@@ -1,4 +1,4 @@
-package com._thproject.gmaking;
+package com.project.gmaking;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
