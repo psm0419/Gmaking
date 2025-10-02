@@ -1,0 +1,73 @@
+# ====================================
+# 1. IDE (IntelliJ, VS Code) 설정 파일
+# ====================================
+### IntelliJ IDEA ###
+# Spring Boot가 들어있는 backend 폴더의 설정 포함
+.idea/
+backend/.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+### VS Code (React, Django에서 사용) ###
+.vscode/
+
+# ====================================
+# 2. Java / Spring Boot (Backend)
+# ====================================
+### Gradle 빌드 및 캐시 ###
+.gradle/
+build/
+# IntelliJ가 사용하는 컴파일 결과 폴더
+backend/build/ 
+
+# Wrapper Jar 파일은 포함(!), 그 외 Jar 파일 제외
+!gradle/wrapper/gradle-wrapper.jar
+*.jar
+
+### 컴파일 결과 및 로그 ###
+*.class
+*.log
+
+# ====================================
+# 3. Python / Django (Backend)
+# ====================================
+### 가상 환경 폴더 ###
+venv/
+env/
+
+### Python 캐시 파일 ###
+*.pyc
+__pycache__/
+
+### SQLite DB (로컬 개발용) ###
+db.sqlite3
+
+### 환경 변수 파일 (민감 정보) ###
+.env
+.flaskenv
+
+# ====================================
+# 4. JavaScript / React (Frontend)
+# ====================================
+### 노드 모듈 (용량이 크므로 제외) ###
+# frontend 폴더 내부에 node_modules가 있다면 경로를 명시
+frontend/node_modules/
+node_modules/
+
+### React 빌드 결과물 (Frontend 배포 파일) ###
+# frontend/build/
+# frontend/dist/
+build/
+dist/
+
+npm-debug.log
+yarn-error.log
+
+# ====================================
+# 5. 기타 시스템 파일
+# ====================================
+.DS_Store
+Thumbs.db
+HELP.md
