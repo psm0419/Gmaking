@@ -1,0 +1,21 @@
+# ------------------------------------
+# 1. End of Line (EOL) 설정: Windows 최적화
+# ------------------------------------
+
+# 모든 텍스트 파일에 대해 EOL 변환을 활성화합니다.
+* text=auto
+
+# Windows 실행 파일(.bat)은 CRLF로 명확하게 지정합니다.
+*.bat text eol=crlf
+
+# Unix/Linux 실행 파일(gradlew)은 LF로 명확하게 지정합니다. (Windows에서 실행 시 오류 방지)
+/gradlew text eol=lf
+
+# ------------------------------------
+# 2. 바이너리 파일 지정
+# ------------------------------------
+*.jar binary
+*.war binary
+*.zip binary
+*.tar binary
+*.gz binary
