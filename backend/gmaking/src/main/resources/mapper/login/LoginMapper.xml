@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.login.dao.LoginDAO">
+
+    <resultMap id="loginResultMap" type="com.project.gmaking.login.vo.LoginVO">
+        <id column="USER_ID" property="userId"/>
+
+        <result column="USER_NAME" property="userName"/>
+        <result column="USER_EMAIL" property="userEmail"/>
+        <result column="USER_PASSWORD" property="userPassword"/>
+        <result column="USER_NICKNAME" property="userNickname"/>
+        <result column="IMAGE_ID" property="imageId"/>
+        <result column="CREATED_DATE" property="createdDate"/>
+        <result column="ROLE" property="role"/>
+    </resultMap>
+
+    <select id="selectUserById" resultMap="loginResultMap">
+        SELECT
+            USER_ID,
+            USER_NAME,
+            USER_EMAIL,
+            USER_PASSWORD,
+            USER_NICKNAME,
+            IMAGE_ID,
+            ROLE,
+            CREATED_DATE
+        FROM TB_USER
+        WHERE USER_ID = #{userId}
+    </select>
+
+</mapper>
