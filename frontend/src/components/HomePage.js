@@ -21,8 +21,8 @@ const HomePage = () => {
 
     // 슬라이드 배너 더미 데이터
     const slideBanner = {
-        title: "Galaxy Maker 시즌 3 오픈!",
-        description: "새로운 행성과 챌린지가 당신을 기다립니다. 지금 접속하여 특별 보상을 받으세요.",
+        title: "겜만중 오픈 준비중",
+        description: "더미",
     };
 
     // 이벤트/업데이트 더미 데이터
