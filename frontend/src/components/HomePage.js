@@ -1,10 +1,11 @@
 import React from 'react';
-import { User, ChevronRight } from 'lucide-react';
+import { User, ChevronRight, Wand2 } from 'lucide-react'; 
 import { useAuth } from '../context/AuthContext';
 import Header from './common/Header'; 
-import Footer from './common/Footer'; 
+import Footer from './common/Footer';
+import { useNavigate } from 'react-router-dom'; 
 
-// 가이드 링크를 위한 서브 컴포넌트 (HomePage 내부 유지)
+// 가이드 링크를 위한 서브 컴포넌트
 const GuideLink = ({ title }) => (
     <div className="flex justify-between items-center p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition cursor-pointer">
         <span className="text-gray-200 font-medium">{title}</span>
@@ -13,19 +14,19 @@ const GuideLink = ({ title }) => (
 );
 
 const HomePage = () => {
-    const { user } = useAuth();
-    
+    const { user, hasCharacter } = useAuth(); 
+    const navigate = useNavigate(); 
+
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const roleColor = user?.role === 'ADMIN' ? 'text-red-400' : 'text-yellow-400';
 
-    // 슬라이드 배너 더미 데이터
+    // 슬라이드 배너 및 이벤트 더미 데이터 
     const slideBanner = {
         title: "겜만중 오픈 준비중",
         description: "더미",
     };
 
-    // 이벤트/업데이트 더미 데이터
     const events = [
         { title: "[이벤트] 7일 접속 보상!", date: "10.01 ~ 10.07" },
         { title: "[업데이트] 신규 코스튬 출시", date: "2025.10.01" },
@@ -33,11 +34,67 @@ const HomePage = () => {
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
 
+    // ---
+
+    // 사용자 정보 요약 또는 캐릭터 생성 유도
+    const renderCentralSection = () => {
+        if (!hasCharacter) {
+            // 캐릭터가 없을 경우: 생성 버튼 표시
+            return (
+                <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-red-500 transform transition duration-500 hover:scale-105">
+                    <div className="text-center">
+                        <Wand2 className="mx-auto w-16 h-16 text-red-400 mb-4 animate-bounce" />
+                        <h3 className="text-3xl font-extrabold text-white mb-2">
+                            캐릭터가 없습니다!
+                        </h3>
+                        <p className="text-md text-gray-400 mb-6">
+                            AI 기반 캐릭터 생성을 시작하고 게임에 접속하세요.
+                        </p>
+                        
+                        <button 
+                            onClick={() => navigate('/create-character')} // 캐릭터 생성 페이지로 이동
+                            className="mt-4 w-full py-3 bg-red-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-red-700 transition"
+                        >
+                            캐릭터 생성
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // 캐릭터가 있을 경우: 기존 사용자 정보 표시
+        return (
+            <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-yellow-400">
+                <div className="text-center">
+                    <div className="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-3 border-4 border-yellow-500">
+                        <User className="w-12 h-12 text-yellow-400" />
+                    </div>
+                    <h3 className="text-3xl font-extrabold text-white mb-1">
+                        {displayName}
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-4">
+                        역할: <span className={roleColor}>{user?.role}</span> | UID: {user?.userId}
+                    </p>
+                    
+                    <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm">
+                        <p>접속 시간: 124시간</p>
+                        <p>보유 코인: 99,999</p>
+                        <p>최고 랭크: 다이아몬드 III</p>
+                    </div>
+                    <button className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
+                        내 정보 보기
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    // ------------------------------------------------------------------
+
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
-            <Header /> {/* 분리된 Header 컴포넌트 사용 */}
+            <Header />
 
-            {/* Main Content Area */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
                 
                 {/* 2-1. 슬라이드 배너 (Slide Banner) */}
@@ -77,28 +134,7 @@ const HomePage = () => {
                     </div>
 
                     {/* 중앙: 사용자 정보 요약 */}
-                    <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-yellow-400">
-                        <div className="text-center">
-                            <div className="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-3 border-4 border-yellow-500">
-                                <User className="w-12 h-12 text-yellow-400" />
-                            </div>
-                            <h3 className="text-3xl font-extrabold text-white mb-1">
-                                {displayName}
-                            </h3>
-                            <p className="text-sm text-gray-400 mb-4">
-                                역할: <span className={roleColor}>{user?.role}</span> | UID: {user?.userId}
-                            </p>
-                            
-                            <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm">
-                                <p>접속 시간: 124시간</p>
-                                <p>보유 코인: 99,999</p>
-                                <p>최고 랭크: 다이아몬드 III</p>
-                            </div>
-                            <button className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
-                                내 정보 보기
-                            </button>
-                        </div>
-                    </div>
+                    {renderCentralSection()}
 
                     {/* 오른쪽: 가이드 보기 */}
                     <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
@@ -116,7 +152,7 @@ const HomePage = () => {
                 </div>
             </main>
             
-            <Footer /> {/* 분리된 Footer 컴포넌트 사용 */}
+            <Footer />
         </div>
     );
 };
