@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
 import CharacterCreationPage from './components/CharacterCreationPage';
+import RegisterPage from './components/RegisterPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -51,13 +52,19 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* 로그인 페이지: 로그인 상태면 메인으로 리다이렉트 */}
+                {/* 로그인 페이지 */}
                 <Route 
                     path="/login" 
                     element={<LoginPage />} 
                 />
+
+                {/* 회원가입 페이지 */}
+                <Route 
+                    path="/register" 
+                    element={<RegisterPage />} 
+                />
                 
-                {/* 캐릭터 생성 페이지: 로그인 필수, 캐릭터 있으면 메인으로 리다이렉트 */}
+                {/* 캐릭터 생성 페이지 */}
                 <Route 
                     path="/create-character" 
                     element={
@@ -67,7 +74,7 @@ function App() {
                     } 
                 />
                 
-                {/* 메인 페이지 (보호된 경로): 로그인만 필수. 캐릭터 유무와 관계없이 HomePage 표시 */}
+                {/* 메인 페이지 (보호된 경로) */}
                 <Route 
                     path="/" 
                     element={

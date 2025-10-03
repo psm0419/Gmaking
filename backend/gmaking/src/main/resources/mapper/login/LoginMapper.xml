@@ -5,9 +5,9 @@
 
     <resultMap id="loginResultMap" type="com.project.gmaking.login.vo.LoginVO">
         <id column="USER_ID" property="userId"/>
-
         <result column="USER_NAME" property="userName"/>
         <result column="USER_EMAIL" property="userEmail"/>
+        <result column="IS_EMAIL_VERIFIED" property="isEmailVerified"/>
         <result column="USER_PASSWORD" property="userPassword"/>
         <result column="USER_NICKNAME" property="userNickname"/>
         <result column="IMAGE_ID" property="imageId"/>
@@ -20,6 +20,7 @@
             USER_ID,
             USER_NAME,
             USER_EMAIL,
+            IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
             IMAGE_ID,
@@ -27,6 +28,39 @@
             CREATED_DATE
         FROM TB_USER
         WHERE USER_ID = #{userId}
+    </select>
+
+    <insert id="insertUser" parameterType="com.project.gmaking.login.vo.RegisterRequestVO">
+        INSERT INTO TB_USER (
+            USER_ID,
+            USER_NAME,
+            USER_EMAIL,
+            IS_EMAIL_VERIFIED,
+            USER_PASSWORD,
+            USER_NICKNAME,
+            ROLE
+        ) VALUES (
+            #{userId},
+            #{userName},
+            #{userEmail},
+            'N',
+            #{userPassword},
+            #{userNickname},
+             'USER'
+        )
+    </insert>
+
+    <select id="checkDuplicate" resultType="int">
+        SELECT
+            COUNT(*)
+        FROM TB_USER
+        WHERE
+        <choose>
+            <when test="type == 'userId'">USER_ID = #{value}</when>
+            <when test="type == 'userNickname'">USER_NICKNAME = #{value}</when>
+            <when test="type == 'userEmail'">USER_EMAIL = #{value}</when>
+            <otherwise>1 = 0</otherwise>
+        </choose>
     </select>
 
 </mapper>
