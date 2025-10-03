@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { LogIn } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 
-
-const LoginPage = () => {
+const LoginPage = ({ onRegisterClick }) => {
     const { login } = useAuth();
+    const navigate = useNavigate();
     const [userId, setUserId] = useState('');
     const [userPassword, setUserPassword] = useState('');
 
@@ -16,8 +17,13 @@ const LoginPage = () => {
             return;
         }
 
-
         const ok = await login(userId, userPassword);
+
+        if (ok) { 
+            navigate('/'); 
+            return;
+        }
+
         if (!ok) {
             // 실패시 추가 동작
         }
@@ -74,6 +80,15 @@ const LoginPage = () => {
                     </button>
                 </form>
 
+                <div className="text-center pt-4">
+                    <Link 
+                        to="/register"
+                        className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center justify-center w-full"
+                    >
+                        <UserPlus className="w-4 h-4 mr-1" />
+                        계정이 없으신가요? 지금 회원가입 하세요!
+                    </Link>
+                </div>
 
                 <div className="text-center text-sm text-gray-400 pt-4">
                     <p>테스트 계정: ID: `testuser`, PW: `1111`</p>
