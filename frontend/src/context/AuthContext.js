@@ -20,9 +20,6 @@ export const AuthProvider = ({ children }) => {
             setToken(storedToken);
             setIsLoggedIn(true);
             
-            // NOTE: 토큰 로드 시에는 서버에서 user 정보를 다시 불러오지 않으므로,
-            // 더미 데이터에 hasCharacter: false를 기본값으로 설정하여 '캐릭터 생성' 화면으로 유도
-            // 실제 구현 시에는 JWT 재인증 또는 사용자 정보 조회 API를 통해 정확한 hasCharacter 상태를 설정해야 함
             const dummyUser = { 
                 userId: 'LoadedUser', 
                 userName: '로딩된 사용자', 
@@ -43,8 +40,6 @@ export const AuthProvider = ({ children }) => {
             if (response.data && response.data.success) {
                 const { token: receivedToken, userInfo } = response.data;
                 
-                // 임시: 백엔드 LoginController 응답에 hasCharacter 정보가 없으므로 임시로 추가
-                // 실제 백엔드 LoginVO 및 응답에는 `hasCharacter` 필드가 추가되어야함
                 const userWithCharStatus = { 
                     ...userInfo, 
                     hasCharacter: userInfo.hasCharacter || false 

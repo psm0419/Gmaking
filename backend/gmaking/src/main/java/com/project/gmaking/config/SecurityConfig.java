@@ -83,6 +83,9 @@ public class SecurityConfig {
                         // 로그인 및 회원가입 경로는 인증 없이 누구나 접근 가능하도록 허용
                         .requestMatchers("/api/login", "/api/register").permitAll()
 
+                        // 이메일 관련 API(인증 코드 발송/검증) 누구나 접근 허용
+                        .requestMatchers("/api/email/**").permitAll()
+
                         // 명시적 설정: /api/secured/** 경로는 JWT 인증된 사용자만 접근 허용
                         .requestMatchers("/api/secured/**").authenticated()
 
