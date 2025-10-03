@@ -3,6 +3,7 @@ package com.project.gmaking.login.controller;
 import com.project.gmaking.login.service.LoginService;
 import com.project.gmaking.login.vo.LoginRequestVO;
 import com.project.gmaking.login.vo.LoginVO;
+import com.project.gmaking.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class LoginController {
 
     private final LoginService loginService;
+    private final JwtTokenProvider tokenProvider;
 
     /**
      * 사용자 로그인 요청 처리
@@ -40,9 +42,19 @@ public class LoginController {
             return ResponseEntity.status(401).body(response);
         }
 
-        // 로그인 성공 (실제 서비스에서는 JWT 토큰 등을 여기에 추가해야 합니다.)
+        // jwt 토큰 생성
+        String jwt = tokenProvider.createToken(
+                authenticatedUser.getUserId(),
+                authenticatedUser.getRole()
+        );
+
+        // 로그인 성공
         response.put("success", true);
         response.put("message", authenticatedUser.getUserName() + "님, 환영합니다.");
+        response.put("token", jwt);
+
+        // 로그인 성공 시 비밀번호만 null 처리해서 반환
+        authenticatedUser.setUserPassword(null);
         response.put("userInfo", authenticatedUser);
 
         return ResponseEntity.ok(response);

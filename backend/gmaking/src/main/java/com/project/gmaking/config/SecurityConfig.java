@@ -1,16 +1,24 @@
 package com.project.gmaking.config;
 
+import com.project.gmaking.security.JwtAuthenticationFilter;
+import com.project.gmaking.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * 비밀번호 암호화 Bean 등록 (BCrypt 사용)
@@ -27,21 +35,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. CSRF 보호 비활성화
-                .csrf(csrf -> csrf.disable())
+            // CSRF 보호 비활성화 & HTTP Basic 인증 및 Form Login 비활성화
+            .csrf(csrf -> csrf.disable())
+            .httpBasic(httpBasic -> httpBasic.disable())
 
-                // 2. HTTP Basic 인증 및 Form Login 비활성화
-                .httpBasic(httpBasic -> httpBasic.disable()) // <--- 이 줄을 추가
-                // .formLogin(formLogin -> formLogin.disable()) // formLogin이 기본적으로 비활성화된 경우 불필요
+            // 세션을 사용하지 않도록 설정 (JWT 사용 시 필수)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 3. 요청에 대한 권한 설정 (순서가 맞는지 확인)
-                .authorizeHttpRequests(auth -> auth
-                        // 로그인 경로는 인증 없이 누구나 접근 가능하도록 허용
-                        .requestMatchers("/api/login").permitAll()
+            // 요청에 대한 권한 설정
+            .authorizeHttpRequests(auth -> auth
+                    // 로그인 경로는 인증 없이 누구나 접근 가능하도록 허용
+                    .requestMatchers("/api/login").permitAll()
 
-                        // 나머지 모든 요청은 인증된 사용자에게만 허용
-                        .anyRequest().authenticated()
-                );
+                    // 나머지 모든 요청은 인증된 사용자에게만 허용
+                    .anyRequest().authenticated()
+            )
+
+            // JWT 필터 추가
+            .addFilterBefore(
+                new JwtAuthenticationFilter(jwtTokenProvider),
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }
