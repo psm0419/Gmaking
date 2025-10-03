@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasCharacter, setHasCharacter] = useState(false); 
 
 
     useEffect(() => {
@@ -18,20 +19,42 @@ export const AuthProvider = ({ children }) => {
         if (storedToken) {
             setToken(storedToken);
             setIsLoggedIn(true);
-            setUser({ userId: 'LoadedUser', userName: '로딩된 사용자', role: 'USER' });
+            
+            // NOTE: 토큰 로드 시에는 서버에서 user 정보를 다시 불러오지 않으므로,
+            // 더미 데이터에 hasCharacter: false를 기본값으로 설정하여 '캐릭터 생성' 화면으로 유도
+            // 실제 구현 시에는 JWT 재인증 또는 사용자 정보 조회 API를 통해 정확한 hasCharacter 상태를 설정해야 함
+            const dummyUser = { 
+                userId: 'LoadedUser', 
+                userName: '로딩된 사용자', 
+                role: 'USER', 
+                hasCharacter: false // 초기에는 false로 설정
+            };
+            setUser(dummyUser);
+            setHasCharacter(dummyUser.hasCharacter);
         }
         setIsLoading(false);
     }, []);
 
 
+    // hasCharacter 상태 업데이트 로직 추가
     const login = async (userId, userPassword) => {
         try {
             const response = await loginApi(userId, userPassword);
             if (response.data && response.data.success) {
                 const { token: receivedToken, userInfo } = response.data;
+                
+                // 임시: 백엔드 LoginController 응답에 hasCharacter 정보가 없으므로 임시로 추가
+                // 실제 백엔드 LoginVO 및 응답에는 `hasCharacter` 필드가 추가되어야함
+                const userWithCharStatus = { 
+                    ...userInfo, 
+                    hasCharacter: userInfo.hasCharacter || false 
+                };
+
                 setToken(receivedToken);
-                setUser(userInfo || null);
+                setUser(userWithCharStatus || null);
                 setIsLoggedIn(true);
+                setHasCharacter(userWithCharStatus.hasCharacter); // 상태 업데이트
+                
                 localStorage.setItem('gmaking_token', receivedToken);
                 return true;
             } else {
@@ -47,17 +70,26 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // 캐릭터 생성 후 상태를 true로 변경하는 함수
+    const setCharacterStatus = (status) => {
+        setHasCharacter(status);
+        if (user) {
+            setUser(prev => ({ ...prev, hasCharacter: status }));
+        }
+    };
+
 
     const logout = () => {
         setToken(null);
         setUser(null);
         setIsLoggedIn(false);
+        setHasCharacter(false);
         localStorage.removeItem('gmaking_token');
     };
 
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, token, user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ isLoggedIn, token, user, isLoading, hasCharacter, login, logout, setCharacterStatus }}>
             {children}
         </AuthContext.Provider>
     );
@@ -65,6 +97,3 @@ export const AuthProvider = ({ children }) => {
 
 
 export const useAuth = () => useContext(AuthContext);
-
-
-export default AuthContext;
