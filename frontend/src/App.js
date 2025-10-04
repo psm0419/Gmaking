@@ -1,9 +1,9 @@
 import React from 'react';
 import { useAuth } from './context/AuthContext';
-import LoginPage from './components/LoginPage';
-import HomePage from './components/HomePage';
-import CharacterCreationPage from './components/CharacterCreationPage';
-import RegisterPage from './components/RegisterPage';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import CharacterCreationPage from './pages/CharacterCreationPage';
+import RegisterPage from './pages/RegisterPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 

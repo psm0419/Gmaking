@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Wand2, RefreshCw, CheckCircle } from 'lucide-react';
-import Header from './common/Header';
-import Footer from './common/Footer';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const CharacterCreationPage = () => {
     const [imageFile, setImageFile] = useState(null);

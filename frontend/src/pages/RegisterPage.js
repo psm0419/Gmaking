@@ -99,6 +99,7 @@ const RegisterPage = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userId">아이디</label>
                 <input id="userId" type="text" onChange={handleChange} value={formData.userId} required 
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
+                <p className="mt-1 text-xs text-yellow-400">아이디는 4자에서 20자 사이여야 합니다.</p>
             </div>
             
             {/* 이메일 */}
@@ -115,6 +116,7 @@ const RegisterPage = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userPassword">비밀번호</label>
                 <input id="userPassword" type="password" onChange={handleChange} value={formData.userPassword} required 
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
+                <p className="mt-1 text-xs text-yellow-400">비밀번호는 최소 8자 이상이어야 합니다.</p>
             </div>
             
             {/* 비밀번호 확인 */}
@@ -136,6 +138,7 @@ const RegisterPage = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userNickname">닉네임</label>
                 <input id="userNickname" type="text" onChange={handleChange} value={formData.userNickname} required 
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
+                <p className="mt-1 text-xs text-yellow-400">닉네임은 2자에서 10자 사이여야 합니다.</p>
             </div>
 
 
