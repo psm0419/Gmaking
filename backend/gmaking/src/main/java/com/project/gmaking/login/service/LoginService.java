@@ -32,4 +32,47 @@ public interface LoginService {
      */
     void completeEmailVerification(String userId);
 
+    /**
+     * 회원 탈퇴 처리: 비밀번호를 검증하고 사용자 및 관련 정보를 삭제
+     * @param userId 탈퇴할 사용자 ID
+     * @param rawPassword 사용자가 입력한 비밀번호
+     * @throws IllegalArgumentException 비밀번호 불일치 또는 사용자 없음
+     */
+    void withdrawUser(String userId, String rawPassword);
+
+    /**
+     * 이름과 이메일로 아이디를 찾고, 인증 코드를 발송
+     * @param userName 사용자 이름
+     * @param userEmail 사용자 이메일
+     * @return 인증 코드 발송을 위해 임시로 사용할 사용자 ID
+     * @throws IllegalArgumentException 사용자 정보가 없을 경우
+     * @throws Exception 이메일 발송 오류
+     */
+    String findIdAndSendVerification(String userName, String userEmail) throws Exception;
+
+    /**
+     * 아이디 찾기 인증 코드를 검증하고, 마스킹된 아이디를 반환
+     * @param userId 인증 코드가 발송된 임시 ID
+     * @return 마스킹된 아이디 (예: 'us***id')
+     * @throws IllegalArgumentException 인증 실패 시
+     */
+    String verifyCodeAndGetUserId(String userId);
+
+    /**
+     * 비밀번호 찾기 요청: ID와 이메일로 사용자 검증 후 인증 코드 발송
+     * @param userId 사용자 ID
+     * @param userEmail 사용자 이메일
+     * @throws IllegalArgumentException 사용자 정보가 없을 경우
+     * @throws Exception 이메일 발송 오류
+     */
+    void findPasswordAndSendVerification(String userId, String userEmail) throws Exception;
+
+    /**
+     * 비밀번호 변경 처리: 인증이 완료된 사용자만 새 비밀번호로 업데이트
+     * @param userId 비밀번호를 변경할 사용자 ID
+     * @param userEmail 사용자 이메일 (인증 레코드 조회를 위해 필요)
+     * @param newRawPassword 새 비밀번호 (암호화 필요)
+     * @throws IllegalArgumentException 인증 실패 또는 비밀번호 규칙 미준수 시
+     */
+    void changePassword(String userId, String userEmail, String newRawPassword);
 }
