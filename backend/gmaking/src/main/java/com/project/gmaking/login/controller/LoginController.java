@@ -216,4 +216,97 @@ public class LoginController {
         }
     }
 
+    /**
+     * 1. 비밀번호 찾기: ID와 이메일로 사용자 확인 후, 인증 코드 발송
+     * @param request JSON 객체 { userId, userEmail }
+     * @return 인증 코드 발송 성공 응답
+     */
+    @PostMapping("/find-password/send-code")
+    public ResponseEntity<Map<String, Object>> findPasswordSendCode(@RequestBody Map<String, String> request) {
+        String userId = request.get("userId");
+        String userEmail = request.get("userEmail");
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (userId == null || userEmail == null) {
+            response.put("success", false);
+            response.put("message", "아이디와 이메일을 모두 입력해주세요.");
+
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            loginService.findPasswordAndSendVerification(userId, userEmail);
+
+            response.put("success", true);
+            response.put("message", "인증 코드가 이메일로 발송되었습니다. 3분 이내에 인증을 완료해주세요.");
+            response.put("userId", userId);
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "비밀번호 찾기 중 오류가 발생했습니다.");
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * 비밀번호 찾기: 인증 코드 검증 요청 (기존 /api/email/verify-code 재활용)
+     * - 이메일 인증 컨트롤러를 그대로 사용하면 됩니다.
+     * - 비밀번호 변경: 인증이 완료된 후, 새 비밀번호로 업데이트
+     * @param request JSON 객체 { userId, userEmail, code, newPassword, confirmPassword }
+     * @return 비밀번호 변경 성공/실패 응답
+     */
+    @PostMapping("/find-password/change")
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> request) {
+        String userId = request.get("userId");
+        String userEmail = request.get("userEmail");
+        String newPassword = request.get("newPassword");
+        String confirmPassword = request.get("confirmPassword");
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (userId == null || userEmail == null || newPassword == null || confirmPassword == null) {
+            response.put("success", false);
+            response.put("message", "필수 입력값(아이디, 이메일, 새 비밀번호)이 누락되었습니다.");
+
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // 새 비밀번호와 확인 비밀번호 일치 검사
+        if (!newPassword.equals(confirmPassword)) {
+            response.put("success", false);
+            response.put("message", "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            // 서비스 계층에서 인증 상태 확인 및 비밀번호 변경 처리
+            loginService.changePassword(userId, userEmail, newPassword);
+
+            response.put("success", true);
+            response.put("message", userId + "님의 비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요.");
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            // 인증 미완료, 비밀번호 규칙 불일치 등의 오류 처리
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "비밀번호 변경 중 예상치 못한 오류가 발생했습니다.");
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
 }
