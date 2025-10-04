@@ -49,4 +49,19 @@ public interface LoginDAO {
      * @return 성공적으로 업데이트된 레코드 수
      */
     int updatePassword(@Param("userId") String userId, @Param("newHashedPassword") String newHashedPassword);
+
+    /**
+     * 소셜 로그인 ID(USER_ID)를 기반으로 사용자 정보를 조회
+     * @param socialId 소셜 ID (예: "google_user@email.com")
+     * @return LoginVO 객체 (사용자 전체 정보)
+     */
+    LoginVO selectUserBySocialId(@Param("userId") String socialId);
+
+    /**
+     * 소셜 사용자 정보를 TB_USER 테이블에 저장 (간소화된 회원가입)
+     * @param user 소셜 사용자 정보 (LoginVO)
+     * @return 성공적으로 삽입된 레코드 수 (1 또는 0)
+     */
+    int insertSocialUser(LoginVO user);
+
 }
