@@ -87,6 +87,9 @@ public class SecurityConfig {
                         // 이메일 관련 API(인증 코드 발송/검증) 누구나 접근 허용
                         .requestMatchers("/api/email/**").permitAll()
 
+                        // ID/비밀번호 찾기 관련 API 누구나 접근 허용
+                        .requestMatchers("/api/find-id/**", "/api/find-password/**").permitAll()
+
                         // 명시적 설정: /api/secured/** 경로는 JWT 인증된 사용자만 접근 허용
                         .requestMatchers("/api/secured/**").authenticated()
 
