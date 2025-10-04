@@ -63,4 +63,57 @@
         </choose>
     </select>
 
+    <delete id="deleteUser">
+        DELETE
+        FROM TB_USER
+        WHERE USER_ID = #{userId}
+    </delete>
+
+    <select id="findUserIdByNameAndEmail" resultType="string">
+        SELECT USER_ID
+        FROM TB_USER
+        WHERE USER_NAME = #{userName} AND USER_EMAIL = #{userEmail}
+    </select>
+
+    <update id="updatePassword">
+        UPDATE TB_USER
+        SET USER_PASSWORD = #{newHashedPassword}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <select id="selectUserBySocialId" resultMap="loginResultMap">
+        SELECT
+            USER_ID,
+            USER_NAME,
+            USER_EMAIL,
+            IS_EMAIL_VERIFIED,
+            USER_PASSWORD,
+            USER_NICKNAME,
+            IMAGE_ID,
+            ROLE,
+            CREATED_DATE
+        FROM TB_USER
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <insert id="insertSocialUser" parameterType="com.project.gmaking.login.vo.LoginVO">
+        INSERT INTO TB_USER (
+            USER_ID,
+            USER_NAME,
+            USER_EMAIL,
+            IS_EMAIL_VERIFIED,
+            USER_PASSWORD,
+            USER_NICKNAME,
+            ROLE
+        ) VALUES (
+            #{userId},
+            #{userName},
+            #{userEmail},
+            'Y',
+            #{userPassword},
+            #{userNickname},
+            'USER'
+        )
+    </insert>
+
 </mapper>
