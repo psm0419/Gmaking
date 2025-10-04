@@ -19,6 +19,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.project.gmaking.oauth2.handler.OAuth2AuthenticationSuccessHandler;
+import com.project.gmaking.oauth2.service.CustomOAuth2UserService;
+import com.project.gmaking.oauth2.handler.OAuth2AuthenticationFailureHandler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +32,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     /**
      * 비밀번호 암호화 Bean 등록 (BCrypt 사용)
@@ -39,7 +45,7 @@ public class SecurityConfig {
     }
 
     /**
-     * 🚨 [핵심] Spring Security에서 사용할 CORS 설정 Bean
+     * Spring Security에서 사용할 CORS 설정 Bean
      * http://localhost:3000 에서의 요청을 허용
      */
     @Bean
@@ -95,6 +101,19 @@ public class SecurityConfig {
 
                         // 나머지 모든 요청은 인증된 사용자에게만 허용
                         .anyRequest().authenticated()
+                )
+
+                // OAuth2 로그인 설정 추가
+                .oauth2Login(oauth2 -> oauth2
+                        // 사용자 정보 로드 서비스 설정
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+
+                        // 인증 성공 핸들러 설정 (JWT 발급 및 리다이렉션 처리)
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
 
                 // JWT 필터 추가

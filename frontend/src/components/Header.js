@@ -3,7 +3,7 @@ import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, 
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, withdrawUser } = useAuth();
     
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
