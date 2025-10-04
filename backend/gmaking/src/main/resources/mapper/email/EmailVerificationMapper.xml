@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.email.dao.EmailVerificationDAO">
+
+    <resultMap id="emailVerificationResultMap" type="com.project.gmaking.email.vo.EmailVerificationVO">
+        <id column="USER_ID" property="userId"/>
+        <result column="EMAIL" property="email"/>
+        <result column="VERIFY_CODE" property="verifyCode"/>
+        <result column="EXPIRY_DATE" property="expiryDate"/>
+        <result column="IS_VERIFIED" property="isVerified"/>
+    </resultMap>
+
+    <insert id="saveVerificationCode" parameterType="com.project.gmaking.email.vo.EmailVerificationVO">
+        INSERT INTO TB_USER_EMAIL_VERIFY
+        (USER_ID,
+         EMAIL,
+         VERIFY_CODE,
+         EXPIRY_DATE,
+         IS_VERIFIED,
+         CREATED_DATE)
+        VALUES (#{userId},
+                #{email},
+                #{verifyCode},
+                #{expiryDate},
+                'N',
+                NOW()) ON DUPLICATE KEY
+        UPDATE
+            EMAIL = #{email},
+            VERIFY_CODE = #{verifyCode},
+            EXPIRY_DATE = #{expiryDate},
+            IS_VERIFIED = 'N',
+            UPDATED_DATE = NOW();
+    </insert>
+
+    <select id="getVerificationInfo" resultMap="emailVerificationResultMap">
+        SELECT
+            USER_ID,
+            EMAIL,
+            VERIFY_CODE,
+            EXPIRY_DATE,
+            IS_VERIFIED
+        FROM TB_USER_EMAIL_VERIFY
+        WHERE USER_ID = #{userId}
+        AND EMAIL = #{email}
+    </select>
+
+    <update id="updateVerificationStatus">
+        UPDATE TB_USER_EMAIL_VERIFY
+        SET
+            IS_VERIFIED  = #{isVerified},
+            UPDATED_DATE = NOW()
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="updateIsEmailVerifiedInUser">
+        UPDATE TB_USER
+        SET
+            IS_EMAIL_VERIFIED = #{isVerified}
+        WHERE USER_ID = #{userId}
+    </update>
+
+</mapper>
