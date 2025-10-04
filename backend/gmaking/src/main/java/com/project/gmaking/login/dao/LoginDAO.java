@@ -41,4 +41,12 @@ public interface LoginDAO {
      * @return 일치하는 사용자 ID (없으면 null)
      */
     String findUserIdByNameAndEmail(@Param("userName") String userName, @Param("userEmail") String userEmail);
+
+    /**
+     * 사용자 비밀번호 업데이트 (비밀번호 찾기/변경)
+     * @param userId 비밀번호를 변경할 사용자 ID
+     * @param newHashedPassword 새로 암호화된 비밀번호
+     * @return 성공적으로 업데이트된 레코드 수
+     */
+    int updatePassword(@Param("userId") String userId, @Param("newHashedPassword") String newHashedPassword);
 }
