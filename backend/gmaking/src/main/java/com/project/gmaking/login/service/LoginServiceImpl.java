@@ -215,4 +215,56 @@ public class LoginServiceImpl implements LoginService {
 
     }
 
+    /**
+     * 비밀번호 찾기: ID/이메일로 사용자 조회 및 인증 코드 발송
+     */
+    @Override
+    public void findPasswordAndSendVerification(String userId, String userEmail) throws Exception {
+        // 사용자 정보 조회 (ID와 이메일 동시 확인)
+        LoginVO user = loginDAO.selectUserById(userId);
+
+        if (user == null || !userEmail.equalsIgnoreCase(user.getUserEmail())) {
+            // ID가 없거나 이메일이 일치하지 않는 경우
+            throw new IllegalArgumentException("아이디 또는 이메일 정보가 일치하지 않습니다.");
+        }
+
+        // 이메일 인증 코드를 발송하고 DB에 저장
+        verificationService.sendCode(userId, userEmail);
+    }
+
+    /**
+     * 비밀번호 변경 처리
+     */
+    @Transactional
+    @Override
+    public void changePassword(String userId, String userEmail, String newRawPassword) {
+
+        // 인증 상태 확인 및 인증 기록 삭제
+        EmailVerificationVO storedInfo = verificationDAO.getVerificationInfo(userId, userEmail);
+
+        // 인증 기록이 없거나 인증이 완료되지 않은 경우
+        if (storedInfo == null || !"Y".equals(storedInfo.getIsVerified())) {
+            throw new IllegalArgumentException("비밀번호를 변경하려면 이메일 인증을 먼저 완료해야 합니다.");
+        }
+
+        // 새 비밀번호 유효성 검사
+        if (newRawPassword.length() < 8) {
+            throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
+        }
+
+        // 새 비밀번호 암호화
+        String newHashedPassword = passwordEncoder.encode(newRawPassword);
+
+        // DB 업데이트
+        int updateCount = loginDAO.updatePassword(userId, newHashedPassword);
+
+        if (updateCount == 0) {
+            throw new RuntimeException("비밀번호 변경에 실패했습니다. (사용자 정보 없음)");
+        }
+
+        // 인증 기록 삭제 (재사용 방지)
+        verificationDAO.deleteVerificationInfoByUserId(userId);
+
+    }
+
 }
