@@ -4,7 +4,7 @@ import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
 
 @Data
-public class LoginRequestVO {
+public class WithdrawRequestVO {
 
     @NotBlank(message = "아이디는 필수입니다.")
     private String userId;

@@ -29,4 +29,5 @@ public class RegisterRequestVO {
 
     // 비밀번호 확인 필드를 포함하여 클라이언트 측 검증을 돕습니다.
     private String confirmPassword;
+
 }

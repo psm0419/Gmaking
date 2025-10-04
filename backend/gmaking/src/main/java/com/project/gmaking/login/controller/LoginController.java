@@ -1,5 +1,6 @@
 package com.project.gmaking.login.controller;
 
+import com.project.gmaking.email.service.EmailVerificationService;
 import com.project.gmaking.login.service.LoginService;
 import com.project.gmaking.login.vo.LoginRequestVO;
 import com.project.gmaking.login.vo.LoginVO;
@@ -24,6 +25,7 @@ public class LoginController {
 
     private final LoginService loginService;
     private final JwtTokenProvider tokenProvider;
+    private final EmailVerificationService verificationService;
 
     /**
      * 사용자 로그인 요청 처리
@@ -117,6 +119,98 @@ public class LoginController {
             response.put("success", false);
             // response.put("message", "회원가입 중 예상치 못한 오류가 발생했습니다.");
             response.put("message", "예상치 못한 오류: " + e.getMessage());
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * 아이디 찾기: 이름과 이메일로 사용자 ID를 찾고, 인증 코드를 발송
+     * @param request JSON 객체 { userName, userEmail }
+     * @return 인증 코드 발송 성공 응답 (임시 userId 포함)
+     */
+    @PostMapping("/find-id/send-code")
+    public ResponseEntity<Map<String, Object>> findIdSendCode(@RequestBody Map<String, String> request) {
+        String userName = request.get("userName");
+        String userEmail = request.get("userEmail");
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (userName == null || userEmail == null) {
+            response.put("success", false);
+            response.put("message", "이름과 이메일을 모두 입력해주세요.");
+
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            String userId = loginService.findIdAndSendVerification(userName, userEmail);
+
+            response.put("success", true);
+            response.put("message", "인증 코드가 이메일로 발송되었습니다. 3분 이내에 코드를 입력해주세요.");
+            response.put("userId", userId);
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "아이디 찾기 중 오류가 발생했습니다.");
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+
+    }
+
+    /**
+     * 아이디 찾기: 인증 코드를 검증하고 최종적으로 아이디를 반환
+     * @param request JSON 객체 { userId, email, code }
+     * @return 아이디 찾기 성공 응답 (마스킹된 userId 포함)
+     */
+    @PostMapping("/find-id/verify-code")
+    public ResponseEntity<Map<String, Object>> findIdVerifyCode(@RequestBody Map<String, String> request) {
+        String userId = request.get("userId");
+        String email = request.get("email");
+        String code = request.get("code");
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (userId == null || email == null || code == null) {
+            response.put("success", false);
+            response.put("message", "필수 입력값(userId, email, code)이 누락되었습니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            // 이메일 인증 코드를 검증 (EmailVerificationService의 로직 호출)
+            boolean isVerified = verificationService.verifyCode(userId, email, code);
+
+            // 인증이 완료된 후, 아이디를 반환하고 인증 기록 삭제
+            if (isVerified) {
+                String maskedUserId = loginService.verifyCodeAndGetUserId(userId);
+
+                response.put("success", true);
+                response.put("message", "아이디 찾기가 완료되었습니다.");
+                response.put("userId", maskedUserId);
+
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "인증 코드가 일치하지 않거나 만료되었습니다.");
+
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "인증 처리 중 예상치 못한 오류가 발생했습니다.");
 
             return ResponseEntity.internalServerError().body(response);
         }
