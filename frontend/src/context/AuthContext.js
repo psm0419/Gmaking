@@ -90,6 +90,21 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // OAuth2 로그인 처리 함수
+    const handleOAuth2Login = (receivedToken, userInfo) => {
+        const userWithCharStatus = {
+            ...userInfo,
+            hasCharacter: userInfo.hasCharacter || false
+        };
+
+        setToken(receivedToken);
+        setUser(userWithCharStatus || null);
+        setIsLoggedIn(true);
+        setHasCharacter(userWithCharStatus.hasCharacter);
+
+        localStorage.setItem('gmaking_token', receivedToken);
+    };
+
     // 캐릭터 생성 후 상태를 true로 변경하는 함수
     const setCharacterStatus = (status) => {
         setHasCharacter(status);
@@ -109,7 +124,11 @@ export const AuthProvider = ({ children }) => {
 
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, token, user, isLoading, hasCharacter, login, logout, setCharacterStatus, withdrawUser }}>
+        <AuthContext.Provider value={{ 
+            isLoggedIn, token, user, isLoading, 
+            hasCharacter, login, logout, setCharacterStatus, 
+            withdrawUser, handleOAuth2Login  
+        }}>
             {children}
         </AuthContext.Provider>
     );

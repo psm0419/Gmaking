@@ -6,6 +6,7 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import RegisterPage from './pages/RegisterPage';
 import FindIdPage from './pages/FindIdPage'; 
 import FindPasswordPage from './pages/FindPasswordPage';
+import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler'; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -65,6 +66,18 @@ function App() {
                     path="/register" 
                     element={<RegisterPage />} 
                 />
+
+                {/* OAuth2 리다이렉션 처리 페이지 및 소셜 로그인 실패 리다이렉션 */}
+                <Route 
+                    path="/oauth/callback" 
+                    element={<OAuth2RedirectHandler />} 
+                />
+
+                <Route 
+                    path="/oauth/callback/failure" 
+                    element={<OAuth2RedirectHandler />} 
+                />
+
 
                 {/* 아이디 찾기 페이지 */}
                 <Route

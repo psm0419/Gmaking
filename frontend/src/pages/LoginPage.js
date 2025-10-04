@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaGoogle, FaComment, FaLeaf } from 'react-icons/fa';
+
+const BACKEND_BASE_URL = 'http://localhost:8080';
+const GOOGLE_AUTH_URL = `${BACKEND_BASE_URL}/oauth2/authorization/google`;
+const NAVER_AUTH_URL = `${BACKEND_BASE_URL}/oauth2/authorization/naver`;
+const KAKAO_AUTH_URL = `${BACKEND_BASE_URL}/oauth2/authorization/kakao`;
 
 const LoginPage = ({ onRegisterClick }) => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const [userId, setUserId] = useState('');
     const [userPassword, setUserPassword] = useState('');
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,6 +33,32 @@ const LoginPage = ({ onRegisterClick }) => {
             // 실패시 추가 동작
         }
     };
+
+    // 소셜 로그인 버튼 렌더링 함수 
+    const renderSocialLoginButtons = () => (
+        <div className="space-y-3 pt-6 border-t border-gray-700">
+            <p className="text-center text-gray-400 text-sm">또는 소셜 계정으로 로그인</p>
+            
+            {/* Google 로그인 버튼 */}
+            <a href={GOOGLE_AUTH_URL} className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-gray-900 bg-white hover:bg-gray-100 transition duration-200 shadow-md">
+                <FaGoogle className="w-5 h-5 mr-3 text-red-600" />
+                Google로 로그인
+            </a>
+
+            {/* Naver 로그인 버튼 */}
+            <a href={NAVER_AUTH_URL} className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-500 hover:bg-green-600 transition duration-200 shadow-md">
+                <FaLeaf className="w-5 h-5 mr-3" />
+                Naver로 로그인
+            </a>
+
+            {/* Kakao 로그인 버튼 */}
+            <a href={KAKAO_AUTH_URL} className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-[#3c1e1e] bg-[#fee500] hover:bg-[#ffd600] transition duration-200 shadow-md">
+                <FaComment className="w-5 h-5 mr-3" />
+                Kakao로 로그인
+            </a>
+        </div>
+    );
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
             <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-xl shadow-2xl">
@@ -54,7 +85,6 @@ const LoginPage = ({ onRegisterClick }) => {
                         />
                     </div>
 
-
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userPassword">
                             비밀번호
@@ -78,6 +108,10 @@ const LoginPage = ({ onRegisterClick }) => {
                         <LogIn className="w-5 h-5 mr-2" />
                         로그인 하기
                     </button>
+
+                    {/* 소셜 로그인 */}
+                    {renderSocialLoginButtons()}
+
                 </form>
 
                 <div className="text-center pt-4">
