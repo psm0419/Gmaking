@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import Header from '../components/Header'; 
+import Footer from '../components/Footer';
 
 export default function ChatMockPage() {
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -56,7 +58,15 @@ export default function ChatMockPage() {
   };
 
   return (
-    <div className="h-screen w-full bg-gray-200/70 flex items-center justify-center font-sans">
+  // 회색 배경 전체를 세로 플렉스로: 헤더 / 메인 / 푸터
+  <div className="min-h-screen w-full bg-gray-200/70 flex flex-col font-sans">
+
+    {/* 상단 회색 영역: Header */}
+
+      <Header />
+
+    {/* 가운데: 메인 보드(그대로) */}
+    <div className="flex-1 flex items-center justify-center">
       <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-300/60 p-6 shadow-inner">
         <div className="w-full h-full rounded-[36px] bg-white overflow-hidden relative flex">
           {/* ===== 사이드바 ===== */}
@@ -71,7 +81,6 @@ export default function ChatMockPage() {
                 />
               ))}
             </div>
-
           </aside>
 
           {/* ===== 채팅 본문 ===== */}
@@ -106,7 +115,7 @@ export default function ChatMockPage() {
                       className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full mx-auto"
                       role="status"
                       aria-label="loading"
-                    ></div>
+                    />
                   ) : (
                     "전송"
                   )}
@@ -117,7 +126,13 @@ export default function ChatMockPage() {
         </div>
       </div>
     </div>
-  );
+
+    {/* 하단 회색 영역: Footer */}
+      <Footer />
+
+  </div>
+);
+
 }
 
 const SIDEBAR_COLOR = "#404040";
@@ -240,9 +255,9 @@ function CapsuleWithNotch({ w, h, notchCx, notchCy, notchR, ringWidth }) {
 /** ======================= 채팅 말풍선 ======================= */
 function Bubble({ role, content }) {
   const mine = role === "user";
-  const bgColor = mine ? "bg-gray-200" : "bg-gray-100";
+  const bgColor = mine ? "bg-blue-500" : "bg-gray-100";
   const textColor = "text-gray-900";
-  const tailColorClass = mine ? "border-l-gray-200" : "border-r-gray-100";
+  const tailColorClass = mine ? "border-l-blue-500" : "border-r-gray-100";
 
   return (
     <div className={`flex w-full ${mine ? "justify-end" : "justify-start"}`}>
@@ -253,8 +268,8 @@ function Bubble({ role, content }) {
         <div
           className={`absolute w-0 h-0 border-t-[6px] border-b-[6px] ${
             mine
-              ? `right-[-8px] border-l-[8px] ${tailColorClass}`
-              : `left-[-8px] border-r-[8px] ${tailColorClass}`
+              ? `right-[-7px] border-l-[8px] ${tailColorClass}`
+              : `left-[-7px] border-r-[8px] ${tailColorClass}`
           } border-t-transparent border-b-transparent`}
           style={{ top: "16px" }}
         />
