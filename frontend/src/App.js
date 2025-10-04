@@ -4,6 +4,8 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
 import RegisterPage from './pages/RegisterPage';
+import FindIdPage from './pages/FindIdPage'; 
+import FindPasswordPage from './pages/FindPasswordPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -62,6 +64,18 @@ function App() {
                 <Route 
                     path="/register" 
                     element={<RegisterPage />} 
+                />
+
+                {/* 아이디 찾기 페이지 */}
+                <Route
+                    path="/find-id"
+                    element={<FindIdPage />}
+                />
+
+                {/* 비밀번호 찾기 페이지 */}
+                <Route
+                    path="/find-password"
+                    element={<FindPasswordPage />}
                 />
                 
                 {/* 캐릭터 생성 페이지 */}
