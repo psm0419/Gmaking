@@ -90,8 +90,18 @@ const LoginPage = ({ onRegisterClick }) => {
                     </Link>
                 </div>
 
+                <div className="text-center text-sm text-gray-400 flex justify-center space-x-4">
+                    <Link to="/find-id" className="hover:text-yellow-400 transition">
+                        아이디 찾기
+                    </Link>
+                    <span>|</span>
+                    <Link to="/find-password" className="hover:text-yellow-400 transition">
+                        비밀번호 찾기
+                    </Link>
+                </div>
+
                 <div className="text-center text-sm text-gray-400 pt-4">
-                    <p>테스트 계정: ID: `testuser`, PW: `11111111`</p>
+                    <p>테스트 계정: ID: `testuser`, PW: `11111111!`</p>
                 </div>
             </div>
         </div>
