@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { loginApi } from '../api/authApi';
+import { loginApi, withdrawUserApi } from '../api/authApi';
 
 
 const AuthContext = createContext();
@@ -65,6 +65,46 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const withdrawUser = async (userPassword) => {
+        if (!token) {
+            alert("로그인 상태가 아닙니다.");
+            return false;
+        }
+
+        try {
+            const response = await withdrawUserApi(userPassword, token);
+
+            if (response.data.success) {
+                alert('성공적으로 계정 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
+                logout();
+                return true;
+            } else {
+                alert(response.data?.message || '탈퇴 처리 중 오류가 발생했습니다.');
+                return false;
+            }
+        } catch (error) {
+            console.error('Withdraw Error:', error);
+            const message = error.response?.data?.message || '계정 탈퇴 중 오류가 발생했습니다.';
+            alert(message);
+            return false;
+        }
+    };
+
+    // OAuth2 로그인 처리 함수
+    const handleOAuth2Login = (receivedToken, userInfo) => {
+        const userWithCharStatus = {
+            ...userInfo,
+            hasCharacter: userInfo.hasCharacter || false
+        };
+
+        setToken(receivedToken);
+        setUser(userWithCharStatus || null);
+        setIsLoggedIn(true);
+        setHasCharacter(userWithCharStatus.hasCharacter);
+
+        localStorage.setItem('gmaking_token', receivedToken);
+    };
+
     // 캐릭터 생성 후 상태를 true로 변경하는 함수
     const setCharacterStatus = (status) => {
         setHasCharacter(status);
@@ -84,7 +124,11 @@ export const AuthProvider = ({ children }) => {
 
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, token, user, isLoading, hasCharacter, login, logout, setCharacterStatus }}>
+        <AuthContext.Provider value={{ 
+            isLoggedIn, token, user, isLoading, 
+            hasCharacter, login, logout, setCharacterStatus, 
+            withdrawUser, handleOAuth2Login  
+        }}>
             {children}
         </AuthContext.Provider>
     );

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class LoginVO {
+
     private String userId;                  // USER_ID
     private String userName;                // USER_NAME
     private String userEmail;               // USER_EMAIL
@@ -14,4 +15,5 @@ public class LoginVO {
     private String userNickname;            // USER_NICKNAME
     private String role;                    // ROLE
     private LocalDateTime createdDate;      // CREATED_DATE
+
 }

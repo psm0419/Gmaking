@@ -1,8 +1,8 @@
 import React from 'react';
 import { User, ChevronRight, Wand2 } from 'lucide-react'; 
 import { useAuth } from '../context/AuthContext';
-import Header from './common/Header'; 
-import Footer from './common/Footer';
+import Header from '../components/Header'; 
+import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom'; 
 
 // 가이드 링크를 위한 서브 컴포넌트
@@ -33,8 +33,6 @@ const HomePage = () => {
         { title: "[공지] 점검 완료 및 보상 지급", date: "2025.09.30" },
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
-
-    // ---
 
     // 사용자 정보 요약 또는 캐릭터 생성 유도
     const renderCentralSection = () => {
