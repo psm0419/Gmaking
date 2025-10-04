@@ -91,7 +91,7 @@ const LoginPage = ({ onRegisterClick }) => {
                 </div>
 
                 <div className="text-center text-sm text-gray-400 pt-4">
-                    <p>테스트 계정: ID: `testuser`, PW: `1111`</p>
+                    <p>테스트 계정: ID: `testuser`, PW: `11111111`</p>
                 </div>
             </div>
         </div>
