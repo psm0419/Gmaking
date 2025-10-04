@@ -38,6 +38,20 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // MyBatis 및 jdbc 설정
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+
+    // JJWT
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
+
+    // JJWT 0.9.1 호환을 위해 JAXB API 추가
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+
+    // 이메일 발송 기능
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {
