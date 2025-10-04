@@ -11,6 +11,7 @@
         <result column="USER_PASSWORD" property="userPassword"/>
         <result column="USER_NICKNAME" property="userNickname"/>
         <result column="IMAGE_ID" property="imageId"/>
+        <result column="CHARACTER_ID" property="characterId"/>
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="ROLE" property="role"/>
     </resultMap>
@@ -24,6 +25,7 @@
             USER_PASSWORD,
             USER_NICKNAME,
             IMAGE_ID,
+            CHARACTER_ID,
             ROLE,
             CREATED_DATE
         FROM TB_USER
@@ -90,6 +92,7 @@
             USER_PASSWORD,
             USER_NICKNAME,
             IMAGE_ID,
+            CHARACTER_ID,
             ROLE,
             CREATED_DATE
         FROM TB_USER

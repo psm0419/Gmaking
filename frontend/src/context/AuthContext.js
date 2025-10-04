@@ -1,9 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { loginApi, withdrawUserApi } from '../api/authApi';
-
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
-
 
 export const AuthProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,21 +13,26 @@ export const AuthProvider = ({ children }) => {
 
 
     useEffect(() => {
-        // 앱 초기 로딩 시 localStorage에 저장된 토큰 확인
         const storedToken = localStorage.getItem('gmaking_token');
+
         if (storedToken) {
             setToken(storedToken);
             setIsLoggedIn(true);
+
+            // JWT에서 사용자 정보 디코딩
+            const userPayload = jwtDecode(storedToken); // jwtDecode 필요
             
-            const dummyUser = { 
-                userId: 'LoadedUser', 
-                userName: '로딩된 사용자', 
-                role: 'USER', 
-                hasCharacter: false // 초기에는 false로 설정
+            const currentUser = {
+                userId: userPayload.userId,
+                userName: userPayload.nickname || userPayload.userName,
+                role: userPayload.role,
+                hasCharacter: !!userPayload.hasCharacter
             };
-            setUser(dummyUser);
-            setHasCharacter(dummyUser.hasCharacter);
+
+            setUser(currentUser);
+            setHasCharacter(currentUser.hasCharacter);
         }
+
         setIsLoading(false);
     }, []);
 
@@ -92,15 +96,18 @@ export const AuthProvider = ({ children }) => {
 
     // OAuth2 로그인 처리 함수
     const handleOAuth2Login = (receivedToken, userInfo) => {
+
+        const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
+
         const userWithCharStatus = {
             ...userInfo,
-            hasCharacter: userInfo.hasCharacter || false
+            hasCharacter: isUserWithCharacter
         };
 
         setToken(receivedToken);
         setUser(userWithCharStatus || null);
         setIsLoggedIn(true);
-        setHasCharacter(userWithCharStatus.hasCharacter);
+        setHasCharacter(isUserWithCharacter);
 
         localStorage.setItem('gmaking_token', receivedToken);
     };
