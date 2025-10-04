@@ -23,3 +23,53 @@ export const registerApi = (userData) => {
 export const verifyEmailApi = (userId, email, code) => {
   return axios.post(`${API_BASE_URL}/email/verify-code`, { userId, email, code });
 };
+
+/**
+ * 아이디 찾기 - 1단계: 이름과 이메일로 ID를 찾고 인증 코드 발송
+ * POST /api/find-id/send-code
+ */
+export const findIdSendCodeApi = (userName, userEmail) => {
+    return axios.post(`${API_BASE_URL}/find-id/send-code`, { userName, userEmail });
+};
+
+/**
+ * 아이디 찾기 - 2단계: 인증 코드를 검증하고 마스킹된 아이디를 반환
+ * POST /api/find-id/verify-code
+ */
+export const findIdVerifyCodeApi = (userId, email, code) => {
+    // userId는 send-code 응답으로 받은 임시 ID입니다.
+    return axios.post(`${API_BASE_URL}/find-id/verify-code`, { userId, email, code });
+};
+
+
+/**
+ * 비밀번호 찾기 - 1단계: ID와 이메일로 사용자 검증 후 인증 코드 발송
+ * POST /api/find-password/send-code
+ */
+export const findPasswordSendCodeApi = (userId, userEmail) => {
+    return axios.post(`${API_BASE_URL}/find-password/send-code`, { userId, userEmail });
+};
+
+/**
+ * 비밀번호 찾기 - 3단계: 인증 완료 후 새 비밀번호로 변경
+ * POST /api/find-password/change
+ * (2단계 인증은 기존 verifyEmailApi를 재활용)
+ */
+export const changePasswordApi = (userId, userEmail, newPassword, confirmPassword) => {
+    return axios.post(`${API_BASE_URL}/find-password/change`, { userId, userEmail, newPassword, confirmPassword });
+};
+
+
+/**
+ * 회원 탈퇴
+ * DELETE /api/withdraw
+ * (JWT 인증 필요)
+ */
+export const withdrawUserApi = (userPassword, token) => {
+    return axios.delete(`${API_BASE_URL}/withdraw`, { 
+        data: { userPassword }, // DELETE 요청 시, body에 데이터를 담기 위해 'data' 필드를 사용합니다.
+        headers: { 
+            Authorization: `Bearer ${token}` 
+        } 
+    });
+};

@@ -1,10 +1,12 @@
 import React from 'react';
 import { useAuth } from './context/AuthContext';
-import LoginPage from './components/LoginPage';
-import HomePage from './components/HomePage';
-import CharacterCreationPage from './components/CharacterCreationPage';
-import RegisterPage from './components/RegisterPage';
-import ChatPage from "./pages/ChatPage"
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import CharacterCreationPage from './pages/CharacterCreationPage';
+import RegisterPage from './pages/RegisterPage';
+import FindIdPage from './pages/FindIdPage';
+import FindPasswordPage from './pages/FindPasswordPage';
+import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -64,7 +66,31 @@ function App() {
                     path="/register" 
                     element={<RegisterPage />} 
                 />
-                
+
+                {/* OAuth2 리다이렉션 처리 페이지 및 소셜 로그인 실패 리다이렉션 */}
+                <Route
+                    path="/oauth/callback"
+                    element={<OAuth2RedirectHandler />}
+                />
+
+                <Route
+                    path="/oauth/callback/failure"
+                    element={<OAuth2RedirectHandler />}
+                />
+
+
+                {/* 아이디 찾기 페이지 */}
+                <Route
+                    path="/find-id"
+                    element={<FindIdPage />}
+                />
+
+                {/* 비밀번호 찾기 페이지 */}
+                <Route
+                    path="/find-password"
+                    element={<FindPasswordPage />}
+                />
+
                 {/* 캐릭터 생성 페이지 */}
                 <Route 
                     path="/create-character" 
@@ -87,7 +113,7 @@ function App() {
 
                 {/* chat 페이지 test */}
                 <Route
-                    path="/chat_test" 
+                    path="/chat_test"
                     element={<ChatPage />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
