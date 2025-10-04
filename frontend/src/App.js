@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
 import CharacterCreationPage from './components/CharacterCreationPage';
 import RegisterPage from './components/RegisterPage';
+import ChatPage from "./pages/ChatPage"
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -83,6 +84,11 @@ function App() {
                         </ProtectedRoute>
                     } 
                 />
+
+                {/* chat 페이지 test */}
+                <Route
+                    path="/chat_test" 
+                    element={<ChatPage />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />

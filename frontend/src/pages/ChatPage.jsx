@@ -1,129 +1,263 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-/**
- * SuperSimpleChat.jsx
- * - 테스트 용 초간단 채팅
- * - 좌: AI, 우: 내 메시지
- * - 입력창 하나 + Enter 전송
- * - (옵션) 백엔드 연동: POST /api/chat/send
- */
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
-
-export default function SuperSimpleChat() {
+export default function ChatMockPage() {
+  const [selectedIdx, setSelectedIdx] = useState(0);
   const [messages, setMessages] = useState([
-    { id: "sys-1", role: "assistant", content: "안녕하세요! 테스트 채팅을 시작해 보세요 😊", ts: Date.now() },
+    { id: "a1", role: "assistant", content: "안녕! 오늘은 어땠니?\n캐릭터 대답창" },
+    { id: "u1", role: "user", content: "사용자 대답란" },
+    { id: "a2", role: "assistant", content: "캐릭터 대답" },
+    { id: "u2", role: "user", content: "좋았어요. 기분이 아주 좋은 하루였어요." },
+    { id: "a3", role: "assistant", content: "정말 다행이네요. 어떤 일이 있었나요?" },
   ]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef(null);
 
-  // 최신 메시지로 스크롤
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const addMessage = (role, content) => {
-    setMessages((prev) => [
-      ...prev,
-      { id: `${role}-${Date.now()}`, role, content, ts: Date.now() },
-    ]);
-  };
-
-  const mockAiReply = async (userText) => {
-    // 1) 아주 간단한 목업 응답 (지우고 2) 백엔드 연동 사용 가능)
-    await new Promise((r) => setTimeout(r, 500));
-    return `AI 응답: “${userText}” 에 대한 테스트 답변입니다.`;
-  };
-
-  const sendToBackend = async (userText) => {
-    // 백엔드에 `/api/chat/send` 있는 경우 이 함수 사용
-    const res = await fetch(`${API_BASE}/api/chat/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: "test", content: userText }),
-    });
-    if (!res.ok) throw new Error(`send failed ${res.status}`);
-    const data = await res.json();
-    // 백엔드가 { content: "..." } 형태로 준다고 가정
-    return data?.content ?? "(빈 응답)";
-  };
-
-  const onSend = async () => {
-    const userText = text.trim();
-    if (!userText || busy) return;
+  const send = async () => {
+    const t = text.trim();
+    if (!t || busy) return;
     setText("");
-    addMessage("user", userText);
-
+    setMessages((prev) => [...prev, { id: "u-" + Date.now(), role: "user", content: t }]);
+    
     setBusy(true);
     try {
-      // ※ 둘 중 하나만 사용하세요
-      // 1) 목업 응답
-      const reply = await mockAiReply(userText);
+     const res = await fetch("http://localhost:8080/api/chat", {
+       method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: t }),
+     });
+     const data = await res.json();
 
-      // 2) 실제 백엔드 연동
-      // const reply = await sendToBackend(userText);
-
-      addMessage("assistant", reply);
-    } catch (e) {
-      addMessage("assistant", "(오류) 답변 생성에 실패했습니다.");
-      console.error(e);
+     setMessages((prev) => [
+        ...prev,
+       { id: "a-" + Date.now(), role: "assistant", content: data.reply },
+     ]);
+   } catch (err) {
+      console.error(err);
+     setMessages((prev) => [
+        ...prev,
+        { id: "a-" + Date.now(), role: "assistant", content: "⚠️ 서버 오류가 발생했습니다." },
+      ]);
     } finally {
       setBusy(false);
     }
   };
 
+
   const onKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      send();
     }
   };
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gray-50">
-      <header className="border-b bg-white px-4 py-3 font-semibold">테스트 채팅</header>
+    <div className="h-screen w-full bg-gray-200/70 flex items-center justify-center font-sans">
+      <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-300/60 p-6 shadow-inner">
+        <div className="w-full h-full rounded-[36px] bg-white overflow-hidden relative flex">
+          {/* ===== 사이드바 ===== */}
+          <aside className="w-[300px] bg-neutral-700 text-white relative overflow-hidden isolate">
+            <div className="absolute inset-y-0 left-[-60px] w-[60px] bg-neutral-700 rounded-l-[48px]" />
+            <div className="flex flex-col items-center pt-10 gap-6">
+              {[0, 1, 2].map((idx) => (
+                <AvatarItem
+                  key={idx}
+                  selected={selectedIdx === idx}
+                  onClick={() => setSelectedIdx(idx)}
+                />
+              ))}
+            </div>
 
-      <main className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((m) => (
-          <Bubble key={m.id} role={m.role} content={m.content} />
-        ))}
-        <div ref={endRef} />
-      </main>
+          </aside>
 
-      <footer className="border-t bg-white p-3">
-        <div className="flex gap-2">
-          <textarea
-            className="flex-1 min-h-[44px] resize-none rounded-xl border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="메시지를 입력하고 Enter로 전송 (줄바꿈: Shift+Enter)"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={onKeyDown}
-            rows={1}
-          />
-          <button
-            className="rounded-xl bg-blue-600 px-4 text-white shadow hover:bg-blue-700 disabled:opacity-50"
-            onClick={onSend}
-            disabled={busy || !text.trim()}
-          >
-            전송
-          </button>
+          {/* ===== 채팅 본문 ===== */}
+          <section className="flex-1 flex flex-col">
+            <div className="flex-1 overflow-y-auto px-14 py-10 space-y-5">
+              {messages.map((m) => (
+                <Bubble key={m.id} role={m.role} content={m.content} />
+              ))}
+              <div ref={endRef} />
+            </div>
+
+            {/* ===== 입력창 ===== */}
+            <div className="border-t px-14 py-6 bg-white">
+              <div className="flex items-end gap-4">
+                <textarea
+                  className="flex-1 min-h-[56px] max-h-[140px] resize-none rounded-3xl border border-gray-300 px-6 py-4 text-lg
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  placeholder="메시지 입력"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={onKeyDown}
+                />
+                <button
+                  className="h-[56px] min-w-[100px] rounded-3xl bg-gray-200 hover:bg-gray-300 active:bg-gray-400
+                             text-gray-900 text-xl font-medium shadow-sm transition-colors
+                             disabled:bg-gray-100 disabled:text-gray-400"
+                  onClick={send}
+                  disabled={!text.trim() || busy}
+                >
+                  {busy ? (
+                    <div
+                      className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full mx-auto"
+                      role="status"
+                      aria-label="loading"
+                    ></div>
+                  ) : (
+                    "전송"
+                  )}
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
 
+const SIDEBAR_COLOR = "#404040";
+const GRAY_FILL = "#d1d5db"; // Tailwind gray-300
+
+/** ======================= 아바타 아이템 ======================= */
+function AvatarItem({ selected = false, onClick }) {
+  const SLOT_W = 300;
+  const D = 80;
+  const P = 18;
+  const R = D / 2 + P;
+  const H = D + 2 * P;
+  const W_DEF = 200;
+  const SLOT_H = H;
+  const CY = SLOT_H / 2;
+  const CX = 152;
+
+  const CAPSULE_X = (CX - D / 2) - P;
+  const CAPSULE_Y = CY - H / 2;
+  const capsuleRight = CAPSULE_X + W_DEF;
+  const W = capsuleRight > SLOT_W ? W_DEF - (capsuleRight - SLOT_W) : W_DEF;
+
+  const cCenterX = CX - CAPSULE_X;
+  const cCenterY = CY - CAPSULE_Y;
+  const RING_T = 8;
+
+  return (
+    <div className="relative w-[300px]" style={{ height: `${SLOT_H}px`, cursor: "pointer" }} onClick={onClick}>
+      {selected ? (
+        <div
+          className="absolute"
+          style={{ left: CAPSULE_X, top: CAPSULE_Y, width: W, height: H, zIndex: 0 }}
+        >
+          <CapsuleWithNotch
+            w={W}
+            h={H}
+            notchCx={cCenterX}
+            notchCy={cCenterY}
+            notchR={R}
+            ringWidth={RING_T}
+          />
+        </div>
+      ) : (
+        <div
+          className="absolute rounded-full bg-white border-[2px] border-gray-300"
+          style={{
+            left: CX - D / 2,
+            top: CY - D / 2,
+            width: D,
+            height: D,
+            zIndex: 1,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** ======================= 캡슐 SVG ======================= */
+function CapsuleWithNotch({ w, h, notchCx, notchCy, notchR, ringWidth }) {
+  const r = 70;
+  const EXT = 10;
+  const path = `M${w + EXT},0 H${r} a${r},${r} 0 0 0 -${r},${r} V${h - r} a${r},${r} 0 0 0 ${r},${r} H${w + EXT} Z`;
+  const mid = `m-${Math.random().toString(36).slice(2)}`;
+  const avatarR = Math.max(0, notchR - ringWidth);
+
+  return (
+    <svg
+      width={w + EXT}
+      height={h}
+      viewBox={`0 0 ${w + EXT} ${h}`}
+      style={{ display: "block" }}
+    >
+      <defs>
+        <mask id={mid}>
+          {/* 🔹 mask의 깎는 원을 살짝 줄여서 경계 오차 제거 */}
+          <path d={path} fill="white" />
+          <circle cx={notchCx} cy={notchCy} r={notchR * 0.99} fill="black" />
+        </mask>
+      </defs>
+
+      {/* 캡슐 회색 바탕 */}
+      <path d={path} fill={GRAY_FILL} mask={`url(#${mid})`} />
+
+      {/* 🔸 경계 덮기용 회색 원 (mask 아래쪽 남은 부분 완전 차단) */}
+      <circle
+        cx={notchCx}
+        cy={notchCy}
+        r={notchR * 1.005}  // ← 살짝 키워서 회색이 더 겹치도록
+        fill={GRAY_FILL}
+      />
+
+      {/* 링(연한 회색 테두리) */}
+      <circle
+        cx={notchCx}
+        cy={notchCy}
+        r={notchR - ringWidth / 2}
+        stroke={GRAY_FILL}
+        strokeWidth={ringWidth}
+        fill="none"
+      />
+
+      {/* 흰색 프로필 원 */}
+      <circle cx={notchCx} cy={notchCy} r={avatarR} fill="white" />
+      <circle
+        cx={notchCx}
+        cy={notchCy}
+        r={avatarR}
+        fill="none"
+        stroke="#e5e7eb"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+
+
+
+/** ======================= 채팅 말풍선 ======================= */
 function Bubble({ role, content }) {
   const mine = role === "user";
+  const bgColor = mine ? "bg-gray-200" : "bg-gray-100";
+  const textColor = "text-gray-900";
+  const tailColorClass = mine ? "border-l-gray-200" : "border-r-gray-100";
+
   return (
     <div className={`flex w-full ${mine ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2 shadow ${
-          mine ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
-        }`}
+        className={`relative max-w-[70%] whitespace-pre-wrap break-words rounded-[18px] px-4 py-2 shadow-sm ${textColor} ${bgColor}`}
       >
         {content}
+        <div
+          className={`absolute w-0 h-0 border-t-[6px] border-b-[6px] ${
+            mine
+              ? `right-[-8px] border-l-[8px] ${tailColorClass}`
+              : `left-[-8px] border-r-[8px] ${tailColorClass}`
+          } border-t-transparent border-b-transparent`}
+          style={{ top: "16px" }}
+        />
       </div>
     </div>
   );
