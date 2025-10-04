@@ -1,4 +1,11 @@
 package com.project.gmaking.conversation.dao;
 
-public class ConversationDAO {
+import com.project.gmaking.conversation.vo.ConversationVO;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+@Mapper
+public interface ConversationDAO {
+    int insert(ConversationVO c);
+    ConversationVO findById(@Param("id") int conversationId);
 }
