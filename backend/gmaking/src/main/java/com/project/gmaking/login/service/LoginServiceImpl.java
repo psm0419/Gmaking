@@ -2,6 +2,7 @@ package com.project.gmaking.login.service;
 
 import com.project.gmaking.email.dao.EmailVerificationDAO;
 import com.project.gmaking.email.service.EmailVerificationService;
+import com.project.gmaking.email.vo.EmailVerificationVO;
 import com.project.gmaking.login.dao.LoginDAO;
 import com.project.gmaking.login.service.LoginService;
 import com.project.gmaking.login.vo.LoginRequestVO;
@@ -129,6 +130,89 @@ public class LoginServiceImpl implements LoginService {
     public void completeEmailVerification(String userId) {
         // TB_USER 테이블의 is_email_verified 컬럼을 'Y'로 업데이트
         verificationDAO.updateIsEmailVerifiedInUser(userId, "Y");
+    }
+
+    /**
+     * 회원 탈퇴 처리 구현 (비밀번호 검증 후 사용자/인증 기록 삭제)
+     */
+    @Transactional
+    @Override
+    public void withdrawUser(String userId, String rawPassword) {
+
+        // 사용자 정보 조회
+        LoginVO user = loginDAO.selectUserById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        // 비밀번호 확인: 사용자가 입력한 비밀번호(rawPassword)와 암호화된 비밀번호(user.getUserPassword()) 비교
+        if (!passwordEncoder.matches(rawPassword, user.getUserPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 이메일 인증 기록 삭제
+        verificationDAO.deleteVerificationInfoByUserId(userId);
+
+        // 사용자 계정 삭제
+        int userDeleteCount = loginDAO.deleteUser(userId);
+
+        if (userDeleteCount == 0) {
+            // 이메일 인증 기록 삭제는 성공했으나 사용자 계정 삭제 실패 시
+            throw new RuntimeException("회원 탈퇴 처리 중 오류가 발생했습니다.");
+        }
+
+    }
+
+    /**
+     * 아이디 찾기: 이름/이메일로 ID 조회 및 인증 코드 발송
+     */
+    @Override
+    public String findIdAndSendVerification(String userName, String userEmail) throws Exception {
+        // 이름과 이메일로 사용자 ID 조회
+        String userId = loginDAO.findUserIdByNameAndEmail(userName, userEmail);
+
+        if (userId == null) {
+            throw new IllegalArgumentException("일치하는 사용자 정보가 없습니다.");
+        }
+
+        // 이메일 인증 코드를 발송하고 DB에 저장
+        verificationService.sendCode(userId, userEmail);
+
+        // 인증 코드가 발송된 userId를 반환
+        return userId;
+    }
+
+    /**
+     * 아이디 찾기: 인증 코드 검증 후 아이디 반환 (마스킹 처리)
+     */
+    @Override
+    public String verifyCodeAndGetUserId(String userId) {
+
+        LoginVO user = loginDAO.selectUserById(userId);
+
+        if (user == null) {
+            throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+        }
+
+        EmailVerificationVO storedInfo = verificationDAO.getVerificationInfo(userId, user.getUserEmail());
+
+        if (storedInfo == null || !"Y".equals(storedInfo.getIsVerified())) {
+            throw new IllegalArgumentException("인증 코드를 확인해주세요. (인증이 완료되지 않았습니다.)");
+        }
+
+        // 인증 완료 후 인증 기록 삭제
+        verificationDAO.deleteVerificationInfoByUserId(userId);
+
+        // 아이디 마스킹 처리
+        String maskedUserId;
+        if (userId.length() > 3) {
+            maskedUserId = userId.substring(0, 3) + "***" + userId.substring(6); // 예: user***id
+        } else {
+            maskedUserId = userId.substring(0, 1) + "***";
+        }
+
+        return maskedUserId;
+
     }
 
 }

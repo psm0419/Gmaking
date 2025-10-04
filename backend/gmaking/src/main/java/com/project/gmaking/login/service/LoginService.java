@@ -32,4 +32,30 @@ public interface LoginService {
      */
     void completeEmailVerification(String userId);
 
+    /**
+     * 회원 탈퇴 처리: 비밀번호를 검증하고 사용자 및 관련 정보를 삭제
+     * @param userId 탈퇴할 사용자 ID
+     * @param rawPassword 사용자가 입력한 비밀번호
+     * @throws IllegalArgumentException 비밀번호 불일치 또는 사용자 없음
+     */
+    void withdrawUser(String userId, String rawPassword);
+
+    /**
+     * 이름과 이메일로 아이디를 찾고, 인증 코드를 발송
+     * @param userName 사용자 이름
+     * @param userEmail 사용자 이메일
+     * @return 인증 코드 발송을 위해 임시로 사용할 사용자 ID
+     * @throws IllegalArgumentException 사용자 정보가 없을 경우
+     * @throws Exception 이메일 발송 오류
+     */
+    String findIdAndSendVerification(String userName, String userEmail) throws Exception;
+
+    /**
+     * 아이디 찾기 인증 코드를 검증하고, 마스킹된 아이디를 반환
+     * @param userId 인증 코드가 발송된 임시 ID
+     * @return 마스킹된 아이디 (예: 'us***id')
+     * @throws IllegalArgumentException 인증 실패 시
+     */
+    String verifyCodeAndGetUserId(String userId);
+
 }
