@@ -1,5 +1,6 @@
 package com.project.gmaking.config;
 
+
 import com.project.gmaking.security.JwtAuthenticationFilter;
 import com.project.gmaking.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -101,4 +102,4 @@ public class SecurityConfig {
         return http.build();
     }
 
-}
+
