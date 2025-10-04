@@ -1,6 +1,6 @@
 import React from 'react';
 import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
     const { user, logout } = useAuth();
