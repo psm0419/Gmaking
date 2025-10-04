@@ -60,4 +60,10 @@
         WHERE USER_ID = #{userId}
     </update>
 
+    <delete id="deleteVerificationInfoByUserId">
+        DELETE
+        FROM TB_USER_EMAIL_VERIFY
+        WHERE USER_ID = #{userId}
+    </delete>
+
 </mapper>

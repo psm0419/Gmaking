@@ -26,4 +26,19 @@ public interface LoginDAO {
      * 중복 확인: ID, 닉네임, 이메일 중 하나라도 중복되는지 확인
      */
     int checkDuplicate(@Param("type") String type, @Param("value") String value);
+
+    /**
+     * 사용자 계정 삭제 (회원 탈퇴)
+     * @param userId 삭제할 사용자 ID
+     * @return 성공적으로 삭제된 레코드 수
+     */
+    int deleteUser(String userId);
+
+    /**
+     * 이름과 이메일로 사용자 ID를 조회 (아이디 찾기)
+     * @param userName 사용자 이름
+     * @param userEmail 사용자 이메일
+     * @return 일치하는 사용자 ID (없으면 null)
+     */
+    String findUserIdByNameAndEmail(@Param("userName") String userName, @Param("userEmail") String userEmail);
 }
