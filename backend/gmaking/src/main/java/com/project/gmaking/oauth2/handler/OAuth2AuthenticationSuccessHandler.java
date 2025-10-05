@@ -1,5 +1,7 @@
 package com.project.gmaking.oauth2.handler;
 
+import com.project.gmaking.login.dao.LoginDAO;
+import com.project.gmaking.login.vo.LoginVO;
 import com.project.gmaking.oauth2.vo.OAuth2Attributes;
 import com.project.gmaking.security.JwtTokenProvider;
 import jakarta.servlet.ServletException;
@@ -7,7 +9,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -21,15 +26,51 @@ import java.nio.charset.StandardCharsets;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final LoginDAO loginDAO;
     private final String FRONTEND_REDIRECT_URI = "http://localhost:3000/oauth/callback";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
-        // Spring Security Context에서 OAuth2Attributes(Custom UserDetails) 객체 획득
-        OAuth2Attributes oauth2Attributes = (OAuth2Attributes) authentication.getPrincipal();
+        // Principal 객체 획득 및 타입 검사
+        OAuth2User principal = (OAuth2User) authentication.getPrincipal();
+        OAuth2Attributes oauth2Attributes = null;
 
-        // JWT 토큰 생성에 필요한 사용자 정보 추출
+        if (principal instanceof OAuth2Attributes) {
+            oauth2Attributes = (OAuth2Attributes) principal;
+            log.info(">>> [OAuth2 Success] Principal is OAuth2Attributes.");
+
+        } else if (principal instanceof OidcUser) {
+            // Google DefaultOidcUser로 래핑되어 넘어온 경우
+            OidcUser oidcUser = (OidcUser) principal;
+
+            // CustomOAuth2UserService에서 저장한 소셜 ID 패턴과 동일하게 ID 재구성
+            // Google의 고유 ID(sub)를 Attributes에서 추출
+            String googleUniqueId = oidcUser.getAttribute("sub");
+            String registrationId = "google"; // Google 소셜 타입
+            String socialId = registrationId + "_" + googleUniqueId;
+
+            log.info(">>> [OAuth2 Success] Principal is OidcUser. SocialId: {}", socialId);
+
+            // DB에서 Social ID를 기준으로 LoginVO 조회
+            LoginVO loginVO = loginDAO.selectUserBySocialId(socialId);
+
+            if (loginVO == null) {
+                log.error(">>> [OAuth2 ERROR] Cannot find LoginVO for socialId: {}", socialId);
+                sendFailureRedirect(request, response, "인증 후 DB에서 사용자 정보를 찾을 수 없습니다.");
+                return;
+            }
+
+            // JWT 발급에 필요한 OAuth2Attributes 객체 재구성
+            oauth2Attributes = OAuth2Attributes.of(loginVO, principal.getAttributes());
+
+        } else {
+            // Case 3: 예상치 못한 타입
+            log.error("Principal type is unexpected. Actual Type: {}", principal.getClass().getName());
+            sendFailureRedirect(request, response, "인증 객체 타입 오류. 관리자에게 문의하세요.");
+            return;
+        }
+
         String userId = oauth2Attributes.getLoginVO().getUserId();
         String role = oauth2Attributes.getLoginVO().getRole();
 
@@ -37,13 +78,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String jwtToken = jwtTokenProvider.createToken(userId, role);
         log.info(">>> [OAuth2 Success] JWT Token issued for user: {}", userId);
 
-        // JWT와 사용자 정보를 URL 쿼리 파라미터에 담아 프론트엔드로 리다이렉션
-        // 프론트엔드에서 JWT를 받아서 로컬 스토리지에 저장하고 메인 페이지로 이동시키는 역할을 합니다.
+        // 리다이렉션 URL 생성 및 실행
         String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes);
-
-        // 리다이렉트
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
 
+    // 실패 리다이렉션 로직
+    private void sendFailureRedirect(HttpServletRequest request, HttpServletResponse response, String errorMessage) throws IOException {
+        String encodedErrorMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
+        String failureUrl = FRONTEND_REDIRECT_URI + "/failure?error=" + encodedErrorMessage;
+        getRedirectStrategy().sendRedirect(request, response, failureUrl);
     }
 
     /**

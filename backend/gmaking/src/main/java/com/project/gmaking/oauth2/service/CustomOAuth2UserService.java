@@ -7,9 +7,11 @@ import com.project.gmaking.oauth2.userinfo.OAuth2UserInfoFactory;
 import com.project.gmaking.oauth2.vo.OAuth2Attributes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +23,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final LoginDAO loginDAO; // 기존 LoginDAO 사용
+    private final LoginDAO loginDAO;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 소셜 로그인 후 사용자 정보를 가져와 처리
@@ -29,41 +32,47 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // DefaultOAuth2UserService를 사용하여 사용자 정보 로드
-        OAuth2User oauth2User = super.loadUser(userRequest);
 
-        // 소셜 타입 (google, naver, kakao) 추출
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        try {
+            OAuth2User oauth2User = super.loadUser(userRequest);
+            String registrationId = userRequest.getClientRegistration().getRegistrationId();
+            OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(registrationId, oauth2User.getAttributes());
 
-        // 사용자 정보 파싱을 위한 Factory 사용
-        OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(registrationId, oauth2User.getAttributes());
+            // socialId를 먼저 계산
+            String socialId = registrationId + "_" + userInfo.getId();
 
-        // OAuth2UserInfo를 기반으로 DB 처리
-        LoginVO user = saveOrUpdate(userInfo, registrationId);
+            // OAuth2UserInfo를 기반으로 DB 처리
+            LoginVO user = saveOrUpdate(userInfo, socialId);
 
-        // Spring Security에서 사용할 OAuth2User 객체 생성 (JWT 발급에 필요)
-        return OAuth2Attributes.of(user, userInfo.getAttributes());
+            if (user == null) {
+                log.error(">>> [OAuth2 FATAL] saveOrUpdate completed, but returned null unexpectedly for {}", socialId);
+                // null 반환 시, 이 예외를 던져 FailureHandler로 넘어가게 합니다.
+                throw new OAuth2AuthenticationException(new OAuth2Error("registration_error"), "사용자 객체를 찾을 수 없습니다.");
+            }
+
+            // Spring Security에서 사용할 OAuth2User 객체 생성
+            return OAuth2Attributes.of(user, userInfo.getAttributes());
+
+        } catch (Exception ex) {
+            // DB 예외 발생 시 로그를 남기고, FailureHandler로 넘깁니다.
+            log.error(">>> [OAuth2 ERROR] Exception during loadUser/registration: {}", ex.getMessage(), ex);
+            throw new OAuth2AuthenticationException(new OAuth2Error("registration_error", "DB 처리 중 예외 발생: " + ex.getMessage(), null), ex);
+        }
     }
 
     /**
      * DB에 사용자 정보가 있으면 업데이트, 없으면 신규 등록
      */
-    private LoginVO saveOrUpdate(OAuth2UserInfo userInfo, String registrationId) {
+    private LoginVO saveOrUpdate(OAuth2UserInfo userInfo, String socialId) { // 🚨 socialId를 인자로 받도록 수정
 
-        // 소셜 타입과 이메일을 조합하여 고유한 ID 생성
-        String socialId = registrationId + "_" + userInfo.getEmail();
-
-        // DB에서 소셜 ID(이메일)로 기존 사용자 조회
-        // DB에 소셜 ID(USER_ID)를 기준으로 조회하는 메소드가 필요합니다.
+        // DB에서 소셜 ID(USER_ID)로 기존 사용자 조회
         LoginVO user = loginDAO.selectUserBySocialId(socialId);
 
         if (user == null) {
-            // 2. 신규 사용자: 회원가입 처리
             log.info(">>> [OAuth2] New User Registration: {}", socialId);
             user = registerNewUser(userInfo, socialId);
         } else {
-            // 3. 기존 사용자: 정보 업데이트 (닉네임/이미지 등)
-            log.info(">>> [OAuth2] Existing User Update: {}", socialId);
+            log.info(">>> [OAuth2] Existing User Login: {}", socialId);
         }
 
         return user;
@@ -73,24 +82,38 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
      * 신규 소셜 사용자 등록
      */
     private LoginVO registerNewUser(OAuth2UserInfo userInfo, String socialId) {
-        // 기존 LoginDAO의 insertUser 메서드는 RegisterRequestVO를 사용하므로,
-        // 소셜 로그인용 신규 DAO 메서드를 사용하는 것이 더 깔끔합니다.
 
-        // 임시 닉네임 설정 (추후 유저가 변경하도록 유도)
+        // 임시 닉네임 설정 (USER_NICKNAME NOT NULL, UNIQUE 해결)
         String tempNickname = userInfo.getNickname();
         if (tempNickname == null || tempNickname.isEmpty()) {
             tempNickname = "소셜유저_" + UUID.randomUUID().toString().substring(0, 6);
         }
 
+        // 이메일 값이 null인 경우 임시 이메일 생성 (USER_EMAIL UNIQUE 충족 시도)
+        String userEmail = userInfo.getEmail();
+
+        if (userEmail == null || userEmail.isEmpty()) {
+            userEmail = socialId + "@social.com";
+        }
+
         LoginVO newUser = new LoginVO();
+
         newUser.setUserId(socialId);
-        newUser.setUserEmail(userInfo.getEmail());
         newUser.setUserName(userInfo.getName());
+        newUser.setUserEmail(userEmail);
+
+        // USER_PASSWORD NOT NULL 제약조건을 맞추기 위해 더미 비밀번호를 암호화하여 저장
+        String dummyPassword = java.util.UUID.randomUUID().toString();
+        newUser.setUserPassword(passwordEncoder.encode(dummyPassword));
+
         newUser.setUserNickname(tempNickname);
         newUser.setRole("USER");
-        newUser.setUserPassword("SOCIAL_USER");
+        newUser.setIsEmailVerified("Y");
 
-        // DB에 삽입
+        // DB 삽입 직전에 LoginVO 값 확인
+        log.debug(">>> [OAuth2-Insert] Prepared newUser values: {}", newUser.toString());
+
+        // DB 삽입
         loginDAO.insertSocialUser(newUser);
 
         return newUser;
