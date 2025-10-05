@@ -2,12 +2,10 @@ package com.project.gmaking.oauth2.userinfo;
 
 import java.util.Map;
 
-public class GoogleOAuth2UserInfo implements OAuth2UserInfo {
-
-    private final Map<String, Object> attributes;
+public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
 
     public GoogleOAuth2UserInfo(Map<String, Object> attributes) {
-        this.attributes = attributes;
+        super(attributes);
     }
 
     @Override
@@ -16,17 +14,22 @@ public class GoogleOAuth2UserInfo implements OAuth2UserInfo {
     }
 
     @Override
-    public String getEmail() {
-        return (String) attributes.get("email");
-    }
-
-    @Override
     public String getName() {
         return (String) attributes.get("name");
     }
 
     @Override
+    public String getEmail() {
+        return (String) attributes.get("email");
+    }
+
+    @Override
     public String getNickname() {
-        return (String) attributes.get("given_name"); // 필요시 다른 값으로 대체 가능
+        return (String) attributes.get("name");
+    }
+
+    @Override
+    public String getImageUrl() {
+        return (String) attributes.get("picture");
     }
 }
