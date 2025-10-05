@@ -70,14 +70,14 @@ function App() {
                 />
 
                 {/* OAuth2 리다이렉션 처리 페이지 및 소셜 로그인 실패 리다이렉션 */}
-                <Route
-                    path="/oauth/callback"
-                    element={<OAuth2RedirectHandler />}
+                <Route 
+                    path="/oauth/callback" 
+                    element={<OAuth2RedirectHandler />} 
                 />
 
-                <Route
-                    path="/oauth/callback/failure"
-                    element={<OAuth2RedirectHandler />}
+                <Route 
+                    path="/oauth/callback/failure" 
+                    element={<OAuth2RedirectHandler />} 
                 />
 
 
@@ -92,7 +92,7 @@ function App() {
                     path="/find-password"
                     element={<FindPasswordPage />}
                 />
-
+                
                 {/* 캐릭터 생성 페이지 */}
                 <Route 
                     path="/create-character" 
