@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { loginApi, withdrawUserApi } from '../api/authApi';
 import { jwtDecode } from 'jwt-decode';
 
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     // OAuth2 로그인 처리 함수
-    const handleOAuth2Login = (receivedToken, userInfo) => {
+    const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
 
         const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
 
@@ -110,15 +110,16 @@ export const AuthProvider = ({ children }) => {
         setHasCharacter(isUserWithCharacter);
 
         localStorage.setItem('gmaking_token', receivedToken);
-    };
+        
+    }, [setToken, setUser, setIsLoggedIn, setHasCharacter]);
 
     // 캐릭터 생성 후 상태를 true로 변경하는 함수
-    const setCharacterStatus = (status) => {
+    const setCharacterStatus = useCallback((status) => {
         setHasCharacter(status);
         if (user) {
             setUser(prev => ({ ...prev, hasCharacter: status }));
         }
-    };
+    }, [user, setHasCharacter, setUser]); 
 
 
     const logout = () => {

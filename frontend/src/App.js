@@ -86,7 +86,7 @@ function App() {
                 />
                 
                 {/* 메인 페이지 (보호된 경로) */}
-                <Route 
+                <Route l
                     path="/" 
                     element={
                         <ProtectedRoute>
