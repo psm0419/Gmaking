@@ -116,4 +116,19 @@
         )
     </insert>
 
+    <select id="selectUserByEmail" resultMap="loginResultMap">
+        SELECT
+            USER_ID,
+            USER_NAME,
+            USER_EMAIL,
+            IS_EMAIL_VERIFIED,
+            USER_PASSWORD,
+            USER_NICKNAME,
+            IMAGE_ID,
+            ROLE,
+            CREATED_DATE
+        FROM TB_USER
+        WHERE USER_EMAIL = #{userEmail}
+    </select>
+
 </mapper>
