@@ -24,22 +24,6 @@ const ProtectedRoute = ({ children }) => {
 };
 
 
-// CharacterCreationRoute: 캐릭터가 이미 있다면 생성 페이지 접근을 막음
-const CharacterCreationRoute = ({ children }) => {
-    const { isLoggedIn, hasCharacter } = useAuth();
-    
-    if (!isLoggedIn) {
-        return <Navigate to="/login" replace />;
-    }
-    
-    // 이미 캐릭터가 있다면 메인 페이지로 이동 (생성 페이지를 볼 필요 없음)
-    if (hasCharacter) {
-        return <Navigate to="/" replace />;
-    }
-
-    return children;
-};
-
 
 function App() {
     const { isLoading } = useAuth();
@@ -94,15 +78,15 @@ function App() {
                 {/* 캐릭터 생성 페이지 */}
                 <Route 
                     path="/create-character" 
-                    element={
-                        <CharacterCreationRoute>
+                    element={ 
+                        <ProtectedRoute>
                             <CharacterCreationPage />
-                        </CharacterCreationRoute>
+                        </ProtectedRoute>
                     } 
                 />
                 
                 {/* 메인 페이지 (보호된 경로) */}
-                <Route 
+                <Route l
                     path="/" 
                     element={
                         <ProtectedRoute>

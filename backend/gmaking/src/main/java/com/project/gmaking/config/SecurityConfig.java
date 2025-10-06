@@ -37,14 +37,6 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     /**
-     * 비밀번호 암호화 Bean 등록 (BCrypt 사용)
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    /**
      * Spring Security에서 사용할 CORS 설정 Bean
      * http://localhost:3000 에서의 요청을 허용
      */

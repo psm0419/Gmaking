@@ -66,8 +66,6 @@ const LoginPage = ({ onRegisterClick }) => {
                     <LogIn className="w-8 h-8 mr-3 text-yellow-400" />
                     로그인
                 </h1>
-                <p className="text-gray-400 text-center">JWT 인증을 통한 게임 플랫폼 접속</p>
-
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -134,9 +132,6 @@ const LoginPage = ({ onRegisterClick }) => {
                     </Link>
                 </div>
 
-                <div className="text-center text-sm text-gray-400 pt-4">
-                    <p>테스트 계정: ID: `testuser`, PW: `11111111!`</p>
-                </div>
             </div>
         </div>
     );

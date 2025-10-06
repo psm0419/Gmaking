@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; 
 import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -33,10 +34,12 @@ const Header = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                 
                 {/* 1-1. 로고/사이트 이름 */}
-                <h1 className="text-3xl font-extrabold text-yellow-400 flex items-center">
-                    <Zap className="w-8 h-8 mr-2" />
-                    겜만중
-                </h1>
+                <Link to="/" className="flex items-center space-x-2 group">
+                        <Zap className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
+                        <h1 className="text-3xl font-extrabold text-white tracking-wider group-hover:text-yellow-400 transition duration-200">
+                            겜만중
+                        </h1>
+                </Link>
                 
                 {/* 1-2. 카테고리 메뉴 */}
                 <nav className="hidden md:flex space-x-6">
