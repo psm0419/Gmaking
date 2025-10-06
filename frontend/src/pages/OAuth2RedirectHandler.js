@@ -25,17 +25,18 @@ const OAuth2RedirectHandler = () => {
 
         if (token && userId) {
             // 사용자 정보를 객체로 구성
-            const userInfo = { userId, userNickname, role, hasCharacter };
+            const userInfo = { 
+                userId, 
+                userName: userNickname,
+                role, 
+                hasCharacter 
+            };
 
             // AuthContext에 토큰 및 사용자 정보 저장
             handleOAuth2Login(token, userInfo);
 
-            // 캐릭터 생성 여부에 따라 페이지 이동
-            if (hasCharacter === 'true') {
-                navigate('/', { replace: true }); // 캐릭터가 있으면 메인 페이지로
-            } else {
-                navigate('/create-character', { replace: true }); // 캐릭터가 없으면 생성 페이지로
-            }
+            navigate('/', { replace: true }); 
+            
             return;
         }
 
@@ -50,6 +51,9 @@ const OAuth2RedirectHandler = () => {
 
         // 잘못된 접근
         navigate('/login', { replace: true });
+
+        console.log('Query Params:', queryParams.toString());
+        console.log('Token:', token, 'UserId:', userId, 'Nickname:', userNickname);
 
     }, [location, navigate, handleOAuth2Login]);
 
