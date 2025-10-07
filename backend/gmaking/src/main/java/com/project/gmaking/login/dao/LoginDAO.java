@@ -20,7 +20,7 @@ public interface LoginDAO {
      * @param registerRequestVO 회원가입 요청 정보
      * @return 성공적으로 삽입된 레코드 수 (1 또는 0)
      */
-    int insertUser(RegisterRequestVO registerRequestVO);
+    int register(RegisterRequestVO registerRequestVO);
 
     /**
      * 중복 확인: ID, 닉네임, 이메일 중 하나라도 중복되는지 확인

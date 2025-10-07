@@ -30,7 +30,7 @@
         WHERE USER_ID = #{userId}
     </select>
 
-    <insert id="insertUser" parameterType="com.project.gmaking.login.vo.RegisterRequestVO">
+    <insert id="register" parameterType="com.project.gmaking.login.vo.RegisterRequestVO">
         INSERT INTO TB_USER (
             USER_ID,
             USER_NAME,

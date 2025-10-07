@@ -75,8 +75,10 @@ export const AuthProvider = ({ children }) => {
             return false;
         }
 
+        const userId = user.userId; // 로그인 상태에서 user 정보 보관 중이라면
+
         try {
-            const response = await withdrawUserApi(userPassword, token);
+            const response = await withdrawUserApi(userId, userPassword, token);
 
             if (response.data.success) {
                 alert('성공적으로 계정 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
@@ -93,6 +95,7 @@ export const AuthProvider = ({ children }) => {
             return false;
         }
     };
+
 
     // OAuth2 로그인 처리 함수
     const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
