@@ -4,9 +4,11 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
 import RegisterPage from './pages/RegisterPage';
-import FindIdPage from './pages/FindIdPage'; 
+import FindIdPage from './pages/FindIdPage';
 import FindPasswordPage from './pages/FindPasswordPage';
-import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler'; 
+import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
+import ChatPage from './pages/ChatPage'
+import MyPage from './pages/MyPage'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -94,6 +96,16 @@ function App() {
                         </ProtectedRoute>
                     } 
                 />
+
+                {/* chat 페이지 test */}
+                <Route
+                    path="/chat_test"
+                    element={<ChatPage />} />
+                
+                {/* 상점 페이지 test */}
+                <Route
+                    path="/my_page"
+                    element={ <MyPage/>} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
