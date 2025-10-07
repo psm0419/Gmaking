@@ -73,3 +73,7 @@ yarn-error.log
 .DS_Store
 Thumbs.db
 HELP.md
+
+# 모델 학습에 필요한 이미지 파일들
+**/dataset/
+**/datasetOriginal/
