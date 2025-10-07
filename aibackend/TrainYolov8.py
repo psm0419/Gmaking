@@ -59,7 +59,7 @@ with open(os.path.join(log_dir, "metrics.json"), "w", encoding="utf-8") as f:
 label_dirs = sorted(os.listdir(os.path.join(DATA_PATH, "train")))
 label_map = {i: name for i, name in enumerate(label_dirs)}
 
-with open(os.path.join(PROJECT_PATH, "classify", "animal_cls_stage1", "label_map.json"), "w", encoding="utf-8") as f:
+with open(os.path.join(PROJECT_PATH, "animal_cls_stage1", "label_map.json"), "w", encoding="utf-8") as f:
     json.dump(label_map, f, indent=4, ensure_ascii=False)
 
 print("라벨맵 저장 완료:", label_map)
