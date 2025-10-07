@@ -64,4 +64,11 @@ public interface LoginDAO {
      */
     int insertSocialUser(LoginVO user);
 
+    /**
+     * 사용자 이메일을 기반으로 TB_USER에서 사용자 정보를 조회
+     * @param userEmail 조회할 사용자 이메일
+     * @return LoginVO 객체 (사용자 전체 정보)
+     */
+    LoginVO selectUserByEmail(@Param("userEmail") String userEmail);
+
 }

@@ -13,7 +13,6 @@ public class LoginVO {
     private String isEmailVerified;         // IS_EMAIL_VERIFIED
     private String userPassword;            // USER_PASSWORD (암호화된 비밀번호)
     private String userNickname;            // USER_NICKNAME
-    private String characterId;
     private String role;                    // ROLE
     private LocalDateTime createdDate;      // CREATED_DATE
 
