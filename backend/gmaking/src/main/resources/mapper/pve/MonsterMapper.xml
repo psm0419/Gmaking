@@ -5,7 +5,7 @@
 
 <mapper namespace="com.project.gmaking.pve.dao.MonsterDAO">
 
-    <resultMap id="monsterResultMap" type="com.project.gmaking.character.vo.MonsterVO">
+    <resultMap id="monsterResultMap" type="com.project.gmaking.pve.vo.MonsterVO">
         <id column="MONSTER_ID" property="monsterId"/>
         <result column="IMAGE_ID" property="imageId"/>
         <result column="MONSTER_NAME" property="monsterName"/>

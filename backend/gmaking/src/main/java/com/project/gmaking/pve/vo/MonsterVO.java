@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor // 모든 필드를 인자로 받는 생성자 자동 생성
 public class MonsterVO {
 
-    private String monsterId; // 몬스터 ID (VARCHAR(50))
+    private Integer monsterId; // 몬스터 ID (Integer)
     private Integer imageId; // 이미지 ID (Integer)
     private String monsterName; // 몬스터 이름 (VARCHAR(100))
     private String monsterType; // 몬스터 유형 (VARCHAR(20))

@@ -9,6 +9,8 @@ import FindPasswordPage from './pages/FindPasswordPage';
 import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
 import ChatPage from './pages/ChatPage'
 import MyPage from './pages/MyPage'
+import PveBattlePage from './pages/PveBattlePage'
+import MapSelection from './pages/MapSelection'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -107,6 +109,16 @@ function App() {
                     path="/my_page"
                     element={ <MyPage/>} />
 
+                {/* PVE 맵 선택 페이지 */}
+                <Route
+                    path="/pve/maps"
+                    element={<MapSelection />} /> 
+                
+                {/* PVE 전투 페이지 */}
+                <Route
+                    path="/pve/battle"
+                    element={<PveBattlePage />} />                
+            
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

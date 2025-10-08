@@ -1,5 +1,6 @@
 package com.project.gmaking.pve.dao;
 
+import com.project.gmaking.character.vo.CharacterVO;
 import com.project.gmaking.pve.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

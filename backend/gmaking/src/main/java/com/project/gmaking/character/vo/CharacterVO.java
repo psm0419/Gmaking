@@ -1,4 +1,4 @@
-package com.project.gmaking.pve.vo;
+package com.project.gmaking.character.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor // 모든 필드를 인자로 받는 생성자 자동 생성
 public class CharacterVO {
 
-    private String characterId; // 캐릭터 ID (CHARACTER_ID)
+    private Integer characterId; // 캐릭터 ID (CHARACTER_ID)
     private String userId; // 사용자 ID (USER_ID)
     private String imageId; // 캐릭터 이미지 ID (IMAGE_ID)
     private Integer characterPersonalityId; // 캐릭터 성격 ID (CHARACTER_PERSONALITY_ID)

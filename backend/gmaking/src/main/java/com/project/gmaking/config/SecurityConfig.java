@@ -91,6 +91,9 @@ public class SecurityConfig {
                         // 명시적 설정: /api/secured/** 경로는 JWT 인증된 사용자만 접근 허용
                         .requestMatchers("/api/secured/**").authenticated()
 
+                        //  PVE 관련: 맵 조회는 비로그인도 허용
+                        .requestMatchers("/api/pve/maps").permitAll()
+
                         // 나머지 모든 요청은 인증된 사용자에게만 허용
                         .anyRequest().authenticated()
                 )
