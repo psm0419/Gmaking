@@ -3,19 +3,18 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.project.gmaking.conversation.dao.ConversationDAO">
-    <insert id="insert" parameterType="com.project.gmaking.conversation.vo.ConversationVO"
-            useGeneratedKeys="true" keyProperty="conversationId">
-        INSERT INTO tb_conversation (user_id, character_id)
-        VALUES (#{userId}, #{characterId})
-    </insert>
-
-    <select id="findById" resultType="com.project.gmaking.conversation.vo.ConversationVO">
-        SELECT conversation_id AS conversationId,
-        user_id AS userId,
-        character_id AS characterId,
-        create_at AS createAt,
-        updated_at AS updatedAt
+    <select id="findOpen" resultMap="mqp">
+        SELECT conversation_id, user_id, character_id, created_date
         FROM tb_conversation
-        WHERE conversation_id = #{id}
+        WHERE user_id = #{userId}
+            AND character_id = #{characterId}
+        ORDER BY created_date DESC
+        LIMIT 1
     </select>
+
+    <insert id="create" useGeneratedKeys="true" keyProperty="conversationId">
+        INSERT INTO tb_conversation
+            (user_id, character_id, created_date, created_by, updated_date, updated_by)
+        VALUES (#{userId}, #{characterId}, NOW(), #{actor}, NOW(), #{actor});
+    </insert>
 </mapper>

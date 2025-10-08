@@ -3,22 +3,25 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.project.gmaking.dialogue.dao.DialogueDAO">
-    <insert id="insert" parameterType="com.project.gmaking.dialogue.vo.DialogueVO"
-            useGeneratedKeys="true" keyProperty="messageId">
-        INSERT INTO tb_dialogue (conversation_id, sender, content, chat_date)
-        VALUES (#{conversationId}, #{sender}, #{content}, CURDATE())
-    </insert>
-
-    <select id="findByConversation" resultType="com.project.gmaking.dialogue.vo.DialogueVO">
-        SELECT message_id AS messageId,
-        conversation_id AS conversationId,
-        sender,
-        content,
-        chat_date  AS chatDate,
-        create_at  AS createAt
+    <select id="findRecent" resultType="map">
+        SELECT message_id, sender, content, created_date
         FROM tb_dialogue
         WHERE conversation_id = #{conversationId}
-        ORDER BY message_id ASC
+        ORDER BY message_id DESC
         LIMIT #{limit}
     </select>
+
+    <insert id="insertUser">
+        INSERT INTO tb_dialogue
+        (conversation_id, sender, content, chat_date, created_date, created_by, updated_date, updated_by)
+        VALUES
+        (#{conversationId}, 'user', #{content}, CURDATE(), NOW(), #{actor}, NOW(), #{actor})
+    </insert>
+
+    <insert id="insertAssistant">
+        INSERT INTO tb_dialogue
+        (conversation_id, sender, content, chat_date, created_date, created_by, updated_date, updated_by)
+        VALUES
+        (#{conversationId}, 'character', #{content}, CURDATE(), NOW(), #{actor}, NOW(), #{actor})
+    </insert>
 </mapper>
