@@ -422,3 +422,28 @@ CREATE TABLE TB_USER_PRODUCT
     UPDATED_DATE    DATETIME COMMENT '수정 일자',
     UPDATED_BY      VARCHAR(50) COMMENT '수정자'
 ) COMMENT='유저 상품/재화 정보';
+
+-- =========================================================================================
+-- TB_Map (맵 정보 테이블)
+-- =========================================================================================
+
+CREATE TABLE TB_Map
+(
+    MAP_ID          INT NOT NULL PRIMARY KEY COMMENT '맵 ID',
+    MAP_NAME        VARCHAR(50) COMMENT '맵 이름',
+    CREATED_DATE    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+    CREATED_BY      VARCHAR(50) COMMENT '생성자',
+    UPDATED_DATE    DATETIME COMMENT '수정 일자',
+    UPDATED_BY      VARCHAR(50) COMMENT '수정자'
+) COMMENT='맵 정보';
+
+-- =========================================================================================
+-- TB_ENCOUNTER_RATE (보스몬스터 등장 확률 테이블)
+-- =========================================================================================
+
+CREATE TABLE TB_ENCOUNTER_RATE (
+    ENCOUNTER_TYPE VARCHAR(20) PRIMARY KEY,  -- 'NORMAL', 'BOSS'
+    ENCOUNTER_RATE DECIMAL(5,2) NOT NULL,    -- 예: 98.00, 2.00 (%)
+    DESCRIPTION VARCHAR(100),
+    UPDATED_DATE DATETIME DEFAULT CURRENT_TIMESTAMP
+)COMMENT='보스몬스터 등장 확률';
