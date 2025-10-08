@@ -64,10 +64,10 @@ CREATE TABLE TB_BATTLE_ACTION
 -- =========================================================================================
 CREATE TABLE TB_BATTLE_LOG
 (
-    BATTLE_ID    VARCHAR(50)    NOT NULL PRIMARY KEY COMMENT '배틀 ID',
-    CHARACTER_ID VARCHAR(50)    NOT NULL COMMENT '캐릭터 ID',
+    BATTLE_ID    INT    NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '배틀 ID',
+    CHARACTER_ID INT    NOT NULL COMMENT '캐릭터 ID',
     BATTLE_TYPE  VARCHAR(10)    NOT NULL COMMENT '전투 유형: PVE',
-    OPPONENT_ID  VARCHAR(50)    NOT NULL COMMENT '상대방 ID (PVP: 상대방 ID, PVE: 몬스터 ID)',
+    OPPONENT_ID  INT    NOT NULL COMMENT '상대방 ID (PVP: 상대방 ID, PVE: 몬스터 ID)',
     IS_WIN       CHAR(1)        NOT NULL DEFAULT 'N' COMMENT '승리 여부: Y: 승리, N: 패배',
     TURN_COUNT   BIGINT         NOT NULL DEFAULT 0 COMMENT '최종 턴 수',
     CREATED_DATE DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
@@ -81,7 +81,7 @@ CREATE TABLE TB_BATTLE_LOG
 -- =========================================================================================
 CREATE TABLE TB_CHARACTER
 (
-    CHARACTER_ID             VARCHAR(50) NOT NULL PRIMARY KEY COMMENT '캐릭터 ID',
+    CHARACTER_ID             INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '캐릭터 ID',
     USER_ID                  VARCHAR(50) NOT NULL COMMENT '사용자 ID',
     IMAGE_ID                 VARCHAR(50) NOT NULL COMMENT '캐릭터 이미지 ID',
     CHARACTER_PERSONALITY_ID INT NOT NULL COMMENT '캐릭터 성격 ID',
@@ -110,7 +110,7 @@ CREATE TABLE TB_CHARACTER_PERSONALITY
 -- =========================================================================================
 CREATE TABLE TB_CHARACTER_STAT
 (
-    CHARACTER_ID      VARCHAR(50) NOT NULL PRIMARY KEY COMMENT '캐릭터 ID',
+    CHARACTER_ID      INT NOT NULL PRIMARY KEY COMMENT '캐릭터 ID',
     CHARACTER_HP      INT NOT NULL COMMENT '캐릭터 체력',
     CHARACTER_ATTACK  INT NOT NULL COMMENT '캐릭터 공격력',
     CHARACTER_DEFENSE INT NOT NULL COMMENT '캐릭터 방어력',
@@ -127,7 +127,7 @@ CREATE TABLE TB_CHARACTER_STAT
 -- =========================================================================================
 CREATE TABLE TB_COMMAND
 (
-    COMMAND_ID          VARCHAR(50) NOT NULL PRIMARY KEY COMMENT '커맨드 ID',
+    COMMAND_ID          INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '커맨드 ID',
     COMMAND_TYPE        VARCHAR(20) NOT NULL COMMENT '커맨드 유형',
     COMMAND_DESCRIPTION VARCHAR(255) COMMENT '커맨드 설명',
     CREATED_DATE        DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
@@ -220,7 +220,7 @@ CREATE TABLE TB_DIALOGUE
 -- =========================================================================================
 CREATE TABLE TB_GROWTH_RULE
 (
-    RULE_ID               VARCHAR(50)    NOT NULL PRIMARY KEY COMMENT '성장 규칙 ID',
+    RULE_ID               INT    NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '성장 규칙 ID',
     MINIGAME_ID           VARCHAR(50) COMMENT '미니게임 ID',
     IMAGE_ID              VARCHAR(50) COMMENT '진화 이미지 ID',
     REQUIRED_CLEARS       INT NOT NULL DEFAULT 0 COMMENT '필요 클리어 횟수',
@@ -264,7 +264,7 @@ CREATE TABLE TB_LONG_MEMORY (
 -- =========================================================================================
 CREATE TABLE TB_MINI_GAME
 (
-    MINI_GAME_ID          VARCHAR(50)  NOT NULL PRIMARY KEY COMMENT '미니 게임 ID',
+    MINI_GAME_ID          INT  NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '미니 게임 ID',
     MINI_GAME_NAME        VARCHAR(100) NOT NULL COMMENT '미니 게임 이름',
     MINI_GAME_DESCRIPTION VARCHAR(255) COMMENT '미니 게임 설명',
     CREATED_DATE          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
@@ -278,7 +278,7 @@ CREATE TABLE TB_MINI_GAME
 -- =========================================================================================
 CREATE TABLE TB_MINI_GAME_RESULT
 (
-    MINI_GAME_RESULT_ID VARCHAR(50) NOT NULL PRIMARY KEY COMMENT '미니 게임 결과 ID',
+    MINI_GAME_RESULT_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '미니 게임 결과 ID',
     MINI_GAME_ID        VARCHAR(50) NOT NULL COMMENT '미니 게임 ID',
     CHARACTER_ID        VARCHAR(50) NOT NULL COMMENT '캐릭터 ID',
     BONUS_HP            INT         NOT NULL DEFAULT 0 COMMENT '추가 체력',
@@ -296,7 +296,7 @@ CREATE TABLE TB_MINI_GAME_RESULT
 -- =========================================================================================
 CREATE TABLE TB_MONSTER
 (
-    MONSTER_ID            VARCHAR(50)  NOT NULL PRIMARY KEY COMMENT '몬스터 ID',
+    MONSTER_ID            INT  NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '몬스터 ID',
     IMAGE_ID              INT NOT NULL COMMENT '이미지 ID',
     MONSTER_NAME          VARCHAR(100) NOT NULL COMMENT '몬스터 이름',
     MONSTER_TYPE          VARCHAR(20)  NOT NULL DEFAULT 'NORMAL' COMMENT '몬스터 유형: NOMAL, BOSS',
@@ -315,7 +315,7 @@ CREATE TABLE TB_MONSTER
 -- =========================================================================================
 CREATE TABLE TB_PAYMENT
 (
-    PAYMENT_ID     VARCHAR(100)   NOT NULL PRIMARY KEY COMMENT '결제 ID',
+    PAYMENT_ID     INT   NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '결제 ID',
     USER_ID        VARCHAR(50)    NOT NULL COMMENT '사용자 ID',
     PRODUCT_ID     VARCHAR(50)    NOT NULL COMMENT '상품 ID',
     AMOUNT         INT NOT NULL DEFAULT 0 COMMENT '결제 금액',
@@ -345,7 +345,7 @@ CREATE TABLE TB_PERSONA
 -- =========================================================================================
 CREATE TABLE TB_PRODUCT
 (
-    PRODUCT_ID    VARCHAR(10)    NOT NULL PRIMARY KEY COMMENT '상품 ID',
+    PRODUCT_ID    INT    NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '상품 ID',
     PRODUCT_NAME  VARCHAR(100)   NOT NULL COMMENT '상품명',
     PRODUCT_TYPE  VARCHAR(20)    NOT NULL COMMENT '상품 유형: 뽑기권, 광고제거',
     PRICE         INT NOT NULL DEFAULT 0 COMMENT '가격',
@@ -429,7 +429,7 @@ CREATE TABLE TB_USER_PRODUCT
 
 CREATE TABLE TB_Map
 (
-    MAP_ID          INT NOT NULL PRIMARY KEY COMMENT '맵 ID',
+    MAP_ID          INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '맵 ID',
     MAP_NAME        VARCHAR(50) COMMENT '맵 이름',
     CREATED_DATE    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
     CREATED_BY      VARCHAR(50) COMMENT '생성자',

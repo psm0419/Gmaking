@@ -1,5 +1,6 @@
 package com.project.gmaking.pve.vo;
 import lombok.Data;
+import java.time.LocalDateTime;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
@@ -9,4 +10,8 @@ import lombok.AllArgsConstructor;
 public class MapVO {
     private Integer mapId;
     private String name;
+    private LocalDateTime createdDate;
+    private String createdBy;
+    private LocalDateTime updatedDate;
+    private String updatedBy;
 }
