@@ -11,6 +11,7 @@ import ChatPage from './pages/ChatPage'
 import MyPage from './pages/MyPage'
 import PveBattlePage from './pages/PveBattlePage'
 import MapSelection from './pages/MapSelection'
+import WithdrawPage from './pages/WithdrawPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -77,6 +78,15 @@ function App() {
                 <Route
                     path="/find-password"
                     element={<FindPasswordPage />}
+                />
+
+                <Route
+                    path="/withdraw"
+                    element={
+                        <ProtectedRoute>
+                            <WithdrawPage />
+                        </ProtectedRoute>
+                    }
                 />
                 
                 {/* 캐릭터 생성 페이지 */}

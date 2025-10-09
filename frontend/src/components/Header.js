@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom'; 
 import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
-    const { user, logout, withdrawUser } = useAuth();
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
@@ -20,20 +21,13 @@ const Header = () => {
     ];
 
     // 회원 탈퇴 핸들러
-    const handleWithdraw = async () => {
-        // user가 없으면 탈퇴 시도 불가 (로그아웃 상태)
-        if (!user || !user.userId) {
+    const handleWithdraw = () => {
+        if (!user) {
             alert("로그인 상태가 아닙니다.");
-            return;
         }
 
-        const password = prompt("회원 탈퇴를 계속하려면 비밀번호를 입력해주세요.");
-        
-        if (password) {
-            // 현재 로그인된 사용자 ID와 비밀번호를 모두 전달
-            await withdrawUser(user.userId, password);
-        } else if (password !== null) {
-            alert("비밀번호를 입력해야 탈퇴할 수 있습니다.");
+        if (window.confirm("정말 계정 탈퇴를 진행하시겠습니까?")) {
+            navigate('/withdraw');
         }
     };
 
