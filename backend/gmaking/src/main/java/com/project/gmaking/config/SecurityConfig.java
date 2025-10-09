@@ -96,6 +96,9 @@ public class SecurityConfig {
                         // 명시적 설정: /api/secured/** 경로는 JWT 인증된 사용자만 접근 허용
                         .requestMatchers("/api/secured/**").authenticated()
 
+                        //  PVE 관련: 맵 조회는 비로그인도 허용
+                        .requestMatchers("/api/pve/maps").permitAll()
+
                         // 회원탈퇴
                         .requestMatchers("/api/user/withdraw").authenticated()
 
@@ -124,4 +127,8 @@ public class SecurityConfig {
         return http.build();
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/phj

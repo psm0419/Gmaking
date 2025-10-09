@@ -99,7 +99,11 @@ export const AuthProvider = ({ children }) => {
 
 
     // OAuth2 로그인 처리 함수
+<<<<<<< HEAD
     const handleOAuth2Login = useCallback((receivedToken, userInfo) => {
+=======
+    const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
+>>>>>>> origin/phj
 
         const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
 

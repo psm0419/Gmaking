@@ -15,4 +15,8 @@ public class OAuth2UserInfoFactory {
             throw new IllegalArgumentException("Unsupported registrationId: " + registrationId);
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/phj

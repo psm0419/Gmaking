@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.pve.dao.EncounterRateDAO">
+
+    <resultMap id="encounterRateMap" type="com.project.gmaking.pve.vo.EncounterRateVO">
+        <id column="ENCOUNTER_TYPE" property="encounterType"/>
+        <result column="ENCOUNTER_RATE" property="encounterRate"/>
+        <result column="DESCRIPTION" property="description"/>
+        <result column="UPDATED_DATE" property="updatedDate"/>
+    </resultMap>
+
+    <select id="getEncounterRates" resultMap="encounterRateMap">
+        SELECT *
+        FROM TB_ENCOUNTER_RATE
+    </select>
+
+</mapper>

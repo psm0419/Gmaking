@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.pve.dao.MonsterDAO">
+
+    <resultMap id="monsterResultMap" type="com.project.gmaking.pve.vo.MonsterVO">
+        <id column="MONSTER_ID" property="monsterId"/>
+        <result column="IMAGE_ID" property="imageId"/>
+        <result column="MONSTER_NAME" property="monsterName"/>
+        <result column="MONSTER_TYPE" property="monsterType"/>
+        <result column="MONSTER_HP" property="monsterHp"/>
+        <result column="MONSTER_ATTACK" property="monsterAttack"/>
+        <result column="MONSTER_DEFENSE" property="monsterDefense"/>
+        <result column="MONSTER_CRITICAL_RATE" property="monsterCriticalRate"/>
+        <result column="CREATED_DATE" property="createdDate"/>
+        <result column="CREATED_BY" property="createdBy"/>
+        <result column="UPDATED_DATE" property="updatedDate"/>
+        <result column="UPDATED_BY" property="updatedBy"/>
+    </resultMap>
+
+    <select id="getRandomMonsterByType" parameterType="string" resultMap="monsterResultMap">
+        SELECT *
+        FROM TB_MONSTER
+        WHERE MONSTER_TYPE = #{type}
+        ORDER BY RAND()
+        LIMIT 1
+    </select>
+
+</mapper>
