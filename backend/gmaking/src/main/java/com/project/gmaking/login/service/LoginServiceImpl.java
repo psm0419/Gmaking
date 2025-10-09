@@ -81,7 +81,7 @@ public class LoginServiceImpl implements LoginService {
         requestVO.setUserPassword(encodedPassword);
 
         // 사용자 정보 DB 저장
-        int insertedRow = loginDAO.insertUser(requestVO);
+        int insertedRow = loginDAO.register(requestVO);
 
         if (insertedRow != 1) {
             throw new RuntimeException("회원가입에 실패했습니다. DB 삽입 오류.");
