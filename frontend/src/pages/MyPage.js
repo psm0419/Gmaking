@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { getMyPageSummary } from "../api/myPageApi"; 
 
 /** 페이지 래퍼: 헤더 / 메인 / 푸터 */
 export default function MyPage() {
@@ -9,11 +10,66 @@ export default function MyPage() {
     alert("뽑으러가기!");
   };
 
+ // 추가: 서버 데이터 상태
+  const [profile, setProfile] = useState(null);
+  const [characters, setCharacters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const userId = localStorage.getItem("gmaking_userId") || "master";
+
+    useEffect(() => {
+    (async () => {
+      try {
+
+        const res = await getMyPageSummary(userId, 6);
+        const data = res.data;
+
+        setProfile(data?.profile ?? null);
+        const cards = (data?.characters ?? []).map((c) => ({
+          id: c.characterId,
+          name: c.name,
+          grade: c.grade,
+          image: c.imageUrl || "/assets/characters/placeholder.png",
+          hp: null, def: null, atk: null, critRate: null,
+        }));
+        setCharacters(cards);
+        setError(null);
+      } catch (e) {
+        console.error(e);
+        setError("마이페이지 데이터를 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-200/70 flex items-center justify-center">
+        로딩 중...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-200/70 flex items-center justify-center text-red-600">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-200/70 flex flex-col">
       <Header />
       <main className="flex-1">
-        <MyMain nickname="마스터 님" ticketCount={5} onPickClick={handlePick} />
+        <MyMain
+          nickname={profile?.nickname ?? "마스터 님"}
+          ticketCount={profile?.ticketCount ?? 0}
+          onPickClick={handlePick}
+          characters={characters} // ✅ 서버 데이터 전달
+        />
       </main>
       <Footer />
     </div>
@@ -21,23 +77,13 @@ export default function MyPage() {
 }
 
 /** 마이페이지 메인 */
-function MyMain({ nickname = "마스터 님", ticketCount = 5, onPickClick = () => {} }) {
-  // 더미 캐릭터(스탯 포함). 없을 때는 []로 바꾸면 빈 UI가 나옵니다.
-  const [characters] = useState([
-    {
-      id: 1,
-      name: "수리법사",
-      grade: "SSR",
-      hp: 1300,
-      def: 100,
-      atk: 250,
-      critRate: 25, // %
-      image: "/assets/characters/eagle-mage.png",
-    },
-  ]);
-
+function MyMain({
+  nickname = "마스터 님",
+  ticketCount = 5,
+  onPickClick = () => {},
+  characters = [], // ✅ 부모가 내려줌
+}) {
   const [selected, setSelected] = useState(null);
-
   const onOpenCharacter = (c) => setSelected(c);
 
   const onGrow = () => alert(`${selected?.name} 성장시키기`);
@@ -102,25 +148,25 @@ function MyMain({ nickname = "마스터 님", ticketCount = 5, onPickClick = () 
 /* ===== 캐릭터 상세 패널 ===== */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
   const { name, grade, hp, def, atk, critRate } = character ?? {};
+  const fmt = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
   return (
     <section className="bg-gray-300 rounded-md p-6 h-full flex flex-col justify-between">
       {/* 좌/우 스탯 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-900">
         <div className="text-2xl md:text-3xl font-extrabold space-y-2">
-          <div>등급: {grade}</div>
-          <div>체력: {hp}</div>
-          <div>방어력: {def}</div>
+          <div>등급: {fmt(grade)}</div>
+          <div>체력: {fmt(hp)}</div>
+          <div>방어력: {fmt(def)}</div>
         </div>
         <div className="text-2xl md:text-3xl font-extrabold space-y-2 sm:text-right">
-          <div>이름: {name}</div>
-          <div>공격력: {atk}</div>
-          <div>치명타 확률: {critRate}%</div>
+          <div>이름: {fmt(name)}</div>
+          <div>공격력: {fmt(atk)}</div>
+          <div>치명타 확률: {critRate == null ? "-" : `${critRate}%`}</div>
         </div>
       </div>
 
       {/* 액션 버튼 */}
       <div className="mt-6 overflow-x-auto">
-        {/* flex-nowrap 로 줄바꿈 방지, 필요하면 가로 스크롤 */}
         <div className="flex flex-nowrap items-center gap-4">
           <button
             onClick={onGrow}
@@ -133,7 +179,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
             onClick={onChat}
             className="shrink-0 whitespace-nowrap px-6 md:px-8 py-3 rounded-xl bg-white border shadow-sm
                       text-xl md:text-2xl font-semibold hover:bg-gray-50 active:bg-gray-100 transition"
-    >
+          >
             대화 하기
           </button>
           <button
@@ -234,25 +280,6 @@ function NotificationBell() {
   const popRef = useRef(null);
   const gearRef = useRef(null);
 
-  useEffect(() => {
-    const onDown = (e) => {
-      if (
-        !popRef.current?.contains(e.target) &&
-        !btnRef.current?.contains(e.target) &&
-        !gearRef.current?.contains(e.target)
-      ) {
-        setOpen(false);
-        setGearOpen(false);
-      }
-    };
-    const onKey = (e) => e.key === "Escape" && (setOpen(false), setGearOpen(false));
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, []);
 
   const newList = items.filter((i) => !i.read);
   const readList = items.filter((i) => i.read);

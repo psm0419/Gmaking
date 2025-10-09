@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.my_page.dao.MyPageDAO">
+<!--  ResultMaps  -->
+<!--  프로필 vo 매핑  -->
+    <resultMap id="MyPageProfileVOMap" type="com.project.gmaking.my_page.vo.MyPageProfileVO">
+        <result property="userId" column="user_id"/>
+        <result property="nickname" column="user_nickname"/>
+        <result property="email" column="user_email"/>
+        <result property="emailVerified" column="is_email_verified"/>
+        <result property="createdDate" column="created_date"/>
+        <result property="role" column="role"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="ticketCount" column="ticket_count"/>
+    </resultMap>
+<!--  캐릭터 카드 VO 매핑  -->
+    <resultMap id="CharacterCardVOMap" type="com.project.gmaking.my_page.vo.CharacterCardVO">
+        <result property="characterId" column="character_id"/>
+        <result property="name" column="character_name"/>
+        <result property="evolutionStep" column="evolution_step"/>
+        <result property="grade" column="grade"/>
+        <result property="imageUrl" column="image_url"/>
+    </resultMap>
+
+
+<!--  프로필 : tb_user + tb_image JOIN  -->
+    <select id="selectProfile" resultMap="MyPageProfileVOMap">
+        SELECT
+            u.user_id,
+            u.user_nickname,
+            u.user_email,
+            (u.is_email_verified = 'Y') AS is_email_verified,
+            u.created_date,
+            u.role,
+            u.ticket_count,
+            CASE
+                WHEN i.image_name IS NULL THEN NULL
+                ELSE CONCAT('/static/profile/', i.image_name)
+            END AS image_url
+        FROM tb_user u
+        LEFT JOIN tb_image i ON u.image_id = i.image_id
+        WHERE u.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+<!--  캐릭터 목록 : tb_character + tb_image JOIN  -->
+    <select id="selectCharacters" resultMap="CharacterCardVOMap">
+        SELECT
+        c.character_id,
+        c.character_name,
+        c.evolution_step,
+        c.grade_id AS grade,   -- 필요 시 등급명으로 조인/변환
+        CASE
+        WHEN img.image_name IS NULL THEN NULL
+        ELSE CONCAT('/static/profile/', img.image_name)
+        END AS image_url
+        FROM tb_character c
+        LEFT JOIN tb_image img ON c.image_id = img.image_id
+        WHERE c.user_id = #{userId}
+        ORDER BY c.updated_date DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+<!--  캐릭터 총 개수  -->
+    <select id="countCharacters" resultType="int">
+        SELECT COUNT(*) FROM tb_character WHERE user_id = #{userId}
+    </select>
+</mapper>
