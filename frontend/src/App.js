@@ -16,89 +16,112 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import React from 'react';
+import { useAuth } from './context/AuthContext';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import CharacterCreationPage from './pages/CharacterCreationPage';
+import RegisterPage from './pages/RegisterPage';
+import FindIdPage from './pages/FindIdPage';
+import FindPasswordPage from './pages/FindPasswordPage';
+import WithdrawPage from './pages/WithdrawPage';
+import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
-  const { isLoggedIn } = useAuth();
-
-  // 비로그인 상태 -> 로그인 페이지로 이동
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // 로그인 상태 -> 요청한 페이지 (HomePage 또는 다른 인증된 페이지) 표시
-  return children;
+    const { isLoggedIn } = useAuth();
+    
+    // 비로그인 상태 -> 로그인 페이지로 이동
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
+    
+    // 로그인 상태 -> 요청한 페이지 (HomePage 또는 다른 인증된 페이지) 표시
+    return children;
 };
 
-// CharacterCreationRoute: 캐릭터가 이미 있다면 생성 페이지 접근을 막음
-const CharacterCreationRoute = ({ children }) => {
-  const { isLoggedIn, hasCharacter } = useAuth();
 
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // 이미 캐릭터가 있다면 메인 페이지로 이동 (생성 페이지를 볼 필요 없음)
-  if (hasCharacter) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
 
 function App() {
-  const { isLoading } = useAuth();
+    const { isLoading } = useAuth();
 
-  if (isLoading) {
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+                앱 로딩 중...
+            </div>
+        );
+    }
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-        앱 로딩 중...
-      </div>
-    );
-  }
+        <Router>
+            <Routes>
+                {/* 로그인 페이지 */}
+                <Route 
+                    path="/login" 
+                    element={<LoginPage />} 
+                />
 
-  return (
-    <Router>
-      <Routes>
-        {/* 로그인 페이지 */}
-        <Route path="/login" element={<LoginPage />} />
+                {/* 회원가입 페이지 */}
+                <Route 
+                    path="/register" 
+                    element={<RegisterPage />} 
+                />
 
-        {/* 회원가입 페이지 */}
-        <Route path="/register" element={<RegisterPage />} />
+                {/* OAuth2 리다이렉션 처리 페이지 및 소셜 로그인 실패 리다이렉션 */}
+                <Route 
+                    path="/oauth/callback" 
+                    element={<OAuth2RedirectHandler />} 
+                />
 
-        {/* OAuth2 리다이렉션 처리 페이지 및 소셜 로그인 실패 리다이렉션 */}
-        <Route path="/oauth/callback" element={<OAuth2RedirectHandler />} />
+                <Route 
+                    path="/oauth/callback/failure" 
+                    element={<OAuth2RedirectHandler />} 
+                />
 
-        <Route
-          path="/oauth/callback/failure"
-          element={<OAuth2RedirectHandler />}
-        />
 
-        {/* 아이디 찾기 페이지 */}
-        <Route path="/find-id" element={<FindIdPage />} />
+                {/* 아이디 찾기 페이지 */}
+                <Route
+                    path="/find-id"
+                    element={<FindIdPage />}
+                />
 
-        {/* 비밀번호 찾기 페이지 */}
-        <Route path="/find-password" element={<FindPasswordPage />} />
+                {/* 비밀번호 찾기 페이지 */}
+                <Route
+                    path="/find-password"
+                    element={<FindPasswordPage />}
+                />
 
-        {/* 캐릭터 생성 페이지 */}
-        <Route
-          path="/create-character"
-          element={
-            <CharacterCreationRoute>
-              <CharacterCreationPage />
-            </CharacterCreationRoute>
-          }
-        />
+                <Route
+                    path="/withdraw"
+                    element={
+                        <ProtectedRoute>
+                            <WithdrawPage />
+                        </ProtectedRoute>
+                    }
+                />
 
-        {/* 메인 페이지 (보호된 경로) */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
+                {/* 캐릭터 생성 페이지 */}
+                <Route
+                    path="/create-character"
+                    element={
+                        <ProtectedRoute>
+                            <CharacterCreationPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* 메인 페이지 (보호된 경로) */}
+                <Route l
+                    path="/" 
+                    element={
+                        <ProtectedRoute>
+                            <HomePage />
+                        </ProtectedRoute>
+                    } 
+                />
 
         {/* chat 페이지 test */}
         <Route path="/chat_test" element={<ChatPage />} />

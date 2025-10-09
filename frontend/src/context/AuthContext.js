@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { loginApi, withdrawUserApi } from '../api/authApi';
 import { jwtDecode } from 'jwt-decode';
 
@@ -69,14 +69,17 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const withdrawUser = async (userPassword) => {
+    const withdrawUser = async (userId, userPassword) => {
         if (!token) {
-            alert("로그인 상태가 아닙니다.");
-            return false;
+            console.error("오류: 현재 토큰 상태가 null이므로 회원 탈퇴 요청을 보낼 수 없습니다.");
+            return { success: false, message: '인증 정보가 없습니다. 다시 로그인 해주세요.' };
         }
 
+        // 디버깅
+        console.log("전송되는 JWT 토큰:", token);
+
         try {
-            const response = await withdrawUserApi(userPassword, token);
+            const response = await withdrawUserApi(token, userId, userPassword);
 
             if (response.data.success) {
                 alert('성공적으로 계정 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
@@ -94,8 +97,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+
     // OAuth2 로그인 처리 함수
-    const handleOAuth2Login = (receivedToken, userInfo) => {
+    const handleOAuth2Login = useCallback((receivedToken, userInfo) => {
 
         const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
 
@@ -110,15 +114,16 @@ export const AuthProvider = ({ children }) => {
         setHasCharacter(isUserWithCharacter);
 
         localStorage.setItem('gmaking_token', receivedToken);
-    };
+
+    }, [setToken, setUser, setIsLoggedIn, setHasCharacter]);
 
     // 캐릭터 생성 후 상태를 true로 변경하는 함수
-    const setCharacterStatus = (status) => {
+    const setCharacterStatus = useCallback((status) => {
         setHasCharacter(status);
         if (user) {
             setUser(prev => ({ ...prev, hasCharacter: status }));
         }
-    };
+    }, [user, setHasCharacter, setUser]);
 
 
     const logout = () => {

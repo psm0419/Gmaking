@@ -10,10 +10,7 @@ backend/.idea/
 *.ipr
 out/
 
-
-
-backend/gmaking/src/main/resources/application.properties
-
+backend/gmaking/gmaking/.env
 
 ### VS Code (React, Django에서 사용) ###
 .vscode/

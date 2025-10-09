@@ -58,6 +58,8 @@ dependencies {
 
     // Spring Security OAuth 2.0 Client
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 }
 
 tasks.named('test') {

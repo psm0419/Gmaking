@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom'; 
 import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
-    const { user, logout, withdrawUser } = useAuth();
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
@@ -20,12 +21,13 @@ const Header = () => {
     ];
 
     // 회원 탈퇴 핸들러
-    const handleWithdraw = async () => {
-        const password = prompt("회원 탈퇴를 계속하려면 비밀번호를 입력해주세요.");
-        if (password) {
-            await withdrawUser(password); 
-        } else if (password !== null) {
-            alert("비밀번호를 입력해야 탈퇴할 수 있습니다.");
+    const handleWithdraw = () => {
+        if (!user) {
+            alert("로그인 상태가 아닙니다.");
+        }
+
+        if (window.confirm("정말 계정 탈퇴를 진행하시겠습니까?")) {
+            navigate('/withdraw');
         }
     };
 
@@ -34,9 +36,11 @@ const Header = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                 
                 {/* 1-1. 로고/사이트 이름 */}
-                <Link to="/" className="text-3xl font-extrabold text-yellow-400 flex items-center hover:text-yellow-300 transition duration-200">
-                    <Zap className="w-8 h-8 mr-2" />
-                    겜만중
+                <Link to="/" className="flex items-center space-x-2 group">
+                        <Zap className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
+                        <h1 className="text-3xl font-extrabold text-white tracking-wider group-hover:text-yellow-400 transition duration-200">
+                            겜만중
+                        </h1>
                 </Link>
                 
                 {/* 1-2. 카테고리 메뉴 */}
