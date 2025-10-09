@@ -6,6 +6,7 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import RegisterPage from './pages/RegisterPage';
 import FindIdPage from './pages/FindIdPage'; 
 import FindPasswordPage from './pages/FindPasswordPage';
+import WithdrawPage from './pages/WithdrawPage';
 import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler'; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -73,6 +74,15 @@ function App() {
                 <Route
                     path="/find-password"
                     element={<FindPasswordPage />}
+                />
+
+                <Route
+                    path="/withdraw"
+                    element={
+                        <ProtectedRoute>
+                            <WithdrawPage />
+                        </ProtectedRoute>
+                    }
                 />
                 
                 {/* 캐릭터 생성 페이지 */}
