@@ -21,9 +21,17 @@ const Header = () => {
 
     // 회원 탈퇴 핸들러
     const handleWithdraw = async () => {
+        // user가 없으면 탈퇴 시도 불가 (로그아웃 상태)
+        if (!user || !user.userId) {
+            alert("로그인 상태가 아닙니다.");
+            return;
+        }
+
         const password = prompt("회원 탈퇴를 계속하려면 비밀번호를 입력해주세요.");
+        
         if (password) {
-            await withdrawUser(password); 
+            // 현재 로그인된 사용자 ID와 비밀번호를 모두 전달
+            await withdrawUser(user.userId, password);
         } else if (password !== null) {
             alert("비밀번호를 입력해야 탈퇴할 수 있습니다.");
         }
