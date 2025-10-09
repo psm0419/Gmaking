@@ -69,16 +69,17 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const withdrawUser = async (userPassword) => {
+    const withdrawUser = async (userId, userPassword) => {
         if (!token) {
-            alert("로그인 상태가 아닙니다.");
-            return false;
+            console.error("오류: 현재 토큰 상태가 null이므로 회원 탈퇴 요청을 보낼 수 없습니다.");
+            return { success: false, message: '인증 정보가 없습니다. 다시 로그인 해주세요.' };
         }
-
-        const userId = user.userId; // 로그인 상태에서 user 정보 보관 중이라면
+        
+        // 디버깅
+        console.log("전송되는 JWT 토큰:", token); 
 
         try {
-            const response = await withdrawUserApi(userId, userPassword, token);
+            const response = await withdrawUserApi(token, userId, userPassword); 
 
             if (response.data.success) {
                 alert('성공적으로 계정 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
