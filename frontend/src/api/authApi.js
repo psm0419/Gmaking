@@ -62,14 +62,31 @@ export const changePasswordApi = (userId, userEmail, newPassword, confirmPasswor
 
 /**
  * 회원 탈퇴
- * DELETE /api/withdraw
+ * DELETE /api/user/withdraw
  * (JWT 인증 필요)
  */
-export const withdrawUserApi = (userPassword, token) => {
-    return axios.delete(`${API_BASE_URL}/withdraw`, { 
-        data: { userPassword }, // DELETE 요청 시, body에 데이터를 담기 위해 'data' 필드를 사용합니다.
-        headers: { 
-            Authorization: `Bearer ${token}` 
-        } 
-    });
+
+export const withdrawUserApi = async () => {
+  const token = localStorage.getItem("accessToken"); // 로그인 시 저장된 토큰
+
+  if (!token) {
+    throw new Error("토큰이 없습니다. 로그인 후 다시 시도해주세요.");
+  }
+
+  return axios.delete("http://localhost:8080/api/user/withdraw", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 };
+
+export const withdrawUser = async () => {
+  try {
+    const response = await withdrawUserApi();
+    console.log(response.data.message); // 탈퇴 성공 메시지
+    localStorage.removeItem("accessToken"); // 로그아웃 처리
+  } catch (err) {
+    console.error("Withdraw Error:", err.response?.data || err.message);
+  }
+};
+
