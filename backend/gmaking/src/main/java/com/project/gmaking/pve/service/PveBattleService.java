@@ -10,12 +10,12 @@ import com.project.gmaking.pve.dao.EncounterRateDAO;
 import com.project.gmaking.pve.dao.MonsterDAO;
 import com.project.gmaking.character.dao.CharacterStatDAO;
 import com.project.gmaking.character.dao.CharacterDAO;
-import com.project.gmaking.pve.dao.MapDAO;
+import com.project.gmaking.map.dao.MapDAO;
 import com.project.gmaking.pve.vo.BattleLogVO;
 import com.project.gmaking.pve.vo.EncounterRateVO;
 import com.project.gmaking.character.vo.CharacterStatVO;
 import com.project.gmaking.pve.vo.MonsterVO;
-import com.project.gmaking.pve.vo.MapVO;
+import com.project.gmaking.map.vo.MapVO;
 
 
 @Service
@@ -34,6 +34,14 @@ public class PveBattleService {
         return mapDAO.selectAllMaps();
     }
 
+    // 맵 ID로 이미지 URL 조회
+    public String getMapImageUrl(Integer mapId) {
+        // DAO를 호출하여 MapVO 전체를 가져온 뒤, URL만 추출
+        MapVO map = mapDAO.selectMapById(mapId);
+
+        // 맵 정보가 null이 아니면 이미지 URL을 반환하고, 없으면 빈 문자열 또는 기본 URL 반환
+        return (map != null) ? map.getMapImageUrl() : "";
+    }
 //    몬스터 조우
     public MonsterVO encounterMonster(Integer mapId) {
         List<EncounterRateVO> rates = encounterRateDAO.getEncounterRates();

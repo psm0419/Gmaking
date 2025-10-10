@@ -12,22 +12,40 @@ function PveBattlePage() {
     const [logs, setLogs] = useState([]);
     const [isBattle, setIsBattle] = useState(false);
     const [result, setResult] = useState(null);
+    const [mapImageUrl, setMapImageUrl] = useState(null); 
 
     // 로그인한 유저 정보 (예: JWT 디코딩 또는 Context)
     const userId = "sumin"; // 예시, 실제 구현시 Context나 Redux에서 가져오기
 
-    // 1️⃣ 로그인 유저 캐릭터 목록 가져오기
+    // MAP_IMAGE_URL을 가져오는 로직 추가
     useEffect(() => {
-        axios.get("/api/characters", { params: { userId } })
-            .then(res => {
-                console.log("캐릭터 데이터:", res.data);
-                if (Array.isArray(res.data)) setCharacters(res.data);
-                else setCharacters([]);
-            })
-            .catch(err => console.error(err));
-    }, [userId]);
+        if (mapId) {
+            // mapId를 이용해 맵 이미지 URL을 가져오는 API 호출 (백엔드 구현 필요)
+            // 예시 API 경로: /api/pve/maps/1/image
+            axios.get(`/api/pve/maps/${mapId}/image`, { withCredentials: true })
+                .then(res => {
+                    console.log("맵 이미지 URL 응답:", res.data);                                      
+                    setMapImageUrl(res.data.mapImageUrl);
+                })
+                .catch(err => {
+                    console.error("맵 이미지 가져오기 실패:", err);
+                    // 실패 시 기본 배경 등을 설정할 수 있습니다.
+                });
+        }
+    }, [mapId]); // mapId가 변경될 때마다 실행됩니다.
 
-    // 2️⃣ 전투 시작
+    // 로그인 유저 캐릭터 목록 가져오기
+    // useEffect(() => {
+    //     axios.get("/api/characters", { params: { userId } })
+    //         .then(res => {
+    //             console.log("캐릭터 데이터:", res.data);
+    //             if (Array.isArray(res.data)) setCharacters(res.data);
+    //             else setCharacters([]);
+    //         })
+    //         .catch(err => console.error(err));
+    // }, [userId]);
+
+    // 전투 시작
     const startBattle = async () => {
         if (!selectedCharacter) {
             alert("캐릭터를 선택하세요!");
@@ -64,9 +82,27 @@ function PveBattlePage() {
         }
     };
 
+    // 배경 스타일 정의 (mapImageUrl 상태 사용)
+    const backgroundStyle = {
+        // 이미지가 있을 경우 배경 이미지 설정
+        backgroundImage: mapImageUrl ? `url(${mapImageUrl})` : 'none',
+
+        backgroundColor: 'transparent', // 흰색 배경 대신 이미지가 나타나게 함
+        // 이미지가 로드되면 배경이 보이도록 cover 설정은 유지
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        // 배경 이미지를 뷰포트에 고정하여 스크롤해도 배경이 움직이지 않게 합니다.
+        backgroundAttachment: 'fixed'
+    };
+
     return (
-        <div className="flex flex-col items-center p-8 text-white bg-gray-900 min-h-screen">
-            <h1 className="text-3xl font-bold mb-6">PVE 전투</h1>
+        // 최상위 div에 backgroundStyle 적용
+        <div
+            className="flex flex-col items-center p-8 text-white min-h-screen"
+            style={backgroundStyle} // 배경 스타일 적용
+        >
+            <h1 className="text-3xl font-bold mb-6">PVE 전투 (맵 ID: {mapId})</h1>
 
             <div className="mb-4">
                 <h2 className="text-xl mb-2">캐릭터 선택</h2>
