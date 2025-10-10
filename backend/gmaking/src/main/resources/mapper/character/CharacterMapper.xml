@@ -5,11 +5,45 @@
 
 <mapper namespace="com.project.gmaking.character.dao.CharacterDAO">
 
-    <select id="selectCharactersByUser" parameterType="string" resultType="com.project.gmaking.character.vo.CharacterVO">
-        SELECT *
-        FROM TB_CHARACTER
-        WHERE USER_ID = #{userId}
+    <select id="selectCharactersByUser" parameterType="string" resultMap="CharacterWithStatMap">
+        SELECT
+        c.CHARACTER_ID,
+        c.USER_ID,
+        c.CHARACTER_NAME,
+        c.IMAGE_ID,
+        c.CHARACTER_PERSONALITY_ID,
+        c.BACKGROUND_INFO,
+        c.GRADE_ID,
+        c.TOTAL_STAGE_CLEARS,
+        c.EVOLUTION_STEP,
+        s.CHARACTER_HP,
+        s.CHARACTER_ATTACK,
+        s.CHARACTER_DEFENSE,
+        s.CHARACTER_SPEED,
+        s.CRITICAL_RATE
+        FROM TB_CHARACTER c
+        LEFT JOIN TB_CHARACTER_STAT s ON c.CHARACTER_ID = s.CHARACTER_ID
+        WHERE c.USER_ID = #{userId}
     </select>
+
+    <resultMap id="CharacterWithStatMap" type="com.project.gmaking.character.vo.CharacterVO">
+        <id property="characterId" column="CHARACTER_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="characterName" column="CHARACTER_NAME"/>
+        <result property="imageId" column="IMAGE_ID"/>
+        <result property="characterPersonalityId" column="CHARACTER_PERSONALITY_ID"/>
+        <result property="backgroundInfo" column="BACKGROUND_INFO"/>
+        <result property="gradeId" column="GRADE_ID"/>
+        <result property="totalStageClears" column="TOTAL_STAGE_CLEARS"/>
+        <result property="evolutionStep" column="EVOLUTION_STEP"/>
+        <association property="characterStat" javaType="com.project.gmaking.character.vo.CharacterStatVO">
+            <result property="characterHp" column="CHARACTER_HP"/>
+            <result property="characterAttack" column="CHARACTER_ATTACK"/>
+            <result property="characterDefense" column="CHARACTER_DEFENSE"/>
+            <result property="characterSpeed" column="CHARACTER_SPEED"/>
+            <result property="criticalRate" column="CRITICAL_RATE"/>
+        </association>
+    </resultMap>
 
     <update id="incrementStageClear">
         UPDATE TB_CHARACTER

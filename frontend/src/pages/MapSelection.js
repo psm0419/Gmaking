@@ -54,17 +54,13 @@ const MapSelection = () => {
                         <div className="absolute inset-0 flex flex-col justify-end items-center p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
                             <h3 className="text-2xl font-bold mb-1 text-shadow-lg">
                                 {map.name}
-                            </h3>
-                            <p className="text-sm text-gray-300">
-                                맵 ID: {map.mapId}
-                            </p>
+                            </h3>                    
                         </div>
 
-                        {/* 맵 설명 (선택 사항)
+                        {/* 맵 설명 (선택 사항)*/}
                         <p className="absolute top-2 right-2 text-xs bg-gray-800/80 px-2 py-1 rounded">
                             일반 지역
-                        </p> 
-                        */}
+                        </p>                        
                     </div>
                 ))}
             </div>

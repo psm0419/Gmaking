@@ -10,14 +10,16 @@ import java.time.LocalDateTime;
 public class CharacterStatVO {
 
     private Integer characterId; // 캐릭터 ID (Integer)
-    private Integer characterHp; // 캐릭터 체력 (INT -> Integer)
-    private Integer characterAttack; // 캐릭터 공격력 (INT -> Integer)
-    private Integer characterDefense; // 캐릭터 방어력 (INT -> Integer)
-    private Integer characterSpeed; // 캐릭터 속도 (INT -> Integer)
-    private Integer criticalRate; // 크리티컬 확률 (INT -> Integer)
+    private Integer characterHp; // 캐릭터 체력 (Integer)
+    private Integer characterAttack; // 캐릭터 공격력 (Integer)
+    private Integer characterDefense; // 캐릭터 방어력 (Integer)
+    private Integer characterSpeed; // 캐릭터 속도 (Integer)
+    private Integer criticalRate; // 크리티컬 확률 (Integer)
 
     private LocalDateTime createdDate; // 생성 일자 (DATETIME)
     private String createdBy; // 생성자 (VARCHAR(50))
     private LocalDateTime updatedDate; // 수정 일자 (DATETIME)
     private String updatedBy; // 수정자 (VARCHAR(50))
+
+    private CharacterVO character; // 캐릭터 기본정보 포함
 }

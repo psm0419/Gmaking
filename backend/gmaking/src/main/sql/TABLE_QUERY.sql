@@ -77,6 +77,18 @@ CREATE TABLE TB_BATTLE_LOG
 ) COMMENT='배틀 로그 정보';
 
 -- =========================================================================================
+-- TB_TURN_LOG  (전투 턴별 상세 로그 테이블)
+-- =========================================================================================
+
+CREATE TABLE TB_TURN_LOG (
+    TURN_LOG_ID   INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '턴 로그 ID',
+    BATTLE_ID     INT NOT NULL COMMENT '배틀 ID (TB_BATTLE_LOG 참조)',
+    TURN_NUMBER   INT NOT NULL COMMENT '턴 번호',
+    ACTION_DETAIL TEXT NOT NULL COMMENT '턴별 상세 로그',
+    CREATED_DATE  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자'
+) COMMENT='전투 턴별 상세 로그';
+
+-- =========================================================================================
 -- TB_CHARACTER (캐릭터 테이블)
 -- =========================================================================================
 CREATE TABLE TB_CHARACTER

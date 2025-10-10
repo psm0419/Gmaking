@@ -4,20 +4,23 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
-
+import com.project.gmaking.pve.service.OpenAIService;
 import com.project.gmaking.pve.dao.BattleDAO;
 import com.project.gmaking.pve.dao.EncounterRateDAO;
 import com.project.gmaking.pve.dao.MonsterDAO;
 import com.project.gmaking.character.dao.CharacterStatDAO;
 import com.project.gmaking.character.dao.CharacterDAO;
 import com.project.gmaking.map.dao.MapDAO;
+import com.project.gmaking.pve.dao.TurnLogDAO;
 import com.project.gmaking.pve.vo.BattleLogVO;
+import com.project.gmaking.pve.vo.TurnLogVO;
 import com.project.gmaking.pve.vo.EncounterRateVO;
 import com.project.gmaking.character.vo.CharacterStatVO;
 import com.project.gmaking.pve.vo.MonsterVO;
 import com.project.gmaking.map.vo.MapVO;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PveBattleService {
@@ -28,6 +31,8 @@ public class PveBattleService {
     private final BattleDAO battleDAO;
     private final CharacterDAO characterDAO;
     private final MapDAO mapDAO;
+    private final OpenAIService openAIService;
+    private final TurnLogDAO turnLogDAO;
 
 //      맵 선택
     public List<MapVO> getMaps() {
@@ -57,63 +62,70 @@ public class PveBattleService {
 
         String type = random < bossRate ? "BOSS" : "NORMAL";
 
-        // 🔹 mapId는 지금은 사용 안하지만, 나중에 맵별로 로직 확장 가능
+        // mapId는 지금은 사용 안하지만, 나중에 맵별로 로직 확장 가능
         return monsterDAO.getRandomMonsterByType(type);
     }
 
-//    자동 전투 시뮬레이션
-public BattleLogVO startBattle(Integer characterId, MonsterVO monster, String userId) {
-    CharacterStatVO stat = characterStatDAO.getCharacterStat(characterId);
+    // GPT 기반 자동 전투 시뮬레이션
+    public BattleLogVO startBattle(Integer characterId, MonsterVO monster, String userId) {
+        CharacterStatVO stat = characterStatDAO.getCharacterStat(characterId);
 
-    List<String> turnLogs = new ArrayList<>();
+        // GPT로 전달할 데이터 구성
+        Map<String, Object> playerMap = Map.of(
+                "name", stat.getCharacter().getCharacterName(),
+                "hp", stat.getCharacterHp(),
+                "attack", stat.getCharacterAttack(),
+                "defense", stat.getCharacterDefense(),
+                "speed", stat.getCharacterSpeed(),
+                "criticalRate", stat.getCriticalRate()
+        );
 
-    int turn = 0;
-    boolean isPlayerTurn = stat.getCharacterSpeed() >= monster.getMonsterDefense();
-    int playerHp = stat.getCharacterHp();
-    int monsterHp = monster.getMonsterHp();
+        Map<String, Object> monsterMap = Map.of(
+                "name", monster.getMonsterName(),
+                "hp", monster.getMonsterHp(),
+                "attack", monster.getMonsterAttack(),
+                "defense", monster.getMonsterDefense(),
+                "speed", monster.getMonsterDefense(), // speed 없으므로 임시로 defense로 대체
+                "criticalRate", monster.getMonsterCriticalRate()
+        );
 
-    while (playerHp > 0 && monsterHp > 0) {
-        turn++;
-        if (isPlayerTurn) {
-            boolean critical = Math.random() * 100 < stat.getCriticalRate();
-            int damage = Math.max(1, stat.getCharacterAttack() - monster.getMonsterDefense());
-            if (critical) damage *= 2;
-            monsterHp -= damage;
-            turnLogs.add("턴 " + turn + ": 플레이어가 " + monster.getMonsterName() + "에게 " +
-                    damage + " 데미지를 입혔습니다" + (critical ? " (크리티컬!)" : "") + ".");
-        } else {
-            boolean critical = Math.random() * 100 < monster.getMonsterCriticalRate();
-            int damage = Math.max(1, monster.getMonsterAttack() - stat.getCharacterDefense());
-            if (critical) damage *= 2;
-            playerHp -= damage;
-            turnLogs.add("턴 " + turn + ": " + monster.getMonsterName() + "이(가) 플레이어에게 " +
-                    damage + " 데미지를 입혔습니다" + (critical ? " (크리티컬!)" : "") + ".");
+        // GPT 호출
+        List<String> turnLogs = openAIService.generateBattleLog(playerMap, monsterMap);
+
+        // 승패 판정 (마지막 로그의 HP 기준)
+        String lastLog = turnLogs.get(turnLogs.size() - 1);
+        boolean isWin = lastLog.contains("몬스터HP:0") || lastLog.contains("몬스터HP:0.0");
+
+        // DB 저장
+        BattleLogVO log = new BattleLogVO();
+        log.setCharacterId(characterId);
+        log.setOpponentId(monster.getMonsterId());
+        log.setBattleType("PVE");
+        log.setIsWin(isWin ? "Y" : "N");
+        log.setTurnCount((long) turnLogs.size());
+        log.setCreatedBy(userId);
+
+        battleDAO.insertBattleLog(log);
+
+        // ===== 배틀 ID 가져와서 턴 로그 저장 =====
+        Integer battleId = log.getBattleId(); // Mapper에서 useGeneratedKeys 설정 필요
+        int turnNum = 1;
+        for (String turnDetail : turnLogs) {
+            TurnLogVO turnLog = new TurnLogVO();
+            turnLog.setBattleId(battleId);
+            turnLog.setTurnNumber(turnNum++);
+            turnLog.setActionDetail(turnDetail);
+            turnLogDAO.insertTurnLog(turnLog);
         }
-        isPlayerTurn = !isPlayerTurn;
+
+        if (isWin) {
+            characterDAO.incrementStageClear(characterId);
+        }
+
+        // 프론트 표시용
+        log.setTurnLogs(turnLogs);
+
+        return log;
     }
-
-    boolean isWin = playerHp > 0;
-    turnLogs.add(isWin ? "🎉 전투에서 승리했습니다!" : "💀 패배했습니다...");
-
-    // 로그 DB 저장
-    BattleLogVO log = new BattleLogVO();
-    log.setCharacterId(characterId);
-    log.setOpponentId(monster.getMonsterId());
-    log.setBattleType("PVE");
-    log.setIsWin(isWin ? "Y" : "N");
-    log.setTurnCount((long) turn);
-    log.setCreatedBy(userId);
-
-    battleDAO.insertBattleLog(log);
-
-    if (isWin) {
-        characterDAO.incrementStageClear(characterId);
-    }
-
-    // 프론트에서 턴별 로그를 표시하기 위해 추가
-    log.setTurnLogs(turnLogs);
-
-    return log;
-}
 
 }

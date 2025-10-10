@@ -106,7 +106,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/pve/maps/*/image").permitAll()
 
                         // 캐릭터 목록 조회 API 허용 (현재 PveBattlePage.js에서 사용 중)
-                        .requestMatchers("/api/characters").permitAll()
+                        .requestMatchers("/api/character/**").permitAll()
                         // 회원탈퇴
                         .requestMatchers("/api/user/withdraw").authenticated()
 

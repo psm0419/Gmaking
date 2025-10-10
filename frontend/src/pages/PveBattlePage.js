@@ -34,17 +34,16 @@ function PveBattlePage() {
         }
     }, [mapId]); // mapId가 변경될 때마다 실행됩니다.
 
-    // 로그인 유저 캐릭터 목록 가져오기
-    // useEffect(() => {
-    //     axios.get("/api/characters", { params: { userId } })
-    //         .then(res => {
-    //             console.log("캐릭터 데이터:", res.data);
-    //             if (Array.isArray(res.data)) setCharacters(res.data);
-    //             else setCharacters([]);
-    //         })
-    //         .catch(err => console.error(err));
-    // }, [userId]);
-
+    // 로그인 유저 캐릭터 목록 가져오기    
+    useEffect(() => {
+        axios.get("/api/characte/list", { params: { userId } })
+                    .then(res => {
+                            console.log("캐릭터  스탯 데이터:", res.data);
+                            if (Array.isArray(res.data)) setCharacters(res.data);
+                            else setCharacters([]);
+                        })
+                    .catch(err => console.error("캐릭터 목록 불러오기 실패:", err));
+        }, [userId]);
     // 전투 시작
     const startBattle = async () => {
         if (!selectedCharacter) {
@@ -59,6 +58,7 @@ function PveBattlePage() {
         try {
             const params = {
                 characterId: selectedCharacter.characterId,
+                characterStatId: selectedCharacter.characterStat?.characterStatId,
                 mapId,
                 userId
             };
@@ -68,7 +68,7 @@ function PveBattlePage() {
             const turnLogs = data.turnLogs || [];
 
             // 턴별 로그 표시
-            for (let i = 0; i < turnLogs.length; i++) {
+            for (let i = 0; i < turnLogs.length; i) {
                 await new Promise(r => setTimeout(r, 1000));
                 setLogs(prev => [...prev, turnLogs[i]]);
             }
@@ -117,6 +117,31 @@ function PveBattlePage() {
                             <div>{char.characterName}</div>
                         </div>
                     ))}
+                    {characters.map(char => (
+                    <div
+                        key={char.characterId}
+                        className={`p-4 border rounded-lg cursor-pointer ${
+                            selectedCharacter?.characterId === char.characterId
+                                ? "border-yellow-400"
+                                : "border-gray-500"
+                        }`}
+                        onClick={() => setSelectedCharacter(char)}
+                    >
+                        <img
+                            src={`/images/${char.imageId}`}
+                            alt={char.characterName}
+                            className="w-24 h-24 mb-2"
+                        />
+                        <div className="font-bold text-lg">{char.characterName}</div>
+                        {char.characterStat && (
+                            <div className="text-sm mt-2 text-gray-300">
+                                HP: {char.characterStat.characterHp} /
+                                ATK: {char.characterStat.characterAttack} /
+                                DEF: {char.characterStat.characterDefense}
+                            </div>
+                        )}
+                    </div>
+                ))}
                 </div>
             </div>
 
