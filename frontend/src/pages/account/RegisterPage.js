@@ -1,8 +1,6 @@
-// src/components/RegisterPage.js
-
 import React, { useState } from 'react';
 import { UserPlus, Mail, ArrowLeft } from 'lucide-react';
-import { registerApi, verifyEmailApi } from '../api/authApi';
+import { registerApi, verifyEmailApi } from '../../api/authApi';
 import { useNavigate } from 'react-router-dom'
 
 const RegisterPage = () => {

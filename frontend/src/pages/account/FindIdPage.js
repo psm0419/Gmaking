@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { findIdSendCodeApi, findIdVerifyCodeApi } from '../api/authApi';
+import { findIdSendCodeApi, findIdVerifyCodeApi } from '../../api/authApi';
 
 const FindIdPage = () => {
     const navigate = useNavigate();

@@ -13,18 +13,23 @@
 
     <insert id="saveVerificationCode" parameterType="com.project.gmaking.email.vo.EmailVerificationVO">
         INSERT INTO TB_USER_EMAIL_VERIFY
-        (USER_ID,
-         EMAIL,
-         VERIFY_CODE,
-         EXPIRY_DATE,
-         IS_VERIFIED,
-         CREATED_DATE)
-        VALUES (#{userId},
-                #{email},
-                #{verifyCode},
-                #{expiryDate},
-                'N',
-                NOW()) ON DUPLICATE KEY
+        (
+            USER_ID,
+            EMAIL,
+            VERIFY_CODE,
+            EXPIRY_DATE,
+            IS_VERIFIED,
+            CREATED_DATE
+        )
+        VALUES
+        (
+            #{userId},
+            #{email},
+            #{verifyCode},
+            #{expiryDate},
+            'N',
+            NOW()
+        ) ON DUPLICATE KEY
         UPDATE
             EMAIL = #{email},
             VERIFY_CODE = #{verifyCode},

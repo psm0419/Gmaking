@@ -1,16 +1,17 @@
 import React from 'react';
 import { useAuth } from './context/AuthContext';
-import LoginPage from './pages/LoginPage';
+import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
-import RegisterPage from './pages/RegisterPage';
-import FindIdPage from './pages/FindIdPage';
-import FindPasswordPage from './pages/FindPasswordPage';
-import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
-import ChatPage from './pages/ChatPage'
-import MyPage from './pages/MyPage'
-import PveBattlePage from './pages/PveBattlePage'
-import MapSelection from './pages/MapSelection'
+import RegisterPage from './pages/account/RegisterPage';
+import FindIdPage from './pages/account/FindPasswordPage';
+import FindPasswordPage from './pages/account/FindPasswordPage';
+import OAuth2RedirectHandler from './pages/account/OAuth2RedirectHandler';
+import ChatPage from './pages/ChatPage';
+import MyPage from './pages/MyPage';
+import PveBattlePage from './pages/PveBattlePage';
+import MapSelection from './pages/MapSelection';
+import WithdrawPage from './pages/account/WithdrawPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -77,6 +78,15 @@ function App() {
                 <Route
                     path="/find-password"
                     element={<FindPasswordPage />}
+                />
+
+                <Route
+                    path="/withdraw"
+                    element={
+                        <ProtectedRoute>
+                            <WithdrawPage />
+                        </ProtectedRoute>
+                    }
                 />
                 
                 {/* 캐릭터 생성 페이지 */}

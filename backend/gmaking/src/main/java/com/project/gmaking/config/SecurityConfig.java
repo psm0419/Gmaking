@@ -6,6 +6,7 @@ import com.project.gmaking.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -79,8 +80,12 @@ public class SecurityConfig {
 
                 // 요청에 대한 권한 설정
                 .authorizeHttpRequests(auth -> auth
+
+                        // 모든 OPTIONS 요청을 인증 없이 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // 로그인 및 회원가입 경로는 인증 없이 누구나 접근 가능하도록 허용
-                        .requestMatchers("/api/login", "/api/register").permitAll()
+                        .requestMatchers("/login", "/api/login", "/api/register").permitAll()
 
                         // 이메일 관련 API(인증 코드 발송/검증) 누구나 접근 허용
                         .requestMatchers("/api/email/**").permitAll()
@@ -102,6 +107,8 @@ public class SecurityConfig {
 
                         // 캐릭터 목록 조회 API 허용 (현재 PveBattlePage.js에서 사용 중)
                         .requestMatchers("/api/characters").permitAll()
+                        // 회원탈퇴
+                        .requestMatchers("/api/user/withdraw").authenticated()
 
                         // 나머지 모든 요청은 인증된 사용자에게만 허용
                         .anyRequest().authenticated()
