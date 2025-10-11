@@ -95,7 +95,7 @@ function PveBattlePage() {
     };
 
     return (
-        <div className="flex flex-col items-center p-8 text-white min-h-screen" style={backgroundStyle}>
+        <div className="flex flex-col items-center p-8 min-h-screen" style={backgroundStyle}>
             <h1 className="text-3xl font-bold mb-6">PVE 전투 (맵 ID: {mapId})</h1>
 
             <div className="mb-4">
@@ -104,7 +104,7 @@ function PveBattlePage() {
                     {characters.map(char => (
                         <div
                             key={char.characterId}
-                            className={`p-4 border rounded-lg cursor-pointer ${selectedCharacter?.characterId === char.characterId
+                            className={`p-4 border rounded-lg cursor-pointer bg-white ${selectedCharacter?.characterId === char.characterId
                                     ? "border-yellow-400"
                                     : "border-gray-500"
                                 }`}
@@ -117,7 +117,7 @@ function PveBattlePage() {
                                     className="w-24 h-24"
                                 />
                             </div>
-                            <div className="font-bold text-lg text-black">{char.characterName}</div>
+                            <div className="font-bold text-lg">{char.characterName}</div>
                             {char.characterStat && (
                                 <div className="text-sm mt-2 text-black">
                                     HP: {char.characterStat.characterHp} /
