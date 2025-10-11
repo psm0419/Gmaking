@@ -20,6 +20,4 @@ public class CharacterStatVO {
     private String createdBy; // 생성자 (VARCHAR(50))
     private LocalDateTime updatedDate; // 수정 일자 (DATETIME)
     private String updatedBy; // 수정자 (VARCHAR(50))
-
-    private CharacterVO character; // 캐릭터 기본정보 포함
 }

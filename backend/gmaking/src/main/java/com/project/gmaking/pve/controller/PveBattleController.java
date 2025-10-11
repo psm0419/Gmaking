@@ -52,12 +52,7 @@ public class PveBattleController {
         MonsterVO monster = pveBattleService.encounterMonster(mapId);
         return ResponseEntity.ok(monster);
     }
-    // 유저 캐릭터 가져오기
-    @GetMapping("/characters")
-    public ResponseEntity<List<CharacterVO>> getUserCharacters(@RequestParam String userId) {
-        List<CharacterVO> chars = characterService.getCharactersByUser(userId);
-        return ResponseEntity.ok(chars);
-    }
+
 
     // 전투 시작
     @PostMapping("/battle/start")

@@ -1,6 +1,7 @@
 package com.project.gmaking.character.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import com.project.gmaking.character.service.CharacterService;
@@ -13,9 +14,10 @@ public class CharacterController {
 
     private final CharacterService characterService;
 
+    // GET /api/character/list?userId=xxxx
     @GetMapping("/list")
-    public List<CharacterVO> getCharactersByUser(@RequestParam String userId) {
-        return characterService.getCharactersByUser(userId);
+    public ResponseEntity<?> getCharacterList(@RequestParam String userId) {
+        List<CharacterVO> list = characterService.getCharactersByUser(userId);
+        return ResponseEntity.ok(list);
     }
 }
-

@@ -9,5 +9,8 @@ import com.project.gmaking.character.vo.CharacterVO;
 public interface CharacterDAO {
     List<CharacterVO> selectCharactersByUser(@Param("userId") String userId);
     void incrementStageClear(@Param("characterId") Integer characterId);
+
+    // 단일 캐릭터 조회
+    CharacterVO selectCharacterById(@Param("characterId") Integer characterId);
 }
 

@@ -1,6 +1,8 @@
 package com.project.gmaking.pve.service;
 
 import java.util.*;
+
+import com.project.gmaking.character.vo.CharacterVO;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
@@ -68,11 +70,15 @@ public class PveBattleService {
 
     // GPT 기반 자동 전투 시뮬레이션
     public BattleLogVO startBattle(Integer characterId, MonsterVO monster, String userId) {
-        CharacterStatVO stat = characterStatDAO.getCharacterStat(characterId);
+        // CharacterVO + CharacterStatVO를 한 번에 가져오기
+        CharacterVO character = characterDAO.selectCharacterById(characterId);
+
+        // 캐릭터 스탯
+        CharacterStatVO stat = character.getCharacterStat();
 
         // GPT로 전달할 데이터 구성
         Map<String, Object> playerMap = Map.of(
-                "name", stat.getCharacter().getCharacterName(),
+                "name", character.getCharacterName(),
                 "hp", stat.getCharacterHp(),
                 "attack", stat.getCharacterAttack(),
                 "defense", stat.getCharacterDefense(),
@@ -98,7 +104,7 @@ public class PveBattleService {
 
         // DB 저장
         BattleLogVO log = new BattleLogVO();
-        log.setCharacterId(characterId);
+        log.setCharacterId(character.getCharacterId());
         log.setOpponentId(monster.getMonsterId());
         log.setBattleType("PVE");
         log.setIsWin(isWin ? "Y" : "N");
@@ -119,7 +125,7 @@ public class PveBattleService {
         }
 
         if (isWin) {
-            characterDAO.incrementStageClear(characterId);
+            characterDAO.incrementStageClear(character.getCharacterId());
         }
 
         // 프론트 표시용

@@ -101,12 +101,13 @@ public class SecurityConfig {
 
                         //  PVE 관련: 맵 조회는 비로그인도 허용
                         .requestMatchers("/api/pve/maps").permitAll()
+                        .requestMatchers("/api/pve/battle").permitAll()
 
                         // 맵 ID를 경로 변수로 받는 /api/pve/maps/{mapId}/image 엔드포인트를 허용합니다.
                         .requestMatchers("/api/pve/maps/*/image").permitAll()
 
                         // 캐릭터 목록 조회 API 허용 (현재 PveBattlePage.js에서 사용 중)
-                        .requestMatchers("/api/character/**").permitAll()
+                        .requestMatchers("/api/character/**").authenticated()
                         // 회원탈퇴
                         .requestMatchers("/api/user/withdraw").authenticated()
 

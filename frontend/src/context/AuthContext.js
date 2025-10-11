@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }) => {
                 setHasCharacter(userWithCharStatus.hasCharacter); // 상태 업데이트
                 
                 localStorage.setItem('gmaking_token', receivedToken);
+                localStorage.setItem('userId', userInfo.userId);
                 return true;
             } else {
                 const msg = response.data?.message || '로그인 실패';
@@ -114,7 +115,7 @@ export const AuthProvider = ({ children }) => {
         setHasCharacter(isUserWithCharacter);
 
         localStorage.setItem('gmaking_token', receivedToken);
-        
+        localStorage.setItem('userId', userInfo.userId);
     }, [setToken, setUser, setIsLoggedIn, setHasCharacter]);
 
     // 캐릭터 생성 후 상태를 true로 변경하는 함수
