@@ -101,7 +101,7 @@ function App() {
                 />
                 
                 {/* 메인 페이지 (보호된 경로) */}
-                <Route l
+                <Route
                     path="/" 
                     element={
                         <ProtectedRoute>
@@ -112,13 +112,21 @@ function App() {
 
                 {/* chat 페이지 test */}
                 <Route
-                    path="/chat_test"
-                    element={<ChatPage />} />
+                    path="/chat/:characterId"
+                    element={
+                        <ProtectedRoute>
+                            <ChatPage />
+                        </ProtectedRoute>
+                    } />
 
-                {/* 상점 페이지 test */}
+                {/* 마이 페이지 */}
                 <Route
                     path="/my_page"
-                    element={ <MyPage/>} />
+                    element={
+                        <ProtectedRoute>
+                            <MyPage/>
+                        </ProtectedRoute>
+                    } />
 
                 <Route path="/shop" element={<ShopPage />} />
 

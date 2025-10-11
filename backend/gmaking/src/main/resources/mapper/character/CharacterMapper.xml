@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.character.dao.CharacterDAO">
+
+    <select id="selectCharactersByUser" parameterType="string" resultType="com.project.gmaking.character.vo.CharacterVO">
+        SELECT *
+        FROM TB_CHARACTER
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <update id="incrementStageClear">
+        UPDATE TB_CHARACTER
+        SET TOTAL_STAGE_CLEARS = TOTAL_STAGE_CLEARS + 1,
+        UPDATED_DATE = NOW()
+        WHERE CHARACTER_ID = #{characterId}
+    </update>
+
+    <!-- 캐릭터 단건 조회 -->
+    <select id="selectCharacterById"
+            resultType="com.project.gmaking.character.vo.CharacterVO">
+        SELECT
+            CHARACTER_ID              AS characterId,
+            USER_ID                   AS userId,
+            IMAGE_ID                  AS imageId,
+            CHARACTER_PERSONALITY_ID  AS characterPersonalityId,
+            CHARACTER_NAME            AS characterName,
+            BACKGROUND_INFO           AS backgroundInfo,
+            GRADE_ID                  AS gradeId,
+            TOTAL_STAGE_CLEARS        AS totalStageClears,
+            EVOLUTION_STEP            AS evolutionStep,
+            CREATED_DATE              AS createdDate,
+            CREATED_BY                AS createdBy,
+            UPDATED_DATE              AS updatedDate,
+            UPDATED_BY                AS updatedBy
+        FROM TB_CHARACTER
+        WHERE CHARACTER_ID = #{characterId}
+        LIMIT 1
+    </select>
+
+    <!--  캐릭터 personality 단건 조회  -->
+    <select id="selectPersonalityById"
+            resultType="com.project.gmaking.character.vo.CharacterPersonalityVO">
+        SELECT
+        CHARACTER_PERSONALITY_ID AS characterPersonalityId,
+        PERSONALITY_DESCRIPTION  AS personalityDescription,
+        CREATED_DATE             AS createdDate,
+        CREATED_BY               AS createdBy,
+        UPDATED_DATE             AS updatedDate,
+        UPDATED_BY               AS updatedBy
+        FROM TB_CHARACTER_PERSONALITY
+        WHERE CHARACTER_PERSONALITY_ID = #{personalityId}
+        LIMIT 1
+    </select>
+
+    <!--  캐릭터 목록 조회  -->
+    <select id="selectCharactersForChat" parameterType="string" resultType="map">
+        SELECT
+            c.CHARACTER_ID AS id,
+            c.CHARACTER_NAME AS name,
+            CASE
+                WHEN i.IMAGE_NAME IS NULL THEN NULL
+                ELSE CONCAT('/static/character/', i.IMAGE_NAME)
+            END AS imageUrl
+        FROM TB_CHARACTER c
+        LEFT JOIN TB_IMAGE i ON c.IMAGE_ID = i.IMAGE_ID
+        WHERE c.USER_ID = #{userId}
+        ORDER BY c.UPDATED_DATE DESC
+    </select>
+
+</mapper>

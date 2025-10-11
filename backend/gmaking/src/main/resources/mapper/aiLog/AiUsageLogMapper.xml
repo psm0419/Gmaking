@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.project.gmaking.aiLog.dao.AiUsageLogDAO">
+
+    <insert id="upsertGeminiUsage">
+        INSERT INTO TB_AI_USAGE_LOG (
+            user_id, feature_type, model_name,
+            input_token, output_token, total_cost,
+            request_count, usage_status, error_message,
+            log_date, created_date, created_by, updated_date, updated_by
+        ) VALUES (
+            #{userId}, #{featureType}, #{modelName},
+            0, 0, 0,
+            1, #{usageStatus}, #{errorMessage},
+            CURRENT_DATE(), NOW(), #{actor}, NOW(), #{actor}
+        )
+        ON DUPLICATE KEY UPDATE
+            request_count = COALESCE(request_count,0) + 1,
+            usage_status  = VALUES(usage_status),
+            error_message = VALUES(error_message),
+            updated_date  = NOW(),
+            updated_by    = VALUES(updated_by)
+    </insert>
+</mapper>

@@ -2,7 +2,33 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { getMyPageSummary } from "../api/myPageApi"; 
+import { getMyPageSummary } from "../api/myPageApi";
+import { useNavigate } from "react-router-dom";
+
+
+// 이미지 경로 보정
+function toFullImageUrl(raw) {
+  const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
+  let url = raw || "/images/character/placeholder.png";
+
+  // 이미 절대 URL이면 그대로
+  if (/^https?:\/\//i.test(url)) return url;
+
+  // 1) /static/ 접두어 제거
+  url = url.replace(/^\/?static\//i, "/");
+
+  // 2) /character/ → /images/character/ 로 정규화
+  url = url.replace(/^\/?character\//i, "/images/character/");
+
+  // 3) 루트(/)로 시작하면 호스트만 붙임
+  if (url.startsWith("/")) return `${API_BASE}${url}`;
+
+  // 4) images/ 로 시작하면 / 하나 붙여서 호스트 결합
+  if (url.startsWith("images/")) return `${API_BASE}/${url}`;
+
+  // 5) 파일명만 온 경우 기본 폴더(images) 붙이기
+  return `${API_BASE}/images/${url}`;
+}
 
 /** 페이지 래퍼: 헤더 / 메인 / 푸터 */
 export default function MyPage() {
@@ -15,7 +41,15 @@ export default function MyPage() {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const userId = localStorage.getItem("gmaking_userId") || "master";
+  const userId = localStorage.getItem("gmaking_userId");
+
+  // 로그인 여부 확인
+  useEffect(() => {
+    if (!userId) {
+      alert("로그인 정보가 없습니다. 로그인 페이지로 이동합니다.");
+      window.location.href = "/login";
+    }
+  }, [userId]);
 
     useEffect(() => {
     (async () => {
@@ -29,7 +63,9 @@ export default function MyPage() {
           id: c.characterId,
           name: c.name,
           grade: c.grade,
-          image: c.imageUrl || "/assets/characters/placeholder.png",
+          image: toFullImageUrl(
+                      c.imageUrl || c.imageAddress || c.imagePath || c.imageName
+                    ),
           hp: null, def: null, atk: null, critRate: null,
         }));
         setCharacters(cards);
@@ -68,7 +104,7 @@ export default function MyPage() {
           nickname={profile?.nickname ?? "마스터 님"}
           ticketCount={profile?.ticketCount ?? 0}
           onPickClick={handlePick}
-          characters={characters} // ✅ 서버 데이터 전달
+          characters={characters} // 서버 데이터 전달
         />
       </main>
       <Footer />
@@ -81,13 +117,23 @@ function MyMain({
   nickname = "마스터 님",
   ticketCount = 5,
   onPickClick = () => {},
-  characters = [], // ✅ 부모가 내려줌
+  characters = [], // 부모가 내려줌
 }) {
   const [selected, setSelected] = useState(null);
   const onOpenCharacter = (c) => setSelected(c);
 
+  const navigate = useNavigate();
+
   const onGrow = () => alert(`${selected?.name} 성장시키기`);
-  const onChat = () => alert(`${selected?.name}와 대화하기`);
+
+  const onChat = () => {
+    if (selected?.id) {
+        navigate(`/chat/${selected.id}`);
+    } else {
+        alert("캐릭터를 먼저 선택하세요!");
+    }
+  };
+
   const onSend = () => alert(`${selected?.name} 보내기`);
 
   return (

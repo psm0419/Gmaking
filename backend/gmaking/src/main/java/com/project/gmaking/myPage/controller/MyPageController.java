@@ -1,8 +1,9 @@
-package com.project.gmaking.my_page.controller;
+package com.project.gmaking.myPage.controller;
 
-import com.project.gmaking.my_page.service.MyPageService;
-import com.project.gmaking.my_page.vo.CharacterCardVO;
-import com.project.gmaking.my_page.vo.MyPageProfileVO;
+import com.project.gmaking.myPage.service.MyPageService;
+import com.project.gmaking.myPage.vo.CharacterCardVO;
+import com.project.gmaking.myPage.vo.MyPageProfileVO;
+import com.project.gmaking.myPage.vo.MyPageSummaryVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,16 +43,18 @@ public class MyPageController {
 
     //요약 한번에 맏고 싶으면
     @GetMapping("/summary")
-    public Map<String, Object> summary(@RequestParam String userId,
-                                       @RequestParam(defaultValue = "6") int previewSize) {
+    public MyPageSummaryVO summary(
+            @RequestParam String userId,
+            @RequestParam(defaultValue = "6") int previewSize
+    ) {
         MyPageProfileVO profile = myPageService.getProfile(userId);
         List<CharacterCardVO> characters = myPageService.getCharacters(userId, 0, previewSize);
         int characterCount = myPageService.getCharacterCount(userId);
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("profile", profile);
-        res.put("characterCount", characterCount);
-        res.put("characters", characters);
-        return res;
+        return MyPageSummaryVO.builder()
+                .profile(profile)
+                .characterCount(characterCount)
+                .characters(characters)
+                .build();
     }
 }

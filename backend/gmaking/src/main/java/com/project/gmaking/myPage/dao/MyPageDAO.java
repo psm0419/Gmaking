@@ -1,7 +1,7 @@
-package com.project.gmaking.my_page.dao;
+package com.project.gmaking.myPage.dao;
 
-import com.project.gmaking.my_page.vo.CharacterCardVO;
-import com.project.gmaking.my_page.vo.MyPageProfileVO;
+import com.project.gmaking.myPage.vo.CharacterCardVO;
+import com.project.gmaking.myPage.vo.MyPageProfileVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

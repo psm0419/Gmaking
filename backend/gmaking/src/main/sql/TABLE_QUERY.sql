@@ -3,7 +3,7 @@
 -- =========================================================================================
 CREATE TABLE TB_ADVERTISEMENT
 (
-    AD_ID          VARCHAR(50)    NOT NULL PRIMARY KEY COMMENT '광고 ID',
+    AD_ID          INT(50)    NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '광고 ID',
     AD_NAME        VARCHAR(100)   NOT NULL COMMENT '광고 이름',
     AD_TYPE        VARCHAR(10)    NOT NULL COMMENT '광고 유형',
     AD_LOCATION    VARCHAR(50)    NOT NULL COMMENT '노출위치',
@@ -36,7 +36,9 @@ CREATE TABLE TB_AI_USAGE_LOG
     STATUS         ENUM('success', 'quota_exceeded', 'error') DEFAULT 'success' COMMENT '처리 상태',
     ERROR_MESSAGE  TEXT COMMENT '에러 메시지',
     LOG_DATE       DATE COMMENT '기록 일자',
-    CREATED_DATE   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자'
+    CREATED_DATE   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+
+    UNIQUE KEY uq_ai_usage_day (user_id, feature_type, model_name, log_date)
 ) COMMENT='AI 토큰 사용량 로그 정보';
 
 
@@ -352,6 +354,7 @@ CREATE TABLE TB_PRODUCT
     CURRENCY_TYPE VARCHAR(10)    NOT NULL DEFAULT 'KRW' COMMENT '통화 유형',
     IS_SALE       CHAR(1)        NOT NULL DEFAULT 'Y' COMMENT '판매 여부',
     CREATED_DATE  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+    DURATION_DAYS INT            COMMENT '사용기간(일단위, 영구적인경우 NULL',
     CREATED_BY    VARCHAR(50) COMMENT '생성자',
     UPDATED_DATE  DATETIME COMMENT '수정 일자',
     UPDATED_BY    VARCHAR(50) COMMENT '수정자'
@@ -447,3 +450,19 @@ CREATE TABLE TB_ENCOUNTER_RATE (
     DESCRIPTION VARCHAR(100),
     UPDATED_DATE DATETIME DEFAULT CURRENT_TIMESTAMP
 )COMMENT='보스몬스터 등장 확률';
+
+
+-- =========================================================================================
+-- TB_USER_INVENTORY (유저 보유 상점 아이템)
+-- =========================================================================================
+
+CREATE TABLE TB_USER_INVENTORY
+(
+		INVENTORY_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '인벤토리 ID',
+        USER_ID VARCHAR(50) NOT NULL COMMENT '유저 ID',
+        PRODUCT_ID INT NOT NULL COMMENT '상품 ID',
+		QUANTITY INT NOT NULL DEFAULT 0 COMMENT '보유개수',
+        EXPIRY_DATE DATETIME COMMENT '만료 일자 (무제한 NULL)',
+        ACQUIRED_DATE DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '획득 일자',
+		UPDATED_DATE  DATETIME COMMENT '수정 일자'
+) COMMENT ='유저 보유 상픔';

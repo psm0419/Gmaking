@@ -1,8 +1,8 @@
-package com.project.gmaking.my_page.service;
+package com.project.gmaking.myPage.service;
 
-import com.project.gmaking.my_page.dao.MyPageDAO;
-import com.project.gmaking.my_page.vo.CharacterCardVO;
-import com.project.gmaking.my_page.vo.MyPageProfileVO;
+import com.project.gmaking.myPage.dao.MyPageDAO;
+import com.project.gmaking.myPage.vo.CharacterCardVO;
+import com.project.gmaking.myPage.vo.MyPageProfileVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

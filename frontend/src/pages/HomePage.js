@@ -3,7 +3,7 @@ import { User, ChevronRight, Wand2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header'; 
 import Footer from '../components/Footer';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 
 // 가이드 링크를 위한 서브 컴포넌트
 const GuideLink = ({ title }) => (

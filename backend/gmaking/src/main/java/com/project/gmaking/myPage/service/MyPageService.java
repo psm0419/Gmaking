@@ -1,7 +1,7 @@
-package com.project.gmaking.my_page.service;
+package com.project.gmaking.myPage.service;
 
-import com.project.gmaking.my_page.vo.CharacterCardVO;
-import com.project.gmaking.my_page.vo.MyPageProfileVO;
+import com.project.gmaking.myPage.vo.CharacterCardVO;
+import com.project.gmaking.myPage.vo.MyPageProfileVO;
 
 import java.util.List;
 

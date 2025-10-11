@@ -1,0 +1,29 @@
+package com.project.gmaking.chat.dao;
+
+import com.project.gmaking.chat.vo.DialogueVO;
+import com.project.gmaking.chat.vo.PersonaVO;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.security.core.parameters.P;
+
+import java.util.List;
+
+@Mapper
+public interface ChatDAO {
+    // 기존의 대화방 검색
+    Integer findLatestConversationId(@Param("userId") String userId,
+                                     @Param("characterId") Integer characterId);
+
+    // 새로운 대화방 생성
+    int createConversation(@Param("userId") String userId,
+                           @Param("characterId") Integer characterId,
+                           @Param("actor") String actor);
+
+    // 대화 내역 추가
+    int insertDialogue(DialogueVO vo);
+
+    List<DialogueVO> selectRecentDialogues(@Param("conversationId") Integer conversationId,
+                                           @Param("limit") int limit);
+
+    PersonaVO selectPersonaByCharacterId(@Param("characterId") Integer characterId);
+}

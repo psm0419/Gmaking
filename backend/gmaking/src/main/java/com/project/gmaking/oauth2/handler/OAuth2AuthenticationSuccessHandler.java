@@ -109,8 +109,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         );
     }
 
-<<<<<<< HEAD
+
 }
-=======
-}
->>>>>>> origin/phj
+

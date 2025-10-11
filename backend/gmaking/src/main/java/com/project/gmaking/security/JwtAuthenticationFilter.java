@@ -24,12 +24,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final String AUTHORIZATION_HEADER = "Authorization";
     private final String BEARER_PREFIX = "Bearer ";
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         // Request Header에서 토큰 추출
         String jwt = resolveToken(request);
+
+        if (jwt == null) {
+            System.out.println("[SEC] " + request.getMethod() + " " + request.getRequestURI() + " Authorization=null");
+        } else {
+            System.out.println("[SEC] " + request.getMethod() + " " + request.getRequestURI()
+                    + " resolved jwt=" + jwt.substring(0, Math.min(12, jwt.length())) + "...");
+        }
 
         // 토큰 유효성 검증
         if (jwt != null && tokenProvider.validateToken(jwt)) {

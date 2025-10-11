@@ -3,6 +3,7 @@ package com.project.gmaking.config;
 
 import com.project.gmaking.security.JwtAuthenticationFilter;
 import com.project.gmaking.security.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -84,6 +85,9 @@ public class SecurityConfig {
                         // 모든 OPTIONS 요청을 인증 없이 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // 이미지
+                        .requestMatchers("/images/**", "/static/**").permitAll()
+
                         // 로그인 및 회원가입 경로는 인증 없이 누구나 접근 가능하도록 허용
                         .requestMatchers("/login", "/api/login", "/api/register").permitAll()
 
@@ -118,17 +122,25 @@ public class SecurityConfig {
 
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
+                // json 오류 응답
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json;charset=UTF-8");
+                            res.getWriter().write("{\"message\":\"unauthorized\"}");
+                        })
+                )
 
                 // JWT 필터 추가
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class
                 );
 
+
+
         return http.build();
     }
 
-<<<<<<< HEAD
+
 }
-=======
-}
->>>>>>> origin/phj
+

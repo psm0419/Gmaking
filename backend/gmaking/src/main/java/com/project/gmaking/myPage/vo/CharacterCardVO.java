@@ -1,4 +1,4 @@
-package com.project.gmaking.my_page.vo;
+package com.project.gmaking.myPage.vo;
 
 import lombok.*;
 
