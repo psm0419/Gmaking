@@ -5,7 +5,6 @@ import Footer from "../components/Footer";
 import { getMyPageSummary } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
 
-
 // 이미지 경로 보정
 function toFullImageUrl(raw) {
   const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
@@ -36,38 +35,46 @@ export default function MyPage() {
     alert("뽑으러가기!");
   };
 
- // 추가: 서버 데이터 상태
+  // 서버 데이터 상태
   const [profile, setProfile] = useState(null);
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const userId = localStorage.getItem("gmaking_userId");
 
-  // 로그인 여부 확인
+  // 로그인(토큰) 여부만 체크
   useEffect(() => {
-    if (!userId) {
+    const token = localStorage.getItem("gmaking_token");
+    if (!token) {
       alert("로그인 정보가 없습니다. 로그인 페이지로 이동합니다.");
       window.location.href = "/login";
     }
-  }, [userId]);
+  }, []);
 
-    useEffect(() => {
+  // 마이페이지 데이터 로드
+  useEffect(() => {
     (async () => {
       try {
+        setLoading(true);
 
-        const res = await getMyPageSummary(userId, 6);
+        // ✅ userId를 보내지 않습니다. (백엔드가 JWT에서 추출)
+        const res = await getMyPageSummary(6);
         const data = res.data;
 
         setProfile(data?.profile ?? null);
+
         const cards = (data?.characters ?? []).map((c) => ({
           id: c.characterId,
           name: c.name,
           grade: c.grade,
           image: toFullImageUrl(
-                      c.imageUrl || c.imageAddress || c.imagePath || c.imageName
-                    ),
-          hp: null, def: null, atk: null, critRate: null,
+            c.imageUrl || c.imageAddress || c.imagePath || c.imageName
+          ),
+          hp: null,
+          def: null,
+          atk: null,
+          critRate: null,
         }));
+
         setCharacters(cards);
         setError(null);
       } catch (e) {
@@ -77,8 +84,7 @@ export default function MyPage() {
         setLoading(false);
       }
     })();
-  }, [userId]);
-
+  }, []); // ✅ 의존성 비움
 
   if (loading) {
     return (
@@ -104,7 +110,7 @@ export default function MyPage() {
           nickname={profile?.nickname ?? "마스터 님"}
           ticketCount={profile?.ticketCount ?? 0}
           onPickClick={handlePick}
-          characters={characters} // 서버 데이터 전달
+          characters={characters}
         />
       </main>
       <Footer />
@@ -117,7 +123,7 @@ function MyMain({
   nickname = "마스터 님",
   ticketCount = 5,
   onPickClick = () => {},
-  characters = [], // 부모가 내려줌
+  characters = [],
 }) {
   const [selected, setSelected] = useState(null);
   const onOpenCharacter = (c) => setSelected(c);
@@ -128,9 +134,9 @@ function MyMain({
 
   const onChat = () => {
     if (selected?.id) {
-        navigate(`/chat/${selected.id}`);
+      navigate(`/chat/${selected.id}`);
     } else {
-        alert("캐릭터를 먼저 선택하세요!");
+      alert("캐릭터를 먼저 선택하세요!");
     }
   };
 
@@ -138,7 +144,7 @@ function MyMain({
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
-      {/* 프로필카드 + (선택 시) 상세패널을 같은 행에 배치 */}
+      {/* 프로필카드 + (선택 시) 상세패널 */}
       <div className="grid gap-6 md:grid-cols-[minmax(320px,540px),1fr] md:items-stretch">
         {/* 프로필 카드 */}
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
@@ -166,7 +172,7 @@ function MyMain({
           </div>
         </section>
 
-        {/* 선택된 캐릭터가 있으면 오른쪽 상세 패널 노출 */}
+        {/* 선택된 캐릭터가 있으면 상세 패널 */}
         {selected && (
           <CharacterDetail
             character={selected}
@@ -178,7 +184,9 @@ function MyMain({
       </div>
 
       {/* 섹션 타이틀 */}
-      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">내 캐릭터</h2>
+      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">
+        내 캐릭터
+      </h2>
 
       {/* 캐릭터 섹션 */}
       <CharacterSection
@@ -325,7 +333,6 @@ function NotificationBell() {
   const btnRef = useRef(null);
   const popRef = useRef(null);
   const gearRef = useRef(null);
-
 
   const newList = items.filter((i) => !i.read);
   const readList = items.filter((i) => i.read);
