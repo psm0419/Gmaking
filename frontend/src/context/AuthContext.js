@@ -135,6 +135,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(false);
         setHasCharacter(false);
         localStorage.removeItem('gmaking_token');
+        localStorage.removeItem('userId');
     };
 
 

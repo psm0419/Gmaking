@@ -105,7 +105,7 @@ public class SecurityConfig {
 
                         //  PVE 관련: 맵 조회는 비로그인도 허용
                         .requestMatchers("/api/pve/maps").permitAll()
-                        .requestMatchers("/api/pve/battle").permitAll()
+                        .requestMatchers("/api/pve/**").permitAll()
 
                         // 맵 ID를 경로 변수로 받는 /api/pve/maps/{mapId}/image 엔드포인트를 허용합니다.
                         .requestMatchers("/api/pve/maps/*/image").permitAll()
