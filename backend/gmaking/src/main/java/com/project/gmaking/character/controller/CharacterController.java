@@ -18,12 +18,12 @@ public class CharacterController {
 
     private final CharacterService characterService;
 
-
+    // GET /api/character/list?userId=xxxx
     @GetMapping("/list")
-    public List<CharacterVO> getCharactersByUser(@RequestParam String userId) {
-        return characterService.getCharactersByUser(userId);
+    public ResponseEntity<?> getCharacterList(@RequestParam String userId) {
+        List<CharacterVO> list = characterService.getCharactersByUser(userId);
+        return ResponseEntity.ok(list);
     }
 
 
 }
-

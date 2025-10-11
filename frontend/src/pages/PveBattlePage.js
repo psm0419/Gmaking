@@ -5,29 +5,47 @@ import { useLocation } from "react-router-dom";
 
 function PveBattlePage() {
     const location = useLocation();
-    const { mapId } = location.state || {}; // MapSelection에서 전달된 mapId
+    const { mapId } = location.state || {};
 
     const [characters, setCharacters] = useState([]);
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [logs, setLogs] = useState([]);
     const [isBattle, setIsBattle] = useState(false);
     const [result, setResult] = useState(null);
+    const [mapImageUrl, setMapImageUrl] = useState(null);
 
-    // 로그인한 유저 정보 (예: JWT 디코딩 또는 Context)
-    const userId = "sumin"; // 예시, 실제 구현시 Context나 Redux에서 가져오기
+    // localStorage에서 token과 userId 가져오기
+    const token = localStorage.getItem("gmaking_token");
+    const userId = localStorage.getItem("userId");
 
-    // 1️⃣ 로그인 유저 캐릭터 목록 가져오기
+    // MAP 이미지 가져오기
     useEffect(() => {
-        axios.get("/api/characters", { params: { userId } })
-            .then(res => {
-                console.log("캐릭터 데이터:", res.data);
-                if (Array.isArray(res.data)) setCharacters(res.data);
-                else setCharacters([]);
-            })
-            .catch(err => console.error(err));
-    }, [userId]);
+        if (mapId) {
+            axios
+                .get(`/api/pve/maps/${mapId}/image`, { withCredentials: true })
+                .then(res => setMapImageUrl(res.data.mapImageUrl))
+                .catch(err => console.error("맵 이미지 가져오기 실패:", err));
+        }
+    }, [mapId]);
 
-    // 2️⃣ 전투 시작
+    // 캐릭터 목록 가져오기
+    useEffect(() => {
+        if (!token || !userId) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        axios.get(`/api/character/list?userId=${userId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                setCharacters(Array.isArray(res.data) ? res.data : []);
+                console.log("캐릭터 데이터:", res.data);
+            })
+            .catch(err => console.error("캐릭터 목록 불러오기 실패:", err));
+    }, [token, userId]);
+
+    // 전투 시작
     const startBattle = async () => {
         if (!selectedCharacter) {
             alert("캐릭터를 선택하세요!");
@@ -45,11 +63,14 @@ function PveBattlePage() {
                 userId
             };
 
-            const res = await axios.post("/api/pve/battle/start", null, { params });
+            const res = await axios.post("/api/pve/battle/start", null, {
+                params,
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
             const data = res.data;
             const turnLogs = data.turnLogs || [];
 
-            // 턴별 로그 표시
             for (let i = 0; i < turnLogs.length; i++) {
                 await new Promise(r => setTimeout(r, 1000));
                 setLogs(prev => [...prev, turnLogs[i]]);
@@ -64,9 +85,18 @@ function PveBattlePage() {
         }
     };
 
+    const backgroundStyle = {
+        backgroundImage: mapImageUrl ? `url(${mapImageUrl})` : 'none',
+        backgroundColor: 'transparent',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+    };
+
     return (
-        <div className="flex flex-col items-center p-8 text-white bg-gray-900 min-h-screen">
-            <h1 className="text-3xl font-bold mb-6">PVE 전투</h1>
+        <div className="flex flex-col items-center p-8 text-white min-h-screen" style={backgroundStyle}>
+            <h1 className="text-3xl font-bold mb-6">PVE 전투 (맵 ID: {mapId})</h1>
 
             <div className="mb-4">
                 <h2 className="text-xl mb-2">캐릭터 선택</h2>
@@ -74,11 +104,27 @@ function PveBattlePage() {
                     {characters.map(char => (
                         <div
                             key={char.characterId}
-                            className={`p-4 border rounded-lg cursor-pointer ${selectedCharacter?.characterId === char.characterId ? "border-yellow-400" : "border-gray-500"}`}
+                            className={`p-4 border rounded-lg cursor-pointer ${selectedCharacter?.characterId === char.characterId
+                                    ? "border-yellow-400"
+                                    : "border-gray-500"
+                                }`}
                             onClick={() => setSelectedCharacter(char)}
                         >
-                            <img src={`/images/${char.imageId}`} alt={char.characterName} className="w-24 h-24 mb-2" />
-                            <div>{char.characterName}</div>
+                            <div className="flex justify-center mb-2">
+                                <img
+                                    src={`/images/character/${char.imageId}.png`}
+                                    alt={char.characterName}
+                                    className="w-24 h-24"
+                                />
+                            </div>
+                            <div className="font-bold text-lg text-black">{char.characterName}</div>
+                            {char.characterStat && (
+                                <div className="text-sm mt-2 text-black">
+                                    HP: {char.characterStat.characterHp} /
+                                    ATK: {char.characterStat.characterAttack} /
+                                    DEF: {char.characterStat.characterDefense}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -93,16 +139,10 @@ function PveBattlePage() {
             </button>
 
             <div className="mt-6 bg-gray-800 p-4 rounded-lg w-2/3 min-h-[300px] overflow-y-auto">
-                {logs.map((log, i) => (
-                    <p key={i} className="text-lg mb-1">{log}</p>
-                ))}
+                {logs.map((log, i) => <p key={i} className="text-lg mb-1">{log}</p>)}
             </div>
 
-            {result && (
-                <div className="mt-4 text-2xl font-bold">
-                    {result === "승리!" ? "승리!" : "패배..."}
-                </div>
-            )}
+            {result && <div className="mt-4 text-2xl font-bold">{result}</div>}
         </div>
     );
 }

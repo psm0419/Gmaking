@@ -13,6 +13,7 @@ public class CharacterVO {
     private String userId; // 사용자 ID (USER_ID)
     private String imageId; // 캐릭터 이미지 ID (IMAGE_ID)
     private Integer characterPersonalityId; // 캐릭터 성격 ID (CHARACTER_PERSONALITY_ID)
+    private String imageUrl;
     private String characterName; // 캐릭터 이름 (CHARACTER_NAME)
     private String backgroundInfo; // 배경 정보 (BACKGROUND_INFO)
     private Integer gradeId; // 캐릭터 등급 (GRADE_ID)
@@ -23,4 +24,6 @@ public class CharacterVO {
     private String createdBy; // 생성자 (CREATED_BY)
     private LocalDateTime updatedDate; // 수정 일자 (UPDATED_DATE)
     private String updatedBy; // 수정자 (UPDATED_BY)
+
+    private CharacterStatVO characterStat;
 }

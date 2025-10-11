@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.pve.dao.TurnLogDAO">
+
+    <!-- 턴 로그 저장 -->
+    <insert id="insertTurnLog" parameterType="com.project.gmaking.pve.vo.TurnLogVO" useGeneratedKeys="true" keyProperty="turnLogId">
+        INSERT INTO TB_TURN_LOG
+        (BATTLE_ID, TURN_NUMBER, ACTION_DETAIL, CREATED_DATE)
+        VALUES
+        (#{battleId}, #{turnNumber}, #{actionDetail}, NOW());
+    </insert>
+
+    <!-- 특정 전투의 턴 로그 조회 -->
+    <select id="selectTurnLogsByBattleId" parameterType="int" resultType="com.project.gmaking.pve.vo.TurnLogVO">
+        SELECT TURN_LOG_ID, BATTLE_ID, TURN_NUMBER, ACTION_DETAIL, CREATED_DATE
+        FROM TB_TURN_LOG
+        WHERE BATTLE_ID = #{battleId}
+        ORDER BY TURN_NUMBER ASC;
+    </select>
+
+</mapper>
