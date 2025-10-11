@@ -6,7 +6,7 @@
 <mapper namespace="com.project.gmaking.map.dao.MapDAO">
     <resultMap id="MapResultMap" type="com.project.gmaking.map.vo.MapVO">
         <id column="MAP_ID" property="mapId"/>
-        <result column="MAP_NAME" property="name"/>
+        <result column="MAP_NAME" property="mapName"/>
         <result property="mapImageUrl" column="MAP_IMAGE_URL"/> <result property="createdDate" column="CREATED_DATE"/>
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="CREATED_BY" property="createdBy"/>
@@ -23,7 +23,7 @@
     <select id="selectMapById" resultType="com.project.gmaking.map.vo.MapVO">
         SELECT
         MAP_ID AS mapId,
-        MAP_NAME AS name,
+        MAP_NAME AS mapName,
         MAP_IMAGE_URL AS mapImageUrl,
         CREATED_DATE AS createdDate,
         CREATED_BY AS createdBy,

@@ -34,14 +34,25 @@ public class PveBattleController {
     // 프론트엔드에서 axios.get(`/api/pve/maps/${mapId}/image`)로 호출합니다.
     @GetMapping("/maps/{mapId}/image")
     public ResponseEntity<Map<String, String>> getMapImageUrl(@PathVariable Integer mapId) {
-        String relativeUrl = pveBattleService.getMapImageUrl(mapId); // 예: /images/map/sea.jpg
 
-        // ⭐ 이 부분을 수정합니다! 서버 주소를 붙여 완전한 URL로 만듭니다.
+        // (수정) 맵 정보 전체를 가져옵니다.
+        // mapVO 클래스에 getMapImageUrl()과 getMapName()이 있다고 가정합니다.
+        MapVO map = pveBattleService.getMapDataById(mapId); // 새로 추가한 Service 메서드 사용
+
+        if (map == null) {
+            // 맵 정보가 없을 경우 404 응답
+            return ResponseEntity.notFound().build();
+        }
+
+        String relativeUrl = map.getMapImageUrl();
+        String mapName = map.getMapName(); // MapVO에서 맵 이름을 가져옴!
+
         String baseUrl = "http://localhost:8080"; // 실제 서버 포트로 변경해야 합니다.
         String absoluteUrl = baseUrl + relativeUrl;
 
         Map<String, String> response = new HashMap<>();
-        response.put("mapImageUrl", absoluteUrl); // 예: http://localhost:8080/images/map/sea.jpg
+        response.put("mapImageUrl", absoluteUrl);
+        response.put("mapName", mapName); // 맵 이름 추가
 
         return ResponseEntity.ok(response);
     }

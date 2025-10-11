@@ -16,6 +16,7 @@ public class MonsterVO {
     private Integer monsterHp; // 몬스터 체력 (Integer)
     private Integer monsterAttack; // 몬스터 공격력 (Integer)
     private Integer monsterDefense; // 몬스터 방어력 (Integer)
+    private Integer monsterSpeed; // 몬스터 스피드 (Integer)
     private Integer monsterCriticalRate; // 몬스터 크리티컬 확률 (Integer, Nullable)
 
     private LocalDateTime createdDate; // 생성 일자 (DATETIME)

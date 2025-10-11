@@ -41,14 +41,20 @@ public class PveBattleService {
         return mapDAO.selectAllMaps();
     }
 
-    // 맵 ID로 이미지 URL 조회
-    public String getMapImageUrl(Integer mapId) {
-        // DAO를 호출하여 MapVO 전체를 가져온 뒤, URL만 추출
-        MapVO map = mapDAO.selectMapById(mapId);
-
-        // 맵 정보가 null이 아니면 이미지 URL을 반환하고, 없으면 빈 문자열 또는 기본 URL 반환
-        return (map != null) ? map.getMapImageUrl() : "";
+    // (추가) 맵 ID로 MapVO 전체를 조회하는 메서드
+    public MapVO getMapDataById(Integer mapId) {
+        // MapDAO를 사용하여 맵 정보를 조회합니다.
+        return mapDAO.selectMapById(mapId);
     }
+
+//    // 맵 ID로 이미지 URL 조회
+//    public String getMapImageUrl(Integer mapId) {
+//        // DAO를 호출하여 MapVO 전체를 가져온 뒤, URL만 추출
+//        MapVO map = mapDAO.selectMapById(mapId);
+//
+//        // 맵 정보가 null이 아니면 이미지 URL을 반환하고, 없으면 빈 문자열 또는 기본 URL 반환
+//        return (map != null) ? map.getMapImageUrl() : "";
+//    }
 //    몬스터 조우
     public MonsterVO encounterMonster(Integer mapId) {
         List<EncounterRateVO> rates = encounterRateDAO.getEncounterRates();
@@ -91,7 +97,7 @@ public class PveBattleService {
                 "hp", monster.getMonsterHp(),
                 "attack", monster.getMonsterAttack(),
                 "defense", monster.getMonsterDefense(),
-                "speed", monster.getMonsterDefense(), // speed 없으므로 임시로 defense로 대체
+                "speed", monster.getMonsterSpeed(),
                 "criticalRate", monster.getMonsterCriticalRate()
         );
 
@@ -100,21 +106,24 @@ public class PveBattleService {
 
         // 승패 판정 (마지막 로그의 HP 기준)
         String lastLog = turnLogs.get(turnLogs.size() - 1);
-        boolean isWin = lastLog.contains("몬스터HP:0") || lastLog.contains("몬스터HP:0.0");
+        Double monsterFinalHp = extractMonsterHp(lastLog);
+
+        // 몬스터의 최종 HP가 0 이하인지 확인
+        boolean isWin = monsterFinalHp != null && monsterFinalHp <= 0.0;
 
         // DB 저장
-        BattleLogVO log = new BattleLogVO();
-        log.setCharacterId(character.getCharacterId());
-        log.setOpponentId(monster.getMonsterId());
-        log.setBattleType("PVE");
-        log.setIsWin(isWin ? "Y" : "N");
-        log.setTurnCount((long) turnLogs.size());
-        log.setCreatedBy(userId);
+        BattleLogVO battleLog = new BattleLogVO();
+        battleLog.setCharacterId(character.getCharacterId());
+        battleLog.setOpponentId(monster.getMonsterId());
+        battleLog.setBattleType("PVE");
+        battleLog.setIsWin(isWin ? "Y" : "N");
+        battleLog.setTurnCount((long) turnLogs.size());
+        battleLog.setCreatedBy(userId);
 
-        battleDAO.insertBattleLog(log);
+        battleDAO.insertBattleLog(battleLog);
 
         // ===== 배틀 ID 가져와서 턴 로그 저장 =====
-        Integer battleId = log.getBattleId(); // Mapper에서 useGeneratedKeys 설정 필요
+        Integer battleId = battleLog.getBattleId(); // Mapper에서 useGeneratedKeys 설정 필요
         int turnNum = 1;
         for (String turnDetail : turnLogs) {
             TurnLogVO turnLog = new TurnLogVO();
@@ -129,9 +138,30 @@ public class PveBattleService {
         }
 
         // 프론트 표시용
-        log.setTurnLogs(turnLogs);
+        battleLog.setTurnLogs(turnLogs);
 
-        return log;
+        return battleLog;
     }
 
+    private Double extractMonsterHp(String logDetail) {
+        // 1. "몬스터HP:" 다음부터 쉼표나 괄호가 나오기 전까지의 문자열을 찾습니다.
+        try {
+            int startIndex = logDetail.indexOf("몬스터HP:") + "몬스터HP:".length();
+            int endIndex = logDetail.indexOf(')', startIndex);
+
+            // 쉼표가 먼저 나오면 쉼표까지 자릅니다.
+            int commaIndex = logDetail.indexOf(',', startIndex);
+            if (commaIndex != -1 && commaIndex < endIndex) {
+                endIndex = commaIndex;
+            }
+
+            if (startIndex > -1 && endIndex > -1) {
+                String hpStr = logDetail.substring(startIndex, endIndex).trim();
+                return Double.parseDouble(hpStr);
+            }
+        } catch (Exception e) {
+            log.error("전투 로그에서 몬스터 HP 추출 실패: {}", logDetail, e);
+        }
+        return null; // 추출 실패 시
+    }
 }
