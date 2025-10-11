@@ -89,7 +89,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                
+
                 {/* 캐릭터 생성 페이지 */}
                 <Route 
                     path="/create-character" 

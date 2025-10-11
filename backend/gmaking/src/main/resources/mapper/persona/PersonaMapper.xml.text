@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.persona.dao.PersonaDAO">
+    <select id="findByCharacterId" resultType="com.project.gmaking.persona.vo.PersonaVO">
+        SELECT persona_id AS personaId,
+        character_id AS characterId,
+        instruction_prompt AS instructionPrompt,
+        created_at AS createdAt,
+        updated_at AS updatedAt
+        FROM tb_persona
+        WHERE character_id = #{characterId}
+        LIMIT 1
+    </select>
+</mapper>

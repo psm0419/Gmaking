@@ -37,6 +37,4 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
     public String getImageUrl() {
         return (String) profile.get("profile_image_url");
     }
-
 }
-
