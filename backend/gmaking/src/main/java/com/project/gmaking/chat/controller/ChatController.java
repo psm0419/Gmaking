@@ -2,8 +2,10 @@ package com.project.gmaking.chat.controller;
 
 import com.project.gmaking.aiLog.service.ChatUsageLogSevice;
 import com.project.gmaking.character.service.CharacterService;
+import com.project.gmaking.chat.service.ChatEnterService;
 import com.project.gmaking.chat.service.ChatService;
 import com.project.gmaking.chat.vo.DialogueVO;
+import com.project.gmaking.chat.vo.EnterResponseVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,8 +20,20 @@ import java.util.Map;
 @RequestMapping("/api/chat")
 public class ChatController {
     private final ChatService chatService;
+    private final ChatEnterService chatEnterService;
     private final ChatUsageLogSevice chatUsageLogService;
     private final CharacterService characterService;
+
+    // 채팅 입장: 페르소나 확인/생성 + 첫인사(프롬프트 기반) + 히스토리 반환
+    @PostMapping("/{characterId}/enter")
+    public ResponseEntity<EnterResponseVO> enterChat(
+            @PathVariable Integer characterId,
+            Authentication auth
+    ) {
+        String userId = auth.getName();
+        EnterResponseVO res = chatEnterService.enterChat(userId, characterId);
+        return ResponseEntity.ok(res);
+    }
 
     // 채팅 페이지에서 캐릭터 목록 가져오기
     @GetMapping("/characters")
@@ -29,20 +43,21 @@ public class ChatController {
         return ResponseEntity.ok(characters);
     }
 
+    // 유저 메시지 전송
     @PostMapping("/{characterId}/send")
     public ResponseEntity<Map<String, Object>> sendMessage(
             @PathVariable Integer characterId,
             @RequestBody Map<String, String> body
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userId = auth.getName(); // 일반적으로 username(userId)로 세팅되어 있음
+        String userId = auth.getName();
 
         String message = body.get("message");
         if (message == null || message.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "message는 필수입니다."));
         }
 
-        String modelName = "gemini-1.5-flash";
+        String modelName = "gemini-2.0-flash";
         String reply;
         String usageStatus = "success";
         String errorMessage = null;

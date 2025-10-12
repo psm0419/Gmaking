@@ -28,60 +28,66 @@ public class ChatEnterService {
     @Transactional
     public EnterResponseVO enterChat(String userId, Integer characterId) {
 
-        // 1) 대화방 없으면 생성
         Integer convId = chatDAO.findLatestConversationId(userId, characterId);
         if (convId == null) {
             chatDAO.createConversation(userId, characterId, userId);
             convId = chatDAO.findLatestConversationId(userId, characterId);
         }
 
-        // 2) 페르소나 확인/생성
         PersonaVO persona = personaDAO.selectPersonaByCharacterId(characterId);
         if (persona == null) {
             persona = personaService.ensurePersona(characterId, userId);
         }
 
-        // 3) 첫인사 여부 확인
-        ConversationVO conv = conversationDAO
-                .selectConversationByUserAndCharacter(userId, characterId);
-        boolean isFirst = conv != null && Boolean.TRUE.equals(conv.getIsFirstMeet());
+        // 첫 대화 여부: 유저가 아직 말 안했으면 true
+        int userMsgCount = chatDAO.countUserMessages(convId);
+        boolean isFirstMeet = (userMsgCount == 0);
 
-        String greeting = null;
-        if (isFirst) {
-            // ‘첫 만남 인사’ 요청 메시지
-            String firstGreetingAsk = """
-                    너는 지금 유저와 '첫 대화'를 시작한다.
-                    규칙:
-                    - 네 이름을 자연스럽게 밝힌다.
-                    - 앞으로 상대를 뭐라고 부르면 좋을지 1문장으로 정중히 묻는다.
-                    - 1~2문장, 친근하고 가볍게. 이모지는 최대 1개.
-                    - 캐릭터 성격/배경은 시스템 프롬프트에 주어진다.
-                    """;
+        if (isFirstMeet) {
+            // 캐릭터 메시지가 이미 있는지 확인
+            int characterMsgCount = chatDAO.countCharacterMessages(convId);
 
-            try {
-                greeting = llmClient.chat(persona.getInstructionPrompt(), firstGreetingAsk);
-            } catch (Exception e) {
-                greeting = "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?";
+            if (characterMsgCount > 0) {
+                // 이미 첫인사가 있음 → LLM 호출 스킵
+                // (혹시 중복이면 최신 1개만 남기고 정리)
+                chatDAO.deleteOldCharacterMessagesExceptLatest(convId);
+            } else {
+                // 아무 캐릭터 메시지도 없으면 첫인사 1개 생성
+                String firstGreetingAsk = """
+                너는 지금 유저와 '첫 대화'를 시작한다.
+                규칙:
+                - 네 이름을 자연스럽게 밝힌다.
+                - 앞으로 상대를 뭐라고 부르면 좋을지 1문장으로 정중히 묻는다.
+                - 1~2문장, 친근하고 가볍게. 이모지는 최대 1개.
+                - 캐릭터 성격/배경은 시스템 프롬프트에 주어진다.
+                """;
+
+                String greeting;
+                try {
+                    greeting = llmClient.chat(persona.getInstructionPrompt(), firstGreetingAsk);
+                    if (greeting == null || greeting.isBlank()) {
+                        greeting = "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?";
+                    }
+                } catch (Exception e) {
+                    greeting = "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?";
+                }
+
+                chatDAO.insertDialogue(DialogueVO.builder()
+                        .conversationId(convId)
+                        .sender(DialogueSender.character)
+                        .content(greeting)
+                        .createdBy(userId)
+                        .updatedBy(userId)
+                        .build());
             }
-
-            // 첫인사 대사 저장(플래그는 유저가 첫 메시지 보낼 때 끔)
-            chatDAO.insertDialogue(DialogueVO.builder()
-                    .conversationId(convId)
-                    .sender(DialogueSender.character)
-                    .content(greeting)
-                    .createdBy(userId)
-                    .updatedBy(userId)
-                    .build());
         }
 
-        // 4) 최근 대화 이력 (오래된→최신)
         List<DialogueVO> history = chatDAO.selectRecentDialogues(convId, 30);
 
-        // 5) 응답 조립
         return EnterResponseVO.builder()
                 .personaId(persona.getPersonaId())
-                .greetingMessage(greeting) // 첫입장일 때만 값 존재
-                .isFirstMeet(isFirst)
+                .greetingMessage(null)     // history에 포함되므로 굳이 별도 필드 필요 X
+                .isFirstMeet(isFirstMeet)
                 .history(history)
                 .build();
     }

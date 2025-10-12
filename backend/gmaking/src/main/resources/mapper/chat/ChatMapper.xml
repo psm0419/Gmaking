@@ -78,4 +78,35 @@
         LIMIT 1
     </select>
 
+    <!-- 유저 메시지 개수 -->
+    <select id="countUserMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'user'
+    </select>
+
+    <!-- 캐릭터 메시지 개수 -->
+    <select id="countCharacterMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'character'
+    </select>
+
+    <!-- 캐릭터 메시지: 최신 1개만 남기고 나머지 삭제 -->
+    <delete id="deleteOldCharacterMessagesExceptLatest">
+        DELETE FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'character'
+        AND message_id NOT IN (
+        SELECT x.max_id FROM (
+        SELECT MAX(message_id) AS max_id
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'character'
+        ) AS x
+        )
+    </delete>
+
 </mapper>
