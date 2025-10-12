@@ -35,4 +35,6 @@ public interface ChatDAO {
 
     // (중복 방지) 캐릭터 메시지 최신 1개만 남기고 나머지 삭제
     int deleteOldCharacterMessagesExceptLatest(@Param("conversationId") Integer conversationId);
+
+    int countAllMessagesToday(@Param("conversationId") Integer conversationId);
 }

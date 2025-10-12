@@ -12,7 +12,7 @@
         CHARACTER_ID    AS characterId,
         STATUS          AS status,
         IS_FIRST_MEET   AS isFirstMeet,
-        CALLING_NAME    AS callIngName,
+        CALLING_NAME    AS callingName,
         DELAY_LOG_CLEAN AS delayLogClean,
         CREATED_DATE    AS createdDate,
         CREATED_BY      AS createdBy,
@@ -31,6 +31,20 @@
         UPDATED_BY    = #{actor},
         UPDATED_DATE  = NOW()
         WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+    <select id="selectCallingName" resultType="string">
+        SELECT calling_name
+        FROM tb_conversation
+        WHERE conversation_id = #{conversationId}
+    </select>
+
+    <update id="updateCallingName">
+        UPDATE tb_conversation
+        SET calling_name = #{callingName},
+        updated_date = NOW(),
+        updated_by   = #{actor}
+        WHERE conversation_id = #{conversationId}
     </update>
 
 </mapper>

@@ -62,6 +62,7 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 페르소나 조회 -->
     <select id="selectPersonaByCharacterId"
             resultType="com.project.gmaking.chat.vo.PersonaVO">
         SELECT
@@ -108,5 +109,12 @@
         ) AS x
         )
     </delete>
+
+    <select id="countAllMessagesToday" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND chat_date = CURDATE()
+    </select>
 
 </mapper>

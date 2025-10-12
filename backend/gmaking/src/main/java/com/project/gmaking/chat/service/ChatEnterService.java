@@ -40,45 +40,43 @@ public class ChatEnterService {
         }
 
         // 첫 대화 여부: 유저가 아직 말 안했으면 true
-        int userMsgCount = chatDAO.countUserMessages(convId);
-        boolean isFirstMeet = (userMsgCount == 0);
+        ConversationVO conv = conversationDAO.selectConversationByUserAndCharacter(userId, characterId);
+        boolean isFirstMeet = conv != null && Boolean.TRUE.equals(conv.getIsFirstMeet());
+
+        String calling = conversationDAO.selectCallingName(convId);
+        String sysPrompt = (persona != null) ? persona.getInstructionPrompt() : "";
+        if (calling != null && !calling.isBlank()) {
+            sysPrompt += "\n\n[대화 지침 - 호칭]\n- 사용자를 '" + calling + "'로 호칭하라. 과도 반복은 피함.\n";
+        }
 
         if (isFirstMeet) {
-            // 캐릭터 메시지가 이미 있는지 확인
-            int characterMsgCount = chatDAO.countCharacterMessages(convId);
+            // 만남 첫 인사: 캐릭터 메시지 중복 방지(선택) 후 1회 생성
+            String ask = """
+            너는 지금 유저와 '첫 대화'를 시작한다.
+            규칙:
+            - 네 이름을 자연스럽게 밝힌다.
+            - 앞으로 상대를 뭐라고 부르면 좋을지 1문장으로 정중히 묻는다.
+            - 1~2문장, 친근하고 가볍게. 이모지는 최대 1개.
+        """;
+            String greeting = safeChat(sysPrompt, ask,
+                    "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?");
+            saveCharacterLine(convId, userId, greeting);
+            // isFirstMeet는 "유저가 첫 메시지 보낼 때" send()에서 false로 내림 (유지)
 
-            if (characterMsgCount > 0) {
-                // 이미 첫인사가 있음 → LLM 호출 스킵
-                // (혹시 중복이면 최신 1개만 남기고 정리)
-                chatDAO.deleteOldCharacterMessagesExceptLatest(convId);
-            } else {
-                // 아무 캐릭터 메시지도 없으면 첫인사 1개 생성
-                String firstGreetingAsk = """
-                너는 지금 유저와 '첫 대화'를 시작한다.
+        } else {
+            // 이미 만난 사이 → 하루 첫 인사: 오늘 메시지가 0일 때만
+            int todayAll = chatDAO.countAllMessagesToday(convId);
+            if (todayAll == 0) {
+                String ask = """
+                오늘의 첫 인사로 짧게 말을 걸어라.
                 규칙:
-                - 네 이름을 자연스럽게 밝힌다.
-                - 앞으로 상대를 뭐라고 부르면 좋을지 1문장으로 정중히 묻는다.
-                - 1~2문장, 친근하고 가볍게. 이모지는 최대 1개.
-                - 캐릭터 성격/배경은 시스템 프롬프트에 주어진다.
-                """;
-
-                String greeting;
-                try {
-                    greeting = llmClient.chat(persona.getInstructionPrompt(), firstGreetingAsk);
-                    if (greeting == null || greeting.isBlank()) {
-                        greeting = "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?";
-                    }
-                } catch (Exception e) {
-                    greeting = "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?";
-                }
-
-                chatDAO.insertDialogue(DialogueVO.builder()
-                        .conversationId(convId)
-                        .sender(DialogueSender.character)
-                        .content(greeting)
-                        .createdBy(userId)
-                        .updatedBy(userId)
-                        .build());
+                - 1~2문장, 가볍고 상냥하게.
+                - 어제 대화와 자연스럽게 연결되는 말투.
+                - 이모지는 최대 1개.
+            """;
+                String greeting = safeChat(sysPrompt, ask,
+                        "좋은 하루야! 오늘은 어떻게 시작하고 있어?");
+                saveCharacterLine(convId, userId, greeting);
             }
         }
 
@@ -90,5 +88,23 @@ public class ChatEnterService {
                 .isFirstMeet(isFirstMeet)
                 .history(history)
                 .build();
+    }
+
+    private String safeChat(String sys, String user, String fallback) {
+        try {
+            String r = llmClient.chat(sys, user);
+            return (r == null || r.isBlank()) ? fallback : r;
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+    private void saveCharacterLine(Integer convId, String userId, String content) {
+        chatDAO.insertDialogue(DialogueVO.builder()
+                .conversationId(convId)
+                .sender(DialogueSender.character)
+                .content(content)
+                .createdBy(userId)
+                .updatedBy(userId)
+                .build());
     }
 }
