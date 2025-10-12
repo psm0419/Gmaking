@@ -92,11 +92,21 @@ export default function ChatEntryPage() {
     [characters, selectedId]
   );
 
-  const enterChat = () => {
-    if (!selectedId) return;
-    // /chat?cid= 로 이동하여 ChatPage에서 해당 캐릭터를 선택하도록 함
-    navigate(`/chat/${encodeURIComponent(selectedId)}`);
-  };
+const enterChat = async () => {
+  if (!selectedId) return;
+  try {
+    // 입장 API 먼저 호출 (페르소나 생성 + 첫인사까지 서버에서 처리)
+    const { data } = await axiosInstance.post(`/chat/${selectedId}/enter`);
+
+    // 응답 payload를 state로 넘기면서 채팅 페이지로 이동
+    navigate(`/chat/${encodeURIComponent(selectedId)}`, {
+      state: { enterPayload: data },
+    });
+  } catch (e) {
+    console.error("입장 처리 실패:", e);
+    alert("채팅방 입장에 실패했습니다.");
+  }
+}
 
   return (
     <div className="min-h-screen w-full bg-gray-200/70 flex flex-col font-sans">
