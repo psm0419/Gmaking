@@ -13,6 +13,7 @@ import PveBattlePage from './pages/PveBattlePage';
 import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
+import ChatEntryPage from './pages/ChatEntryPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -110,7 +111,17 @@ function App() {
                     } 
                 />
 
-                {/* chat 페이지 test */}
+                {/* 채팅 입장 페이지 */}
+                <Route
+                    path="/chat-entry/:characterId"
+                    element={
+                        <ProtectedRoute>
+                            <ChatEntryPage/>
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* chat 페이지 */}
                 <Route
                     path="/chat/:characterId"
                     element={
@@ -121,7 +132,7 @@ function App() {
 
                 {/* 마이 페이지 */}
                 <Route
-                    path="/my_page"
+                    path="/my-page"
                     element={
                         <ProtectedRoute>
                             <MyPage/>

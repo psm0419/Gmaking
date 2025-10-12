@@ -216,6 +216,13 @@ CREATE TABLE TB_CONVERSATION
     UPDATED_AT      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 일시'
 ) COMMENT='사용자-캐릭터 대화 세션 정보';
 
+ALTER TABLE tb_conversation
+  ADD COLUMN status ENUM('OPEN','CLOSED') NOT NULL DEFAULT 'OPEN' COMMENT '대화 상태',
+  ADD COLUMN is_first_meet BOOLEAN NOT NULL DEFAULT TRUE COMMENT '첫 인사 단계 여부',
+  ADD COLUMN calling_name VARCHAR(50) NULL COMMENT '사용자 호칭(NULL이면 마스터로 처리)',
+  ADD COLUMN delay_log_clean BOOLEAN NOT NULL DEFAULT FALSE COMMENT '지연 삭제 플래그',
+  ADD INDEX idx_conv_user_char_status (user_id, character_id, status);
+
 -- =========================================================================================
 -- TB_DIALOGUE (대화 메시지 테이블)
 -- =========================================================================================
@@ -228,6 +235,10 @@ CREATE TABLE TB_DIALOGUE
     CHAT_DATE       DATE NOT NULL COMMENT '대화 날짜',
     CREATED_AT      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일시'
 ) COMMENT='대화 메시지 정보';
+
+ALTER TABLE tb_dialogue
+  ADD INDEX idx_dlg_conv (conversation_id),
+  ADD INDEX idx_dlg_conv_created (conversation_id, created_date);
 
 -- =========================================================================================
 -- TB_GROWTH_RULE (성장 규칙 테이블)

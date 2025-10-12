@@ -134,7 +134,7 @@ function MyMain({
 
   const onChat = () => {
     if (selected?.id) {
-      navigate(`/chat/${selected.id}`);
+      navigate(`/chat-entry/${selected.id}`);
     } else {
       alert("캐릭터를 먼저 선택하세요!");
     }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import axiosInstance from "../api/axiosInstance";
+import { useParams } from "react-router-dom";
 
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
 
@@ -59,6 +60,8 @@ function normalizeCharacters(payload) {
 }
 
 export default function ChatPage() {
+  const { characterId } = useParams();
+
   const [characters, setCharacters] = useState([]); // [{id, name, imageUrl}]
   const [selectedIdx, setSelectedIdx] = useState(0);
   const selectedCharacter = useMemo(
@@ -73,6 +76,22 @@ export default function ChatPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const endRef = useRef(null);
 
+  //히스토리 정규화 함수
+  function normalizeHistory(raw) {
+      const arr = Array.isArray(raw) ? raw : [];
+      return arr.map((m) => {
+        let s = m.sender;
+        if (s && typeof s !== "string") s = s.name ?? String(s);
+        s = (s || "").toLowerCase();
+
+        const role = s === "user" ? "user" : "assistant";
+        return {
+          id: m.id ?? m.messageId ?? `m-${Date.now()}`,
+          role,
+          content: m.content ?? m.message ?? "",
+        };
+      });
+  }
   // 스크롤 맨 아래로
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -85,8 +104,6 @@ export default function ChatPage() {
         setLoading(true);
         const res = await axiosInstance.get(API.characters);
 
-
-
         const list = (Array.isArray(res.data) ? res.data : res.data.characters || []).map((c) => ({
                   id: c.id ?? c.characterId,
                   name: c.name ?? c.characterName,
@@ -97,8 +114,15 @@ export default function ChatPage() {
 
         setCharacters(list);
         // 인덱스가 범위를 벗어나지 않게 보정
-        if (list.length && selectedIdx > list.length - 1) {
-          setSelectedIdx(0);
+        if (list.length) {
+          const preferId = characterId?.toString();
+          if (preferId) {
+            const idx = list.findIndex((c) => String(c.id) === preferId);
+            setSelectedIdx(idx >= 0 ? idx : 0);
+          } else {
+            // 파라미터 없으면 기존 보정 로직
+            if (selectedIdx > list.length - 1) setSelectedIdx(0);
+          }
         }
       } catch (e) {
         console.error("캐릭터 목록 조회 실패:", e);
@@ -124,7 +148,8 @@ export default function ChatPage() {
         const { data: hist } = await axiosInstance.get(
           API.history(selectedCharacter.id)
         );
-        const list = Array.isArray(hist) ? hist : [];
+        const list = normalizeHistory(hist);
+        list.reverse();
         setMessages(list);
 
         // 히스토리가 비어 있으면 기본 인사 추가

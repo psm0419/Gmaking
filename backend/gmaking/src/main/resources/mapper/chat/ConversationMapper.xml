@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.chat.dao.ConversationDAO">
+
+    <select id="selectConversationByUserAndCharacter"
+            resultType="com.project.gmaking.chat.vo.ConversationVO">
+        SELECT
+        CONVERSATION_ID AS conversationId,
+        USER_ID         AS userId,
+        CHARACTER_ID    AS characterId,
+        STATUS          AS status,
+        IS_FIRST_MEET   AS isFirstMeet,
+        CALLING_NAME    AS callIngName,
+        DELAY_LOG_CLEAN AS delayLogClean,
+        CREATED_DATE    AS createdDate,
+        CREATED_BY      AS createdBy,
+        UPDATED_DATE    AS updateDate,
+        UPDATED_BY      AS updateBy
+        FROM TB_CONVERSATION
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        ORDER BY CREATED_DATE DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateFirstMeetFlag">
+        UPDATE TB_CONVERSATION
+        SET IS_FIRST_MEET = #{isFirstMeet},
+        UPDATED_BY    = #{actor},
+        UPDATED_DATE  = NOW()
+        WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+</mapper>

@@ -53,7 +53,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // 구글 채팅 기능
-    implementation 'com.google.genai:google-genai:1.20.0'
+    implementation 'com.google.genai:google-genai:1.22.0'
 
     // Spring Security OAuth 2.0 Client
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'

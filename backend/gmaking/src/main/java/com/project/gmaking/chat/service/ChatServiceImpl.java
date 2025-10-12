@@ -1,5 +1,6 @@
 package com.project.gmaking.chat.service;
 
+import com.project.gmaking.chat.constant.DialogueSender;
 import com.project.gmaking.chat.dao.ChatDAO;
 import com.project.gmaking.chat.dao.PersonaDAO;
 import com.project.gmaking.chat.llm.LlmClient;
@@ -39,7 +40,8 @@ public class ChatServiceImpl implements ChatService {
 
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
-                .sender("user")
+                .sender(DialogueSender.user
+                )
                 .content(message)
                 .createdBy(userId)
                 .updatedBy(userId)
@@ -62,7 +64,7 @@ public class ChatServiceImpl implements ChatService {
         // 캐릭터 메세지 저장
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
-                .sender("character")
+                .sender(DialogueSender.character)
                 .content(reply)
                 .createdBy(userId)
                 .updatedBy(userId)
