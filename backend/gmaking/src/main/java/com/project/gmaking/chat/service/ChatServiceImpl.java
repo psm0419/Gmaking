@@ -73,10 +73,22 @@ public class ChatServiceImpl implements ChatService {
                 currentCalling
         );
 
+        // LLM 컨트렉트용 히스토리 구성
+        List<DialogueVO> recent = chatDAO.selectRecentDialogues(convId, 20); // 최신→오래된
+        java.util.Collections.reverse(recent); // 오래된→최신으로 정렬
+
+        if (!recent.isEmpty()) {
+            DialogueVO last = recent.get(recent.size() - 1);
+            if (last.getSender() == DialogueSender.user && message.equals(last.getContent())) {
+                // 이번 턴의 유저 발화(방금 insert 한 것)는 컨텍스트에서 제외
+                recent.remove(recent.size() - 1);
+            }
+        }
+
         // 5) LLM 호출
         String reply;
         try {
-            reply = llmClient.chat(systemPrompt, message);
+            reply = llmClient.chatWithHistory(systemPrompt, recent, message);
             if (reply == null || reply.isBlank()) reply = "빈 응답입니다.";
         } catch (Exception e) {
             log.error("Gemini error userId={}, characterId={}", userId, characterId, e);
