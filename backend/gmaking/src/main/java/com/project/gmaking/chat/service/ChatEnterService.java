@@ -27,7 +27,7 @@ public class ChatEnterService {
     private final PersonaService personaService;
     private final ConversationDAO conversationDAO;
     private final LlmClient llmClient;
-    private final LongMemoryService longMemoryService;
+    private final ConversationSummaryService conversationSummaryService;
 
     @Transactional
     public EnterResponseVO enterChat(String userId, Integer characterId) {
@@ -140,7 +140,7 @@ public class ChatEnterService {
         if (delayed == null || !delayed) return; // 딜레이 아니면 종료
 
         // 2) 요약 시도
-        boolean summarized = longMemoryService.summarizeAndSave(convId, actor);
+        boolean summarized = conversationSummaryService.summarizeAndSave(convId, actor);
         if (!summarized) {
             // 실패 시 보존: 플래그 유지 → 다음 입장/스케줄에 재시도
             return;

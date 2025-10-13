@@ -273,14 +273,46 @@ CREATE TABLE TB_IMAGE
 -- =========================================================================================
 -- TB_LONG_MEMORY (장기 기억 테이블)
 -- =========================================================================================
-CREATE TABLE TB_LONG_MEMORY (
-    MEMORY_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT '기억 ID',
-    CONVERSATION_ID INT NOT NULL COMMENT '대화 세션 ID',
-    MEMORY_DATE DATE NOT NULL COMMENT '기억 날짜',
-    SUMMARY TEXT NOT NULL COMMENT '요약 내용',
-    CREATED_AT DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일시',
-    UNIQUE KEY UQ_CONVERSATION_DATE (CONVERSATION_ID, MEMORY_DATE)
-) COMMENT='AI 장기 기억 정보';
+CREATE TABLE IF NOT EXISTS TB_LONG_MEMORY (
+  MEMORY_ID        INT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK',
+  USER_ID          VARCHAR(50)   NOT NULL COMMENT '유저 ID',
+  CHARACTER_ID     INT           NULL COMMENT '캐릭터 ID (전역 선호면 NULL)',
+  TYPE             ENUM('PROFILE','PREFERENCE','FACT','GOAL','CORRECTION','STYLE') NOT NULL COMMENT '메모리 유형',
+  SUBJECT          VARCHAR(100)  NOT NULL COMMENT '주제 키(예: tone, relationship, goal 등)',
+  VALUE            TEXT          NOT NULL COMMENT '1~2문장 요약(200~300자 권장)',
+  STRENGTH         TINYINT       NOT NULL DEFAULT 1 COMMENT '중요도/확신(1~5)',
+  LAST_USED_AT     DATETIME      NULL COMMENT '최근 프롬프트 사용 시각',
+  FIRST_SEEN_AT    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '최초 생성 시각',
+  SOURCE_CONV_ID   INT           NULL COMMENT '유래한 대화방 ID(선택)',
+  UPDATED_BY       VARCHAR(50)   NULL COMMENT '최근 갱신자',
+  UPDATED_DATE     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '최근 갱신 시각',
+  CONSTRAINT uq_ltm UNIQUE (USER_ID, CHARACTER_ID, TYPE, SUBJECT),
+  INDEX idx_ltm_user_char (USER_ID, CHARACTER_ID),
+  INDEX idx_ltm_last_used (LAST_USED_AT),
+  INDEX idx_ltm_strength (STRENGTH)
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  COMMENT='LTM: 사용자/캐릭터별 지속 규칙·선호·정정·목표. 동일 주제는 업서트로 덮어씀';
+
+
+-- =========================================================================================
+-- TB_CONVERSATION_SUMMARY (대화 요약)
+-- =========================================================================================
+
+CREATE TABLE IF NOT EXISTS TB_CONVERSATION_SUMMARY (
+  CONVERSATION_ID  INT        NOT NULL PRIMARY KEY COMMENT '대화방 ID (1방=1행 롤링)',
+  ROLLING_SUMMARY  TEXT       NOT NULL COMMENT '최근 맥락 1장 요약(600~800자 권장)',
+  SUMMARY_VERSION  INT        NOT NULL DEFAULT 1 COMMENT '요약 수정 회차(선택)',
+  LAST_TURN_ID     INT        NULL COMMENT '마지막 반영된 턴/메시지 ID(선택)',
+  LENGTH_CHARS     INT        NULL COMMENT 'ROLLING_SUMMARY 길이(모니터링용)',
+  UPDATED_BY       VARCHAR(50) NULL COMMENT '최근 갱신자',
+  UPDATED_DATE     DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '최근 갱신 시각',
+  INDEX idx_summary_updated (UPDATED_DATE)
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  COMMENT='대화 요약(Recent): 진행 중 매 턴 덮어쓰기. 프롬프트에는 항상 이 1장만 사용';
 
 -- =========================================================================================
 -- TB_MINI_GAME (미니 게임 테이블)

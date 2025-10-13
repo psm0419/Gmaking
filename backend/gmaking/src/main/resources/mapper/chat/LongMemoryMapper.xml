@@ -3,10 +3,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.project.gmaking.chat.dao.LongMemoryDAO">
+<mapper namespace="com.project.gmaking.chat.dao.ConversationSummaryDAO">
 
     <!-- 매핑 -->
-    <resultMap id="LongMemoryResultMap" type="com.project.gmaking.chat.vo.LongMemoryVO">
+    <resultMap id="LongMemoryResultMap" type="com.project.gmaking.chat.vo.ConversationSummaryVO">
         <id     column="MEMORY_ID"        property="memoryId"/>
         <result column="CONVERSATION_ID"  property="conversationId"/>
         <result column="MEMORY_DATE"      property="memoryDate"/>
@@ -19,7 +19,7 @@
     </resultMap>
 
     <!-- INSERT -->
-    <insert id="insert" parameterType="com.project.gmaking.chat.vo.LongMemoryVO" useGeneratedKeys="true" keyProperty="memoryId">
+    <insert id="insert" parameterType="com.project.gmaking.chat.vo.ConversationSummaryVO" useGeneratedKeys="true" keyProperty="memoryId">
         INSERT INTO TB_LONG_MEMORY (
         CONVERSATION_ID,
         MEMORY_DATE,

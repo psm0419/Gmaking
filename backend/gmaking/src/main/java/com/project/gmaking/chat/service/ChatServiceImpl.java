@@ -26,7 +26,7 @@ public class ChatServiceImpl implements ChatService {
     private final PersonaService personaService;
     private final ConversationDAO conversationDAO;
     private final CallingNameExtractor callingNameExtractor;
-    private final LongMemoryService longMemoryService;
+    private final ConversationSummaryService conversationSummaryService;
 
 
     @Override
@@ -141,7 +141,7 @@ public class ChatServiceImpl implements ChatService {
         // 동시성 방지 위해 FOR UPDATE로 읽는 DAO 쿼리 권장
         Boolean delayed = conversationDAO.selectDelayLogCleanForUpdate(convId);
         if (Boolean.TRUE.equals(delayed)) {
-            boolean summarized = longMemoryService.summarizeAndSave(convId, actor);
+            boolean summarized = conversationSummaryService.summarizeAndSave(convId, actor);
             if (!summarized) {
                 // 요약 실패 시 삭제하지 않음 (데이터 보존)
                 return;

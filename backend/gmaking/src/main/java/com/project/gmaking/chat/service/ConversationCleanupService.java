@@ -18,10 +18,10 @@ public class ConversationCleanupService {
 
     private final ConversationDAO conversationDAO;
     private final ChatDAO chatDAO;
-    private final LongMemoryService longMemoryService;
+    private final ConversationSummaryService conversationSummaryService;
 
 
-    /** 한 번 실행에 한 페이지만 처리 (무한루프 방지) */
+    /** 한 번 실행에 한 페이지만 처리 */
     @Transactional
     public int cleanClosedConversationsBatch(int batchSize) {
         List<Integer> ids = conversationDAO.findConversationIdsByStatusPaged(ConversationStatus.CLOSED, batchSize);
@@ -57,7 +57,7 @@ public class ConversationCleanupService {
         }
 
         // 요약 시도
-        boolean summarized = longMemoryService.summarizeAndSave(convId, "system@cleaner");
+        boolean summarized = conversationSummaryService.summarizeAndSave(convId, "system@cleaner");
         if (!summarized) {
             // 다음 회차에 재시도 (updated_date만 갱신)
             conversationDAO.touch(convId, "system@cleaner");

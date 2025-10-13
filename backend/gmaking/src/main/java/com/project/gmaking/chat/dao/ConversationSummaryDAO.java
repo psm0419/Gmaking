@@ -1,23 +1,23 @@
 package com.project.gmaking.chat.dao;
 
-import com.project.gmaking.chat.vo.LongMemoryVO;
+import com.project.gmaking.chat.vo.ConversationSummaryVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 @Mapper
-public interface LongMemoryDAO {
+public interface ConversationSummaryDAO {
 
-    int insert(LongMemoryVO vo);
+    int insert(ConversationSummaryVO vo);
 
-    LongMemoryVO selectById(@Param("memoryId") Integer memoryId);
+    ConversationSummaryVO selectById(@Param("memoryId") Integer memoryId);
 
     /* 해당 대화의 가장 최근 롱메모리 한 건 */
-    LongMemoryVO selectLatestByConversationId(@Param("conversationId") Integer conversationId);
+    ConversationSummaryVO selectLatestByConversationId(@Param("conversationId") Integer conversationId);
 
     /* 해당 대화의 롱메모리 목록 (최신순, 페이징) */
-    List<LongMemoryVO> selectByConversationId(
+    List<ConversationSummaryVO> selectByConversationId(
             @Param("conversationId") Integer conversationId,
             @Param("limit") Integer limit,
             @Param("offset") Integer offset

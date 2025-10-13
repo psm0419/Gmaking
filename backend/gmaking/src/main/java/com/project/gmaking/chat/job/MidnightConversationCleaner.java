@@ -1,16 +1,10 @@
 package com.project.gmaking.chat.job;
 
-import com.project.gmaking.chat.dao.ChatDAO;
-import com.project.gmaking.chat.dao.ConversationDAO;
 import com.project.gmaking.chat.service.ConversationCleanupService;
-import com.project.gmaking.chat.service.LongMemoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Component

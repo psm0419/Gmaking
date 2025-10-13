@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LongMemoryVO {
+public class ConversationSummaryVO {
     private Integer memoryId;
     private Integer conversationId;
     private LocalDate memoryDate;

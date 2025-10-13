@@ -2,10 +2,10 @@ package com.project.gmaking.chat.service;
 
 import com.project.gmaking.chat.dao.ChatDAO;
 import com.project.gmaking.chat.dao.ConversationDAO;
-import com.project.gmaking.chat.dao.LongMemoryDAO;
+import com.project.gmaking.chat.dao.ConversationSummaryDAO;
 import com.project.gmaking.chat.llm.LlmClient;
 import com.project.gmaking.chat.vo.DialogueVO;
-import com.project.gmaking.chat.vo.LongMemoryVO;
+import com.project.gmaking.chat.vo.ConversationSummaryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,11 +16,11 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LongMemoryService {
+public class ConversationSummaryService {
     private final ChatDAO chatDAO;
     private final ConversationDAO conversationDAO;
     private final LlmClient llmClient;
-    private final LongMemoryDAO longMemoryDAO;
+    private final ConversationSummaryDAO conversationSummaryDAO;
 
 
     @Transactional
@@ -28,14 +28,14 @@ public class LongMemoryService {
         // 메타 확인
         var conv = conversationDAO.selectById(convId); // 없으면 null
         if (conv == null) {
-            log.warn("LongMemory: conversation not found. convId={}", convId);
+            log.warn("ConversationSummary: conversation not found. convId={}", convId);
             return false;
         }
 
         // 최근 N개만 (예: 100개) — 너무 길면 모델 품질/비용 저하
         List<DialogueVO> logs = chatDAO.selectRecentDialogues(convId, 100);
         if (logs == null || logs.isEmpty()) {
-            log.info("LongMemory: no logs to summarize. convId={}", convId);
+            log.info("ConversationSummary: no logs to summarize. convId={}", convId);
             return false;
         }
 
@@ -54,26 +54,26 @@ public class LongMemoryService {
             // LlmClient.chat(systemPrompt, userMessage) 시그니처에 맞춤
             summary = llmClient.chat(systemPrompt, textBlock);
         } catch (Exception e) {
-            log.error("LongMemory: LLM summarize failed. convId={}", convId, e);
+            log.error("ConversationSummary: LLM summarize failed. convId={}", convId, e);
             return false;
         }
 
         if (summary == null || summary.isBlank()) {
-            log.warn("LongMemory: empty summary. convId={}", convId);
+            log.warn("ConversationSummary : empty summary. convId={}", convId);
             return false;
         }
 
-        // TB_LONG_MEMORY는 summary만 저장 (memory_date/created_date는 DB default)
-        LongMemoryVO vo = LongMemoryVO.builder()
+        // TB_Conversation_Summary는 summary만 저장 (memory_date/created_date는 DB default)
+        ConversationSummaryVO vo = ConversationSummaryVO.builder()
                 .conversationId(convId)
                 .summary(summary)
                 .createdBy(actor)
                 .updatedBy(actor)
                 .build();
 
-        int inserted = longMemoryDAO.insert(vo);
+        int inserted = conversationSummaryDAO.insert(vo);
         if (inserted != 1) {
-            log.error("LongMemory: insert failed. convId={}", convId);
+            log.error("ConversationSummary: insert failed. convId={}", convId);
             return false;
         }
         return true;
