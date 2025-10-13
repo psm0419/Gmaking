@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom";
 function PveBattlePage() {
     const location = useLocation();
     const { mapId } = location.state || {};
-    const [mapName, setMapName] = useState(null); 
+    const [mapName, setMapName] = useState(null);
     const [characters, setCharacters] = useState([]);
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [logs, setLogs] = useState([]);
@@ -14,25 +14,21 @@ function PveBattlePage() {
     const [result, setResult] = useState(null);
     const [mapImageUrl, setMapImageUrl] = useState(null);
 
-    // localStorage에서 token과 userId 가져오기
     const token = localStorage.getItem("gmaking_token");
     const userId = localStorage.getItem("userId");
 
-    // MAP 이미지 가져오기
     useEffect(() => {
         if (mapId) {
             axios
                 .get(`/api/pve/maps/${mapId}/image`, { withCredentials: true })
                 .then(res => {
                     setMapImageUrl(res.data.mapImageUrl);
-                    // 맵 이름 상태 저장
                     setMapName(res.data.mapName);
                 })
                 .catch(err => console.error("맵 이미지/이름 가져오기 실패:", err));
         }
     }, [mapId]);
 
-    // 캐릭터 목록 가져오기
     useEffect(() => {
         if (!token || !userId) {
             alert("로그인이 필요합니다.");
@@ -49,8 +45,7 @@ function PveBattlePage() {
             .catch(err => console.error("캐릭터 목록 불러오기 실패:", err));
     }, [token, userId]);
 
-    // 전투 시작
-    const startBattle = async () => {
+    const startBattle = () => {
         if (!selectedCharacter) {
             alert("캐릭터를 선택하세요!");
             return;
@@ -60,33 +55,46 @@ function PveBattlePage() {
         setResult(null);
         setIsBattle(true);
 
-        try {
-            const params = {
-                characterId: selectedCharacter.characterId,
-                mapId,
-                userId
-            };
+        const eventSource = new EventSource(
+            `/api/pve/battle/stream?characterId=${selectedCharacter.characterId}&mapId=${mapId}&userId=${userId}`,
+            { withCredentials: true }
+        );
 
-            const res = await axios.post("/api/pve/battle/start", null, {
-                params,
-                headers: { Authorization: `Bearer ${token}` }
-            });
+        eventSource.onopen = () => {
+            console.log("SSE 연결 성공:", new Date().toISOString());
+        };
 
-            const data = res.data;
-            const turnLogs = data.turnLogs || [];
+        eventSource.addEventListener("turnLog", (event) => {
+            console.log("턴 로그 수신:", event.data, new Date().toISOString());
+            setLogs(prev => [...prev, event.data]);
+        });
 
-            for (let i = 0; i < turnLogs.length; i++) {
-                await new Promise(r => setTimeout(r, 1000));
-                setLogs(prev => [...prev, turnLogs[i]]);
-            }
-
+        eventSource.addEventListener("battleResult", (event) => {
+            console.log("전투 결과 수신:", event.data, new Date().toISOString());
+            const data = JSON.parse(event.data);
             setResult(data.isWin === "Y" ? "승리!" : "패배...");
-        } catch (e) {
-            console.error("전투 시작 실패:", e);
-            setLogs(["전투 시작 실패"]);
-        } finally {
             setIsBattle(false);
-        }
+            eventSource.close();
+        });
+
+        eventSource.addEventListener("error", (event) => {
+            console.error("SSE 에러 이벤트:", event.data, new Date().toISOString());
+            setLogs(prev => [...prev, event.data || "전투 중 오류가 발생했습니다."]);
+            setIsBattle(false);
+            eventSource.close();
+        });
+
+        eventSource.onerror = (err) => {
+            console.error("SSE 연결 에러:", err, new Date().toISOString());
+            setLogs(prev => [...prev, "전투 중 연결 오류가 발생했습니다."]);
+            setIsBattle(false);
+            eventSource.close();
+        };
+
+        return () => {
+            console.log("SSE 연결 종료:", new Date().toISOString());
+            eventSource.close();
+        };
     };
 
     const backgroundStyle = {
@@ -102,7 +110,7 @@ function PveBattlePage() {
         <div className="flex flex-col items-center p-8 min-h-screen" style={backgroundStyle}>
             <h1 className="text-3xl font-bold mb-6">
                 PVE 전투 ({mapName ? mapName : `맵 ID: ${mapId}`})
-            </h1> 
+            </h1>
 
             <div className="mb-4">
                 <h2 className="text-xl mb-2">캐릭터 선택</h2>
@@ -126,9 +134,15 @@ function PveBattlePage() {
                             <div className="font-bold text-lg">{char.characterName}</div>
                             {char.characterStat && (
                                 <div className="text-sm mt-2 text-black">
-                                    HP: {char.characterStat.characterHp} /
-                                    ATK: {char.characterStat.characterAttack} /
-                                    DEF: {char.characterStat.characterDefense}
+                                    <div>
+                                        HP: {char.characterStat.characterHp} /
+                                        ATK: {char.characterStat.characterAttack} /
+                                        DEF: {char.characterStat.characterDefense}
+                                    </div>
+                                    <div>
+                                        SPEED: {char.characterStat.characterSpeed} /
+                                        CRITICAL: {char.characterStat.criticalRate}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -146,13 +160,16 @@ function PveBattlePage() {
 
             <div
                 className="mt-6 bg-gray-900/80 p-6 rounded-xl w-3/5 min-h-[300px] overflow-y-auto border border-gray-700"
-                style={{ maxHeight: '50vh' }} // 화면 높이의 50%를 최대 높이로 제한
+                style={{ maxHeight: '50vh' }}
             >
-                {logs.map((log, i) =>
-                    <p key={i} className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150">
+                {logs.map((log, i) => (
+                    <pre
+                        key={i}
+                        className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 whitespace-pre-wrap"
+                    >
                         {log}
-                    </p>
-                )}
+                    </pre>
+                ))}
             </div>
 
             {result && <div className="mt-4 text-2xl font-bold">{result}</div>}

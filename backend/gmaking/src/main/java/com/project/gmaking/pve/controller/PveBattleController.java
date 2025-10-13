@@ -2,6 +2,7 @@ package com.project.gmaking.pve.controller;
 
 import com.project.gmaking.character.service.CharacterService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,6 +15,7 @@ import com.project.gmaking.pve.vo.MonsterVO;
 import com.project.gmaking.pve.vo.BattleLogVO;
 import com.project.gmaking.map.vo.MapVO;
 import com.project.gmaking.character.vo.CharacterVO;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/pve")
@@ -64,7 +66,6 @@ public class PveBattleController {
         return ResponseEntity.ok(monster);
     }
 
-
     // 전투 시작
     @PostMapping("/battle/start")
     public ResponseEntity<BattleLogVO> startBattle(
@@ -75,5 +76,20 @@ public class PveBattleController {
         MonsterVO monster = pveBattleService.encounterMonster(mapId);
         BattleLogVO result = pveBattleService.startBattle(characterId, monster, userId);
         return ResponseEntity.ok(result);
+    }
+
+    // New SSE endpoint for streaming battle logs
+    @GetMapping(value = "/battle/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamBattle(
+            @RequestParam Integer characterId,
+            @RequestParam Integer mapId,
+            @RequestParam String userId) {
+        SseEmitter emitter = new SseEmitter(0L); // 타임아웃을 무제한으로 설정하지 않고, 0으로 설정하여 기본값 사용
+        try {
+            pveBattleService.startBattleStream(characterId, mapId, userId, emitter);
+        } catch (Exception e) {
+            emitter.completeWithError(e);
+        }
+        return emitter;
     }
 }

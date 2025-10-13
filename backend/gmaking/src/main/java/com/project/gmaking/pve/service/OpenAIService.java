@@ -1,101 +1,90 @@
 package com.project.gmaking.pve.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
-import java.net.URI;
 import java.net.http.*;
+import java.net.URI;
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class OpenAIService {
 
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String MODEL = "gpt-4o-mini"; // 모델은 비용/속도에 따라 변경 가능
+    private static final String MODEL = "gpt-4o-mini";
     private static final ObjectMapper mapper = new ObjectMapper();
+    private final HttpClient client = HttpClient.newHttpClient();
 
-    public List<String> generateBattleLog(Map<String, Object> character, Map<String, Object> monster) {
-        try {
-            String apiKey = System.getenv("OPENAI_API_KEY");
-            if (apiKey == null) {
-                throw new IllegalStateException("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.");
+    /**
+     * 비동기 note 생성 (damage, critical 반영)
+     */
+    public CompletableFuture<String> requestGPTNote(Map<String, Object> turnData) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String apiKey = System.getenv("OPENAI_API_KEY");
+                if (apiKey == null) throw new IllegalStateException("OPENAI_API_KEY 없음");
+
+                String prompt = String.format("""
+                                한 턴 전투에 대한 코믹한 note를 생성하세요.
+                                공격자: %s
+                                방어자: %s
+                                데미지: %d
+                                크리티컬: %s
+                                절대 데미지 수치 언급 금지
+                                - JSON 형식으로 {"note":"..."}만 반환
+                                """,
+                        turnData.get("actor"),
+                        turnData.get("target"),
+                        turnData.get("damage"),
+                        turnData.get("critical")
+                );
+
+                Map<String, Object> body = Map.of(
+                        "model", MODEL,
+                        "messages", List.of(
+                                Map.of("role", "system", "content", "You are a funny combat narrator."),
+                                Map.of("role", "user", "content", prompt)
+                        ),
+                        "temperature", 0.4
+                );
+
+                String json = mapper.writeValueAsString(body);
+
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(API_URL))
+                        .timeout(Duration.ofSeconds(30))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + apiKey)
+                        .POST(HttpRequest.BodyPublishers.ofString(json))
+                        .build();
+
+                HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+
+                // **응답 로그 출력**
+                System.out.println("[GPT 원본 응답] " + res.body());
+
+                if (res.statusCode() != 200) {
+                    System.err.println("[GPT 호출 실패] HTTP 상태: " + res.statusCode());
+                    return "{\"note\":\"[GPT 호출 실패: HTTP 오류]\"}";
+                }
+
+                var node = mapper.readTree(res.body());
+                String content = node.path("choices").get(0).path("message").path("content").asText();
+
+                // **파싱 전 note 내용 확인**
+                System.out.println("[GPT 파싱 전 note] " + content);
+
+                return content;
+
+            } catch (Exception e) {
+                System.err.println("[GPT 호출 실패] 이유: " + e.getMessage());
+                e.printStackTrace();
+                return "{\"note\":\"[GPT 호출 실패: " + e.getClass().getSimpleName() + "]\"}";
             }
-
-            // GPT 프롬프트
-            String prompt = String.format("""
-                두 전투자의 스탯을 기반으로 턴제 전투를 시뮬레이션하세요.
-                속도가 높은 쪽이 선공합니다.
-                전투는 한쪽 HP가 0 이하가 되면 종료됩니다.
-                HP는 정수로 계산하는 것을 선호하지만, 소수점이 나와도 됩니다.
-                JSON 배열 형태로 결과를 출력하세요. 각 턴은 아래 형식을 따라야 합니다:
-
-                [
-                  {"turn":1, "actor":"플레이어", "action":"공격", "damage":15, "monsterHp":85, "playerHp":100, "note":null},
-                  ...
-                ]
-
-                플레이어: %s
-                몬스터: %s
-                """, mapper.writeValueAsString(character), mapper.writeValueAsString(monster));
-
-            // 요청 메시지 구조
-            var messages = List.of(
-                    Map.of("role", "system", "content", "You are a game combat simulator."),
-                    Map.of("role", "user", "content", prompt)
-            );
-
-            var body = Map.of(
-                    "model", MODEL,
-                    "messages", messages,
-                    "temperature", 0.3
-            );
-
-            String json = mapper.writeValueAsString(body);
-
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
-
-            var node = mapper.readTree(res.body());
-            String content = node.path("choices").get(0).path("message").path("content").asText();
-
-            // JSON 배열만 추출
-            int start = content.indexOf('[');
-            int end = content.lastIndexOf(']');
-            if (start == -1 || end == -1) throw new RuntimeException("응답에서 JSON 배열을 찾지 못했습니다.");
-            String jsonArray = content.substring(start, end + 1);
-
-            // JSON → List<String> 변환 (턴 로그만 추출)
-            var turns = mapper.readValue(jsonArray, new TypeReference<List<Map<String, Object>>>() {});
-            List<String> logs = new ArrayList<>();
-            for (Map<String, Object> t : turns) {
-                logs.add(String.format(
-                        "턴 %d: %s가 %s으로 %d 데미지를 입힘 (플레이어HP:%s, 몬스터HP:%s)",
-                        ((Number)t.get("turn")).intValue(),
-                        t.get("actor"),
-                        t.get("action"),
-                        ((Number)t.get("damage")).intValue(),
-                        t.get("playerHp"),
-                        t.get("monsterHp")
-                ));
-            }
-
-            return logs;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return List.of("GPT 전투 로그 생성 실패: " + e.getMessage());
-        }
+        });
     }
 }
