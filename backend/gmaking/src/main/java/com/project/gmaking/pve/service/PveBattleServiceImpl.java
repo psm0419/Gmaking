@@ -241,10 +241,11 @@ public class PveBattleServiceImpl implements PveBattleService {
 
         // 초기 로그 전송
         try {
+            log.info("Sending initial log: {}", initialLog);
             emitter.send(SseEmitter.event()
                     .name("turnLog")
                     .data(initialLog));
-            Thread.sleep(500); // 클라이언트가 이벤트를 처리할 시간 확보
+            Thread.sleep(500); // 클라이언트 처리 시간 확보
         } catch (IOException e) {
             log.error("SSE 초기 로그 전송 실패", e);
             emitter.completeWithError(e);
@@ -324,7 +325,7 @@ public class PveBattleServiceImpl implements PveBattleService {
             String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패]").toString();
 
             String line = String.format(
-                    "턴 %s: %s가 공격으로 %s 데미지를 입힘 %s%n(플레이어HP:%s, 몬스터HP:%s)%n",
+                    "턴 %s: %s가 공격으로 %s 데미지를 입힘 %s%n(플레이어HP:%s, 몬스터HP:%s)%n%n",
                     String.valueOf(turn),
                     String.valueOf(actor),
                     String.valueOf(damage),
@@ -336,10 +337,11 @@ public class PveBattleServiceImpl implements PveBattleService {
 
             // 턴 로그 스트리밍
             try {
+                log.info("Sending turn log [{}]: {}", turn, line);
                 emitter.send(SseEmitter.event()
                         .name("turnLog")
                         .data(line));
-                Thread.sleep(500); // 실시간감 조절을 위한 짧은 지연
+                Thread.sleep(500); // 클라이언트 처리 시간 확보
             } catch (IOException e) {
                 log.error("SSE 턴 로그 전송 실패: 턴 {}", turn, e);
                 emitter.completeWithError(e);
@@ -359,6 +361,7 @@ public class PveBattleServiceImpl implements PveBattleService {
 
         // 전투 결과 스트리밍
         try {
+            log.info("Sending battle result: {}", resultMsg);
             emitter.send(SseEmitter.event()
                     .name("battleResult")
                     .data(Map.of("isWin", isWin ? "Y" : "N", "message", resultMsg)));
@@ -388,4 +391,5 @@ public class PveBattleServiceImpl implements PveBattleService {
         // 스트림 종료
         emitter.complete();
     }
+
 }

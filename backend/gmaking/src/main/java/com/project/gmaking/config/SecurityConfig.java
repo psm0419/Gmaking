@@ -69,70 +69,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // CORS 설정을 Spring Security에 적용
                 .cors(Customizer.withDefaults())
-
-                // CSRF 보호 비활성화 & HTTP Basic 인증 및 Form Login 비활성화
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
-
-                // 세션을 사용하지 않도록 설정 (JWT 사용 시 필수)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // 요청에 대한 권한 설정
                 .authorizeHttpRequests(auth -> auth
-
-                        // 모든 OPTIONS 요청을 인증 없이 허용
+                        // 모든 OPTIONS 허용 (CORS용)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 이미지
+                        // /api/** 전체 허용 (이 한 줄로 다 처리됨)
+                        .requestMatchers("/api/**").permitAll()
+
+                        // 정적 자원 허용
                         .requestMatchers("/images/**", "/static/**").permitAll()
 
-                        // 로그인 및 회원가입 경로는 인증 없이 누구나 접근 가능하도록 허용
-                        .requestMatchers("/login", "/api/login", "/api/register").permitAll()
-
-                        // 이메일 관련 API(인증 코드 발송/검증) 누구나 접근 허용
-                        .requestMatchers("/api/email/**").permitAll()
-
-                        // ID/비밀번호 찾기 관련 API 누구나 접근 허용
-                        .requestMatchers("/api/find-id/**", "/api/find-password/**").permitAll()
-
-                        // 명시적 설정: /api/secured/** 경로는 JWT 인증된 사용자만 접근 허용
-                        .requestMatchers("/api/secured/**").authenticated()
-
-                        // 'static' 폴더에 매핑된 '/images/' 경로의 모든 파일 허용
-                        .requestMatchers("/images/**").permitAll()
-
-                        //  PVE 관련: 맵 조회는 비로그인도 허용
-                        .requestMatchers("/api/pve/maps").permitAll()
-                        .requestMatchers("/api/pve/**").permitAll()
-                        .requestMatchers("/api/pve/battle/stream").permitAll()
-
-                        // 맵 ID를 경로 변수로 받는 /api/pve/maps/{mapId}/image 엔드포인트를 허용합니다.
-                        .requestMatchers("/api/pve/maps/*/image").permitAll()
-
-                        // 캐릭터 목록 조회 API 허용 (현재 PveBattlePage.js에서 사용 중)
-                        .requestMatchers("/api/character/**").authenticated()
-                        // 회원탈퇴
-                        .requestMatchers("/api/user/withdraw").authenticated()
-
-                        // 나머지 모든 요청은 인증된 사용자에게만 허용
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
-
-                // OAuth2 로그인 설정 추가
                 .oauth2Login(oauth2 -> oauth2
-                        // 사용자 정보 로드 서비스 설정
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-
-                        // 인증 성공 핸들러 설정 (JWT 발급 및 리다이렉션 처리)
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
-                // json 오류 응답
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
                             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -140,13 +98,7 @@ public class SecurityConfig {
                             res.getWriter().write("{\"message\":\"unauthorized\"}");
                         })
                 )
-
-                // JWT 필터 추가
-                .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class
-                );
-
-
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
