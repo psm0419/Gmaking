@@ -61,22 +61,35 @@ public class ChatEnterService {
             sysPrompt += "\n\n[대화 지침 - 호칭]\n- 사용자를 '" + calling + "'로 호칭하라. 과도 반복은 피함.\n";
         }
 
-        if (isFirstMeet) {
-            // 만남 첫 인사: 캐릭터 메시지 중복 방지(선택) 후 1회 생성
-            String ask = """
-            너는 지금 유저와 '첫 대화'를 시작한다.
-            규칙:
-            - 네 이름을 자연스럽게 밝힌다.
-            - 앞으로 상대를 뭐라고 부르면 좋을지 1문장으로 정중히 묻는다.
-            - 1~2문장, 친근하고 가볍게. 이모지는 최대 1개.
-        """;
-            String greeting = safeChat(sysPrompt, ask,
-                    "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?");
-            saveCharacterLine(convId, userId, greeting);
-            // isFirstMeet는 "유저가 첫 메시지 보낼 때" send()에서 false로 내림 (유지)
+        // 재인사 방지 가드
+        int userCnt = chatDAO.countUserMessages(convId);
+        int charCnt = chatDAO.countCharacterMessages(convId);
 
-        } else {
-            // 이미 만난 사이 → 하루 첫 인사: 오늘 메시지가 0일 때만
+
+        if (isFirstMeet) {
+            if (userCnt > 0) {
+                // 유저가 이미 말했으면 더 이상 첫만남 아님
+                conversationDAO.updateFirstMeetFlag(convId, false, userId);
+                isFirstMeet = false;
+            } else if (charCnt == 0) {
+                // 완전 빈 대화일 때만 '첫만남 인사' 1회 생성
+                String ask = """
+                너는 지금 유저와 '첫 대화'를 시작한다.
+                규칙:
+                - 네 이름을 자연스럽게 밝힌다.
+                - 앞으로 상대를 뭐라고 부르면 좋을지 1문장으로 정중히 묻는다.
+                - 1~2문장, 친근하고 가볍게. 이모지는 최대 1개.
+            """;
+                String greeting = safeChat(sysPrompt, ask,
+                        "안녕! 처음 보는 것 같네. 앞으로 뭐라고 부르면 좋을까?");
+                saveCharacterLine(convId, userId, greeting);
+                // 첫 메시지는 send()에서 is_first_meet=false 로 내림 (기존 로직 유지)
+            }
+            // charCnt > 0 인 경우 이미 인사를 남긴 상태 → 아무 것도 하지 않음
+        }
+
+        // 이미 만난 사이 → 오늘 첫 인사 (오늘 총 메시지 0일 때만)
+        if (!isFirstMeet) {
             int todayAll = chatDAO.countAllMessagesToday(convId);
             if (todayAll == 0) {
                 String ask = """
