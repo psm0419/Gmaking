@@ -1,5 +1,6 @@
 package com.project.gmaking.chat.service;
 
+import com.project.gmaking.chat.constant.ConversationStatus;
 import com.project.gmaking.chat.constant.DialogueSender;
 import com.project.gmaking.chat.dao.ChatDAO;
 import com.project.gmaking.chat.dao.ConversationDAO;
@@ -24,6 +25,7 @@ public class ChatEnterService {
     private final PersonaService personaService;
     private final ConversationDAO conversationDAO;
     private final LlmClient llmClient;
+    private final LongMemoryService longMemoryService;
 
     @Transactional
     public EnterResponseVO enterChat(String userId, Integer characterId) {
@@ -33,6 +35,9 @@ public class ChatEnterService {
             chatDAO.createConversation(userId, characterId, userId);
             convId = chatDAO.findLatestConversationId(userId, characterId);
         }
+
+        // 입장시 지연청소
+        cleanupDelayedIfClosed(convId, userId);
 
         PersonaVO persona = personaDAO.selectPersonaByCharacterId(characterId);
         if (persona == null) {
@@ -98,6 +103,7 @@ public class ChatEnterService {
             return fallback;
         }
     }
+
     private void saveCharacterLine(Integer convId, String userId, String content) {
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
@@ -106,5 +112,23 @@ public class ChatEnterService {
                 .createdBy(userId)
                 .updatedBy(userId)
                 .build());
+    }
+
+    private void cleanupDelayedIfClosed(Integer convId, String actor) {
+        // 1) 지연 플래그 잠금 조회 (동시성 방지)
+        Boolean delayed = conversationDAO.selectDelayLogCleanForUpdate(convId);
+        if (delayed == null || !delayed) return; // 딜레이 아니면 종료
+
+        // 2) 요약 시도
+        boolean summarized = longMemoryService.summarizeAndSave(convId, actor);
+        if (!summarized) {
+            // 실패 시 보존: 플래그 유지 → 다음 입장/스케줄에 재시도
+            return;
+        }
+
+        // 3) 대화 로그 삭제 + 플래그 해제 + 터치(업데이트 시각만)
+        chatDAO.deleteDialoguesByConversationId(convId);
+        conversationDAO.updateDelayLogClean(convId, false, actor);
+        conversationDAO.touch(convId, actor);
     }
 }
