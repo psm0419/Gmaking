@@ -236,9 +236,7 @@ CREATE TABLE TB_DIALOGUE
     CREATED_AT      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일시'
 ) COMMENT='대화 메시지 정보';
 
-ALTER TABLE tb_dialogue
-  ADD INDEX idx_dlg_conv (conversation_id),
-  ADD INDEX idx_dlg_conv_created (conversation_id, created_date);
+CREATE INDEX ix_dialogue_conv ON TB_DIALOGUE (CONVERSATION_ID);
 
 -- =========================================================================================
 -- TB_GROWTH_RULE (성장 규칙 테이블)

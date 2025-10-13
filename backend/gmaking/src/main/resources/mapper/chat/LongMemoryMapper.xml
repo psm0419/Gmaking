@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.chat.dao.LongMemoryDAO">
+
+    <!-- 매핑 -->
+    <resultMap id="LongMemoryResultMap" type="com.project.gmaking.chat.vo.LongMemoryVO">
+        <id     column="MEMORY_ID"        property="memoryId"/>
+        <result column="CONVERSATION_ID"  property="conversationId"/>
+        <result column="MEMORY_DATE"      property="memoryDate"/>
+        <result column="SUMMARY"          property="summary"/>
+
+        <result column="CREATED_DATE"     property="createdDate"/>
+        <result column="CREATED_BY"       property="createdBy"/>
+        <result column="UPDATED_DATE"     property="updatedDate"/>
+        <result column="UPDATED_BY"       property="updatedBy"/>
+    </resultMap>
+
+    <!-- INSERT -->
+    <insert id="insert" parameterType="com.project.gmaking.chat.vo.LongMemoryVO" useGeneratedKeys="true" keyProperty="memoryId">
+        INSERT INTO TB_LONG_MEMORY (
+        CONVERSATION_ID,
+        MEMORY_DATE,
+        SUMMARY,
+        CREATED_DATE,
+        CREATED_BY,
+        UPDATED_DATE,
+        UPDATED_BY
+        )
+        VALUES (
+        #{conversationId},
+        /* null이면 오늘 날짜로 */
+        COALESCE(#{memoryDate}, CURRENT_DATE),
+        #{summary},
+        COALESCE(#{createdDate}, NOW()),
+        #{createdBy},
+        COALESCE(#{updatedDate}, NOW()),
+        #{updatedBy}
+        )
+    </insert>
+
+    <!-- PK 조회 -->
+    <select id="selectById" parameterType="int" resultMap="LongMemoryResultMap">
+        SELECT
+        MEMORY_ID, CONVERSATION_ID, MEMORY_DATE, SUMMARY,
+        CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM TB_LONG_MEMORY
+        WHERE MEMORY_ID = #{memoryId}
+    </select>
+
+    <!-- 대화별 최신 1건 -->
+    <select id="selectLatestByConversationId" parameterType="int" resultMap="LongMemoryResultMap">
+        SELECT
+        MEMORY_ID, CONVERSATION_ID, MEMORY_DATE, SUMMARY,
+        CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM TB_LONG_MEMORY
+        WHERE CONVERSATION_ID = #{conversationId}
+        ORDER BY MEMORY_DATE DESC, MEMORY_ID DESC
+        LIMIT 1
+    </select>
+
+    <!-- 대화별 목록 (최신순 + 페이징) -->
+    <select id="selectByConversationId" resultMap="LongMemoryResultMap">
+        SELECT
+        MEMORY_ID, CONVERSATION_ID, MEMORY_DATE, SUMMARY,
+        CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM TB_LONG_MEMORY
+        WHERE CONVERSATION_ID = #{conversationId}
+        ORDER BY MEMORY_DATE DESC, MEMORY_ID DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+            <if test="offset != null">
+                OFFSET #{offset}
+            </if>
+        </if>
+    </select>
+
+    <!-- 요약만 업데이트 -->
+    <update id="updateSummaryById">
+        UPDATE TB_LONG_MEMORY
+        SET SUMMARY = #{summary},
+        UPDATED_DATE = NOW(),
+        UPDATED_BY   = #{updatedBy}
+        WHERE MEMORY_ID = #{memoryId}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM TB_LONG_MEMORY
+        WHERE MEMORY_ID = #{memoryId}
+    </delete>
+
+    <delete id="deleteByConversationId" parameterType="int">
+        DELETE FROM TB_LONG_MEMORY
+        WHERE CONVERSATION_ID = #{conversationId}
+    </delete>
+
+</mapper>

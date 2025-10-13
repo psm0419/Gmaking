@@ -21,6 +21,15 @@ public class CallingNameExtractor {
             if (res == null) return "";
             String v = res.trim();
             if (v.length() > 20) v = v.substring(0, 20); // 과도 방어
+
+            if (v.equalsIgnoreCase("없음") ||
+                    v.equalsIgnoreCase("none") ||
+                    v.equalsIgnoreCase("빈 응답입니다.") ||
+                    v.equalsIgnoreCase("no response") ||
+                    v.isBlank()) {
+                return "";
+            }
+
             if (v.equalsIgnoreCase("없음") || v.equalsIgnoreCase("none")) return "";
             // 기존과 동일하면 변경 안 함
             if (currentCalling != null && currentCalling.equals(v)) return "";

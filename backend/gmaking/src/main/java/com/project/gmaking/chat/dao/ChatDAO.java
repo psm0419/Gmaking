@@ -4,7 +4,7 @@ import com.project.gmaking.chat.vo.DialogueVO;
 import com.project.gmaking.chat.vo.PersonaVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.security.core.parameters.P;
+
 
 import java.util.List;
 
@@ -37,4 +37,9 @@ public interface ChatDAO {
     int deleteOldCharacterMessagesExceptLatest(@Param("conversationId") Integer conversationId);
 
     int countAllMessagesToday(@Param("conversationId") Integer conversationId);
+
+    int deleteDialoguesByConversationId(@Param("conversationId") Integer conversationId);
+
+    // 스케줄러 돌리려고
+    int countByConversationId(@org.apache.ibatis.annotations.Param("conversationId") Integer conversationId);
 }

@@ -45,7 +45,7 @@
 
     <!--  최근 메시지 N개  -->
     <select id="selectRecentDialogues"
-            resultType="com.project.gmaking.chat.vo.DialogueVO">
+            resultMap="dialogueMap">
         SELECT
             MESSAGE_ID      AS messageId,
             CONVERSATION_ID AS conversationId,
@@ -115,6 +115,15 @@
         FROM tb_dialogue
         WHERE conversation_id = #{conversationId}
         AND chat_date = CURDATE()
+    </select>
+
+    <delete id="deleteDialoguesByConversationId" parameterType="int">
+        DELETE FROM TB_DIALOGUE WHERE CONVERSATION_ID = #{conversationId}
+    </delete>
+
+    <!--  스케줄러  -->
+    <select id="countByConversationId" resultType="int">
+        SELECT COUNT(*) FROM TB_DIALOGUE WHERE CONVERSATION_ID = #{conversationId}
     </select>
 
 </mapper>

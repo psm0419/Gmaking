@@ -25,7 +25,9 @@ public class ChatServiceImpl implements ChatService {
     private final PersonaDAO personaDAO;
     private final PersonaService personaService;
     private final ConversationDAO conversationDAO;
-    private final CallingNameExtractor callingNameExtractor; // 주입
+    private final CallingNameExtractor callingNameExtractor;
+    private final LongMemoryService longMemoryService;
+
 
     @Override
     @Transactional
@@ -38,13 +40,16 @@ public class ChatServiceImpl implements ChatService {
             convId = chatDAO.findLatestConversationId(userId, characterId);
         }
 
+        // 자정 지연 삭제 플래그 처리
+        cleanupIfDelayed(convId, userId);
+
         // 페르소나 확보
         PersonaVO persona = personaDAO.selectPersonaByCharacterId(characterId);
         if (persona == null) {
             persona = personaService.ensurePersona(characterId, userId);
         }
 
-        // 1) 유저 발화 저장
+        // 유저 발화 저장
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
                 .sender(DialogueSender.user)
@@ -53,21 +58,25 @@ public class ChatServiceImpl implements ChatService {
                 .updatedBy(userId)
                 .build());
 
-        // 2) 첫만남 플래그 해제
+        // 첫만남 플래그 해제
         ConversationVO conv = conversationDAO.selectConversationByUserAndCharacter(userId, characterId);
         if (conv != null && Boolean.TRUE.equals(conv.getIsFirstMeet())) {
             conversationDAO.updateFirstMeetFlag(conv.getConversationId(), false, userId);
         }
 
-        // 3) 호칭 추출 + DB 반영 (같은 요청에 즉시 반영)
+        // 호칭 추출 + DB 반영 (같은 요청에 즉시 반영)
         String currentCalling = conversationDAO.selectCallingName(convId);
         String newCalling = callingNameExtractor.extract(message, currentCalling);
-        if (newCalling != null && !newCalling.isBlank()) {
+
+        if (newCalling != null
+                && !newCalling.isBlank()
+                && !"빈 응답입니다.".equalsIgnoreCase(newCalling)
+                && !"no response".equalsIgnoreCase(newCalling)) { // 혹시 영문 대응도
             conversationDAO.updateCallingName(convId, newCalling, userId);
             currentCalling = newCalling;
         }
 
-        // 4) 시스템 프롬프트에 호칭 주입
+        // 시스템 프롬프트에 호칭 주입
         String systemPrompt = buildSystemPrompt(
                 persona != null ? persona.getInstructionPrompt() : null,
                 currentCalling
@@ -127,4 +136,20 @@ public class ChatServiceImpl implements ChatService {
         if (convId == null) return List.of();
         return chatDAO.selectRecentDialogues(convId, limit);
     }
+
+    private void cleanupIfDelayed(Integer convId, String actor) {
+        // 동시성 방지 위해 FOR UPDATE로 읽는 DAO 쿼리 권장
+        Boolean delayed = conversationDAO.selectDelayLogCleanForUpdate(convId);
+        if (Boolean.TRUE.equals(delayed)) {
+            boolean summarized = longMemoryService.summarizeAndSave(convId, actor);
+            if (!summarized) {
+                // 요약 실패 시 삭제하지 않음 (데이터 보존)
+                return;
+            }
+            chatDAO.deleteDialoguesByConversationId(convId);
+            conversationDAO.updateDelayLogClean(convId, false, actor);
+        }
+    }
+
+
 }

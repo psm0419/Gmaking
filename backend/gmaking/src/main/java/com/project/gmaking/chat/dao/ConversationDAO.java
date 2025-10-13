@@ -4,6 +4,8 @@ import com.project.gmaking.chat.vo.ConversationVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 @Mapper
 public interface ConversationDAO {
 
@@ -25,5 +27,29 @@ public interface ConversationDAO {
                           @Param("callingName") String callingName,
                           @Param("actor") String actor);
 
+    ConversationVO selectById(@Param("conversationId") Integer conversationId);
 
+    // 상태별 대화방 목록(open - 삭제 x, close - 삭제)
+    List<Integer> findConversationIdsByStatusPaged(@Param("status") String status,
+                                                   @Param("limit") int limit);
+
+    // 오픈 상태의 대화 delay_log_clean = 1 로 설정
+    int markDelayLogCleanForOpen();
+
+    // delay_log_clean 조회
+    Boolean selectDelayLogCleanForUpdate(@Param("conversationId") Integer conversationId);
+
+    // delay_log_clean 값 변경
+    int updateDelayLogClean(@Param("conversationId") Integer conversationId,
+                            @Param("delay") boolean delay,
+                            @Param("actor") String actor);
+
+    // updated_date 갱신
+    int touch(@Param("conversationId") Integer conversationId,
+              @Param("actor") String actor);
+
+    // 스케줄러
+    int updateStatus(@org.apache.ibatis.annotations.Param("conversationId") Integer conversationId,
+                     @org.apache.ibatis.annotations.Param("status") String status,
+                     @org.apache.ibatis.annotations.Param("actor") String actor);
 }

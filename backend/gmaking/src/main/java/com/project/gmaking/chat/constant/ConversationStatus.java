@@ -1,5 +1,5 @@
 package com.project.gmaking.chat.constant;
 
 public enum ConversationStatus {
-    OPEN, CLOSED
+    OPEN, CLOSED, ARCHIVED
 }
