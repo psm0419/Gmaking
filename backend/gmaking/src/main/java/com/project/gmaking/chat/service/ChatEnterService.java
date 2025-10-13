@@ -11,11 +11,13 @@ import com.project.gmaking.chat.vo.DialogueVO;
 import com.project.gmaking.chat.vo.EnterResponseVO;
 import com.project.gmaking.chat.vo.PersonaVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatEnterService {
@@ -38,6 +40,11 @@ public class ChatEnterService {
 
         // 입장시 지연청소
         cleanupDelayedIfClosed(convId, userId);
+
+        var convNow = conversationDAO.selectById(convId);
+        if (convNow != null && convNow.getStatus() != ConversationStatus.OPEN) {
+            conversationDAO.updateStatus(convId, ConversationStatus.OPEN, userId);
+        }
 
         PersonaVO persona = personaDAO.selectPersonaByCharacterId(characterId);
         if (persona == null) {
@@ -130,5 +137,18 @@ public class ChatEnterService {
         chatDAO.deleteDialoguesByConversationId(convId);
         conversationDAO.updateDelayLogClean(convId, false, actor);
         conversationDAO.touch(convId, actor);
+    }
+
+    @Transactional
+    public void exitChat(String userId, Integer characterId) {
+        // 1) 최신 OPEN 찾기
+        Integer convId = conversationDAO.findLatestOpenConversationId(userId, characterId);
+        log.info("[EXIT] open convId={}", convId);
+        if (convId == null) return;
+
+        // 2) 닫기
+        int updated = conversationDAO.closeConversation(convId, userId);
+        log.info("[EXIT] closed rows={}", updated);
+
     }
 }

@@ -4,6 +4,21 @@
 
 <mapper namespace="com.project.gmaking.chat.dao.ConversationDAO">
 
+    <resultMap id="ConversationMap" type="com.project.gmaking.chat.vo.ConversationVO">
+        <id     column="CONVERSATION_ID" property="conversationId"/>
+        <result column="USER_ID"         property="userId"/>
+        <result column="CHARACTER_ID"    property="characterId"/>
+        <result column="STATUS"          property="status"
+                javaType="com.project.gmaking.chat.constant.ConversationStatus"/>
+        <result column="IS_FIRST_MEET"   property="isFirstMeet"/>
+        <result column="CALLING_NAME"    property="callingName"/>
+        <result column="DELAY_LOG_CLEAN" property="delayLogClean"/>
+        <result column="CREATED_DATE"    property="createdDate"/>
+        <result column="CREATED_BY"      property="createdBy"/>
+        <result column="UPDATED_DATE"    property="updatedDate"/>
+        <result column="UPDATED_BY"      property="updatedBy"/>
+    </resultMap>
+
     <select id="selectConversationByUserAndCharacter"
             resultType="com.project.gmaking.chat.vo.ConversationVO">
         SELECT
@@ -113,6 +128,26 @@
         UPDATED_BY = #{actor},
         UPDATED_DATE = NOW()
         WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+    <select id="findLatestOpenConversationId" resultType="int">
+        SELECT CONVERSATION_ID
+        FROM TB_CONVERSATION
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        AND STATUS = 'OPEN'
+        ORDER BY UPDATED_DATE DESC, CONVERSATION_ID DESC
+        LIMIT 1
+    </select>
+
+    <update id="closeConversation">
+        UPDATE TB_CONVERSATION
+        SET STATUS = 'CLOSED',
+        UPDATED_DATE = NOW(),
+        UPDATED_BY = #{userId}
+        WHERE CONVERSATION_ID = #{conversationId}
+        AND USER_ID = #{userId}
+        AND STATUS &lt;&gt; 'CLOSED'
     </update>
 
 

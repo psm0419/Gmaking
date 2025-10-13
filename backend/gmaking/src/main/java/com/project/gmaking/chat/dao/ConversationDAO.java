@@ -1,5 +1,6 @@
 package com.project.gmaking.chat.dao;
 
+import com.project.gmaking.chat.constant.ConversationStatus;
 import com.project.gmaking.chat.vo.ConversationVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -30,7 +31,7 @@ public interface ConversationDAO {
     ConversationVO selectById(@Param("conversationId") Integer conversationId);
 
     // 상태별 대화방 목록(open - 삭제 x, close - 삭제)
-    List<Integer> findConversationIdsByStatusPaged(@Param("status") String status,
+    List<Integer> findConversationIdsByStatusPaged(@Param("status") ConversationStatus status,
                                                    @Param("limit") int limit);
 
     // 오픈 상태의 대화 delay_log_clean = 1 로 설정
@@ -49,7 +50,16 @@ public interface ConversationDAO {
               @Param("actor") String actor);
 
     // 스케줄러
-    int updateStatus(@org.apache.ibatis.annotations.Param("conversationId") Integer conversationId,
-                     @org.apache.ibatis.annotations.Param("status") String status,
-                     @org.apache.ibatis.annotations.Param("actor") String actor);
+    int updateStatus(@Param("conversationId") Integer conversationId,
+                     @Param("status") ConversationStatus status,
+                     @Param("actor") String actor);
+
+    Integer findLatestOpenConversationId(
+            @Param("userId") String userId,
+            @Param("characterId") Integer characterId
+    );
+    int closeConversation(
+            @Param("conversationId") Integer conversationId,
+            @Param("userId") String userId
+    );
 }

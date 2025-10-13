@@ -7,6 +7,7 @@ import com.project.gmaking.chat.service.ChatService;
 import com.project.gmaking.chat.vo.DialogueVO;
 import com.project.gmaking.chat.vo.EnterResponseVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")
@@ -96,5 +98,13 @@ public class ChatController {
 
         List<DialogueVO> history = chatService.history(userId, characterId, limit);
         return ResponseEntity.ok(history);
+    }
+
+    @PostMapping("/{characterId}/exit")
+    public ResponseEntity<Void> exit(@PathVariable Integer characterId, Authentication authentication) {
+        String userId = authentication.getName();
+        log.info("[EXIT] userId={}, characterId={}", userId, characterId);
+        chatEnterService.exitChat(userId, characterId); // 내부에서 최신 OPEN을 찾아 닫기
+        return ResponseEntity.noContent().build(); // 204
     }
 }

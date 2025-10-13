@@ -130,6 +130,7 @@ function App() {
                         </ProtectedRoute>
                     } />
 
+
                 {/* 마이 페이지 */}
                 <Route
                     path="/my-page"

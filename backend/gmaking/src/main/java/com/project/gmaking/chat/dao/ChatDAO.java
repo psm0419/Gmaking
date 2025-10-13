@@ -42,4 +42,10 @@ public interface ChatDAO {
 
     // 스케줄러 돌리려고
     int countByConversationId(@org.apache.ibatis.annotations.Param("conversationId") Integer conversationId);
+
+    int insertSystemEvent(
+            @Param("conversationId") Integer conversationId,
+            @Param("content") String content,
+            @Param("actor") String actor
+    );
 }

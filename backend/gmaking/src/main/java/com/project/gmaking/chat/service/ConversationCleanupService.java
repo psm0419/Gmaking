@@ -1,5 +1,6 @@
 package com.project.gmaking.chat.service;
 
+import com.project.gmaking.chat.constant.ConversationStatus;
 import org.springframework.transaction.annotation.Propagation;
 import com.project.gmaking.chat.dao.ChatDAO;
 import com.project.gmaking.chat.dao.ConversationDAO;
@@ -23,7 +24,7 @@ public class ConversationCleanupService {
     /** 한 번 실행에 한 페이지만 처리 (무한루프 방지) */
     @Transactional
     public int cleanClosedConversationsBatch(int batchSize) {
-        List<Integer> ids = conversationDAO.findConversationIdsByStatusPaged("CLOSED", batchSize);
+        List<Integer> ids = conversationDAO.findConversationIdsByStatusPaged(ConversationStatus.CLOSED, batchSize);
         if (ids == null || ids.isEmpty()) {
             log.info("[Cleaner] no CLOSED conversations to clean.");
             return 0;
@@ -50,7 +51,7 @@ public class ConversationCleanupService {
         // 대화가 없으면 바로 ARCHIVED
         int remain = chatDAO.countByConversationId(convId);
         if (remain <= 0) {
-            conversationDAO.updateStatus(convId, "ARCHIVED", "system@cleaner");
+            conversationDAO.updateStatus(convId, ConversationStatus.ARCHIVED, "system@cleaner");
             log.info("[Cleaner] no dialogues, archived convId={}", convId);
             return true;
         }
@@ -66,7 +67,7 @@ public class ConversationCleanupService {
 
         // 로그 삭제 후 ARCHIVED 전환
         chatDAO.deleteDialoguesByConversationId(convId);
-        conversationDAO.updateStatus(convId, "ARCHIVED", "system@cleaner");
+        conversationDAO.updateStatus(convId, ConversationStatus.ARCHIVED, "system@cleaner");
         log.info("[Cleaner] archived convId={}", convId);
         return true;
     }

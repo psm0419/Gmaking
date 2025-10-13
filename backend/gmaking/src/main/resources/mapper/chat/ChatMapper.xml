@@ -126,4 +126,11 @@
         SELECT COUNT(*) FROM TB_DIALOGUE WHERE CONVERSATION_ID = #{conversationId}
     </select>
 
+    <insert id="insertSystemEvent">
+        INSERT INTO TB_DIALOGUE
+        (CONVERSATION_ID, SENDER, CONTENT, CHAT_DATE, CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY)
+        VALUES
+        (#{conversationId}, 'system', #{content}, CURDATE(), NOW(), #{actor}, NOW(), #{actor})
+    </insert>
+
 </mapper>
