@@ -67,18 +67,20 @@ export const changePasswordApi = (userId, userEmail, newPassword, confirmPasswor
  * @param {string} userPassword - 사용자가 입력한 비밀번호 (필수)
  */
 export const withdrawUserApi = (token, userId, userPassword) => {
-    // URL 설정
-    const url = `${API_BASE_URL}/user/withdraw`; 
-    
-    // 헤더 설정 (Authorization: JWT 토큰)
-    const config = {
+    return axios.delete(`${API_BASE_URL}/user/withdraw`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { 
-            userId: userId, 
-            userPassword: userPassword 
-        }
-    };
-    
-    // DELETE 요청 실행
-    return axios.delete(url, config);
+        data: { userId, userPassword }
+    });
+};
+
+/**
+ * 소셜 회원 탈퇴 API (DELETE /api/user/withdraw/social)
+ * 비밀번호 없이 JWT 인증만으로 탈퇴 처리
+ * @param {string} token - JWT 토큰
+ */
+export const withdrawSocialUserApi = (token) => { 
+    // 백엔드에서 userId는 JWT 토큰에서 추출 
+    return axios.delete(`${API_BASE_URL}/user/withdraw/social`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
 };

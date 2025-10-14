@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { loginApi, withdrawUserApi } from '../api/authApi';
+import { loginApi, withdrawUserApi, withdrawSocialUserApi } from '../api/authApi';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
@@ -37,6 +37,16 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
 
+    const logout = useCallback(() => {
+        setToken(null);
+        setUser(null);
+        setIsLoggedIn(false);
+        setHasCharacter(false);
+        localStorage.removeItem('gmaking_token');
+        localStorage.removeItem('userId');
+    }, []);
+
+
     // hasCharacter 상태 업데이트 로직 추가
     const login = async (userId, userPassword) => {
         try {
@@ -70,42 +80,48 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const withdrawUser = async (userId, userPassword) => {
+
+    const withdrawUser = useCallback(async (userId, userPassword) => { // <<< 로직 수정
         if (!token) {
-            console.error("오류: 현재 토큰 상태가 null이므로 회원 탈퇴 요청을 보낼 수 없습니다.");
-            return { success: false, message: '인증 정보가 없습니다. 다시 로그인 해주세요.' };
+            alert("인증 토큰이 없습니다. 다시 로그인 해주세요.");
+            return false;
         }
 
-        // 디버깅
-        console.log("전송되는 JWT 토큰:", token);
-
         try {
-            const response = await withdrawUserApi(token, userId, userPassword);
+            let response;
+            
+            // userPassword가 전달된 경우 (일반 유저)
+            if (userPassword) {
+                console.log(`[Withdraw] 일반 회원 탈퇴 시도: ${userId}`);
+                response = await withdrawUserApi(token, userId, userPassword);
+            } 
+            // userPassword가 없는 경우 (소셜 유저)
+            else {
+                console.log(`[Withdraw] 소셜 회원 탈퇴 시도: ${userId}`);
+                response = await withdrawSocialUserApi(token);
+            }
 
             if (response.data.success) {
-                alert('성공적으로 계정 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
+                alert(response.data.message);
                 logout();
                 return true;
             } else {
-                alert(response.data?.message || '탈퇴 처리 중 오류가 발생했습니다.');
+                alert(`탈퇴 실패: ${response.data.message}`);
                 return false;
             }
+
         } catch (error) {
-            console.error('Withdraw Error:', error);
-            const message = error.response?.data?.message || '계정 탈퇴 중 오류가 발생했습니다.';
-            alert(message);
+            console.error("탈퇴 요청 오류:", error);
+            const errorMessage = error.response?.data?.message || '계정 탈퇴 처리 중 오류가 발생했습니다.';
+            alert(`탈퇴 실패: ${errorMessage}`);
             return false;
         }
-    };
+    }, [token, logout]);
 
 
     // OAuth2 로그인 처리 함수
-
     const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
-
-
         const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
-
         const userWithCharStatus = {
             ...userInfo,
             hasCharacter: isUserWithCharacter
@@ -118,7 +134,8 @@ export const AuthProvider = ({ children }) => {
 
         localStorage.setItem('gmaking_token', receivedToken);
         localStorage.setItem('userId', userInfo.userId);
-    }, [setToken, setUser, setIsLoggedIn, setHasCharacter]);
+    }, [setToken, setUser, setIsLoggedIn, setHasCharacter, logout]);
+
 
     // 캐릭터 생성 후 상태를 true로 변경하는 함수
     const setCharacterStatus = useCallback((status) => {
@@ -127,16 +144,6 @@ export const AuthProvider = ({ children }) => {
             setUser(prev => ({ ...prev, hasCharacter: status }));
         }
     }, [user, setHasCharacter, setUser]);
-
-
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        setIsLoggedIn(false);
-        setHasCharacter(false);
-        localStorage.removeItem('gmaking_token');
-        localStorage.removeItem('userId');
-    };
 
 
     return (

@@ -1,62 +1,64 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2 } from 'lucide-react'; 
+import { Loader2 } from 'lucide-react';
 
-/**
- * 소셜 로그인 성공/실패 후 백엔드에서 리다이렉트되는 경로를 처리하는 컴포넌트
- * 성공 URL: /oauth/callback?token=...&userId=...&nickname=...&hasCharacter=...
- * 실패 URL: /oauth/callback/failure?error=...
- */
 const OAuth2RedirectHandler = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { handleOAuth2Login } = useAuth();
 
     useEffect(() => {
+        let isProcessed = false; 
+
+        if (isProcessed) return; 
+
         const queryParams = new URLSearchParams(location.search);
-        
-        // 로그인 성공 처리
         const token = queryParams.get('token');
         const userId = queryParams.get('userId');
         const userNickname = queryParams.get('nickname');
         const role = queryParams.get('role');
         const hasCharacter = queryParams.get('hasCharacter');
+        const userEmail = queryParams.get('userEmail');
 
-        if (token && userId) {
-            // 사용자 정보를 객체로 구성
-            const userInfo = { 
-                userId, 
-                userName: userNickname,
-                role, 
-                hasCharacter 
-            };
+        try {
+            if (token && userId) {
+                const userInfo = { 
+                    userId, 
+                    userName: userNickname,
+                    role, 
+                    hasCharacter,
+                    userEmail
+                };
 
-            // AuthContext에 토큰 및 사용자 정보 저장
-            handleOAuth2Login(token, userInfo);
+                handleOAuth2Login(token, userInfo);
+                navigate('/', { replace: true });
+                isProcessed = true; 
+                return;
+            }
 
-            navigate('/', { replace: true }); 
-            
-            return;
-        }
+            const error = queryParams.get('error');
+            if (error) {
+                alert(`소셜 로그인 실패: ${decodeURIComponent(error)}`);
+                navigate('/login', { replace: true });
+                isProcessed = true;
+                return;
+            }
 
-        // 로그인 실패 처리
-        const error = queryParams.get('error');
-
-        if (error) {
-            alert(`소셜 로그인 실패: ${decodeURIComponent(error)}`);
+            console.log('잘못된 접근 또는 매개변수 누락. 로그인 페이지로 리다이렉트합니다.');
             navigate('/login', { replace: true });
-            return;
+            isProcessed = true;
+
+        } catch (e) {
+            console.error("OAuth2RedirectHandler 처리 중 예기치 않은 DOM 오류 발생:", e);
+            navigate('/login', { replace: true });
         }
 
-        // 잘못된 접근
-        navigate('/login', { replace: true });
-
-        console.log('Query Params:', queryParams.toString());
-        console.log('Token:', token, 'UserId:', userId, 'Nickname:', userNickname);
-
-    }, [location, navigate, handleOAuth2Login]);
-
+        
+        return () => {
+            isProcessed = true;
+        };
+    }, [location, handleOAuth2Login, navigate]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
