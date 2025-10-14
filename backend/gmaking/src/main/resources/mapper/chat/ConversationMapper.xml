@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.chat.dao.ConversationDAO">
+
+    <resultMap id="ConversationMap" type="com.project.gmaking.chat.vo.ConversationVO">
+        <id     column="CONVERSATION_ID" property="conversationId"/>
+        <result column="USER_ID"         property="userId"/>
+        <result column="CHARACTER_ID"    property="characterId"/>
+        <result column="STATUS"          property="status"
+                javaType="com.project.gmaking.chat.constant.ConversationStatus"/>
+        <result column="IS_FIRST_MEET"   property="isFirstMeet"/>
+        <result column="CALLING_NAME"    property="callingName"/>
+        <result column="DELAY_LOG_CLEAN" property="delayLogClean"/>
+        <result column="CREATED_DATE"    property="createdDate"/>
+        <result column="CREATED_BY"      property="createdBy"/>
+        <result column="UPDATED_DATE"    property="updatedDate"/>
+        <result column="UPDATED_BY"      property="updatedBy"/>
+    </resultMap>
+
+    <select id="selectConversationByUserAndCharacter"
+            resultType="com.project.gmaking.chat.vo.ConversationVO">
+        SELECT
+        CONVERSATION_ID AS conversationId,
+        USER_ID         AS userId,
+        CHARACTER_ID    AS characterId,
+        STATUS          AS status,
+        IS_FIRST_MEET   AS isFirstMeet,
+        CALLING_NAME    AS callingName,
+        DELAY_LOG_CLEAN AS delayLogClean,
+        CREATED_DATE    AS createdDate,
+        CREATED_BY      AS createdBy,
+        UPDATED_DATE    AS updatedDate,
+        UPDATED_BY      AS updatedBy
+        FROM TB_CONVERSATION
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        ORDER BY CREATED_DATE DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateFirstMeetFlag">
+        UPDATE TB_CONVERSATION
+        SET IS_FIRST_MEET = #{isFirstMeet},
+        UPDATED_BY    = #{actor},
+        UPDATED_DATE  = NOW()
+        WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+    <select id="selectCallingName" resultType="string">
+        SELECT calling_name
+        FROM tb_conversation
+        WHERE conversation_id = #{conversationId}
+    </select>
+
+    <update id="updateCallingName">
+        UPDATE tb_conversation
+        SET calling_name = #{callingName},
+        updated_date = NOW(),
+        updated_by   = #{actor}
+        WHERE conversation_id = #{conversationId}
+    </update>
+
+    <select id="selectById" parameterType="int" resultType="com.project.gmaking.chat.vo.ConversationVO">
+        SELECT
+        CONVERSATION_ID   AS conversationId,
+        USER_ID           AS userId,
+        CHARACTER_ID      AS characterId,
+        CREATED_DATE      AS createdDate,
+        CREATED_BY        AS createdBy,
+        UPDATED_DATE      AS updatedDate,
+        UPDATED_BY        AS updatedBy,
+        STATUS            AS status,
+        IS_FIRST_MEET     AS isFirstMeet,
+        CALLING_NAME      AS callingName,
+        DELAY_LOG_CLEAN   AS delayLogClean
+        FROM TB_CONVERSATION
+        WHERE CONVERSATION_ID = #{conversationId}
+    </select>
+
+    <select id="findConversationIdsByStatusPaged" resultType="int">
+        SELECT c.CONVERSATION_ID
+        FROM TB_CONVERSATION c
+        WHERE c.STATUS = #{status}
+        AND EXISTS (
+        SELECT 1 FROM TB_DIALOGUE d
+        WHERE d.CONVERSATION_ID = c.CONVERSATION_ID
+        LIMIT 1
+        )
+        ORDER BY c.UPDATED_DATE ASC, c.CONVERSATION_ID ASC
+        LIMIT #{limit}
+    </select>
+
+    <update id="markDelayLogCleanForOpen">
+        UPDATE TB_CONVERSATION
+        SET DELAY_LOG_CLEAN = 1,
+        UPDATED_DATE = NOW(),
+        UPDATED_BY   = 'system@cleaner'
+        WHERE STATUS = 'OPEN'
+    </update>
+
+    <select id="selectDelayLogCleanForUpdate" resultType="boolean">
+        SELECT DELAY_LOG_CLEAN
+        FROM TB_CONVERSATION
+        WHERE CONVERSATION_ID = #{conversationId}
+        FOR UPDATE
+    </select>
+
+    <update id="updateDelayLogClean">
+        UPDATE TB_CONVERSATION
+        SET DELAY_LOG_CLEAN = #{delay},
+        UPDATED_DATE = NOW(),
+        UPDATED_BY   = #{actor}
+        WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+    <update id="touch">
+        UPDATE TB_CONVERSATION
+        SET UPDATED_DATE = NOW(),
+        UPDATED_BY   = #{actor}
+        WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE TB_CONVERSATION
+        SET STATUS = #{status},
+        UPDATED_BY = #{actor},
+        UPDATED_DATE = NOW()
+        WHERE CONVERSATION_ID = #{conversationId}
+    </update>
+
+    <select id="findLatestOpenConversationId" resultType="int">
+        SELECT CONVERSATION_ID
+        FROM TB_CONVERSATION
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        AND STATUS = 'OPEN'
+        ORDER BY UPDATED_DATE DESC, CONVERSATION_ID DESC
+        LIMIT 1
+    </select>
+
+    <update id="closeConversation">
+        UPDATE TB_CONVERSATION
+        SET STATUS = 'CLOSED',
+        UPDATED_DATE = NOW(),
+        UPDATED_BY = #{userId}
+        WHERE CONVERSATION_ID = #{conversationId}
+        AND USER_ID = #{userId}
+        AND STATUS &lt;&gt; 'CLOSED'
+    </update>
+
+
+
+</mapper>

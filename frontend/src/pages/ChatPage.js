@@ -2,14 +2,15 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import axiosInstance from "../api/axiosInstance";
+import useChatExit from "../hooks/useChatExit";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
 
 /** API 경로 */
-
 const API = {
   characters: "/chat/characters",
-  history: (cid) => `/chat/${cid}/history`,
+  enter: (cid) => `/chat/${cid}/enter`,
   chatSend: (cid) => `/chat/${cid}/send`,
 };
 
@@ -17,23 +18,11 @@ const API = {
 function toFullImageUrl(raw) {
   const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
   let url = raw || "/images/character/placeholder.png";
-
-  // 이미 절대 URL이면 그대로
   if (/^https?:\/\//i.test(url)) return url;
-
-  // 1) /static/ 접두어 제거
   url = url.replace(/^\/?static\//i, "/");
-
-  // 2) /character/ → /images/character/ 로 정규화
   url = url.replace(/^\/?character\//i, "/images/character/");
-
-  // 3) 루트(/)로 시작하면 호스트만 붙임
   if (url.startsWith("/")) return `${API_BASE}${url}`;
-
-  // 4) images/ 로 시작하면 / 하나 붙여서 호스트 결합
   if (url.startsWith("images/")) return `${API_BASE}/${url}`;
-
-  // 5) 파일명만 온 경우 기본 폴더(images) 붙이기
   return `${API_BASE}/images/${url}`;
 }
 
@@ -58,7 +47,31 @@ function normalizeCharacters(payload) {
     .filter((c) => c.id);
 }
 
+/** 히스토리 정규화 */
+function normalizeHistory(raw) {
+  const arr = Array.isArray(raw) ? raw : [];
+  return arr.map((m) => {
+    let s = m.sender;
+    if (s && typeof s !== "string") s = s.name ?? String(s);
+    s = (s || "").toLowerCase();
+    const role = s === "user" ? "user" : "assistant";
+    return {
+      id:
+        m.id ??
+        m.messageId ??
+        `m-${Date.now()}-${Math.random().toString(36).slice(2)}`, // 충돌 방지
+      role,
+      content: m.content ?? m.message ?? "",
+    };
+  });
+}
+
 export default function ChatPage() {
+  const { characterId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const enterPayload = location.state?.enterPayload;
+
   const [characters, setCharacters] = useState([]); // [{id, name, imageUrl}]
   const [selectedIdx, setSelectedIdx] = useState(0);
   const selectedCharacter = useMemo(
@@ -66,16 +79,23 @@ export default function ChatPage() {
     [characters, selectedIdx]
   );
 
+  // 나가기
+  useChatExit(selectedCharacter?.id ?? characterId);
+
   const [messages, setMessages] = useState([]); // [{id, role, content}]
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const endRef = useRef(null);
+  const scrollWrapRef = useRef(null);
+
+  // StrictMode에서 useEffect 이중 호출 방지용 락
+  const enterOnceRef = useRef({ cid: null, called: false });
 
   // 스크롤 맨 아래로
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   /** 1) 초기: 캐릭터 목록 */
@@ -85,20 +105,26 @@ export default function ChatPage() {
         setLoading(true);
         const res = await axiosInstance.get(API.characters);
 
-
-
-        const list = (Array.isArray(res.data) ? res.data : res.data.characters || []).map((c) => ({
-                  id: c.id ?? c.characterId,
-                  name: c.name ?? c.characterName,
-                  imageUrl: toFullImageUrl(
-                    c.imageUrl ?? c.profileImageUrl ?? c.imagePath ?? c.imageName
-                  ),
-                }));
+        const list = (Array.isArray(res.data) ? res.data : res.data.characters || []).map(
+          (c) => ({
+            id: c.id ?? c.characterId,
+            name: c.name ?? c.characterName,
+            imageUrl: toFullImageUrl(
+              c.imageUrl ?? c.profileImageUrl ?? c.imagePath ?? c.imageName
+            ),
+          })
+        );
 
         setCharacters(list);
-        // 인덱스가 범위를 벗어나지 않게 보정
-        if (list.length && selectedIdx > list.length - 1) {
-          setSelectedIdx(0);
+
+        if (list.length) {
+          const preferId = characterId?.toString();
+          if (preferId) {
+            const idx = list.findIndex((c) => String(c.id) === preferId);
+            setSelectedIdx(idx >= 0 ? idx : 0);
+          } else {
+            if (selectedIdx > list.length - 1) setSelectedIdx(0);
+          }
         }
       } catch (e) {
         console.error("캐릭터 목록 조회 실패:", e);
@@ -110,54 +136,79 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** 2) 캐릭터 전환: 히스토리 로딩, 없으면 기본 인사 */
+  const loadIdRef = useRef(0);
+
+  /** 2) 캐릭터 전환: 입장 payload 있으면 재호출 없이 사용, 없으면 enter 호출 */
   useEffect(() => {
     if (!selectedCharacter) {
       setMessages([]);
       return;
     }
+
+    setMessages([]);
+    const myLoadId = ++loadIdRef.current;
+
+    // A) 입장 페이지에서 전달된 payload가 현재 캐릭터와 매칭되면 그대로 사용
+    if (
+      enterPayload &&
+      (enterPayload.characterId === selectedCharacter.id ||
+        String(enterPayload.characterId) === String(selectedCharacter.id))
+    ) {
+      const list = normalizeHistory(enterPayload.history || []).reverse();
+
+      if (myLoadId === loadIdRef.current) setMessages(list);
+      // 호출된 것으로 마킹
+      enterOnceRef.current = { cid: selectedCharacter.id, called: true };
+
+      // 주소창 state 제거 (새로고침 시 중복 방지)
+      navigate(".", { replace: true, state: {} });
+      return;
+    }
+
+    // B) state가 없을 때만 서버 호출
+    if (enterOnceRef.current.cid !== selectedCharacter.id) {
+      enterOnceRef.current = { cid: selectedCharacter.id, called: false };
+    }
+    if (enterOnceRef.current.called) return;
+    enterOnceRef.current.called = true;
+
+    let cancelled = false;
     (async () => {
       try {
         setHistoryLoading(true);
-
-        // 히스토리 불러오기
-        const { data: hist } = await axiosInstance.get(
-          API.history(selectedCharacter.id)
+        const { data: enter } = await axiosInstance.post(
+          API.enter(selectedCharacter.id)
         );
-        const list = Array.isArray(hist) ? hist : [];
-        setMessages(list);
-
-        // 히스토리가 비어 있으면 기본 인사 추가
-        if (list.length === 0) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: "greet-" + Date.now(),
-              role: "assistant",
-              content: `안녕! 나는 ${selectedCharacter.name}. 오늘은 어땠어?`,
-            },
-          ]);
+        const list = normalizeHistory(enter?.history || []).reverse();
+        if (!cancelled && myLoadId === loadIdRef.current) {
+          setMessages(list);
         }
       } catch (e) {
         console.error("대화 이력 조회 실패:", e);
-        setMessages([
-          {
-            id: "err-" + Date.now(),
-            role: "assistant",
-            content: "대화 이력을 불러오지 못했어요.",
-          },
-        ]);
+        if (!cancelled)
+          setMessages([
+            {
+              id: "err-" + Date.now(),
+              role: "assistant",
+              content: "대화 이력을 불러오지 못했어요.",
+            },
+          ]);
       } finally {
-        setHistoryLoading(false);
+        if (!cancelled) setHistoryLoading(false);
       }
     })();
-  }, [selectedCharacter?.id]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCharacter?.id, enterPayload, navigate]);
 
   /** 3) 메시지 전송 */
   const send = async () => {
     const t = text.trim();
     if (!t || busy || !selectedCharacter) return;
 
+    const cidSnapshot = selectedCharacter.id;
     const uid = "u-" + Date.now();
     setText("");
     setMessages((prev) => [...prev, { id: uid, role: "user", content: t }]);
@@ -165,17 +216,15 @@ export default function ChatPage() {
     setBusy(true);
     try {
       const { data } = await axiosInstance.post(
-        API.chatSend(selectedCharacter.id),
+        API.chatSend(cidSnapshot),
         { message: t }
       );
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: data?.messageId || "a-" + Date.now(),
-          role: "assistant",
-          content: data?.reply ?? "응답이 비어있어요.",
-        },
-      ]);
+      if (cidSnapshot === selectedCharacter?.id) {
+        setMessages((prev) => [
+          ...prev,
+            { id: data?.messageId || "a-" + Date.now(), role: "assistant", content: data?.reply ?? "응답이 비어있어요." },
+        ]);
+      }
     } catch (err) {
       console.error("채팅 전송 실패:", err);
       setMessages((prev) => [
@@ -242,7 +291,10 @@ export default function ChatPage() {
                 )}
               </div>
 
-              <div className="flex-1 overflow-y-auto px-14 py-10 space-y-5">
+              <div
+                key={selectedCharacter?.id || "none"}     // 캐릭터 바뀌면 강제 리마운트
+                className="flex-1 overflow-y-auto px-14 py-10 space-y-5"
+              >
                 {messages.map((m) => (
                   <Bubble key={m.id} role={m.role} content={m.content} />
                 ))}

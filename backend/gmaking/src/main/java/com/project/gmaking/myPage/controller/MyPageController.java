@@ -1,17 +1,17 @@
 package com.project.gmaking.myPage.controller;
 
+import com.project.gmaking.character.service.CharacterService;
+import com.project.gmaking.character.vo.CharacterStatVO;
 import com.project.gmaking.myPage.service.MyPageService;
 import com.project.gmaking.myPage.vo.CharacterCardVO;
 import com.project.gmaking.myPage.vo.MyPageProfileVO;
 import com.project.gmaking.myPage.vo.MyPageSummaryVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
@@ -23,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/api/my-page")
 public class MyPageController {
     private final MyPageService myPageService;
+    private final CharacterService characterService;
 
     // 상단 프로필
     @GetMapping("/profile")
@@ -76,5 +77,15 @@ public class MyPageController {
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails ud) return ud.getUsername();
         return authentication.getName(); // 기본
+    }
+
+    @GetMapping("/characters/{characterId}/stats")
+    public ResponseEntity<CharacterStatVO> getCharacterStats(
+            @PathVariable Integer characterId
+    ) {
+
+        CharacterStatVO vo = characterService.getCharacterStat(characterId);
+        if (vo == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(vo);
     }
 }

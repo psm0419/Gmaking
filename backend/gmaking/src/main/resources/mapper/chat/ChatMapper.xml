@@ -3,6 +3,20 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.project.gmaking.chat.dao.ChatDAO">
+
+    <resultMap id="dialogueMap" type="com.project.gmaking.chat.vo.DialogueVO">
+        <id     column="message_id"      property="messageId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="sender"          property="sender"
+                javaType="com.project.gmaking.chat.constant.DialogueSender"/>
+        <result column="content"         property="content"/>
+        <result column="chat_date"       property="chatDate"      jdbcType="DATE"/>
+        <result column="created_date"    property="createdDate"   jdbcType="TIMESTAMP"/>
+        <result column="created_by"      property="createdBy"/>
+        <result column="updated_date"    property="updatedDate"   jdbcType="TIMESTAMP"/>
+        <result column="updated_by"      property="updatedBy"/>
+    </resultMap>
+
     <!--  최신 대화방  -->
     <select id="findLatestConversationId" resultType="int">
         SELECT CONVERSATION_ID
@@ -31,7 +45,7 @@
 
     <!--  최근 메시지 N개  -->
     <select id="selectRecentDialogues"
-            resultType="com.project.gmaking.chat.vo.DialogueVO">
+            resultMap="dialogueMap">
         SELECT
             MESSAGE_ID      AS messageId,
             CONVERSATION_ID AS conversationId,
@@ -48,6 +62,7 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 페르소나 조회 -->
     <select id="selectPersonaByCharacterId"
             resultType="com.project.gmaking.chat.vo.PersonaVO">
         SELECT
@@ -63,5 +78,59 @@
         ORDER BY UPDATED_DATE DESC, PERSONA_ID DESC
         LIMIT 1
     </select>
+
+    <!-- 유저 메시지 개수 -->
+    <select id="countUserMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'user'
+    </select>
+
+    <!-- 캐릭터 메시지 개수 -->
+    <select id="countCharacterMessages" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'character'
+    </select>
+
+    <!-- 캐릭터 메시지: 최신 1개만 남기고 나머지 삭제 -->
+    <delete id="deleteOldCharacterMessagesExceptLatest">
+        DELETE FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'character'
+        AND message_id NOT IN (
+        SELECT x.max_id FROM (
+        SELECT MAX(message_id) AS max_id
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND sender = 'character'
+        ) AS x
+        )
+    </delete>
+
+    <select id="countAllMessagesToday" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_dialogue
+        WHERE conversation_id = #{conversationId}
+        AND chat_date = CURDATE()
+    </select>
+
+    <delete id="deleteDialoguesByConversationId" parameterType="int">
+        DELETE FROM TB_DIALOGUE WHERE CONVERSATION_ID = #{conversationId}
+    </delete>
+
+    <!--  스케줄러  -->
+    <select id="countByConversationId" resultType="int">
+        SELECT COUNT(*) FROM TB_DIALOGUE WHERE CONVERSATION_ID = #{conversationId}
+    </select>
+
+    <insert id="insertSystemEvent">
+        INSERT INTO TB_DIALOGUE
+        (CONVERSATION_ID, SENDER, CONTENT, CHAT_DATE, CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY)
+        VALUES
+        (#{conversationId}, 'system', #{content}, CURDATE(), NOW(), #{actor}, NOW(), #{actor})
+    </insert>
 
 </mapper>
