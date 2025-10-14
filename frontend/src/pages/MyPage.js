@@ -5,28 +5,24 @@ import Footer from "../components/Footer";
 import { getMyPageSummary, getCharacterStats } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
 
+// ===== 알림: STOMP + SockJS 직접 연결(별도 helpers 없이) =====
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+// 공통 axios (JWT 인터셉터 사용)
+import axiosInstance from "../api/axiosInstance";
+
+// ===== 공통 baseUrl (동일 오리진이면 "", 분리 개발이면 .env의 VITE_API_BASE) =====
+const BASE_URL = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
+
 // 이미지 경로 보정
 function toFullImageUrl(raw) {
-  const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
   let url = raw || "/images/character/placeholder.png";
-
-  // 이미 절대 URL이면 그대로
   if (/^https?:\/\//i.test(url)) return url;
-
-  // 1) /static/ 접두어 제거
   url = url.replace(/^\/?static\//i, "/");
-
-  // 2) /character/ → /images/character/ 로 정규화
   url = url.replace(/^\/?character\//i, "/images/character/");
-
-  // 3) 루트(/)로 시작하면 호스트만 붙임
-  if (url.startsWith("/")) return `${API_BASE}${url}`;
-
-  // 4) images/ 로 시작하면 / 하나 붙여서 호스트 결합
-  if (url.startsWith("images/")) return `${API_BASE}/${url}`;
-
-  // 5) 파일명만 온 경우 기본 폴더(images) 붙이기
-  return `${API_BASE}/images/${url}`;
+  if (url.startsWith("/")) return `${BASE_URL}${url}`;
+  if (url.startsWith("images/")) return `${BASE_URL}/${url}`;
+  return `${BASE_URL}/images/${url}`;
 }
 
 /** 페이지 래퍼: 헤더 / 메인 / 푸터 */
@@ -55,7 +51,6 @@ export default function MyPage() {
     (async () => {
       try {
         setLoading(true);
-
         const res = await getMyPageSummary(6);
         const data = res.data;
 
@@ -84,7 +79,7 @@ export default function MyPage() {
         setLoading(false);
       }
     })();
-  }, []); // 의존성 비움
+  }, []);
 
   if (loading) {
     return (
@@ -126,16 +121,14 @@ function MyMain({
   characters = [],
 }) {
   const [selected, setSelected] = useState(null);
-  const statCache = useRef(new Map()); // 캐시 추가
+  const statCache = useRef(new Map());
   const navigate = useNavigate();
 
   // 스탯 조회 (VO 키 → 프론트 키로 매핑)
   const fetchStats = async (characterId) => {
-    if (statCache.current.has(characterId)) {
-      return statCache.current.get(characterId);
-    }
+    if (statCache.current.has(characterId)) return statCache.current.get(characterId);
     try {
-      const { data } = await getCharacterStats(characterId); // VO 그대로 받음
+      const { data } = await getCharacterStats(characterId);
       const stats = {
         hp: data.characterHp,
         atk: data.characterAttack,
@@ -151,34 +144,26 @@ function MyMain({
     }
   };
 
-  // onOpenCharacter는 한 번만 선언 (중복 제거)
   const onOpenCharacter = async (c) => {
     setSelected({ ...c, _statsLoading: true });
     const stats = await fetchStats(c.id);
     setSelected({ ...c, ...stats, _statsLoading: false });
   };
 
-  // 캐릭터 성장 페이지
-  const onGrow = () => alert(`${selected?.name} 성장시키기`);
-
   const onChat = () => {
-    if (selected?.id) {
-      navigate(`/chat-entry/${selected.id}`);
-    } else {
-      alert("캐릭터를 먼저 선택하세요!");
-    }
+    if (selected?.id) navigate(`/chat-entry/${selected.id}`);
+    else alert("캐릭터를 먼저 선택하세요!");
   };
 
+  const onGrow = () => alert(`${selected?.name} 성장시키기`);
   const onSend = () => alert(`${selected?.name} 보내기`);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
-      {/* 프로필카드 + (선택 시) 상세패널 */}
       <div className="grid gap-6 md:grid-cols-[minmax(320px,540px),1fr] md:items-stretch">
         {/* 프로필 카드 */}
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
           <div className="flex items-start gap-6">
-            {/* 왼쪽: 아바타 + 아이콘 */}
             <div className="shrink-0 flex flex-col items-center">
               <div className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-gray-300" />
               <div className="mt-6 flex items-center gap-5 text-gray-800">
@@ -188,7 +173,6 @@ function MyMain({
               </div>
             </div>
 
-            {/* 오른쪽: 텍스트 */}
             <div className="flex-1 pt-2">
               <div className="text-2xl md:text-[28px] font-semibold text-gray-900">
                 {nickname}
@@ -201,7 +185,6 @@ function MyMain({
           </div>
         </section>
 
-        {/* 선택된 캐릭터가 있으면 상세 패널 */}
         {selected && (
           <CharacterDetail
             character={selected}
@@ -212,12 +195,10 @@ function MyMain({
         )}
       </div>
 
-      {/* 섹션 타이틀 */}
       <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">
         내 캐릭터
       </h2>
 
-      {/* 캐릭터 섹션 */}
       <CharacterSection
         characters={characters}
         selectedId={selected?.id}
@@ -230,107 +211,101 @@ function MyMain({
 
 /* ===== 캐릭터 상세 패널 ===== */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
-  const { name, grade, hp, def, atk, critRate, speed, _statsLoading, _statsError } = character ?? {};
+  const {
+    name,
+    grade,
+    hp,
+    def,
+    atk,
+    critRate,
+    speed,
+    _statsLoading,
+    _statsError,
+  } = character ?? {};
   const fmt = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
 
   return (
-     <section className="rounded-2xl border border-black/10 bg-gradient-to-b from-gray-100 to-gray-200 p-6 shadow-sm">
-       {/* 상단: 이름 + 등급 뱃지 */}
-       <div className="mb-5 flex items-center justify-between gap-3">
-         <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-           {fmt(name)}
-         </h3>
+    <section className="rounded-2xl border border-black/10 bg-gradient-to-b from-gray-100 to-gray-200 p-6 shadow-sm">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
+          {fmt(name)}
+        </h3>
+        <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-gray-800">
+          <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+          등급 {fmt(grade)}
+        </span>
+      </div>
 
-         {/* 등급 뱃지 */}
-         <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-gray-800">
-           <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-           등급 {fmt(grade)}
-         </span>
-       </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">체력</div>
+          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(hp)}</div>
+        </div>
+        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">방어력</div>
+          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(def)}</div>
+        </div>
+        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">공격력</div>
+          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(atk)}</div>
+        </div>
+        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">속도</div>
+          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(speed)}</div>
+        </div>
+      </div>
 
-       {/* 스탯 카드 4개 (2 x 2) */}
-       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-         {/* 체력 */}
-         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">체력</div>
-           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(hp)}</div>
-         </div>
-         {/* 방어력 */}
-         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">방어력</div>
-           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(def)}</div>
-         </div>
-         {/* 공격력 */}
-         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">공격력</div>
-           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(atk)}</div>
-         </div>
-         {/* 속도 */}
-         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">속도</div>
-           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(speed)}</div>
-         </div>
-       </div>
+      <div className="mt-3 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">치명타 확률</span>
+          <span className="text-xl md:text-2xl font-extrabold text-gray-900">
+            {typeof critRate === "number" ? `${critRate}%` : "-"}
+          </span>
+        </div>
+        {typeof critRate === "number" && (
+          <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
+            <div
+              className="h-2 rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${Math.max(0, Math.min(100, critRate))}%` }}
+              aria-label="치명타 확률"
+            />
+          </div>
+        )}
+      </div>
 
-       {/* 치명타 확률(넓게 한 줄) */}
-       <div className="mt-3 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-         <div className="flex items-center justify-between">
-           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">치명타 확률</span>
-           <span className="text-xl md:text-2xl font-extrabold text-gray-900">
-             {critRate == null ? "-" : `${critRate}%`}
-           </span>
-         </div>
-         {/* 진행바 느낌 (값이 있을 때만 표시) */}
-         {typeof critRate === "number" && (
-           <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
-             <div
-               className="h-2 rounded-full bg-emerald-500 transition-all"
-               style={{ width: `${Math.max(0, Math.min(100, critRate))}%` }}
-               aria-label="치명타 확률"
-             />
-           </div>
-         )}
-       </div>
+      {_statsLoading && (
+        <div className="mt-3 rounded-md bg-black/5 px-3 py-2 text-sm text-gray-700">스탯 불러오는 중...</div>
+      )}
+      {_statsError && (
+        <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{_statsError}</div>
+      )}
 
-       {/* 상태 메시지 */}
-       {_statsLoading && (
-         <div className="mt-3 rounded-md bg-black/5 px-3 py-2 text-sm text-gray-700">
-           스탯 불러오는 중...
-         </div>
-       )}
-       {_statsError && (
-         <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-           {_statsError}
-         </div>
-       )}
-
-       {/* 액션 버튼 */}
-       <div className="mt-6">
-         <div className="flex flex-wrap items-center gap-3">
-           <button
-             onClick={onGrow}
-             disabled={_statsLoading}
-             className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
-           >
-             성장시키기
-           </button>
-           <button
-             onClick={onChat}
-             disabled={_statsLoading}
-             className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
-           >
-             대화 하기
-           </button>
-           <button
-             onClick={onSend}
-             disabled={_statsLoading}
-             className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
-           >
-             보내기
-           </button>
-         </div>
-       </div>
-     </section>
+      <div className="mt-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={onGrow}
+            disabled={_statsLoading}
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+          >
+            성장시키기
+          </button>
+          <button
+            onClick={onChat}
+            disabled={_statsLoading}
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+          >
+            대화 하기
+          </button>
+          <button
+            onClick={onSend}
+            disabled={_statsLoading}
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+          >
+            보내기
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -365,12 +340,9 @@ function CharacterSection({ characters = [], selectedId, onPickClick, onOpenChar
             onClick={() => onOpenCharacter?.(c)}
           />
         ))}
-
-        {/* 플러스 카드 */}
         <button
           onClick={onPickClick}
-          className="aspect-square rounded-2xl bg-white border border-gray-200 flex items-center justify-center
-                     hover:bg-gray-50 active:bg-gray-100 transition"
+          className="aspect-square rounded-2xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition"
           aria-label="캐릭터 추가"
         >
           <span className="text-7xl leading-none text-gray-900">+</span>
@@ -385,9 +357,9 @@ function CharacterCard({ character, active, onClick }) {
     <div className="select-none">
       <button
         onClick={onClick}
-        className={`aspect-square w-full rounded-2xl overflow-hidden bg-white border
-                    ${active ? "border-sky-400 ring-2 ring-sky-300" : "border-gray-200 hover:border-gray-300"}
-                    active:scale-[0.99] transition`}
+        className={`aspect-square w-full rounded-2xl overflow-hidden bg-white border ${
+          active ? "border-sky-400 ring-2 ring-sky-300" : "border-gray-200 hover:border-gray-300"
+        } active:scale-[0.99] transition`}
         aria-label={character.name}
       >
         <div className="w-full h-full p-3 flex items-center justify-center">
@@ -395,7 +367,9 @@ function CharacterCard({ character, active, onClick }) {
             src={character.image}
             alt={character.name}
             className="max-h-full max-w-full object-contain"
-            onError={(e) => { e.currentTarget.style.opacity = 0; }}
+            onError={(e) => {
+              e.currentTarget.style.opacity = 0;
+            }}
           />
         </div>
       </button>
@@ -404,58 +378,229 @@ function CharacterCard({ character, active, onClick }) {
   );
 }
 
-/* ===== 알림 벨 ===== */
+/* ===== 알림 벨: REST 직접 호출 + STOMP 구독(직접) ===== */
 function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
   const [tab, setTab] = useState("new"); // 'new' | 'read'
-  const [items, setItems] = useState([
-    { id: 1, text: "가입을 축하합니다 마스터님", read: true },
-    { id: 2, text: "내 커뮤니티 글에 댓글이 달렸습니다", read: false },
-    { id: 3, text: "보유 부화권 5개 구매하셨습니다", read: false },
-  ]);
+  const [badge, setBadge] = useState(0);
+  const [unread, setUnread] = useState([]); // [{id, title, linkUrl, type, metaJson, ...}]
+  const [read, setRead] = useState([]);
+  const [isBulkWorking, setIsBulkWorking] = useState(false);
+  const navigate = useNavigate();
 
   const btnRef = useRef(null);
   const popRef = useRef(null);
   const gearRef = useRef(null);
+  const stompRef = useRef/** @type {React.MutableRefObject<Client | null>} */(null);
 
-  const newList = items.filter((i) => !i.read);
-  const readList = items.filter((i) => i.read);
-  const visible = tab === "new" ? newList : readList;
+  // 테스트 코드
+  const sendPing = () => {
+    const c = stompRef.current;
+    if (!c || !c.connected) return alert("소켓이 아직 연결되지 않았어요.");
+    c.publish({ destination: "/app/ping", body: "" });
+  }
+   // 테스트 코드
 
-  const markAllRead = () => setItems((prev) => prev.map((i) => ({ ...i, read: true })));
-  const deleteAll = () => setItems([]);
-  const deleteOne = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
+  // ===== REST helpers (axiosInstance 는 JWT 인터셉터 적용) =====
+  const fetchUnreadCount = async () => {
+    const { data } = await axiosInstance.get("/api/notifications/unread/count");
+    return typeof data?.count === "number" ? data.count : 0;
+  };
+
+  const fetchUnread = async ({ limit = 20, offset = 0 } = {}) => {
+    const { data } = await axiosInstance.get(
+      `/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(
+        offset
+      )}`
+    );
+    return data;
+  };
+
+  const fetchRead = async ({ limit = 20, offset = 0 } = {}) => {
+    const { data } = await axiosInstance.get(
+      `/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(
+        offset
+      )}`
+    );
+    return data;
+  };
+
+  const markRead = async (id) => {
+    await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/read`);
+  };
+
+  const normalizeList = (arr) =>
+    (arr || []).map((n) => ({
+      id: n.id,
+      title: n.title || "알림",
+      linkUrl: n.linkUrl || null,
+      type: n.type,
+      status: n.status,
+      meta: typeof n.metaJson === "string" ? safeJson(n.metaJson) : n.metaJson || {},
+      createdDate: n.createdDate,
+    }));
+
+  const refreshAll = async () => {
+    const [cnt, u, r] = await Promise.all([
+      fetchUnreadCount(),
+      fetchUnread({ limit: 20, offset: 0 }),
+      fetchRead({ limit: 20, offset: 0 }),
+    ]);
+    setBadge(cnt ?? 0);
+    setUnread(normalizeList(u));
+    setRead(normalizeList(r));
+  };
+
+  // 초기 로드 + STOMP 연결
+  const startedRef = useRef(false);
+  const subRef = useRef(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("gmaking_token");
+    if (!token) {
+      // 로그인 안되어 있으면 소켓 연결 생략
+      return;
+    }
+
+    // 최초 목록 로드
+    refreshAll().catch(console.error);
+
+    if (startedRef.current) return;
+    startedRef.current = true;
+
+    // STOMP 클라이언트 구성
+    const sockUrl = `${BASE_URL}/notify-ws`; // 서버의 SockJS 엔드포인트 (예: /ws)
+    const client = new Client({
+      // SockJS 팩토리
+      webSocketFactory: () => new SockJS(sockUrl),
+      // 연결 헤더 (서버 StompAuthChannelInterceptor가 Authorization 읽음)
+      connectHeaders: {
+        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+      },
+      debug: () => {},
+      reconnectDelay: 0,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+
+      onConnect: () => {
+        // 구독 경로는 서버 설정에 맞춰 조정하세요.
+        // 흔한 패턴: /user/queue/notifications
+        subRef.current = client.subscribe("/user/queue/notifications", () => {
+          // 새 알림 도착 → 배지/목록 새로고침
+          refreshAll().catch(console.error);
+        });
+      },
+      onStompError: (frame) => {
+        console.error("STOMP error", frame?.headers, frame?.body);
+      },
+      onWebSocketClose: (ev) => {
+        // console.log("WS closed", ev.code, ev.reason);
+      }
+    });
+
+    client.activate();
+    stompRef.current = client;
+
+    return () => {
+      try { subRef.current?.unsubscribe(); } catch {}
+      subRef.current = null;
+      try { stompRef.current?.deactivate(); } catch {}
+      stompRef.current = null;
+      startedRef.current = false;
+    };
+
+  }, []);
+
+  // 모두 읽음
+  const markAllRead = async () => {
+    if (unread.length === 0) return;
+    setIsBulkWorking(true);
+    try {
+      await Promise.all(unread.map((n) => markRead(n.id)));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      await refreshAll().catch(console.error);
+      setIsBulkWorking(false);
+    }
+  };
+
+  // 전체 삭제(서버 API 없으므로 UI에서만 비움)
+  const deleteAll = () => {
+    setUnread([]);
+    setRead([]);
+    setBadge(0);
+  };
+
+  const onClickItem = async (n) => {
+    try {
+      await markRead(n.id);
+      if (n.linkUrl) {
+        navigate(n.linkUrl);
+      } else if (n.type === "PVP_RESULT") {
+        const m = n.meta || {};
+        alert(
+          `${m.opponentName ?? m.opponentUserId ?? "상대"}과/와의 전투에서 ${
+            m.result === "WIN" ? "승리" : "패배"
+          }했습니다 (전투ID: ${m.battleId ?? "-"})`
+        );
+      }
+    } finally {
+      await refreshAll().catch(console.error);
+    }
+  };
+
+  const visible = tab === "new" ? unread : read;
 
   return (
     <div className="relative">
       <button
         ref={btnRef}
-        onClick={() => { setOpen((v) => !v); setGearOpen(false); }}
+        onClick={() => {
+          setOpen((v) => !v);
+          setGearOpen(false);
+        }}
         className="relative rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
         aria-label="알림 열기"
       >
         <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
-          <path d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M10 19a2 2 0 004 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <path
+            d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
-        {newList.length > 0 && (
+        {badge > 0 && (
           <span className="absolute -right-1 -top-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">
-            {newList.length}
+            {badge}
           </span>
         )}
       </button>
 
       {open && (
-        <div ref={popRef} className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl">
+        <div
+          ref={popRef}
+          className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl"
+        >
           <div className="flex items-center justify-between px-3 py-2 border-b">
             <div className="flex items-center gap-2">
-              <button onClick={() => setTab("new")}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${tab === "new" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"}`}>
+              <button
+                onClick={() => setTab("new")}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  tab === "new" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
+                }`}
+              >
                 새 알림
               </button>
-              <button onClick={() => setTab("read")}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${tab === "read" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"}`}>
+              <button
+                onClick={() => setTab("read")}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  tab === "read" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
+                }`}
+              >
                 읽은 알림
               </button>
             </div>
@@ -468,19 +613,35 @@ function NotificationBell() {
                 aria-label="알림 설정"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6"/>
-                  <path d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2-.9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6" />
+                  <path
+                    d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                  />
                 </svg>
               </button>
 
               {gearOpen && (
                 <div className="absolute left-full top-0 ml-2 w-40 rounded-lg border bg-white shadow-lg overflow-hidden z-[60] origin-top-left">
-                  <button onClick={() => { markAllRead(); setGearOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors">
+                  <button
+                    onClick={() => {
+                      markAllRead();
+                      setGearOpen(false);
+                    }}
+                    disabled={isBulkWorking}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
+                  >
                     모두 읽음
                   </button>
-                  <button onClick={() => { deleteAll(); setGearOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  <button
+                    onClick={() => {
+                      deleteAll();
+                      setGearOpen(false);
+                    }}
+                    disabled={isBulkWorking}
+                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  >
                     알림 전체 삭제
                   </button>
                 </div>
@@ -489,33 +650,21 @@ function NotificationBell() {
           </div>
 
           <div className="max-h-80 overflow-auto p-3">
-            {visible.length === 0 ? (
+            { (tab === "new" ? unread : read).length === 0 ? (
               <div className="py-16 text-center text-gray-500">
                 {tab === "new" ? "새 알림이 없어요" : "읽은 알림이 없어요"}
               </div>
             ) : (
               <ul className="space-y-2">
-                {visible.map((n) => (
+                {(tab === "new" ? unread : read).map((n) => (
                   <li
                     key={n.id}
                     tabIndex={0}
                     role="button"
-                    className="relative group cursor-pointer rounded-md px-3 py-3
-                               border border-gray-200 bg-white
-                               transition-colors duration-150
-                               hover:bg-sky-50 hover:border-sky-300
-                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                    onClick={() => onClickItem(n)}
+                    className="relative group cursor-pointer rounded-md px-3 py-3 border border-gray-200 bg-white transition-colors duration-150 hover:bg-sky-50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                   >
-                    <p className="pr-8 text-sm text-gray-900">{n.text}</p>
-                    <button
-                      onClick={() => deleteOne(n.id)}
-                      className="absolute right-1 top-1 opacity-0 group-hover:opacity-100
-                                 transition-opacity text-xs px-1.5 py-0.5 rounded
-                                 bg-black/5 hover:bg-black/10"
-                      aria-label="알림 삭제"
-                    >
-                      ×
-                    </button>
+                    <p className="pr-8 text-sm text-gray-900">{n.title}</p>
                   </li>
                 ))}
               </ul>
@@ -531,17 +680,26 @@ function NotificationBell() {
 function IconMail(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
-      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7"/>
-      <path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 function IconMore(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
-      <circle cx="6" cy="12" r="1.7" fill="currentColor"/>
-      <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
-      <circle cx="18" cy="12" r="1.7" fill="currentColor"/>
+      <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+      <circle cx="18" cy="12" r="1.7" fill="currentColor" />
     </svg>
   );
+}
+
+/* ===== 유틸 ===== */
+function safeJson(s) {
+  try {
+    return JSON.parse(s || "{}");
+  } catch {
+    return {};
+  }
 }

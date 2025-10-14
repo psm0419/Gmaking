@@ -12,8 +12,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -24,6 +22,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.project.gmaking.oauth2.handler.OAuth2AuthenticationSuccessHandler;
 import com.project.gmaking.oauth2.service.CustomOAuth2UserService;
 import com.project.gmaking.oauth2.handler.OAuth2AuthenticationFailureHandler;
+
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.web.filter.CorsFilter;
+
+import java.time.Duration;
+
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +54,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of("http://localhost:3000"));
 
         // 모든 HTTP 메서드 허용 (GET, POST, OPTIONS 등)
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // 모든 헤더 허용 ('Authorization' 헤더 포함)
         configuration.setAllowedHeaders(List.of("*"));
@@ -76,6 +80,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 모든 OPTIONS 허용 (CORS용)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 웹알림
+                        .requestMatchers("/notify-ws/**").permitAll()
+                        .requestMatchers("/api/dev/**").authenticated()
 
                         // /api/** 전체 허용 (이 한 줄로 다 처리됨)
                         .requestMatchers("/api/**").permitAll()

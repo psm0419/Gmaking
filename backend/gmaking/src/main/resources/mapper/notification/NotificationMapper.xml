@@ -26,7 +26,8 @@
             CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY, EXPIRES_AT, META_JSON)
         VALUES
             (#{userId}, #{type}, #{title}, #{message}, #{linkUrl}, #{status},
-            NOW(), #{createdBy}, NOW(), #{updatedBy}, #{expiresAt}, CAST(#{metaJson} AS JSON))
+            NOW(), #{createdBy}, NOW(), #{updatedBy}, #{expiresAt}, #{metaJson})
+
     </insert>
     
     <select id="selectUnread" resultMap="NotifMap">
@@ -41,7 +42,7 @@
     
     <select id="countUnread" resultType="int">
         SELECT COUNT(*)
-        FORM TB_NOTIFICATION 
+        FROM TB_NOTIFICATION
         WHERE USER_ID = #{userId} 
             AND STATUS = 'unread'
             AND (EXPIRES_AT IS NULL OR EXPIRES_AT > NOW())

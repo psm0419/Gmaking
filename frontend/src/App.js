@@ -14,6 +14,7 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 
@@ -150,6 +151,7 @@ function App() {
                 <Route
                     path="/pve/battle"
                     element={<PveBattlePage />} />
+
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
