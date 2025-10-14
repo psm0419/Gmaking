@@ -399,8 +399,16 @@ public class PveBattleServiceImpl implements PveBattleService {
             battleDAO.insertBattleLog(battleLog);
             Integer battleId = battleLog.getBattleId();
 
-            int turn = 1;
+            // 초기 로그
+            List<String> logs = new ArrayList<>();
+            String initialLog = String.format("%s(HP:%s, 공격:%s, 방어:%s, 속도:%s, 크리티컬:%s)을 마주쳤다!",
+                    monster.getMonsterName(), monsterHp, monsterAtk, monsterDef, monsterSpeed, monsterCrit);
+            logs.add(initialLog);
 
+            // 초기 로그 전송
+            session.sendMessage(new TextMessage(initialLog));
+
+            int turn = 1;
             while (playerHp > 0 && monsterHp > 0) {
                 boolean isPlayerAttack = (turn % 2 == 1) ? playerFirst : !playerFirst;
                 String actor = isPlayerAttack ? character.getCharacterName() : monster.getMonsterName();
@@ -415,7 +423,6 @@ public class PveBattleServiceImpl implements PveBattleService {
                 if (isPlayerAttack) monsterHp -= damage;
                 else playerHp -= damage;
 
-                // GPT 호출
                 String noteJson = openAIService.requestGPTNote(Map.of(
                         "actor", actor, "target", target, "damage", damage, "critical", critical
                 )).join();
@@ -434,47 +441,46 @@ public class PveBattleServiceImpl implements PveBattleService {
                 }
                 String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패]").toString();
 
-                // 여기가 핵심: 기존 웹소켓 로그 형식처럼 합치기
+                // 마지막 턴이면 로그에 승리/패배 메시지 포함
                 String actionLog = String.format(
-                        "턴 %d: %s가 공격으로 %d 데미지를 입힘%s\n%s (플레이어HP:%d, 몬스터HP:%d)",
+                        "턴 %d: %s가 공격으로 %d 데미지를 입힘%s\n%s (플레이어HP:%d, 몬스터HP:%d)%s",
                         turn,
                         actor,
                         damage,
                         critical ? " 크리티컬 히트!" : "",
                         noteText,
                         playerHp,
-                        monsterHp
+                        monsterHp,
+                        (playerHp <= 0 || monsterHp <= 0)
+                                ? (monsterHp <= 0 ? "\n승리! 전투 종료!" : "\n패배... 다음에 다시 도전하세요!")
+                                : ""
                 );
 
+                logs.add(actionLog);
+
                 // 프론트로 전송
-                Map<String, Object> message = Map.of(
-                        "type", "turn",
-                        "turn", turn,
-                        "log", actionLog,
-                        "playerHp", playerHp,
-                        "monsterHp", monsterHp
-                );
-                session.sendMessage(new TextMessage(mapper.writeValueAsString(message)));
+                session.sendMessage(new TextMessage(actionLog));
 
                 // DB 저장
                 TurnLogVO turnLog = new TurnLogVO();
                 turnLog.setBattleId(battleId);
                 turnLog.setTurnNumber(turn);
-                turnLog.setActionDetail(noteText);
+                turnLog.setActionDetail(actionLog);
                 turnLogDAO.insertTurnLog(turnLog);
 
-                Thread.sleep(1000); // 턴 간 딜레이
+                Thread.sleep(1000);
                 turn++;
             }
 
             boolean isWin = monsterHp <= 0;
+
+            // 전투 종료 메시지 전송
             Map<String, Object> result = Map.of(
                     "type", "end",
                     "result", isWin ? "win" : "lose"
             );
             session.sendMessage(new TextMessage(mapper.writeValueAsString(result)));
-
-            // 최종 DB 반영
+            // DB 기록
             battleLog.setIsWin(isWin ? "Y" : "N");
             battleLog.setTurnCount((long) (turn - 1));
             battleDAO.insertBattleLog(battleLog);
@@ -489,7 +495,5 @@ public class PveBattleServiceImpl implements PveBattleService {
             }
         }
     }
-
-
 
 }

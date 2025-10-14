@@ -15,6 +15,8 @@ import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import PvpMatchPage from './pages/PvpMatchPage';
+import PvpBattlePage from './pages/PvpBattlePage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -60,11 +62,7 @@ function App() {
                 <Route path="/oauth/callback/failure" element={<OAuth2RedirectHandler />} />
                 <Route path="/find-id" element={<FindIdPage />} />
                 <Route path="/find-password" element={<FindPasswordPage />} />
-                <Route path="/shop" element={<ShopPage />} />
-                <Route path="/pve/maps" element={<MapSelection />} />
-                <Route path="/pve/battle" element={<PveBattlePage />} />
-
-
+                
                 {/* 보호 경로 */}
                 <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
@@ -72,7 +70,12 @@ function App() {
                 <Route path="/chat-entry/:characterId" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>} />
                 <Route path="/chat/:characterId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                 <Route path="/my-page" element={<ProtectedRoute><MyPage/></ProtectedRoute>} />
-
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/pve/maps" element={<MapSelection />} />
+                <Route path="/pve/battle" element={<PveBattlePage />} />  
+                <Route path="/pvp/match" element={<PvpMatchPage />} />
+                <Route path="/pvp/battle" element={<PvpBattlePage />} />
+                       
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

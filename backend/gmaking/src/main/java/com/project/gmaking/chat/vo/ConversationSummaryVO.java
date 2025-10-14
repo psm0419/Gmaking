@@ -13,13 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ConversationSummaryVO {
-    private Integer memoryId;
     private Integer conversationId;
-    private LocalDate memoryDate;
-    private String summary;
+    private String  rollingSummary;
+    private Integer summaryVersion;
 
-    private LocalDateTime createdDate;
-    private String createdBy;
-    private LocalDateTime updatedDate;
+    private Integer lastTurnId;
+    private Integer lengthChars;
     private String updatedBy;
+    private LocalDateTime updatedDate;
 }

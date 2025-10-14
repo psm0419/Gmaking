@@ -1,17 +1,17 @@
 // src/pages/PveBattlePage.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function PveBattlePage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { mapId } = location.state || {};
     const [mapName, setMapName] = useState(null);
     const [characters, setCharacters] = useState([]);
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [logs, setLogs] = useState([]);
-    const [isBattle, setIsBattle] = useState(false);
-    const [result, setResult] = useState(null);
+    const [isBattle, setIsBattle] = useState(false);    
     const [mapImageUrl, setMapImageUrl] = useState(null);
     const logContainerRef = useRef(null);
     const socketRef = useRef(null);
@@ -60,8 +60,7 @@ function PveBattlePage() {
             return;
         }
 
-        setLogs([]);
-        setResult(null);
+        setLogs([]);        
         setIsBattle(true);
 
         // WebSocket 연결
@@ -80,9 +79,22 @@ function PveBattlePage() {
         };
 
         socket.onmessage = (event) => {
-            const data = event.data;
-            console.log("턴 로그 수신:", data);
-            setLogs(prev => [...prev, data]);
+            let data;
+            try {
+                data = JSON.parse(event.data);
+            } catch {
+                data = { log: event.data }; // 순수 텍스트 로그 처리
+            }
+
+            if (data.type === "end") {
+                // 전투 종료 시 상태 업데이트
+                setIsBattle(false);                
+                return;
+            }
+
+            // 일반 로그 처리
+            const logText = data.log || event.data;
+            setLogs(prev => [...prev, logText]);
         };
 
         socket.onclose = () => {
@@ -148,15 +160,24 @@ function PveBattlePage() {
                     ))}
                 </div>
             </div>
+            
+            <div className="flex gap-4 mt-4">
+                <button
+                    onClick={startBattle}
+                    disabled={isBattle || !selectedCharacter}
+                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
+                >
+                    {isBattle ? "전투 중..." : "전투 시작"}
+                </button>
 
-            <button
-                onClick={startBattle}
-                disabled={isBattle || !selectedCharacter}
-                className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
-            >
-                {isBattle ? "전투 중..." : "전투 시작"}
-            </button>
-
+                <button
+                    onClick={() => navigate("/pve/maps")}
+                    disabled={isBattle}
+                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
+                >
+                    맵 선택
+                </button>
+            </div>
             <div
                 className="mt-6 bg-gray-900/80 p-6 rounded-xl w-3/5 min-h-[300px] overflow-y-auto border border-gray-700"
                 style={{ maxHeight: '50vh' }}
@@ -169,9 +190,7 @@ function PveBattlePage() {
                         {log}
                     </pre>
                 ))}
-            </div>
-
-            {result && <div className="mt-4 text-2xl font-bold">{result}</div>}
+            </div>            
         </div>
     );
 }
