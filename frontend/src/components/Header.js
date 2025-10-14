@@ -16,7 +16,7 @@ const Header = () => {
         { name: '공지사항', icon: Bell, link: '#' },
         { name: '상점', icon: ShoppingCart, link: '#' },
         { name: '랭킹', icon: Award, link: '#' },
-        { name: '커뮤니티', icon: MessageSquare, link: '#' },
+        { name: '커뮤니티', icon: MessageSquare, link: '/community' },
         { name: '고객지원', icon: LifeBuoy, link: '#' },
         { name: '전투', icon: LifeBuoy, link: 'pve/maps' },
     ];

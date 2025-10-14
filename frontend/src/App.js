@@ -14,7 +14,10 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
+import CommunityPage from './pages/CommunityPage';
+import CreatePostPage from './pages/CreatePostPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import PostDetailPage from './pages/PostDetailPage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -153,6 +156,37 @@ function App() {
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
+
+                {/* 커뮤니티 페이지 */}
+                <Route
+                    path="/community"
+                    element={
+                        <ProtectedRoute>
+                            <CommunityPage/>
+                        </ProtectedRoute>
+                    } 
+                />
+
+                {/* 새 게시글 작성 페이지 */}
+                <Route
+                    path="/create-post"
+                    element={
+                        <ProtectedRoute>
+                            <CreatePostPage/>
+                        </ProtectedRoute>
+                    } 
+                />
+
+                {/* 게시글 상세 페이지 */}
+                <Route
+                    path="/community/:postId"
+                    element={
+                        <ProtectedRoute>
+                            <PostDetailPage/>
+                        </ProtectedRoute>
+                    } 
+                />
+
             </Routes>
         </Router>
     );
