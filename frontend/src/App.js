@@ -6,12 +6,8 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import RegisterPage from './pages/RegisterPage';
 import FindIdPage from './pages/FindIdPage';
 import FindPasswordPage from './pages/FindPasswordPage';
-import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler';
-import ChatPage from './pages/ChatPage'
-import MyPage from './pages/MyPage'
-import PveBattlePage from './pages/PveBattlePage'
-import MapSelection from './pages/MapSelection'
 import WithdrawPage from './pages/WithdrawPage';
+import OAuth2RedirectHandler from './pages/OAuth2RedirectHandler'; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 

@@ -98,7 +98,7 @@ public class SecurityConfig {
 
                         //  PVE 관련: 맵 조회는 비로그인도 허용
                         .requestMatchers("/api/pve/maps").permitAll()
-
+                        
                         // 회원탈퇴
                         .requestMatchers("/api/user/withdraw").authenticated()
 
