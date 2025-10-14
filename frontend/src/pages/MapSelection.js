@@ -53,7 +53,7 @@ const MapSelection = () => {
                         {/* 맵 이름 오버레이 */}
                         <div className="absolute inset-0 flex flex-col justify-end items-center p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
                             <h3 className="text-2xl font-bold mb-1 text-shadow-lg">
-                                {map.name}
+                                {map.mapName}
                             </h3>                    
                         </div>
 

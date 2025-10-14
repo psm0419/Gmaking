@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.project.gmaking.pve.dao.BattleDAO">
+<mapper namespace="com.project.gmaking.pve.dao.PveBattleDAO">
 
     <update id="updateCharacterStageClear" parameterType="int">
         UPDATE TB_CHARACTER

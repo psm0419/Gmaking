@@ -1,34 +1,36 @@
 // src/pages/PveBattlePage.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 
 function PveBattlePage() {
     const location = useLocation();
     const { mapId } = location.state || {};
-
+    const [mapName, setMapName] = useState(null);
     const [characters, setCharacters] = useState([]);
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [logs, setLogs] = useState([]);
     const [isBattle, setIsBattle] = useState(false);
     const [result, setResult] = useState(null);
     const [mapImageUrl, setMapImageUrl] = useState(null);
+    const logContainerRef = useRef(null);
+    const socketRef = useRef(null);
 
-    // localStorage에서 token과 userId 가져오기
     const token = localStorage.getItem("gmaking_token");
     const userId = localStorage.getItem("userId");
 
-    // MAP 이미지 가져오기
     useEffect(() => {
         if (mapId) {
             axios
                 .get(`/api/pve/maps/${mapId}/image`, { withCredentials: true })
-                .then(res => setMapImageUrl(res.data.mapImageUrl))
-                .catch(err => console.error("맵 이미지 가져오기 실패:", err));
+                .then(res => {
+                    setMapImageUrl(res.data.mapImageUrl);
+                    setMapName(res.data.mapName);
+                })
+                .catch(err => console.error("맵 이미지/이름 가져오기 실패:", err));
         }
     }, [mapId]);
 
-    // 캐릭터 목록 가져오기
     useEffect(() => {
         if (!token || !userId) {
             alert("로그인이 필요합니다.");
@@ -45,8 +47,14 @@ function PveBattlePage() {
             .catch(err => console.error("캐릭터 목록 불러오기 실패:", err));
     }, [token, userId]);
 
-    // 전투 시작
-    const startBattle = async () => {
+    useEffect(() => {
+        // 로그가 추가될 때마다 스크롤을 맨 아래로 이동
+        if (logContainerRef.current) {
+            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+        }
+    }, [logs]);
+
+    const startBattle = () => {
         if (!selectedCharacter) {
             alert("캐릭터를 선택하세요!");
             return;
@@ -56,33 +64,36 @@ function PveBattlePage() {
         setResult(null);
         setIsBattle(true);
 
-        try {
-            const params = {
+        // WebSocket 연결
+        const socket = new WebSocket("ws://localhost:8080/battle");
+        socketRef.current = socket;
+
+        socket.onopen = () => {
+            console.log("웹소켓 연결 성공:", new Date().toISOString());
+            // 서버에 전투 시작 요청 전송
+            const payload = {
                 characterId: selectedCharacter.characterId,
-                mapId,
-                userId
+                userId: userId,
+                mapId: mapId // 서버가 DB에서 몬스터 생성
             };
+            socket.send(JSON.stringify(payload));
+        };
 
-            const res = await axios.post("/api/pve/battle/start", null, {
-                params,
-                headers: { Authorization: `Bearer ${token}` }
-            });
+        socket.onmessage = (event) => {
+            const data = event.data;
+            console.log("턴 로그 수신:", data);
+            setLogs(prev => [...prev, data]);
+        };
 
-            const data = res.data;
-            const turnLogs = data.turnLogs || [];
-
-            for (let i = 0; i < turnLogs.length; i++) {
-                await new Promise(r => setTimeout(r, 1000));
-                setLogs(prev => [...prev, turnLogs[i]]);
-            }
-
-            setResult(data.isWin === "Y" ? "승리!" : "패배...");
-        } catch (e) {
-            console.error("전투 시작 실패:", e);
-            setLogs(["전투 시작 실패"]);
-        } finally {
+        socket.onclose = () => {
+            console.log("웹소켓 연결 종료");
             setIsBattle(false);
-        }
+        };
+
+        socket.onerror = (error) => {
+            console.error("웹소켓 오류:", error);
+            setIsBattle(false);
+        };
     };
 
     const backgroundStyle = {
@@ -96,7 +107,9 @@ function PveBattlePage() {
 
     return (
         <div className="flex flex-col items-center p-8 min-h-screen" style={backgroundStyle}>
-            <h1 className="text-3xl font-bold mb-6">PVE 전투 (맵 ID: {mapId})</h1>
+            <h1 className="text-3xl font-bold mb-6">
+                PVE 전투 ({mapName ? mapName : `맵 ID: ${mapId}`})
+            </h1>
 
             <div className="mb-4">
                 <h2 className="text-xl mb-2">캐릭터 선택</h2>
@@ -105,8 +118,8 @@ function PveBattlePage() {
                         <div
                             key={char.characterId}
                             className={`p-4 border rounded-lg cursor-pointer bg-white ${selectedCharacter?.characterId === char.characterId
-                                    ? "border-yellow-400"
-                                    : "border-gray-500"
+                                ? "border-yellow-400"
+                                : "border-gray-500"
                                 }`}
                             onClick={() => setSelectedCharacter(char)}
                         >
@@ -120,9 +133,15 @@ function PveBattlePage() {
                             <div className="font-bold text-lg">{char.characterName}</div>
                             {char.characterStat && (
                                 <div className="text-sm mt-2 text-black">
-                                    HP: {char.characterStat.characterHp} /
-                                    ATK: {char.characterStat.characterAttack} /
-                                    DEF: {char.characterStat.characterDefense}
+                                    <div>
+                                        HP: {char.characterStat.characterHp} /
+                                        ATK: {char.characterStat.characterAttack} /
+                                        DEF: {char.characterStat.characterDefense}
+                                    </div>
+                                    <div>
+                                        SPEED: {char.characterStat.characterSpeed} /
+                                        CRITICAL: {char.characterStat.criticalRate}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -138,8 +157,18 @@ function PveBattlePage() {
                 {isBattle ? "전투 중..." : "전투 시작"}
             </button>
 
-            <div className="mt-6 bg-gray-800 p-4 rounded-lg w-2/3 min-h-[300px] overflow-y-auto">
-                {logs.map((log, i) => <p key={i} className="text-lg mb-1">{log}</p>)}
+            <div
+                className="mt-6 bg-gray-900/80 p-6 rounded-xl w-3/5 min-h-[300px] overflow-y-auto border border-gray-700"
+                style={{ maxHeight: '50vh' }}
+            >
+                {logs.map((log, i) => (
+                    <pre
+                        key={i}
+                        className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 whitespace-pre-wrap"
+                    >
+                        {log}
+                    </pre>
+                ))}
             </div>
 
             {result && <div className="mt-4 text-2xl font-bold">{result}</div>}

@@ -13,6 +13,7 @@
         <result column="MONSTER_HP" property="monsterHp"/>
         <result column="MONSTER_ATTACK" property="monsterAttack"/>
         <result column="MONSTER_DEFENSE" property="monsterDefense"/>
+        <result column="MONSTER_SPEED" property="monsterSpeed"/>
         <result column="MONSTER_CRITICAL_RATE" property="monsterCriticalRate"/>
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="CREATED_BY" property="createdBy"/>
