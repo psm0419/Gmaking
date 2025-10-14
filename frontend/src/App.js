@@ -104,27 +104,7 @@ function App() {
                         </ProtectedRoute>
                     } 
                 />
-
-                {/* chat 페이지 test */}
-                <Route
-                    path="/chat_test"
-                    element={<ChatPage />} />
-                
-                {/* 상점 페이지 test */}
-                <Route
-                    path="/my_page"
-                    element={ <MyPage/>} />
-
-                {/* PVE 맵 선택 페이지 */}
-                <Route
-                    path="/pve/maps"
-                    element={<MapSelection />} /> 
-                
-                {/* PVE 전투 페이지 */}
-                <Route
-                    path="/pve/battle"
-                    element={<PveBattlePage />} />                
-            
+             
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
