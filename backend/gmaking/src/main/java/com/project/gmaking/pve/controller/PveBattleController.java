@@ -1,13 +1,23 @@
 package com.project.gmaking.pve.controller;
 
 import com.project.gmaking.character.service.CharacterService;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.project.gmaking.pve.service.PveBattleService;
@@ -17,10 +27,15 @@ import com.project.gmaking.map.vo.MapVO;
 import com.project.gmaking.character.vo.CharacterVO;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/pve")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(
+        origins = "http://localhost:3000",
+        allowCredentials = "true",
+        exposedHeaders = {"Content-Type", "Cache-Control", "X-Accel-Buffering"}
+)
 public class PveBattleController {
 
     private final PveBattleService pveBattleService;
@@ -78,18 +93,36 @@ public class PveBattleController {
         return ResponseEntity.ok(result);
     }
 
-    // New SSE endpoint for streaming battle logs
-    @GetMapping(value = "/battle/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamBattle(
-            @RequestParam Integer characterId,
-            @RequestParam Integer mapId,
-            @RequestParam String userId) {
-        SseEmitter emitter = new SseEmitter(0L); // 타임아웃을 무제한으로 설정하지 않고, 0으로 설정하여 기본값 사용
-        try {
-            pveBattleService.startBattleStream(characterId, mapId, userId, emitter);
-        } catch (Exception e) {
-            emitter.completeWithError(e);
-        }
-        return emitter;
-    }
+//    @GetMapping(value = "/battle/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+//    public void streamBattle(
+//            @RequestParam Integer characterId,
+//            @RequestParam Integer mapId,
+//            @RequestParam String userId,
+//            HttpServletRequest request,
+//            HttpServletResponse response) throws IOException {
+//
+//        // AsyncContext 시작
+//        final AsyncContext asyncContext = request.startAsync();
+//        asyncContext.setTimeout(300_000); // 5분
+//
+//        response.setContentType("text/event-stream");
+//        response.setCharacterEncoding("UTF-8");
+//        response.setHeader("Cache-Control", "no-cache");
+//        response.setHeader("Connection", "keep-alive");
+//        response.setHeader("X-Accel-Buffering", "no");
+//
+//        // 비동기로 처리
+//        CompletableFuture.runAsync(() -> {
+//            try {
+//                ServletOutputStream out = response.getOutputStream();
+//                pveBattleService.startBattleStreamWithOutputStream(
+//                        characterId, mapId, userId, out
+//                );
+//                asyncContext.complete();
+//            } catch (Exception e) {
+//                log.error("전투 스트리밍 실패", e);
+//                asyncContext.complete();
+//            }
+//        });
+//    }
 }

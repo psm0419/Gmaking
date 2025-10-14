@@ -14,7 +14,7 @@
         <result column="CRITICAL_RATE" property="criticalRate"/>
     </resultMap>
 
-    <select id="getCharacterStat" parameterType="string" resultMap="characterStatMap">
+    <select id="getCharacterStat" parameterType="int" resultMap="characterStatMap">
         SELECT * FROM TB_CHARACTER_STAT
         WHERE CHARACTER_ID = #{characterId}
     </select>

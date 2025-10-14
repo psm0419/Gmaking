@@ -1,5 +1,5 @@
 // src/pages/PveBattlePage.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 
@@ -13,6 +13,8 @@ function PveBattlePage() {
     const [isBattle, setIsBattle] = useState(false);
     const [result, setResult] = useState(null);
     const [mapImageUrl, setMapImageUrl] = useState(null);
+    const logContainerRef = useRef(null);
+    const socketRef = useRef(null);
 
     const token = localStorage.getItem("gmaking_token");
     const userId = localStorage.getItem("userId");
@@ -45,6 +47,13 @@ function PveBattlePage() {
             .catch(err => console.error("캐릭터 목록 불러오기 실패:", err));
     }, [token, userId]);
 
+    useEffect(() => {
+        // 로그가 추가될 때마다 스크롤을 맨 아래로 이동
+        if (logContainerRef.current) {
+            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+        }
+    }, [logs]);
+
     const startBattle = () => {
         if (!selectedCharacter) {
             alert("캐릭터를 선택하세요!");
@@ -55,45 +64,35 @@ function PveBattlePage() {
         setResult(null);
         setIsBattle(true);
 
-        const eventSource = new EventSource(
-            `/api/pve/battle/stream?characterId=${selectedCharacter.characterId}&mapId=${mapId}&userId=${userId}`,
-            { withCredentials: true }
-        );
+        // WebSocket 연결
+        const socket = new WebSocket("ws://localhost:8080/battle");
+        socketRef.current = socket;
 
-        eventSource.onopen = () => {
-            console.log("SSE 연결 성공:", new Date().toISOString());
+        socket.onopen = () => {
+            console.log("웹소켓 연결 성공:", new Date().toISOString());
+            // 서버에 전투 시작 요청 전송
+            const payload = {
+                characterId: selectedCharacter.characterId,
+                userId: userId,
+                mapId: mapId // 서버가 DB에서 몬스터 생성
+            };
+            socket.send(JSON.stringify(payload));
         };
 
-        eventSource.addEventListener("turnLog", (event) => {
-            console.log("턴 로그 수신:", event.data, new Date().toISOString());
-            setLogs(prev => [...prev, event.data]);
-        });
-
-        eventSource.addEventListener("battleResult", (event) => {
-            console.log("전투 결과 수신:", event.data, new Date().toISOString());
-            const data = JSON.parse(event.data);
-            setResult(data.isWin === "Y" ? "승리!" : "패배...");
-            setIsBattle(false);
-            eventSource.close();
-        });
-
-        eventSource.addEventListener("error", (event) => {
-            console.error("SSE 에러 이벤트:", event.data, new Date().toISOString());
-            setLogs(prev => [...prev, event.data || "전투 중 오류가 발생했습니다."]);
-            setIsBattle(false);
-            eventSource.close();
-        });
-
-        eventSource.onerror = (err) => {
-            console.error("SSE 연결 에러:", err, new Date().toISOString());
-            setLogs(prev => [...prev, "전투 중 연결 오류가 발생했습니다."]);
-            setIsBattle(false);
-            eventSource.close();
+        socket.onmessage = (event) => {
+            const data = event.data;
+            console.log("턴 로그 수신:", data);
+            setLogs(prev => [...prev, data]);
         };
 
-        return () => {
-            console.log("SSE 연결 종료:", new Date().toISOString());
-            eventSource.close();
+        socket.onclose = () => {
+            console.log("웹소켓 연결 종료");
+            setIsBattle(false);
+        };
+
+        socket.onerror = (error) => {
+            console.error("웹소켓 오류:", error);
+            setIsBattle(false);
         };
     };
 
@@ -119,8 +118,8 @@ function PveBattlePage() {
                         <div
                             key={char.characterId}
                             className={`p-4 border rounded-lg cursor-pointer bg-white ${selectedCharacter?.characterId === char.characterId
-                                    ? "border-yellow-400"
-                                    : "border-gray-500"
+                                ? "border-yellow-400"
+                                : "border-gray-500"
                                 }`}
                             onClick={() => setSelectedCharacter(char)}
                         >
