@@ -1,10 +1,11 @@
 // src/pages/PveBattlePage.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function PveBattlePage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { mapId } = location.state || {};
     const [mapName, setMapName] = useState(null);
     const [characters, setCharacters] = useState([]);
@@ -162,15 +163,24 @@ function PveBattlePage() {
                     ))}
                 </div>
             </div>
+            
+            <div className="flex gap-4 mt-4">
+                <button
+                    onClick={startBattle}
+                    disabled={isBattle || !selectedCharacter}
+                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
+                >
+                    {isBattle ? "전투 중..." : "전투 시작"}
+                </button>
 
-            <button
-                onClick={startBattle}
-                disabled={isBattle || !selectedCharacter}
-                className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
-            >
-                {isBattle ? "전투 중..." : "전투 시작"}
-            </button>
-
+                <button
+                    onClick={() => navigate("/pve/maps")}
+                    disabled={isBattle}
+                    className="bg-gray-500 px-6 py-3 rounded-xl hover:bg-gray-400 disabled:bg-gray-500"
+                >
+                    맵 선택
+                </button>
+            </div>
             <div
                 className="mt-6 bg-gray-900/80 p-6 rounded-xl w-3/5 min-h-[300px] overflow-y-auto border border-gray-700"
                 style={{ maxHeight: '50vh' }}
