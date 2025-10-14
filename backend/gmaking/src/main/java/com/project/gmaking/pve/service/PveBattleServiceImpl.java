@@ -473,6 +473,14 @@ public class PveBattleServiceImpl implements PveBattleService {
             }
 
             boolean isWin = monsterHp <= 0;
+
+            // 전투 종료 메시지 전송
+            Map<String, Object> result = Map.of(
+                    "type", "end",
+                    "result", isWin ? "win" : "lose"
+            );
+            session.sendMessage(new TextMessage(mapper.writeValueAsString(result)));
+            // DB 기록
             battleLog.setIsWin(isWin ? "Y" : "N");
             battleLog.setTurnCount((long) (turn - 1));
             battleDAO.insertBattleLog(battleLog);

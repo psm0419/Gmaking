@@ -80,9 +80,23 @@ function PveBattlePage() {
         };
 
         socket.onmessage = (event) => {
-            const data = event.data;
-            console.log("턴 로그 수신:", data);
-            setLogs(prev => [...prev, data]);
+            let data;
+            try {
+                data = JSON.parse(event.data);
+            } catch {
+                data = { log: event.data }; // 순수 텍스트 로그 처리
+            }
+
+            if (data.type === "end") {
+                // 전투 종료 시 상태 업데이트
+                setIsBattle(false);
+                setResult(data.result === "win" ? "승리!" : "패배...");
+                return;
+            }
+
+            // 일반 로그 처리
+            const logText = data.log || event.data;
+            setLogs(prev => [...prev, logText]);
         };
 
         socket.onclose = () => {
