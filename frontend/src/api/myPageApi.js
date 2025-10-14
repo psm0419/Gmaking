@@ -14,9 +14,12 @@ export const getMyPageCharacters = (page = 0, size = 12) => {
 };
 
 // 마이페이지 요약 (프로필 + 캐릭터 미리보기)
-// userId를 절대 보내지 않음 — 서버가 JWT에서 본인 ID를 자동으로 식별
 export const getMyPageSummary = (previewSize = 6) => {
   return api.get("/my-page/summary", {
     params: { previewSize },
   });
 };
+
+// 캐릭터 스텟
+export const getCharacterStats = (characterId) =>
+  api.get(`/my-page/characters/${characterId}/stats`);

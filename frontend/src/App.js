@@ -31,7 +31,6 @@ const ProtectedRoute = ({ children }) => {
 };
 
 
-
 function App() {
     const { isLoading } = useAuth();
 

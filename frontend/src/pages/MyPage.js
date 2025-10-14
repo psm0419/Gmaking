@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { getMyPageSummary } from "../api/myPageApi";
+import { getMyPageSummary, getCharacterStats } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
 
 // 이미지 경로 보정
@@ -56,7 +56,6 @@ export default function MyPage() {
       try {
         setLoading(true);
 
-        // ✅ userId를 보내지 않습니다. (백엔드가 JWT에서 추출)
         const res = await getMyPageSummary(6);
         const data = res.data;
 
@@ -73,6 +72,7 @@ export default function MyPage() {
           def: null,
           atk: null,
           critRate: null,
+          speed: null,
         }));
 
         setCharacters(cards);
@@ -84,7 +84,7 @@ export default function MyPage() {
         setLoading(false);
       }
     })();
-  }, []); // ✅ 의존성 비움
+  }, []); // 의존성 비움
 
   if (loading) {
     return (
@@ -126,10 +126,39 @@ function MyMain({
   characters = [],
 }) {
   const [selected, setSelected] = useState(null);
-  const onOpenCharacter = (c) => setSelected(c);
-
+  const statCache = useRef(new Map()); // 캐시 추가
   const navigate = useNavigate();
 
+  // 스탯 조회 (VO 키 → 프론트 키로 매핑)
+  const fetchStats = async (characterId) => {
+    if (statCache.current.has(characterId)) {
+      return statCache.current.get(characterId);
+    }
+    try {
+      const { data } = await getCharacterStats(characterId); // VO 그대로 받음
+      const stats = {
+        hp: data.characterHp,
+        atk: data.characterAttack,
+        def: data.characterDefense,
+        speed: data.characterSpeed,
+        critRate: data.criticalRate,
+      };
+      statCache.current.set(characterId, stats);
+      return stats;
+    } catch (e) {
+      console.error(e);
+      return { _statsError: "스탯을 불러오지 못했습니다." };
+    }
+  };
+
+  // onOpenCharacter는 한 번만 선언 (중복 제거)
+  const onOpenCharacter = async (c) => {
+    setSelected({ ...c, _statsLoading: true });
+    const stats = await fetchStats(c.id);
+    setSelected({ ...c, ...stats, _statsLoading: false });
+  };
+
+  // 캐릭터 성장 페이지
   const onGrow = () => alert(`${selected?.name} 성장시키기`);
 
   const onChat = () => {
@@ -201,51 +230,107 @@ function MyMain({
 
 /* ===== 캐릭터 상세 패널 ===== */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
-  const { name, grade, hp, def, atk, critRate } = character ?? {};
+  const { name, grade, hp, def, atk, critRate, speed, _statsLoading, _statsError } = character ?? {};
   const fmt = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
-  return (
-    <section className="bg-gray-300 rounded-md p-6 h-full flex flex-col justify-between">
-      {/* 좌/우 스탯 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-gray-900">
-        <div className="text-2xl md:text-3xl font-extrabold space-y-2">
-          <div>등급: {fmt(grade)}</div>
-          <div>체력: {fmt(hp)}</div>
-          <div>방어력: {fmt(def)}</div>
-        </div>
-        <div className="text-2xl md:text-3xl font-extrabold space-y-2 sm:text-right">
-          <div>이름: {fmt(name)}</div>
-          <div>공격력: {fmt(atk)}</div>
-          <div>치명타 확률: {critRate == null ? "-" : `${critRate}%`}</div>
-        </div>
-      </div>
 
-      {/* 액션 버튼 */}
-      <div className="mt-6 overflow-x-auto">
-        <div className="flex flex-nowrap items-center gap-4">
-          <button
-            onClick={onGrow}
-            className="shrink-0 whitespace-nowrap px-6 md:px-8 py-3 rounded-xl bg-white border shadow-sm
-                      text-xl md:text-2xl font-semibold hover:bg-gray-50 active:bg-gray-100 transition"
-          >
-            성장시키기
-          </button>
-          <button
-            onClick={onChat}
-            className="shrink-0 whitespace-nowrap px-6 md:px-8 py-3 rounded-xl bg-white border shadow-sm
-                      text-xl md:text-2xl font-semibold hover:bg-gray-50 active:bg-gray-100 transition"
-          >
-            대화 하기
-          </button>
-          <button
-            onClick={onSend}
-            className="shrink-0 whitespace-nowrap px-6 md:px-8 py-3 rounded-xl bg-white border shadow-sm
-                      text-xl md:text-2xl font-semibold hover:bg-gray-50 active:bg-gray-100 transition"
-          >
-            보내기
-          </button>
-        </div>
-      </div>
-    </section>
+  return (
+     <section className="rounded-2xl border border-black/10 bg-gradient-to-b from-gray-100 to-gray-200 p-6 shadow-sm">
+       {/* 상단: 이름 + 등급 뱃지 */}
+       <div className="mb-5 flex items-center justify-between gap-3">
+         <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
+           {fmt(name)}
+         </h3>
+
+         {/* 등급 뱃지 */}
+         <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-gray-800">
+           <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+           등급 {fmt(grade)}
+         </span>
+       </div>
+
+       {/* 스탯 카드 4개 (2 x 2) */}
+       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+         {/* 체력 */}
+         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">체력</div>
+           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(hp)}</div>
+         </div>
+         {/* 방어력 */}
+         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">방어력</div>
+           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(def)}</div>
+         </div>
+         {/* 공격력 */}
+         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">공격력</div>
+           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(atk)}</div>
+         </div>
+         {/* 속도 */}
+         <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">속도</div>
+           <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(speed)}</div>
+         </div>
+       </div>
+
+       {/* 치명타 확률(넓게 한 줄) */}
+       <div className="mt-3 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+         <div className="flex items-center justify-between">
+           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">치명타 확률</span>
+           <span className="text-xl md:text-2xl font-extrabold text-gray-900">
+             {critRate == null ? "-" : `${critRate}%`}
+           </span>
+         </div>
+         {/* 진행바 느낌 (값이 있을 때만 표시) */}
+         {typeof critRate === "number" && (
+           <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
+             <div
+               className="h-2 rounded-full bg-emerald-500 transition-all"
+               style={{ width: `${Math.max(0, Math.min(100, critRate))}%` }}
+               aria-label="치명타 확률"
+             />
+           </div>
+         )}
+       </div>
+
+       {/* 상태 메시지 */}
+       {_statsLoading && (
+         <div className="mt-3 rounded-md bg-black/5 px-3 py-2 text-sm text-gray-700">
+           스탯 불러오는 중...
+         </div>
+       )}
+       {_statsError && (
+         <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+           {_statsError}
+         </div>
+       )}
+
+       {/* 액션 버튼 */}
+       <div className="mt-6">
+         <div className="flex flex-wrap items-center gap-3">
+           <button
+             onClick={onGrow}
+             disabled={_statsLoading}
+             className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+           >
+             성장시키기
+           </button>
+           <button
+             onClick={onChat}
+             disabled={_statsLoading}
+             className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+           >
+             대화 하기
+           </button>
+           <button
+             onClick={onSend}
+             disabled={_statsLoading}
+             className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+           >
+             보내기
+           </button>
+         </div>
+       </div>
+     </section>
   );
 }
 

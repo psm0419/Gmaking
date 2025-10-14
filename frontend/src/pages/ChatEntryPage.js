@@ -113,10 +113,10 @@ const enterChat = async () => {
       <Header />
 
       <main className="flex-1 flex items-center justify-center">
-        <div className="w-[1200px] min-h-[680px] rounded-[48px] bg-gray-300/60 p-6 shadow-inner">
-          <div className="w-full h-full rounded-[36px] bg-white overflow-hidden relative flex">
+        <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-300/60 p-6 shadow-inner">
+          <div className="w-full h-full min-h-0 rounded-[36px] bg-white overflow-hidden relative flex">
             {/* 좌측: 선택/검색 */}
-            <aside className="w-[420px] border-r bg-white/60 p-6 flex flex-col gap-4">
+            <aside className="w-[420px] border-r bg-white/60 p-6 flex flex-col gap-4 min-h-0">
               <h2 className="text-xl font-semibold tracking-tight">채팅 입장하기</h2>
               <p className="text-sm text-gray-500">대화할 캐릭터를 선택하세요.</p>
 

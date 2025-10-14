@@ -6,8 +6,16 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("gmaking_token");
-   console.log("📦 보내는 요청:", config.url, "token:", token ? "있음" : "없음");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const hasBearer = token && token.startsWith("Bearer ");
+  const auth = hasBearer ? token : (token ? `Bearer ${token}` : null);
+
+   console.log("📦 요청:", config.method?.toUpperCase(), config.url, "| token:", auth ? "있음" : "없음");
+
+  if (auth) {
+      // 헤더 객체 보장
+      config.headers = config.headers || {};
+      config.headers.Authorization = auth;
+    }
   return config;
 });
 
