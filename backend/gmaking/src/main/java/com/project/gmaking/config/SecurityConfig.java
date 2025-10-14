@@ -80,6 +80,8 @@ public class SecurityConfig {
                         // /api/** 전체 허용 (이 한 줄로 다 처리됨)
                         .requestMatchers("/api/**").permitAll()
 
+                        .requestMatchers("/battle/**").permitAll()
+
                         // 정적 자원 허용
                         .requestMatchers("/images/**", "/static/**").permitAll()
 
