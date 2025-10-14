@@ -33,14 +33,6 @@ public interface LoginService {
     void completeEmailVerification(String userId);
 
     /**
-     * 회원 탈퇴 처리: 비밀번호를 검증하고 사용자 및 관련 정보를 삭제
-     * @param userId 탈퇴할 사용자 ID
-     * @param rawPassword 사용자가 입력한 비밀번호
-     * @throws IllegalArgumentException 비밀번호 불일치 또는 사용자 없음
-     */
-    void withdrawUser(String userId, String rawPassword);
-
-    /**
      * 이름과 이메일로 아이디를 찾고, 인증 코드를 발송
      * @param userName 사용자 이름
      * @param userEmail 사용자 이메일
@@ -75,4 +67,20 @@ public interface LoginService {
      * @throws IllegalArgumentException 인증 실패 또는 비밀번호 규칙 미준수 시
      */
     void changePassword(String userId, String userEmail, String newRawPassword);
+
+    /**
+     * 회원 탈퇴 처리: 비밀번호를 검증하고 사용자 및 관련 정보를 삭제
+     * @param userId 탈퇴할 사용자 ID
+     * @param rawPassword 사용자가 입력한 비밀번호
+     * @throws IllegalArgumentException 비밀번호 불일치 또는 사용자 없음
+     */
+    void withdrawUser(String userId, String rawPassword);
+
+    /**
+     * 소셜 회원 탈퇴 처리: 비밀번호 검증 없이 사용자 및 관련 정보를 삭제 (추가)
+     * @param userId 탈퇴할 사용자 ID (JWT에서 추출된 ID)
+     * @throws IllegalArgumentException 사용자 없음
+     */
+    void withdrawSocialUser(String userId);
+
 }
