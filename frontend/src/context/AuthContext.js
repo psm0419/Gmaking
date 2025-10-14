@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { loginApi, withdrawUserApi, withdrawSocialUserApi } from '../api/authApi';
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom'; 
 
 const AuthContext = createContext();
 
@@ -12,39 +13,83 @@ export const AuthProvider = ({ children }) => {
     const [hasCharacter, setHasCharacter] = useState(false); 
 
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem('gmaking_token');
-
-        if (storedToken) {
-            setToken(storedToken);
-            setIsLoggedIn(true);
-
-            // JWT에서 사용자 정보 디코딩
-            const userPayload = jwtDecode(storedToken); // jwtDecode 필요
-            
-            const currentUser = {
-                userId: userPayload.userId,
-                userName: userPayload.nickname || userPayload.userName,
-                role: userPayload.role,
-                hasCharacter: !!userPayload.hasCharacter
-            };
-
-            setUser(currentUser);
-            setHasCharacter(currentUser.hasCharacter);
-        }
-
-        setIsLoading(false);
-    }, []);
-
-
     const logout = useCallback(() => {
+        // localStorage 비우기
+        localStorage.removeItem('gmaking_token');
+        localStorage.removeItem('userId');
+
+        // 상태 초기화
         setToken(null);
         setUser(null);
         setIsLoggedIn(false);
         setHasCharacter(false);
-        localStorage.removeItem('gmaking_token');
-        localStorage.removeItem('userId');
     }, []);
+
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem('gmaking_token');
+
+        if (!storedToken) {
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const userPayload = jwtDecode(storedToken);
+
+            // JWT 만료시간 검증
+            const now = Date.now() / 1000;
+            if (userPayload.exp && userPayload.exp < now) {
+                console.log('🔸 JWT expired — clearing token');
+                localStorage.removeItem('gmaking_token');
+                setIsLoggedIn(false);
+                setToken(null);
+                setUser(null);
+                setHasCharacter(false);
+            } else {
+                // 토큰은 유효하지만, 사용자 객체 생성 시 오류 방지
+                try {
+                    setToken(storedToken);
+                    setIsLoggedIn(true);
+
+                    const currentUser = {
+                        userId: userPayload.userId,
+                        userEmail: userPayload.userEmail,
+                        role: userPayload.role,
+                        userName: userPayload.userName || userPayload.name,
+                        userNickname: userPayload.userNickname || userPayload.nickname,
+                        
+                        hasCharacter: userPayload.hasCharacter === true || userPayload.hasCharacter === 'true',
+                    };
+                    
+                    // 필수 필드 검증
+                    if (!currentUser.userId) {
+                        throw new Error("JWT payload is missing a critical userId.");
+                    }
+                    
+                    setUser(currentUser);
+                    setHasCharacter(currentUser.hasCharacter);
+                    
+                } catch (e) {
+                    console.error('Failed to construct user from valid token. Resetting state:', e);
+                    localStorage.removeItem('gmaking_token');
+                    setIsLoggedIn(false);
+                    setToken(null);
+                    setUser(null);
+                    setHasCharacter(false);
+                }
+            }
+        } catch (error) {
+            console.error('JWT 디코딩 실패:', error);
+            localStorage.removeItem('gmaking_token');
+            setIsLoggedIn(false);
+            setToken(null);
+            setUser(null);
+            setHasCharacter(false);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [logout]);
 
 
     // hasCharacter 상태 업데이트 로직 추가

@@ -43,7 +43,7 @@ public class JwtTokenProvider {
      * @param role 사용자 역할 (ROLE)
      * @return JWT 문자열
      */
-    public String createToken(String userId, String role) {
+    public String createToken(String userId, String role, String userNickname) {
         long now = (new Date()).getTime();
 
         Date validity = new Date(now + this.tokenValidityInMilliseconds);
@@ -51,6 +51,8 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("role", role)
+                .claim("userId", userId)
+                .claim("userNickname", userNickname)
                 .signWith(SignatureAlgorithm.HS512, key)
                 .setExpiration(validity)
                 .compact();

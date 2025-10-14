@@ -49,7 +49,8 @@ public class LoginController {
         // jwt 토큰 생성
         String jwt = tokenProvider.createToken(
                 authenticatedUser.getUserId(),
-                authenticatedUser.getRole()
+                authenticatedUser.getRole(),
+                authenticatedUser.getUserNickname()
         );
 
         // 로그인 성공

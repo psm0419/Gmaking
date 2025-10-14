@@ -73,9 +73,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String userId = oauth2Attributes.getLoginVO().getUserId();
         String role = oauth2Attributes.getLoginVO().getRole();
+        String userNickname = oauth2Attributes.getLoginVO().getUserNickname();
 
         // JWT 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(userId, role);
+        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname);
         log.info(">>> [OAuth2 Success] JWT Token issued for user: {}", userId);
 
         // 리다이렉션 URL 생성 및 실행
