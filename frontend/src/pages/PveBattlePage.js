@@ -176,7 +176,7 @@ function PveBattlePage() {
                 <button
                     onClick={() => navigate("/pve/maps")}
                     disabled={isBattle}
-                    className="bg-gray-500 px-6 py-3 rounded-xl hover:bg-gray-400 disabled:bg-gray-500"
+                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
                 >
                     맵 선택
                 </button>
@@ -193,9 +193,7 @@ function PveBattlePage() {
                         {log}
                     </pre>
                 ))}
-            </div>
-
-            {result && <div className="mt-4 text-2xl font-bold">{result}</div>}
+            </div>            
         </div>
     );
 }
