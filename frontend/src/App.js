@@ -15,6 +15,8 @@ import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import PvpMatchPage from './pages/PvpMatchPage';
+import PvpBattlePage from './pages/PvpBattlePage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -150,6 +152,16 @@ function App() {
                 <Route
                     path="/pve/battle"
                     element={<PveBattlePage />} />
+                
+                {/* PVP 매칭 페이지 */}
+                <Route
+                    path="/pvp/match"
+                    element={<PvpMatchPage />} />
+                
+                {/* PVP 전투 페이지 */}
+                <Route
+                    path="/pvp/battle"
+                    element={<PvpBattlePage />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />

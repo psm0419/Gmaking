@@ -11,8 +11,7 @@ function PveBattlePage() {
     const [characters, setCharacters] = useState([]);
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [logs, setLogs] = useState([]);
-    const [isBattle, setIsBattle] = useState(false);
-    const [result, setResult] = useState(null);
+    const [isBattle, setIsBattle] = useState(false);    
     const [mapImageUrl, setMapImageUrl] = useState(null);
     const logContainerRef = useRef(null);
     const socketRef = useRef(null);
@@ -61,8 +60,7 @@ function PveBattlePage() {
             return;
         }
 
-        setLogs([]);
-        setResult(null);
+        setLogs([]);        
         setIsBattle(true);
 
         // WebSocket 연결
@@ -90,8 +88,7 @@ function PveBattlePage() {
 
             if (data.type === "end") {
                 // 전투 종료 시 상태 업데이트
-                setIsBattle(false);
-                setResult(data.result === "win" ? "승리!" : "패배...");
+                setIsBattle(false);                
                 return;
             }
 
