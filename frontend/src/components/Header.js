@@ -19,7 +19,8 @@ const Header = () => {
         { name: '랭킹', icon: Award, link: '#' },
         { name: '커뮤니티', icon: MessageSquare, link: '#' },
         { name: '고객지원', icon: LifeBuoy, link: '#' },
-        { name: '전투', icon: LifeBuoy, link: 'pve/maps' },
+        { name: 'PVE', icon: LifeBuoy, link: 'pve/maps' },
+        { name: 'PVP', icon: LifeBuoy, link: 'pvp/match' },
     ];
 
     // 회원 탈퇴 핸들러
