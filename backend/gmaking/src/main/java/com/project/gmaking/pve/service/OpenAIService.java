@@ -29,29 +29,35 @@ public class OpenAIService {
                 if (apiKey == null) throw new IllegalStateException("OPENAI_API_KEY 없음");
 
                 String prompt = String.format("""
-                                한 턴 전투에 대한 코믹한 note를 생성하세요.
-                                아래 조건을 반드시 지켜서 JSON으로 출력해 주세요:
-                                1. 반드시 note 필드 하나만 포함
-                                2. 문자열은 큰따옴표 안에만 넣고, 코드 블록이나 다른 문법 사용 금지
-                                3. 예시: {"note": "루루가 늑대를 공격했다!"}
+                                한 턴 전투에 대한 코믹한 note를 생성하는 임무를 받았습니다.
+                                아래 <규칙>을 **무조건 준수**하여 <턴 정보>에 기반한 로그를 생성하세요.
+
+                                <필수 명령>
+                                1. 절대 데미지 수치 언급 금지.
+                                2. 체력이 0이하로 떨어지는 마지막 턴은 대사가 마무리 되도록 작성
+                                2. 반드시 JSON 형식으로 {"note":"..."}만 반환하고, 코드 블록이나 서문 사용 금지.
+
+                                <턴 정보>
                                 공격자: %s
                                 방어자: %s
                                 데미지: %d
                                 크리티컬: %s
-                                절대 데미지 수치 언급 금지
-                                체력이 0이하로 떨어지는 마지막턴은 대사가 마무리되도록 작성
-                                - JSON 형식으로 {"note":"..."}만 반환
+                                전투 종료 여부 (IS_OVER): %s   <-- 이 값(true/false)을 보고 판단하세요.
+                                // 전투 종료 여부 값에 따른 묘사 방법
+                                - IS_OVER가 "true"이면: 대사가 마무리되도록 작성하고 **'승리!' 또는 '패배!'**를 명확히 포함하세요.
+                                - IS_OVER가 "false"이면: '다음 턴이 기대된다'는 뉘앙스로 작성하세요.
                                 """,
                         turnData.get("actor"),
                         turnData.get("target"),
                         turnData.get("damage"),
-                        turnData.get("critical")
+                        turnData.get("critical"),
+                        turnData.get("isBattleOver")
                 );
 
                 Map<String, Object> body = Map.of(
                         "model", MODEL,
                         "messages", List.of(
-                                Map.of("role", "system", "content", "You are a funny combat narrator."),
+                                Map.of("role", "system", "content", "You are a funny combat narrator who bases your jokes and commentary on the exact turn results (damage, critical, actor/target)."),
                                 Map.of("role", "user", "content", prompt)
                         ),
                         "temperature", 0.4

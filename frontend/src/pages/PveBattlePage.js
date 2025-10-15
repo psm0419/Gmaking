@@ -152,7 +152,7 @@ function PveBattlePage() {
                                     </div>
                                     <div>
                                         SPEED: {char.characterStat.characterSpeed} /
-                                        CRITICAL: {char.characterStat.criticalRate}
+                                        CRITICAL: {char.characterStat.criticalRate}%
                                     </div>
                                 </div>
                             )}
@@ -179,16 +179,16 @@ function PveBattlePage() {
                 </button>
             </div>
             <div
-                className="mt-6 bg-gray-900/80 p-6 rounded-xl w-3/5 min-h-[300px] overflow-y-auto border border-gray-700"
+                className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 min-h-[300px] overflow-y-auto border border-gray-700"
                 style={{ maxHeight: '50vh' }}
             >
                 {logs.map((log, i) => (
-                    <pre
+                    <p
                         key={i}
                         className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 whitespace-pre-wrap"
                     >
                         {log}
-                    </pre>
+                    </p>
                 ))}
             </div>            
         </div>

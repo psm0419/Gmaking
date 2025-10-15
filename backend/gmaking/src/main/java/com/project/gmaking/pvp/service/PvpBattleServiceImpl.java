@@ -180,7 +180,7 @@ public class PvpBattleServiceImpl implements PvpBattleService{
             }
 
             // 최종 로그 결합: 서버 결과 + GPT 해설
-            finalLog = resultLog + "\n" + gptLog;
+            finalLog = resultLog + "\n" + gptLog + "\n";
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

@@ -423,8 +423,13 @@ public class PveBattleServiceImpl implements PveBattleService {
                 if (isPlayerAttack) monsterHp -= damage;
                 else playerHp -= damage;
 
+                boolean isBattleOver = (playerHp <= 0 || monsterHp <= 0);
                 String noteJson = openAIService.requestGPTNote(Map.of(
-                        "actor", actor, "target", target, "damage", damage, "critical", critical
+                        "actor", actor,
+                        "target", target,
+                        "damage", damage,
+                        "critical", critical,
+                        "isBattleOver", isBattleOver // boolean 값을 전달
                 )).join();
 
                 noteJson = noteJson.replaceAll("(?s)^```json\\s*(.*?)\\s*```$", "$1")
@@ -443,7 +448,7 @@ public class PveBattleServiceImpl implements PveBattleService {
 
                 // 마지막 턴이면 로그에 승리/패배 메시지 포함
                 String actionLog = String.format(
-                        "턴 %d: %s가 공격으로 %d 데미지를 입힘%s\n%s (플레이어HP:%d, 몬스터HP:%d)%s",
+                        "턴 %d: %s가 공격으로 %d 데미지를 입힘%s\n%s \n(플레이어HP:%d, 몬스터HP:%d)\n%s",
                         turn,
                         actor,
                         damage,
@@ -453,9 +458,8 @@ public class PveBattleServiceImpl implements PveBattleService {
                         monsterHp,
                         (playerHp <= 0 || monsterHp <= 0)
                                 ? (monsterHp <= 0 ? "\n승리! 전투 종료!" : "\n패배... 다음에 다시 도전하세요!")
-                                : ""
+                                : "" // 서버가 판단한 승패/종료 메시지
                 );
-
                 logs.add(actionLog);
 
                 // 프론트로 전송
