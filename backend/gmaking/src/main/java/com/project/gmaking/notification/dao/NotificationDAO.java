@@ -1,10 +1,12 @@
 package com.project.gmaking.notification.dao;
 
 import com.project.gmaking.notification.vo.NotificationVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
+@Mapper
 public interface NotificationDAO {
     void insert(NotificationVO vo);
 
@@ -16,7 +18,7 @@ public interface NotificationDAO {
             );
 
     // 카운트
-    int conuntUnread(@Param("userId") String userId);
+    int countUnread(@Param("userId") String userId);
 
 
     // 읽음 목록

@@ -4,22 +4,21 @@ import Footer from "../components/Footer";
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
+const API_BASE = process.env.REACT_APP_API_BASE || "";
 
 const API = {
-  characters: "/chat/characters",
+  characters: "/api/chat/characters",
 };
 
 // 이미지 경로 보정 (ChatPage와 동일 로직)
 function toFullImageUrl(raw) {
-  const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
   let url = raw || "/images/character/placeholder.png";
   if (/^https?:\/\//i.test(url)) return url; // 절대경로면 그대로
   url = url.replace(/^\/?static\//i, "/"); // /static/ 제거
   url = url.replace(/^\/?character\//i, "/images/character/"); // /character/ 정규화
-  if (url.startsWith("/")) return `${API_BASE}${url}`; // 루트 시작
-  if (url.startsWith("images/")) return `${API_BASE}/${url}`; // images/ 시작
-  return `${API_BASE}/images/${url}`; // 파일명만 온 경우
+  if (url.startsWith("/")) return url;
+  if (url.startsWith("images/")) return `/${url}`;
+  return `/images/${url}`;
 }
 
 // 서버 응답 정규화 (id, name, imageUrl 3가지만 사용)
@@ -96,7 +95,7 @@ const enterChat = async () => {
   if (!selectedId) return;
   try {
     // 입장 API 먼저 호출 (페르소나 생성 + 첫인사까지 서버에서 처리)
-    const { data } = await axiosInstance.post(`/chat/${selectedId}/enter`);
+    const { data } = await axiosInstance.post(`/api/chat/${selectedId}/enter`);
 
     // 응답 payload를 state로 넘기면서 채팅 페이지로 이동
     navigate(`/chat/${encodeURIComponent(selectedId)}`, {

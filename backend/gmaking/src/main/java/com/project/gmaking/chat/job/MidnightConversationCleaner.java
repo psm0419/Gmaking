@@ -16,7 +16,7 @@ public class MidnightConversationCleaner {
     private final ConversationCleanupService cleanupService;
 
     // 기존: @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 53 13 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 45 21 * * *", zone = "Asia/Seoul")
     public void run() {
         log.info("[Cleaner] start");
 

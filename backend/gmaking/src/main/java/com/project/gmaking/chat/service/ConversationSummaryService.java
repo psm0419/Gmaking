@@ -83,8 +83,8 @@ public class ConversationSummaryService {
                 .build();
 
         int inserted = conversationSummaryDAO.upsertRollingSummary(vo);
-        if (inserted != 1) {
-            log.error("ConversationSummary: insert failed. convId={}", convId);
+        if (inserted <= 0) { // 0만 실패로 보고, 1(INSERT)·2(UPDATE) 모두 성공
+            log.error("ConversationSummary: insert failed. convId={}, rows={}", convId, inserted);
             return false;
         }
         return true;
