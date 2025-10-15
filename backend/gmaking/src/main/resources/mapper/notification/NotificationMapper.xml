@@ -66,6 +66,7 @@
             UPDATED_BY = #{updatedBy}
         WHERE NOTIFICATION_ID = #{id}
             AND USER_ID = #{userId}
+            AND STATUS = 'unread'
             AND READ_AT IS NULL
     </update>
 
@@ -76,6 +77,7 @@
             UPDATED_DATE = NOW(),
             UPDATED_BY = #{updatedBy}
         WHERE USER_ID = #{userId}
+            AND STATUS = 'unread'
             AND READ_AT IS NULL
     </update>
 
@@ -84,7 +86,25 @@
         WHERE EXPIRES_AT IS NOT NULL
             AND EXPIRES_AT &lt; NOW()
     </delete>
-    
+
+    <update id="softDeleteOne">
+        UPDATE TB_NOTIFICATION
+        SET STATUS = 'deleted',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy}
+        WHERE USER_ID = #{userId}
+            AND NOTIFICATION_ID = #{id}
+            AND STATUS != 'deleted'
+    </update>
+
+    <update id="softDeleteAllRead">
+        UPDATE TB_NOTIFICATION
+        SET STATUS = 'deleted',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy}
+        WHERE USER_ID = #{userId}
+            AND STATUS = 'read'
+    </update>
     
 
 </mapper>

@@ -29,7 +29,7 @@ public interface NotificationDAO {
     );
 
     // 읽음 처리
-    int markRead(@Param("id") Long id,
+    int markRead(@Param("id") Integer id,
                  @Param("userId") String userId,
                  @Param("updatedBy") String updatedBy
                  );
@@ -41,5 +41,13 @@ public interface NotificationDAO {
     // 만료 알림 삭제
     int deleteExpired();
 
+    // 소프트 단건 삭제
+    int softDeleteOne(@Param("userId") String userId,
+                      @Param("id") Integer id,
+                      @Param("updatedBy") String updatedBy);
+
+    // 소프트 전체 삭제
+    int softDeleteAllRead(@Param("userId") String userId,
+                          @Param("updatedBy") String updatedBy);
 
 }
