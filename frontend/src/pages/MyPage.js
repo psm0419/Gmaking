@@ -1,9 +1,11 @@
 // src/pages/MyPage.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getMyPageSummary, getCharacterStats } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useAuth } from "../context/AuthContext";
 
 // ===== 알림: STOMP + SockJS 직접 연결(별도 helpers 없이) =====
 import { Client } from "@stomp/stompjs";
@@ -169,7 +171,7 @@ function MyMain({
               <div className="mt-6 flex items-center gap-5 text-gray-800">
                 <NotificationBell />
                 <IconMail />
-                <IconMore />
+                <MoreMenuInline />
               </div>
             </div>
 
@@ -378,7 +380,7 @@ function CharacterCard({ character, active, onClick }) {
   );
 }
 
-/* ===== 알림 벨: REST 직접 호출 + STOMP 구독(직접) ===== */
+/* 알림 벨 */
 function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
@@ -715,7 +717,7 @@ function NotificationBell() {
 }
 
 
-/* ===== 기타 아이콘 ===== */
+/* 기타 메일 아이콘 */
 function IconMail(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -725,6 +727,140 @@ function IconMail(props) {
   );
 }
 
+function MoreMenuInline() {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const btnRef = useRef(null);
+  const panelRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const handleEditProfile = () => {
+    setOpen(false);
+    navigate("/my-page/profile/edit");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      setOpen(false);
+      navigate("/login");
+    }
+  };
+
+  // 버튼 기준 위치 계산 (뷰포트 기준 fixed)
+  const updatePosition = () => {
+    const btn = btnRef.current;
+    const panel = panelRef.current;
+    if (!btn || !panel) return;
+
+    const r = btn.getBoundingClientRect();
+    const margin = 8;
+    const OFFSET_Y = -5;  // 버튼 아래 여백
+    const OFFSET_X = 150;
+
+    let pw = panel.offsetWidth;
+    let left = r.left + r.width / 2 - pw / 2  + OFFSET_X;
+    left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
+    const top = r.bottom + OFFSET_Y;
+    setPos({ top, left, width: pw });
+
+    requestAnimationFrame(() => {
+      if (!panelRef.current) return;
+      pw = panelRef.current.offsetWidth;
+      let l2 = r.left + r.width / 2 - pw / 2 + OFFSET_X;
+      l2 = Math.max(margin, Math.min(l2, window.innerWidth - pw - margin));
+      setPos((p) => (p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }));
+
+    });
+
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onResizeScroll = () => updatePosition();
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    const onDown = (e) => {
+      const p = panelRef.current;
+      const b = btnRef.current;
+      if (!p) return;
+      if (p.contains(e.target) || b?.contains?.(e.target)) return;
+      setOpen(false); // 바깥 클릭 닫기
+    };
+
+    window.addEventListener("resize", onResizeScroll);
+    window.addEventListener("scroll", onResizeScroll, true);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown, { passive: true });
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      window.removeEventListener("resize", onResizeScroll);
+      window.removeEventListener("scroll", onResizeScroll, true);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative inline-flex">
+      {/* 버튼 */}
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="더보기"
+        className="rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
+      >
+        <IconMore />
+      </button>
+
+      {/* 팝오버: 백드롭/어둡게 처리 없음 */}
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="false"
+            className="fixed z-[100] w-64 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 overflow-hidden"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            {/* 작은 화살표 (옵션) */}
+            <div className="absolute -top-2 left-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow" />
+
+            <div className="px-4 py-3 border-b text-sm text-gray-600">더보기</div>
+            <div className="p-2">
+              <button
+                className="w-full text-left rounded-xl px-4 py-3 text-[15px] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onClick={handleEditProfile}
+              >
+                회원 정보 수정
+              </button>
+              <button
+                className="mt-1 w-full text-left rounded-xl px-4 py-3 text-[15px] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onClick={handleLogout}
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+    </div>
+  );
+}
+
+
+/* 더보기 아이콘 */
 function IconMore(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
