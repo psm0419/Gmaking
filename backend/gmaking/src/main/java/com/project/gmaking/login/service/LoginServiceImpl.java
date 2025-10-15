@@ -133,37 +133,6 @@ public class LoginServiceImpl implements LoginService {
     }
 
     /**
-     * 회원 탈퇴 처리 구현 (비밀번호 검증 후 사용자/인증 기록 삭제)
-     */
-    @Transactional
-    @Override
-    public void withdrawUser(String userId, String rawPassword) {
-
-        // 사용자 정보 조회
-        LoginVO user = loginDAO.selectUserById(userId);
-        if (user == null) {
-            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
-        }
-
-        // 비밀번호 확인: 사용자가 입력한 비밀번호(rawPassword)와 암호화된 비밀번호(user.getUserPassword()) 비교
-        if (!passwordEncoder.matches(rawPassword, user.getUserPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-
-        // 이메일 인증 기록 삭제
-        verificationDAO.deleteVerificationInfoByUserId(userId);
-
-        // 사용자 계정 삭제
-        int userDeleteCount = loginDAO.deleteUser(userId);
-
-        if (userDeleteCount == 0) {
-            // 이메일 인증 기록 삭제는 성공했으나 사용자 계정 삭제 실패 시
-            throw new RuntimeException("회원 탈퇴 처리 중 오류가 발생했습니다.");
-        }
-
-    }
-
-    /**
      * 아이디 찾기: 이름/이메일로 ID 조회 및 인증 코드 발송
      */
     @Override
@@ -265,6 +234,64 @@ public class LoginServiceImpl implements LoginService {
         // 인증 기록 삭제 (재사용 방지)
         verificationDAO.deleteVerificationInfoByUserId(userId);
 
+    }
+
+    /**
+     * 회원 탈퇴 처리 구현 (비밀번호 검증 후 사용자/인증 기록 삭제)
+     */
+    @Transactional
+    @Override
+    public void withdrawUser(String userId, String rawPassword) {
+
+        // 사용자 정보 조회
+        LoginVO user = loginDAO.selectUserById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        // 비밀번호 확인: 사용자가 입력한 비밀번호(rawPassword)와 암호화된 비밀번호(user.getUserPassword()) 비교
+        if (!passwordEncoder.matches(rawPassword, user.getUserPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 이메일 인증 기록 삭제
+        verificationDAO.deleteVerificationInfoByUserId(userId);
+
+        // 사용자 계정 삭제
+        int userDeleteCount = loginDAO.deleteUser(userId);
+
+        if (userDeleteCount == 0) {
+            // 이메일 인증 기록 삭제는 성공했으나 사용자 계정 삭제 실패 시
+            throw new RuntimeException("회원 탈퇴 처리 중 오류가 발생했습니다.");
+        }
+
+    }
+
+    /**
+     * 소셜 회원 탈퇴 처리 구현
+     */
+    @Transactional
+    @Override
+    public void withdrawSocialUser(String userId) {
+        // 사용자 존재 여부 확인
+        LoginVO user = loginDAO.selectUserById(userId);
+
+        if (user == null) {
+            throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
+        }
+
+        // 이메일 인증 기록 삭제 (하드코딩)
+        verificationDAO.deleteVerificationInfoByUserId(userId);
+
+        // 사용자 계정 삭제 (TB_USER)
+        int deleteCount = loginDAO.deleteUser(userId);
+
+        if (deleteCount == 0) {
+            log.error("[Withdrawal Failed] User deletion failed for ID: {}", userId);
+            throw new RuntimeException("회원 탈퇴 처리 중 오류가 발생했습니다.");
+        }
+
+        log.info("[Withdrawal Success] Social User ID: {} has been successfully withdrawn.", userId);
     }
 
 }

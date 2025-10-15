@@ -71,8 +71,16 @@ const MapSelection = () => {
                     맵 정보를 불러오는 중이거나 맵이 없습니다...
                 </p>
             )}
+            <div className="flex gap-4 mt-4 flex-col items-center">                
+                <button
+                    onClick={() => navigate("/")}
+                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500">                
+                    홈으로
+                </button>
+            </div>
 
         </div>
+        
     );
 };
 

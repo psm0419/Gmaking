@@ -16,18 +16,28 @@ import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import PvpMatchPage from './pages/PvpMatchPage';
+import PvpBattlePage from './pages/PvpBattlePage';
 
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, isLoading } = useAuth(); 
     
-    // 비로그인 상태 -> 로그인 페이지로 이동
+    // AuthContext가 토큰 검증 중이라면 로딩 화면을 표시
+    if (isLoading) {
+        return (
+            <div className="min-h-[80vh] flex items-center justify-center text-gray-400 text-xl font-medium">
+                인증 상태 확인 중...
+            </div>
+        );
+    }
+
+    // 로딩이 끝났는데 비로그인 상태라면 -> 로그인 페이지로 이동
     if (!isLoggedIn) {
         return <Navigate to="/login" replace />;
     }
     
-    // 로그인 상태 -> 요청한 페이지 (HomePage 또는 다른 인증된 페이지) 표시
     return children;
 };
 
@@ -46,113 +56,27 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* 로그인 페이지 */}
-                <Route 
-                    path="/login" 
-                    element={<LoginPage />} 
-                />
-
-                {/* 회원가입 페이지 */}
-                <Route 
-                    path="/register" 
-                    element={<RegisterPage />} 
-                />
-
-                {/* OAuth2 리다이렉션 처리 페이지 및 소셜 로그인 실패 리다이렉션 */}
-                <Route 
-                    path="/oauth/callback" 
-                    element={<OAuth2RedirectHandler />} 
-                />
-
-                <Route 
-                    path="/oauth/callback/failure" 
-                    element={<OAuth2RedirectHandler />} 
-                />
-
-
-                {/* 아이디 찾기 페이지 */}
-                <Route
-                    path="/find-id"
-                    element={<FindIdPage />}
-                />
-
-                {/* 비밀번호 찾기 페이지 */}
-                <Route
-                    path="/find-password"
-                    element={<FindPasswordPage />}
-                />
-
-                <Route
-                    path="/withdraw"
-                    element={
-                        <ProtectedRoute>
-                            <WithdrawPage />
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* 캐릭터 생성 페이지 */}
-                <Route 
-                    path="/create-character" 
-                    element={ 
-                        <ProtectedRoute>
-                            <CharacterCreationPage />
-                        </ProtectedRoute>
-                    } 
-                />
+                {/* 비보호 경로 */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/oauth/callback" element={<OAuth2RedirectHandler />} />
+                <Route path="/oauth/callback/failure" element={<OAuth2RedirectHandler />} />
+                <Route path="/find-id" element={<FindIdPage />} />
+                <Route path="/find-password" element={<FindPasswordPage />} />
                 
-                {/* 메인 페이지 (보호된 경로) */}
-                <Route
-                    path="/" 
-                    element={
-                        <ProtectedRoute>
-                            <HomePage />
-                        </ProtectedRoute>
-                    } 
-                />
-
-                {/* 채팅 입장 페이지 */}
-                <Route
-                    path="/chat-entry/:characterId"
-                    element={
-                        <ProtectedRoute>
-                            <ChatEntryPage/>
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* chat 페이지 */}
-                <Route
-                    path="/chat/:characterId"
-                    element={
-                        <ProtectedRoute>
-                            <ChatPage />
-                        </ProtectedRoute>
-                    } />
-
-
-                {/* 마이 페이지 */}
-                <Route
-                    path="/my-page"
-                    element={
-                        <ProtectedRoute>
-                            <MyPage/>
-                        </ProtectedRoute>
-                    } />
-
+                {/* 보호 경로 */}
+                <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
+                <Route path="/create-character" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
+                <Route path="/chat-entry/:characterId" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>} />
+                <Route path="/chat/:characterId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+                <Route path="/my-page" element={<ProtectedRoute><MyPage/></ProtectedRoute>} />
                 <Route path="/shop" element={<ShopPage />} />
-
-                {/* PVE 맵 선택 페이지 */}
-                <Route
-                    path="/pve/maps"
-                    element={<MapSelection />} />
-
-                {/* PVE 전투 페이지 */}
-                <Route
-                    path="/pve/battle"
-                    element={<PveBattlePage />} />
-
-
+                <Route path="/pve/maps" element={<MapSelection />} />
+                <Route path="/pve/battle" element={<PveBattlePage />} />  
+                <Route path="/pvp/match" element={<PvpMatchPage />} />
+                <Route path="/pvp/battle" element={<PvpBattlePage />} />
+                       
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

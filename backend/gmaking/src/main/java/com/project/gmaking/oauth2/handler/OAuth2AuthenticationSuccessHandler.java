@@ -73,9 +73,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String userId = oauth2Attributes.getLoginVO().getUserId();
         String role = oauth2Attributes.getLoginVO().getRole();
+        String userNickname = oauth2Attributes.getLoginVO().getUserNickname();
 
         // JWT 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(userId, role);
+        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname);
         log.info(">>> [OAuth2 Success] JWT Token issued for user: {}", userId);
 
         // 리다이렉션 URL 생성 및 실행
@@ -97,15 +98,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String userId = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserId(), StandardCharsets.UTF_8);
         String nickname = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserNickname(), StandardCharsets.UTF_8);
         String role = URLEncoder.encode(oauth2Attributes.getLoginVO().getRole(), StandardCharsets.UTF_8);
+        String userEmail = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserEmail(), StandardCharsets.UTF_8);
         String hasCharacter = "false";
 
-        return String.format("%s?token=%s&userId=%s&nickname=%s&role=%s&hasCharacter=%s",
+        return String.format("%s?token=%s&userId=%s&nickname=%s&role=%s&hasCharacter=%s&userEmail=%s",
                 FRONTEND_REDIRECT_URI,
                 jwtToken,
                 userId,
                 nickname,
                 role,
-                hasCharacter
+                hasCharacter,
+                userEmail
         );
     }
 
