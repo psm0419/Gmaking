@@ -40,49 +40,73 @@ function PvpMatchPage() {
     };
 
     return (
-        <div className="flex flex-col items-center p-8">
-            <h1 className="text-3xl font-bold mb-4">PVP 매칭</h1>
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center text-white p-10">
+            <h1 className="text-4xl font-extrabold mb-8 tracking-wider text-yellow-300 drop-shadow-lg">
+                PVP 매칭
+            </h1>
 
-            <button onClick={findOpponent} className="bg-blue-600 text-white px-6 py-3 rounded-xl mb-4">
-                상대방 찾기
+            <button
+                onClick={() => navigate("/")}
+                className="bg-blue-600 hover:bg-blue-500 px-8 py-2 rounded-2xl mb-5 font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
+            >
+                홈으로
             </button>
 
-            <div className="flex gap-10">
+            <button
+                onClick={findOpponent}
+                className="bg-green-600 hover:bg-green-500 px-7 py-2 rounded-2xl mb-5 font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
+            >
+                상대방 찾기
+            </button>
+            
+            <div className="flex flex-col lg:flex-row gap-10 w-full max-w-6xl justify-center">
                 {/* 내 캐릭터 */}
-                <div>
-                    <h2 className="text-xl font-bold mb-2">내 캐릭터</h2>
-                    <div className="flex gap-3 flex-wrap">
+                <div className="bg-gray-800/70 p-6 rounded-2xl shadow-lg border border-gray-700 w-full lg:w-1/2">
+                    <h2 className="text-2xl font-semibold mb-4 text-yellow-400 text-center">
+                        내 캐릭터
+                    </h2>
+                    <div className="flex gap-4 flex-wrap justify-center">
                         {myCharacters.map(char => (
                             <div
                                 key={char.characterId}
                                 onClick={() => setSelectedMyChar(char)}
-                                className={`p-3 rounded-xl border cursor-pointer ${selectedMyChar?.characterId === char.characterId
-                                        ? "border-yellow-400"
-                                        : "border-gray-500"
+                                className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedMyChar?.characterId === char.characterId
+                                        ? "border-yellow-400 bg-yellow-500/10"
+                                        : "border-gray-700 hover:border-yellow-300/50"
                                     }`}
                             >
-                                <img src={`/images/character/${char.imageId}.png`} alt={char.characterName} className="w-20 h-20" />
-                                <div>{char.characterName}</div>
+                                <img
+                                    src={`/images/character/${char.imageId}.png`}
+                                    alt={char.characterName}
+                                    className="w-24 h-24 object-contain mx-auto mb-2"
+                                />
+                                <div className="text-center text-sm font-medium">{char.characterName}</div>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* 상대 캐릭터 */}
-                <div>
-                    <h2 className="text-xl font-bold mb-2">상대 캐릭터</h2>
-                    <div className="flex gap-3 flex-wrap">
+                <div className="bg-gray-800/70 p-6 rounded-2xl shadow-lg border border-gray-700 w-full lg:w-1/2">
+                    <h2 className="text-2xl font-semibold mb-4 text-red-400 text-center">
+                        상대 캐릭터
+                    </h2>
+                    <div className="flex gap-4 flex-wrap justify-center">
                         {opponentCharacters.map(char => (
                             <div
                                 key={char.characterId}
                                 onClick={() => setSelectedEnemyChar(char)}
-                                className={`p-3 rounded-xl border cursor-pointer ${selectedEnemyChar?.characterId === char.characterId
-                                        ? "border-red-400"
-                                        : "border-gray-500"
+                                className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedEnemyChar?.characterId === char.characterId
+                                        ? "border-red-400 bg-red-500/10"
+                                        : "border-gray-700 hover:border-red-300/50"
                                     }`}
                             >
-                                <img src={`/images/character/${char.imageId}.png`} alt={char.characterName} className="w-20 h-20" />
-                                <div>{char.characterName}</div>
+                                <img
+                                    src={`/images/character/${char.imageId}.png`}
+                                    alt={char.characterName}
+                                    className="w-24 h-24 object-contain mx-auto mb-2"
+                                />
+                                <div className="text-center text-sm font-medium">{char.characterName}</div>
                             </div>
                         ))}
                     </div>
@@ -91,7 +115,7 @@ function PvpMatchPage() {
 
             <button
                 onClick={startBattle}
-                className="bg-green-600 text-white px-8 py-3 rounded-xl mt-6 hover:bg-green-500"
+                className="bg-green-600 hover:bg-green-500 px-8 py-3 rounded-2xl mt-10 text-lg font-semibold shadow-lg transition-all duration-300 hover:scale-105"
             >
                 전투 시작
             </button>

@@ -92,37 +92,4 @@ public class PveBattleController {
         BattleLogVO result = pveBattleService.startBattle(characterId, monster, userId);
         return ResponseEntity.ok(result);
     }
-
-//    @GetMapping(value = "/battle/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    public void streamBattle(
-//            @RequestParam Integer characterId,
-//            @RequestParam Integer mapId,
-//            @RequestParam String userId,
-//            HttpServletRequest request,
-//            HttpServletResponse response) throws IOException {
-//
-//        // AsyncContext 시작
-//        final AsyncContext asyncContext = request.startAsync();
-//        asyncContext.setTimeout(300_000); // 5분
-//
-//        response.setContentType("text/event-stream");
-//        response.setCharacterEncoding("UTF-8");
-//        response.setHeader("Cache-Control", "no-cache");
-//        response.setHeader("Connection", "keep-alive");
-//        response.setHeader("X-Accel-Buffering", "no");
-//
-//        // 비동기로 처리
-//        CompletableFuture.runAsync(() -> {
-//            try {
-//                ServletOutputStream out = response.getOutputStream();
-//                pveBattleService.startBattleStreamWithOutputStream(
-//                        characterId, mapId, userId, out
-//                );
-//                asyncContext.complete();
-//            } catch (Exception e) {
-//                log.error("전투 스트리밍 실패", e);
-//                asyncContext.complete();
-//            }
-//        });
-//    }
 }

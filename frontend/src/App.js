@@ -58,6 +58,7 @@ function App() {
         <Router>
             <Routes>
                 {/* 비보호 경로 */}
+                <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/oauth/callback" element={<OAuth2RedirectHandler />} />
@@ -66,7 +67,6 @@ function App() {
                 <Route path="/find-password" element={<FindPasswordPage />} />
                 
                 {/* 보호 경로 */}
-                <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
                 <Route path="/create-character" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
                 <Route path="/chat-entry/:characterId" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>} />

@@ -1,10 +1,11 @@
 package com.project.gmaking.pvp.service;
 
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.gmaking.character.dao.CharacterDAO;
 import com.project.gmaking.character.vo.CharacterVO;
 import com.project.gmaking.pve.dao.TurnLogDAO;
+import com.project.gmaking.pve.service.OpenAIService;
 import com.project.gmaking.pve.vo.TurnLogVO;
 import com.project.gmaking.pve.vo.BattleLogVO;
 import com.project.gmaking.pvp.dao.PvpBattleDAO;
@@ -13,9 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +26,9 @@ public class PvpBattleServiceImpl implements PvpBattleService{
     private final CharacterDAO characterDAO;
     private final TurnLogDAO turnLogDAO;
     private final ObjectMapper mapper;
+    private final OpenAIService openAIService;
 
-    // 메모리 캐시용 (테스트용)
+    // 메모리 캐시용
     private final List<PvpBattleVO> activeBattles = new ArrayList<>();
 
     @Override
@@ -79,14 +81,16 @@ public class PvpBattleServiceImpl implements PvpBattleService{
                 .orElse(null);
     }
 
+    // 한글 커맨드 정의
+    private static final String[] COMMANDS = {"공격", "방어", "회피", "필살기"}; // 커맨드 목록을 상수로 정의
+    
     // 턴 진행 (커맨드 계산)
     @Override
     public PvpBattleVO processTurn(PvpBattleVO battle, String myCommand) {
         // 이미 종료된 배틀이면 진행 차단
         if (battle == null || battle.isBattleOver()) return battle;
 
-        String[] commands = {"attack", "defense", "evade", "ultimate"};
-        String enemyCommand = commands[new Random().nextInt(commands.length)];
+        String enemyCommand = COMMANDS[new Random().nextInt(COMMANDS.length)];
         battle.setEnemyCommand(enemyCommand);
 
         int playerDamage = 0, enemyDamage = 0;
@@ -97,36 +101,103 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         int eDef = battle.getEnemy().getCharacterStat().getCharacterDefense();
 
         // ==== 상성 규칙 ====
-        if (myCommand.equals("attack") && enemyCommand.equals("evade")) enemyDamage = atk;
-        else if (myCommand.equals("defense") && enemyCommand.equals("attack")) enemyDamage = def * 2;
-        else if (myCommand.equals("evade") && enemyCommand.equals("ultimate")) enemyDamage = def * 3;
-        else if (myCommand.equals("ultimate") &&
-                (enemyCommand.equals("attack") || enemyCommand.equals("defense"))) enemyDamage = atk * 2;
-        else if (enemyCommand.equals("attack") && myCommand.equals("evade")) playerDamage = eAtk;
-        else if (enemyCommand.equals("defense") && myCommand.equals("attack")) playerDamage = eDef * 2;
-        else if (enemyCommand.equals("evade") && myCommand.equals("ultimate")) playerDamage = eDef * 3;
-        else if (enemyCommand.equals("ultimate") &&
-                (myCommand.equals("attack") || myCommand.equals("defense"))) playerDamage = eAtk * 2;
-        else if (myCommand.equals(enemyCommand) && (myCommand.equals("attack") || myCommand.equals("ultimate"))) {
-            playerDamage = eAtk;
-            enemyDamage = atk;
+        if (myCommand.equals("공격") && enemyCommand.equals("회피")) enemyDamage = atk;
+        else if (myCommand.equals("방어") && enemyCommand.equals("공격")) enemyDamage = def * 2;
+        else if (myCommand.equals("회피") && enemyCommand.equals("필살기")) enemyDamage = def * 3;
+        else if (myCommand.equals("필살기") &&
+                (enemyCommand.equals("공격") || enemyCommand.equals("방어"))) enemyDamage = atk * 2;
+        else if (enemyCommand.equals("공격") && myCommand.equals("회피")) playerDamage = eAtk;
+        else if (enemyCommand.equals("방어") && myCommand.equals("공격")) playerDamage = eDef * 2;
+        else if (enemyCommand.equals("회피") && myCommand.equals("필살기")) playerDamage = eDef * 3;
+        else if (enemyCommand.equals("필살기") &&
+                (myCommand.equals("공격") || myCommand.equals("방어"))) playerDamage = eAtk * 2;
+        else if (myCommand.equals(enemyCommand)) {
+            if (myCommand.equals("공격")) {
+                // 공격 vs 공격: 기본 피해
+                playerDamage = eAtk;
+                enemyDamage = atk;
+            } else if (myCommand.equals("필살기")) {
+                // 필살기 vs 필살기: 2배 피해
+                playerDamage = eAtk * 2;
+                enemyDamage = atk * 2;
+            }
+            // 방어 vs 방어, 회피 vs 회피는 피해 0으로 처리 (기존 else 문에서 처리될 가능성 높음)
         }
 
         // === HP 갱신 ===
         battle.setPlayerHp(Math.max(0, battle.getPlayerHp() - playerDamage));
         battle.setEnemyHp(Math.max(0, battle.getEnemyHp() - enemyDamage));
 
-        // ==== GPT 요청용 로그 생성 ====
-        String actionLog = String.format(
-                "플레이어는 %s / 상대는 %s 행동을 했다. 피해: 플레이어=%d, 상대=%d",
-                myCommand, enemyCommand, playerDamage, enemyDamage
+        // 1단계: 서버 계산 결과 로그 생성 (GPT 비의존)
+        String resultLog = String.format(
+                "[%s의 %s]가 [%s의 %s]에게 입힌 피해: %d. 받은 피해: %d",
+                battle.getPlayer().getCharacterName(), myCommand,
+                battle.getEnemy().getCharacterName(), enemyCommand,
+                enemyDamage, playerDamage
         );
 
-        // DB에는 이번 턴 로그만 저장
-        turnLogDAO.insertTurnLog(new TurnLogVO(null, battle.getBattleId(), battle.getTurn(), actionLog, LocalDateTime.now()));
+        // 2단계: GPT 해설 로그 생성 및 결합
+        Map<String, Object> gptData = new HashMap<>();
+        // 1. 규칙 - 행동 기반 묘사 강조용
+        gptData.put("command1", myCommand);
+        gptData.put("command2", enemyCommand);
+        // 2. 턴 정보 (플레이어/상대방 이름, 커맨드)
+        gptData.put("player", battle.getPlayer().getCharacterName());
+        gptData.put("playerCommand", myCommand);
+        gptData.put("enemy", battle.getEnemy().getCharacterName());
+        gptData.put("enemyCommand", enemyCommand);
+        // 3. HP 정보 (턴 종료 후 남은 HP)
+        gptData.put("playerHp", battle.getPlayerHp());
+        gptData.put("enemyHp", battle.getEnemyHp());
+        // 4. 피해 정보
+        gptData.put("playerDamage", playerDamage);
+        gptData.put("enemyDamage", enemyDamage);
+        // 5. 지시사항 1 강조용
+        gptData.put("command3", myCommand);
+        gptData.put("command4", enemyCommand);
+
+        // 비동기 GPT 호출
+        CompletableFuture<String> gptNoteFuture = openAIService.requestGPTPvpNote(gptData);
+        String gptLog = "";
+        String finalLog = "";
+
+        try {
+            String gptNoteJson = gptNoteFuture.get();
+
+            // JSON 문자열 정리: 코드 블록 마크다운과 서문 제거 (가장 중요!)
+            String cleanJson = gptNoteJson
+                    .replaceAll("```json", "") // 마크다운 시작 태그 제거
+                    .replaceAll("```", "")      // 마크다운 끝 태그 및 일반 코드 블록 마크다운 제거
+                    .trim();                    // 앞뒤 공백 및 줄바꿈 제거
+
+            // 파싱 시도 (cleanJson 사용)
+            JsonNode rootNode = mapper.readTree(cleanJson);
+            gptLog = rootNode.path("note").asText();
+
+            if (gptLog.isEmpty()) {
+                // 'note' 필드가 없거나 비어있는 경우
+                gptLog = "[GPT 해설 실패: note 필드 없음/비어있음] 원본: " + gptNoteJson;
+            }
+
+            // 최종 로그 결합: 서버 결과 + GPT 해설
+            finalLog = resultLog + "\n" + gptLog + "\n";
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            finalLog = resultLog + " | 해설: [GPT 통신 오류: 스레드 중단]";
+        } catch (ExecutionException e) {
+            finalLog = resultLog + " | 해설: [GPT 통신 오류: 실행 예외] " + e.getCause().getMessage();
+        } catch (Exception e) {
+            // 이 부분이 JSON 파싱 오류를 잡는 곳입니다.
+            finalLog = resultLog + " | 해설: [JSON 파싱 오류] 원본 응답 확인 필요";
+        }
+
+        // 3단계: 로그 저장 및 업데이트
+        // DB에는 최종 결합 로그만 저장
+        turnLogDAO.insertTurnLog(new TurnLogVO(null, battle.getBattleId(), battle.getTurn(), finalLog, LocalDateTime.now()));
 
         // 프론트용 누적 로그
-        battle.getLogs().add(actionLog);
+        battle.getLogs().add(finalLog);
 
         // 턴 증가 및 종료 체크
         battle.setTurn(battle.getTurn() + 1);
