@@ -71,8 +71,8 @@ function App() {
                 <Route path="/chat/:characterId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                 <Route path="/my-page" element={<ProtectedRoute><MyPage/></ProtectedRoute>} />
                 <Route path="/shop" element={<ProtectedRoute><ShopPage/></ProtectedRoute>} />
-                <Route path="/pve/maps" element={<ProtectedRoute><MapSelection/></ProtectedRoute>>} />
-                <Route path="/pve/battle" element={<ProtectedRoute><PveBattlePage/></ProtectedRoute>>} />  
+                <Route path="/pve/maps" element={<ProtectedRoute><MapSelection/></ProtectedRoute>} />
+                <Route path="/pve/battle" element={<ProtectedRoute><PveBattlePage/></ProtectedRoute>} />  
                 <Route path="/pvp/match" element={<ProtectedRoute><PvpMatchPage/></ProtectedRoute>} />
                 <Route path="/pvp/battle" element={<ProtectedRoute><PvpBattlePage/></ProtectedRoute>} />
                        
