@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.imageUpload.dao.ImageDAO">
+    <insert id="insertImage" parameterType="map" useGeneratedKeys="true" keyProperty="p.imageId">
+        INSERT INTO tb_image
+            (IMAGE_ORIGINAL_NAME, IMAGE_URL, IMAGE_NAME, IMAGE_TYPE,
+            CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY)
+        VALUES
+            (#{p.imageOriginalName}, #{p.imageUrl}, #{p.imageName}, #{p.imageType},
+            NOW(), #{p.createdBy}, NOW(), #{p.updatedBy})
+    </insert>
+</mapper>
