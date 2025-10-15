@@ -19,6 +19,14 @@ function PveBattlePage() {
     const token = localStorage.getItem("gmaking_token");
     const userId = localStorage.getItem("userId");
 
+    const styles = [
+        { key: "COMIC", label: "코믹 (현재 기본)" },
+        { key: "FANTASY", label: "웅장한 판타지" },
+        { key: "WUXIA", label: "무협지 스타일" },
+        // 필요에 따라 스타일 추가
+    ];
+    const [noteStyle, setNoteStyle] = useState(styles[0].key);
+
     useEffect(() => {
         if (mapId) {
             axios
@@ -71,9 +79,11 @@ function PveBattlePage() {
             console.log("웹소켓 연결 성공:", new Date().toISOString());
             // 서버에 전투 시작 요청 전송
             const payload = {
+                type: "start", // 웹소켓 핸들러가 메시지 타입을 구분할 수 있도록 type 추가
                 characterId: selectedCharacter.characterId,
                 userId: userId,
-                mapId: mapId // 서버가 DB에서 몬스터 생성
+                mapId: mapId, // 서버가 DB에서 몬스터 생성
+                noteStyle: noteStyle
             };
             socket.send(JSON.stringify(payload));
         };
@@ -160,7 +170,21 @@ function PveBattlePage() {
                     ))}
                 </div>
             </div>
-            
+            {/* GPT 노트 스타일 선택 */}
+            <div className="mb-4 text-center">
+                <label className="mr-2">해설 스타일 선택:</label>
+                <select
+                    value={noteStyle}
+                    onChange={(e) => setNoteStyle(e.target.value)}
+                    className="bg-gray-700 text-white p-2 rounded"
+                >
+                    {styles.map((style) => (
+                        <option key={style.key} value={style.key}>
+                            {style.label}
+                        </option>
+                    ))}
+                </select>
+            </div>
             <div className="flex gap-4 mt-4">
                 <button
                     onClick={startBattle}
