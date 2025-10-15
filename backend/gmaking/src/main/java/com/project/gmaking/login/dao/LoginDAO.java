@@ -71,4 +71,12 @@ public interface LoginDAO {
      */
     LoginVO selectUserByEmail(@Param("userEmail") String userEmail);
 
+    /**
+     * 캐릭터 생성 완료 후, TB_USER의 캐릭터 정보를 업데이트
+     * @param userId 사용자 ID
+     * @param imageUrl 생성된 캐릭터 이미지 URL
+     * @return 성공적으로 업데이트된 레코드 수
+     */
+    int updateUserCharacterInfo(@Param("userId") String userId, @Param("imageUrl") String imageUrl);
+
 }

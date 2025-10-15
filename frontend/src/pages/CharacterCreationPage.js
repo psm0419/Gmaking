@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Wand2, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react'; 
+import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -9,6 +10,7 @@ const API_BASE_URL = 'http://localhost:8080';
 
 const CharacterCreationPage = () => {
     const navigate = useNavigate();
+    const { setCharacterCreated } = useAuth();
     const [imageFile, setImageFile] = useState(null);
     const [prompt, setPrompt] = useState('');
     const [characterName, setCharacterName] = useState(''); 
@@ -81,6 +83,8 @@ const CharacterCreationPage = () => {
             
             setStatus('success');
             setGeneratedImage(result.imageUrl); 
+
+            setCharacterCreated(result.imageUrl); 
 
             alert(`캐릭터 '${characterName}' 생성이 완료되었습니다! 메인 페이지로 이동합니다.`);
             navigate('/');

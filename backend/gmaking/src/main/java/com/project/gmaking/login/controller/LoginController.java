@@ -50,7 +50,9 @@ public class LoginController {
         String jwt = tokenProvider.createToken(
                 authenticatedUser.getUserId(),
                 authenticatedUser.getRole(),
-                authenticatedUser.getUserNickname()
+                authenticatedUser.getUserNickname(),
+                authenticatedUser.isHasCharacter(),
+                authenticatedUser.getCharacterImageUrl()
         );
 
         // 로그인 성공

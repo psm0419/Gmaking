@@ -5,6 +5,9 @@ import com.project.gmaking.character.service.ClassificationService;
 import com.project.gmaking.character.service.GcsService;
 import com.project.gmaking.character.service.StableDiffusionService;
 import com.project.gmaking.character.vo.*;
+import com.project.gmaking.login.dao.LoginDAO;
+import com.project.gmaking.login.vo.LoginVO;
+import com.project.gmaking.security.JwtTokenProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -21,17 +24,23 @@ public class CharacterServiceSdImpl implements CharacterServiceSd {
     private final StableDiffusionService sdService;
     private final GcsService gcsService;
     private final CharacterDAO characterDAO;
+    private final LoginDAO loginDAO;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public CharacterServiceSdImpl(
             ClassificationService classificationService,
             StableDiffusionService sdService,
             GcsService gcsService,
-            CharacterDAO characterDAO) {
+            CharacterDAO characterDAO,
+            LoginDAO loginDAO,
+            JwtTokenProvider jwtTokenProvider) {
 
         this.classificationService = classificationService;
         this.sdService = sdService;
         this.gcsService = gcsService;
         this.characterDAO = characterDAO;
+        this.loginDAO = loginDAO;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
@@ -89,13 +98,27 @@ public class CharacterServiceSdImpl implements CharacterServiceSd {
                             imageId
                     );
 
+                    // 6. TB_USER 업데이트
+                    String imageUrl = imageResponse.getFileUrl();
+                    loginDAO.updateUserCharacterInfo(userId, imageUrl);
 
-                    // 6. 응답 VO 생성: characterId를 포함하여 최종 응답 빌드
+                    // 7. 최신 사용자 정보 조회 및 새 토큰 생성 (NEW)
+                    LoginVO updatedUser = loginDAO.selectUserById(userId);
+                    String newToken = jwtTokenProvider.createToken(
+                            updatedUser.getUserId(),
+                            updatedUser.getRole(),
+                            updatedUser.getUserNickname(),
+                            updatedUser.isHasCharacter(),
+                            updatedUser.getCharacterImageUrl()
+                    );
+
+                    // 8. 응답 VO 생성: characterId를 포함하여 최종 응답 빌드
                     return Mono.just(CharacterGenerateResponseVO.builder()
                             .characterId(characterId) // Character ID 포함
                             .characterName(requestVO.getCharacterName())
                             .imageUrl(imageResponse.getFileUrl())
                             .predictedAnimal(predictedAnimal)
+                            //.newToken(newToken)
                             .build());
 
                 } catch (Exception e) {
@@ -114,5 +137,5 @@ public class CharacterServiceSdImpl implements CharacterServiceSd {
         // 프롬프트 로직
         return String.format("%s, %s, digital art, highly detailed, fantasy, epic lighting", predictedAnimal, userPrompt);
     }
-    
+
 }
