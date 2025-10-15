@@ -60,7 +60,7 @@ public class NotificationController {
     @PatchMapping("/{id}/read")
     public ResponseEntity<Void> markRead(
             Principal principal,
-            @PathVariable Long id
+            @PathVariable int id
     ) {
         String userId = principal.getName();
         notificationService.markRead(userId, id, userId);
@@ -72,6 +72,27 @@ public class NotificationController {
     public ResponseEntity<Map<String, Integer>> markAllRead(Principal principal) {
         String userId = principal.getName();
         int changed = notificationService.markAllRead(userId, userId);
+        return ResponseEntity.ok(Map.of("changed", changed));
+    }
+
+    /* 단건 소프트 삭제 */
+    @PatchMapping("/{id}/delete")
+    public ResponseEntity<Void> softDeleteOne(
+            Principal principal,
+            @PathVariable int id
+    ) {
+        String userId = principal.getName();
+        int affected = notificationService.softDeleteOne(userId, id, userId);
+        return affected == 0 ? ResponseEntity.notFound().build()
+                            : ResponseEntity.noContent().build();
+    }
+
+
+    /* 전체 소프트 삭제 */
+    @PatchMapping("/read/delete")
+    public ResponseEntity<Map<String, Integer>> softDeleteAllRead(Principal principal) {
+        String userId = principal.getName();
+        int changed = notificationService.softDeleteAllRead(userId, userId);
         return ResponseEntity.ok(Map.of("changed", changed));
     }
 

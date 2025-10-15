@@ -14,6 +14,7 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
+import ProfileEditPage from'./pages/ProfileEditPage';
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PvpMatchPage from './pages/PvpMatchPage';
@@ -71,11 +72,12 @@ function App() {
                 <Route path="/chat-entry/:characterId" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>} />
                 <Route path="/chat/:characterId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                 <Route path="/my-page" element={<ProtectedRoute><MyPage/></ProtectedRoute>} />
-                <Route path="/shop" element={<ProtectedRoute><ShopPage/></ProtectedRoute>} />
-                <Route path="/pve/maps" element={<ProtectedRoute><MapSelection/></ProtectedRoute>} />
-                <Route path="/pve/battle" element={<ProtectedRoute><PveBattlePage/></ProtectedRoute>} />  
-                <Route path="/pvp/match" element={<ProtectedRoute><PvpMatchPage/></ProtectedRoute>} />
-                <Route path="/pvp/battle" element={<ProtectedRoute><PvpBattlePage/></ProtectedRoute>} />
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/pve/maps" element={<MapSelection />} />
+                <Route path="/pve/battle" element={<PveBattlePage />} />  
+                <Route path="/pvp/match" element={<PvpMatchPage />} />
+                <Route path="/pvp/battle" element={<PvpBattlePage />} />
+                <Route path="/my-page/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
                        
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />

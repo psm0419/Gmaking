@@ -1,9 +1,11 @@
 // src/pages/MyPage.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getMyPageSummary, getCharacterStats } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useAuth } from "../context/AuthContext";
 
 // ===== 알림: STOMP + SockJS 직접 연결(별도 helpers 없이) =====
 import { Client } from "@stomp/stompjs";
@@ -11,7 +13,7 @@ import SockJS from "sockjs-client";
 // 공통 axios (JWT 인터셉터 사용)
 import axiosInstance from "../api/axiosInstance";
 
-// ===== 공통 baseUrl (동일 오리진이면 "", 분리 개발이면 .env의 VITE_API_BASE) =====
+// 공통 baseUrl
 const BASE_URL = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
 
 // 이미지 경로 보정
@@ -169,7 +171,7 @@ function MyMain({
               <div className="mt-6 flex items-center gap-5 text-gray-800">
                 <NotificationBell />
                 <IconMail />
-                <IconMore />
+                <MoreMenuInline />
               </div>
             </div>
 
@@ -378,13 +380,13 @@ function CharacterCard({ character, active, onClick }) {
   );
 }
 
-/* ===== 알림 벨: REST 직접 호출 + STOMP 구독(직접) ===== */
+/* 알림 벨 */
 function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
   const [tab, setTab] = useState("new"); // 'new' | 'read'
   const [badge, setBadge] = useState(0);
-  const [unread, setUnread] = useState([]); // [{id, title, linkUrl, type, metaJson, ...}]
+  const [unread, setUnread] = useState([]); // [{id, title, linkUrl, type, status, meta, createdDate}]
   const [read, setRead] = useState([]);
   const [isBulkWorking, setIsBulkWorking] = useState(false);
   const navigate = useNavigate();
@@ -392,42 +394,43 @@ function NotificationBell() {
   const btnRef = useRef(null);
   const popRef = useRef(null);
   const gearRef = useRef(null);
-  const stompRef = useRef/** @type {React.MutableRefObject<Client | null>} */(null);
+  /** @type {React.MutableRefObject<Client | null>} */
+  const stompRef = useRef(null);
+  const startedRef = useRef(false);
+  const subRef = useRef(null);
 
-  // 테스트 코드
-  const sendPing = () => {
-    const c = stompRef.current;
-    if (!c || !c.connected) return alert("소켓이 아직 연결되지 않았어요.");
-    c.publish({ destination: "/app/ping", body: "" });
-  }
-   // 테스트 코드
-
-  // ===== REST helpers (axiosInstance 는 JWT 인터셉터 적용) =====
+  // ===== REST helpers (JWT 인터셉터 적용된 axiosInstance 사용) =====
   const fetchUnreadCount = async () => {
     const { data } = await axiosInstance.get("/api/notifications/unread/count");
     return typeof data?.count === "number" ? data.count : 0;
   };
-
   const fetchUnread = async ({ limit = 20, offset = 0 } = {}) => {
     const { data } = await axiosInstance.get(
-      `/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(
-        offset
-      )}`
+      `/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
     );
     return data;
   };
-
   const fetchRead = async ({ limit = 20, offset = 0 } = {}) => {
     const { data } = await axiosInstance.get(
-      `/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(
-        offset
-      )}`
+      `/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
     );
     return data;
   };
 
+  // 읽음 처리 (단건 / 전체)
   const markRead = async (id) => {
     await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/read`);
+  };
+  const markAllReadApi = async () => {
+    await axiosInstance.patch(`/api/notifications/read-all`);
+  };
+
+  // 소프트 삭제 (STATUS='deleted')
+  const softDeleteOne = async (id) => {
+    await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/delete`);
+  };
+  const softDeleteAllRead = async () => {
+    await axiosInstance.patch(`/api/notifications/read/delete`);
   };
 
   const normalizeList = (arr) =>
@@ -436,7 +439,7 @@ function NotificationBell() {
       title: n.title || "알림",
       linkUrl: n.linkUrl || null,
       type: n.type,
-      status: n.status,
+      status: n.status, // 'unread' | 'read' (deleted는 서버에서 제외)
       meta: typeof n.metaJson === "string" ? safeJson(n.metaJson) : n.metaJson || {},
       createdDate: n.createdDate,
     }));
@@ -453,28 +456,17 @@ function NotificationBell() {
   };
 
   // 초기 로드 + STOMP 연결
-  const startedRef = useRef(false);
-  const subRef = useRef(null);
-
   useEffect(() => {
     const token = localStorage.getItem("gmaking_token");
-    if (!token) {
-      // 로그인 안되어 있으면 소켓 연결 생략
-      return;
-    }
+    if (!token) return;
 
-    // 최초 목록 로드
     refreshAll().catch(console.error);
-
     if (startedRef.current) return;
     startedRef.current = true;
 
-    // STOMP 클라이언트 구성
-    const sockUrl = `${BASE_URL}/notify-ws`; // 서버의 SockJS 엔드포인트 (예: /ws)
+    const sockUrl = `${BASE_URL}/notify-ws`;
     const client = new Client({
-      // SockJS 팩토리
       webSocketFactory: () => new SockJS(sockUrl),
-      // 연결 헤더 (서버 StompAuthChannelInterceptor가 Authorization 읽음)
       connectHeaders: {
         Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
       },
@@ -482,21 +474,12 @@ function NotificationBell() {
       reconnectDelay: 0,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
-
       onConnect: () => {
-        // 구독 경로는 서버 설정에 맞춰 조정하세요.
-        // 흔한 패턴: /user/queue/notifications
         subRef.current = client.subscribe("/user/queue/notifications", () => {
-          // 새 알림 도착 → 배지/목록 새로고침
           refreshAll().catch(console.error);
         });
       },
-      onStompError: (frame) => {
-        console.error("STOMP error", frame?.headers, frame?.body);
-      },
-      onWebSocketClose: (ev) => {
-        // console.log("WS closed", ev.code, ev.reason);
-      }
+      onStompError: (frame) => console.error("STOMP error", frame?.headers, frame?.body),
     });
 
     client.activate();
@@ -509,33 +492,68 @@ function NotificationBell() {
       stompRef.current = null;
       startedRef.current = false;
     };
-
   }, []);
 
-  // 모두 읽음
+  // 알림창 닫기
+  useEffect(() => {
+    if (!open) return;
+
+    const onDocPointer = (e) => {
+      const popEl = popRef.current;
+      const btnEl = btnRef.current;
+      if (!popEl) return;
+
+      const target = e.target;
+      // 팝오버 내부나 버튼을 누른 경우는 무시
+      const clickedInsidePop = popEl.contains(target);
+      const clickedOnButton = btnEl && btnEl.contains(target);
+      if (clickedInsidePop || clickedOnButton) return;
+
+      // 바깥 클릭 → 닫기
+      setOpen(false);
+      setGearOpen(false);
+    };
+
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        setGearOpen(false);
+      }
+    };
+
+    // mousedown/touchstart로 빠르게 감지
+    document.addEventListener("mousedown", onDocPointer);
+    document.addEventListener("touchstart", onDocPointer, { passive: true });
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      document.removeEventListener("mousedown", onDocPointer);
+      document.removeEventListener("touchstart", onDocPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // “모두 읽음” (서버 일괄 처리)
   const markAllRead = async () => {
     if (unread.length === 0) return;
     setIsBulkWorking(true);
     try {
-      await Promise.all(unread.map((n) => markRead(n.id)));
+      await markAllReadApi();
+      await refreshAll();
     } catch (e) {
       console.error(e);
+      alert("모두 읽음 처리에 실패했습니다.");
     } finally {
-      await refreshAll().catch(console.error);
       setIsBulkWorking(false);
     }
   };
 
-  // 전체 삭제(서버 API 없으므로 UI에서만 비움)
-  const deleteAll = () => {
-    setUnread([]);
-    setRead([]);
-    setBadge(0);
-  };
-
+  // 개별 알림 클릭(읽음 처리 & 이동/알림)
   const onClickItem = async (n) => {
     try {
-      await markRead(n.id);
+      if (n.status !== "read") {
+        await markRead(n.id);
+      }
       if (n.linkUrl) {
         navigate(n.linkUrl);
       } else if (n.type === "PVP_RESULT") {
@@ -551,26 +569,31 @@ function NotificationBell() {
     }
   };
 
+  // 읽은 알림 개별 삭제(소프트)
+  const onDeleteRead = async (id) => {
+    try {
+      await softDeleteOne(id);
+      setRead((prev) => prev.filter((n) => n.id !== id)); // 즉시 UI 반영
+    } catch (e) {
+      console.error(e);
+      alert("알림 삭제에 실패했습니다.");
+    }
+  };
+
   const visible = tab === "new" ? unread : read;
 
   return (
     <div className="relative">
       <button
         ref={btnRef}
-        onClick={() => {
-          setOpen((v) => !v);
-          setGearOpen(false);
-        }}
+        onClick={() => { setOpen((v) => !v); setGearOpen(false); }}
         className="relative rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
         aria-label="알림 열기"
       >
         <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
           <path
             d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
           />
         </svg>
         {badge > 0 && (
@@ -581,10 +604,7 @@ function NotificationBell() {
       </button>
 
       {open && (
-        <div
-          ref={popRef}
-          className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl"
-        >
+        <div ref={popRef} className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl">
           <div className="flex items-center justify-between px-3 py-2 border-b">
             <div className="flex items-center gap-2">
               <button
@@ -616,33 +636,39 @@ function NotificationBell() {
                   <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6" />
                   <path
                     d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
+                    stroke="currentColor" strokeWidth="1.2"
                   />
                 </svg>
               </button>
 
               {gearOpen && (
-                <div className="absolute left-full top-0 ml-2 w-40 rounded-lg border bg-white shadow-lg overflow-hidden z-[60] origin-top-left">
+                <div className="absolute left-full top-0 ml-2 w-48 rounded-lg border bg-white shadow-lg overflow-hidden z-[60] origin-top-left">
                   <button
-                    onClick={() => {
-                      markAllRead();
-                      setGearOpen(false);
+                    onClick={async () => {
+                      setIsBulkWorking(true);
+                      try { await markAllReadApi(); await refreshAll(); }
+                      catch (e) { console.error(e); alert("모두 읽음 처리에 실패했습니다."); }
+                      finally { setIsBulkWorking(false); setGearOpen(false); }
                     }}
                     disabled={isBulkWorking}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
                   >
                     모두 읽음
                   </button>
+
+                  {/* 읽은 알림 전체 소프트 삭제 */}
                   <button
-                    onClick={() => {
-                      deleteAll();
-                      setGearOpen(false);
+                    onClick={async () => {
+                      if (!window.confirm("읽은 알림을 모두 삭제하시겠습니까?")) return;
+                      setIsBulkWorking(true);
+                      try { await softDeleteAllRead(); await refreshAll(); }
+                      catch (e) { console.error(e); alert("읽은 알림 전체 삭제에 실패했습니다."); }
+                      finally { setIsBulkWorking(false); setGearOpen(false); }
                     }}
                     disabled={isBulkWorking}
                     className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
                   >
-                    알림 전체 삭제
+                    읽은 알림 전체 삭제
                   </button>
                 </div>
               )}
@@ -665,6 +691,20 @@ function NotificationBell() {
                     className="relative group cursor-pointer rounded-md px-3 py-3 border border-gray-200 bg-white transition-colors duration-150 hover:bg-sky-50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                   >
                     <p className="pr-8 text-sm text-gray-900">{n.title}</p>
+
+                    {/* 읽은 탭에서만 X(소프트 삭제) */}
+                    {tab === "read" && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteRead(n.id); }}
+                        aria-label="알림 삭제"
+                        title="알림 삭제"
+                        className="absolute right-2 top-2 rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -676,7 +716,8 @@ function NotificationBell() {
   );
 }
 
-/* ===== 기타 아이콘 ===== */
+
+/* 기타 메일 아이콘 */
 function IconMail(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -685,6 +726,141 @@ function IconMail(props) {
     </svg>
   );
 }
+
+function MoreMenuInline() {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const btnRef = useRef(null);
+  const panelRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const handleEditProfile = () => {
+    setOpen(false);
+    navigate("/my-page/profile/edit");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      setOpen(false);
+      navigate("/login");
+    }
+  };
+
+  // 버튼 기준 위치 계산 (뷰포트 기준 fixed)
+  const updatePosition = () => {
+    const btn = btnRef.current;
+    const panel = panelRef.current;
+    if (!btn || !panel) return;
+
+    const r = btn.getBoundingClientRect();
+    const margin = 8;
+    const OFFSET_Y = -5;  // 버튼 아래 여백
+    const OFFSET_X = 150;
+
+    let pw = panel.offsetWidth;
+    let left = r.left + r.width / 2 - pw / 2  + OFFSET_X;
+    left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
+    const top = r.bottom + OFFSET_Y;
+    setPos({ top, left, width: pw });
+
+    requestAnimationFrame(() => {
+      if (!panelRef.current) return;
+      pw = panelRef.current.offsetWidth;
+      let l2 = r.left + r.width / 2 - pw / 2 + OFFSET_X;
+      l2 = Math.max(margin, Math.min(l2, window.innerWidth - pw - margin));
+      setPos((p) => (p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }));
+
+    });
+
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onResizeScroll = () => updatePosition();
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    const onDown = (e) => {
+      const p = panelRef.current;
+      const b = btnRef.current;
+      if (!p) return;
+      if (p.contains(e.target) || b?.contains?.(e.target)) return;
+      setOpen(false); // 바깥 클릭 닫기
+    };
+
+    window.addEventListener("resize", onResizeScroll);
+    window.addEventListener("scroll", onResizeScroll, true);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown, { passive: true });
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      window.removeEventListener("resize", onResizeScroll);
+      window.removeEventListener("scroll", onResizeScroll, true);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative inline-flex">
+      {/* 버튼 */}
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="더보기"
+        className="rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
+      >
+        <IconMore />
+      </button>
+
+      {/* 팝오버: 백드롭/어둡게 처리 없음 */}
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="false"
+            className="fixed z-[100] w-64 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 overflow-hidden"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            {/* 작은 화살표 (옵션) */}
+            <div className="absolute -top-2 left-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow" />
+
+            <div className="px-4 py-3 border-b text-sm text-gray-600">더보기</div>
+            <div className="p-2">
+              <button
+                className="w-full text-left rounded-xl px-4 py-3 text-[15px] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onClick={handleEditProfile}
+              >
+                회원 정보 수정
+              </button>
+              <button
+                className="mt-1 w-full text-left rounded-xl px-4 py-3 text-[15px] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onClick={handleLogout}
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+    </div>
+  );
+}
+
+
+/* 더보기 아이콘 */
 function IconMore(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>

@@ -88,7 +88,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markRead(String userId, Long notificationId, String actor) {
+    public void markRead(String userId, int notificationId, String actor) {
         int updated = notificationDAO.markRead(notificationId, userId, actor);
     }
 
@@ -102,6 +102,17 @@ public class NotificationService {
         return notificationDAO.deleteExpired();
     }
 
+    // 소프트 삭제
+    @Transactional
+    public int softDeleteOne(String userId, int id, String updatedBy) {
+        return notificationDAO.softDeleteOne(userId, id, updatedBy);
+    }
+
+    // 읽은 것만 소프트 삭제
+    @Transactional
+    public int softDeleteAllRead(String userId, String updatedBy) {
+        return notificationDAO.softDeleteAllRead(userId, updatedBy);
+    }
 
     private int sanitizeLimit(int limit) {
         if (limit <= 0) return 20;

@@ -18,12 +18,13 @@ public class NotificationFacade {
     private final ObjectMapper om = new ObjectMapper();
 
     // 구매 알림
-    public Long purchase(String userId, String orderId, long amount, String actor) {
+    public Long purchase(String userId, String orderId, String itemName, long amount, String actor) {
         String title = String.format("%s 를 구매했습니다.", orderId);
 
         String link = "/orders";
         String meta = json(Map.of(
                 "orderId", orderId,
+                "itemName", itemName,
                 "amount", amount
         ));
         return notificationService.create(
