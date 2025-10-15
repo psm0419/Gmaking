@@ -9,55 +9,62 @@ const OAuth2RedirectHandler = () => {
     const { handleOAuth2Login } = useAuth();
 
     useEffect(() => {
-        let isProcessed = false; 
+        let isCancelled = false; 
+ 
+        const processOAuth2Redirect = () => {
+            const queryParams = new URLSearchParams(location.search);
+            const token = queryParams.get('token');
+            const userId = queryParams.get('userId');
+            const userNickname = queryParams.get('nickname');
+            const role = queryParams.get('role');
+            const hasCharacter = queryParams.get('hasCharacter');
+            const userEmail = queryParams.get('userEmail');
 
-        if (isProcessed) return; 
+            try {
+                if (token && userId) {
+                    const userInfo = { 
+                        userId, 
+                        userName: userNickname,
+                        role, 
+                        hasCharacter: hasCharacter === 'true' || hasCharacter === true, 
+                        userEmail
+                    };
 
-        const queryParams = new URLSearchParams(location.search);
-        const token = queryParams.get('token');
-        const userId = queryParams.get('userId');
-        const userNickname = queryParams.get('nickname');
-        const role = queryParams.get('role');
-        const hasCharacter = queryParams.get('hasCharacter');
-        const userEmail = queryParams.get('userEmail');
+                    if (!isCancelled) {
+                        handleOAuth2Login(token, userInfo);
+                        navigate('/', { replace: true });
+                    }
+                    return; 
+                }
 
-        try {
-            if (token && userId) {
-                const userInfo = { 
-                    userId, 
-                    userName: userNickname,
-                    role, 
-                    hasCharacter,
-                    userEmail
-                };
+                const error = queryParams.get('error');
+                if (error) {
+                    alert(`소셜 로그인 실패: ${decodeURIComponent(error)}`);
+                    if (!isCancelled) {
+                        navigate('/login', { replace: true });
+                    }
+                    return; 
+                }
 
-                handleOAuth2Login(token, userInfo);
-                navigate('/', { replace: true });
-                isProcessed = true; 
-                return;
+                console.log('잘못된 접근 또는 매개변수 누락. 로그인 페이지로 리다이렉트합니다.');
+                if (!isCancelled) {
+                    navigate('/login', { replace: true });
+                }
+                
+            } catch (e) {
+                console.error("OAuth2RedirectHandler 처리 중 예기치 않은 DOM 오류 발생:", e);
+                if (!isCancelled) {
+                    navigate('/login', { replace: true });
+                }
             }
-
-            const error = queryParams.get('error');
-            if (error) {
-                alert(`소셜 로그인 실패: ${decodeURIComponent(error)}`);
-                navigate('/login', { replace: true });
-                isProcessed = true;
-                return;
-            }
-
-            console.log('잘못된 접근 또는 매개변수 누락. 로그인 페이지로 리다이렉트합니다.');
-            navigate('/login', { replace: true });
-            isProcessed = true;
-
-        } catch (e) {
-            console.error("OAuth2RedirectHandler 처리 중 예기치 않은 DOM 오류 발생:", e);
-            navigate('/login', { replace: true });
-        }
-
-        
-        return () => {
-            isProcessed = true;
         };
+        
+        processOAuth2Redirect(); 
+
+        return () => {
+            isCancelled = true; 
+        };
+        
     }, [location, handleOAuth2Login, navigate]);
 
     return (
