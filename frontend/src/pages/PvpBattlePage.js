@@ -58,7 +58,7 @@ function PvpBattlePage() {
                 setBattleId(currentBattleId);
                 setBattleLogs(startResponse.data.log || []);
             }
-            
+
             // 턴 실행 API 호출
             const turnResponse = await axios.post("/api/pvp/turn", {
                 battleId: currentBattleId,
@@ -76,8 +76,12 @@ function PvpBattlePage() {
                 `${myCharacter.characterName}가 ${myCommand} 시도`,
                 `${enemyCharacter.characterName}가 ${actualEnemyCommand} 시도` // 로그의 기본값도 서버 응답을 사용
             ];
-
             setBattleLogs(logs);
+
+            // 서버 응답에서 최신 HP 반영
+            setPlayerCurrentHp(turnResponse.data.playerHp);
+            setEnemyCurrentHp(turnResponse.data.enemyHp);
+
             setMyCommand(null); // 선택 초기화
 
         } catch (err) {
@@ -86,6 +90,26 @@ function PvpBattlePage() {
         }
     };
 
+    // 체력 퍼센트 계산 함수
+    const calcHpPercent = (current, max) => Math.max(0, Math.round((current / max) * 100));
+
+    // HP bar 컴포넌트
+    const HpBar = ({ current, max }) => {
+        const percent = calcHpPercent(current, max);
+        const barColor =
+            percent > 60 ? "bg-green-500" :
+                percent > 30 ? "bg-yellow-500" : "bg-red-500";
+
+        return (
+            <div className="w-40 bg-gray-700 rounded-full h-4 mt-2">
+                <div
+                    className={`${barColor} h-4 rounded-full transition-all duration-300`}
+                    style={{ width: `${percent}%` }}
+                />
+                <p className="text-sm mt-1">{`${current} / ${max} (${percent}%)`}</p>
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col items-center p-8 text-white bg-gray-900 min-h-screen">
@@ -94,8 +118,16 @@ function PvpBattlePage() {
             <div className="flex justify-between w-3/4 mb-10">
                 {/* 내 캐릭터 */}
                 <div className="text-center">
-                    <img src={`/images/character/${myCharacter.imageId}.png`} className="w-40 h-40" />
-                    <p className="text-lg mt-2">{myCharacter.characterName}</p>
+                    <div className="flex justify-center">
+                        <img src={`/images/character/${myCharacter.imageId}.png`} className="w-40 h-40" />
+                    </div>
+                    <p className="text-xl mt-2">{myCharacter.characterName}</p>
+
+                    {/* 내 캐릭터 스탯 표시 */}
+                    <p className="text-sm text-gray-400 text-xl">
+                        공격력: {myCharacter.characterStat.characterAttack}  방어력: {myCharacter.characterStat.characterDefense}
+                    </p>
+
                     <div className="flex gap-2 mt-2 justify-center flex-wrap">
                         {commands.map(cmd => (
                             <button
@@ -107,12 +139,27 @@ function PvpBattlePage() {
                             </button>
                         ))}
                     </div>
+                    {/* 체력바 표시 */}
+                    <div className="flex justify-center">
+                        <HpBar
+                            current={playerCurrentHp}
+                            max={myCharacter.characterStat.characterHp}
+                        />
+                    </div>
                 </div>
 
                 {/* 상대 캐릭터 */}
                 <div className="text-center">
-                    <img src={`/images/character/${enemyCharacter.imageId}.png`} className="w-40 h-40" />
-                    <p className="text-lg mt-2">{enemyCharacter.characterName}</p>
+                    <div className="flex justify-center">
+                        <img src={`/images/character/${enemyCharacter.imageId}.png`} className="w-40 h-40" />
+                    </div>
+                    <p className="text-xl mt-2">{enemyCharacter.characterName}</p>
+
+                    {/* 상대 스탯 */}
+                    <p className="text-sm text-gray-400 text-xl">
+                        공격력: {enemyCharacter.characterStat.characterAttack}  방어력: {enemyCharacter.characterStat.characterDefense}
+                    </p>
+
                     <div className="flex gap-2 mt-2 justify-center flex-wrap">
                         {commands.map(cmd => (
                             <button
@@ -124,32 +171,42 @@ function PvpBattlePage() {
                             </button>
                         ))}
                     </div>
+                    {/* 체력바 표시 */}
+                    <div className="flex justify-center">
+                        <HpBar
+                            current={enemyCurrentHp}
+                            max={enemyCharacter.characterStat.characterHp}
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* 중앙 턴 요약 */}
             <div className="bg-gray-700 p-4 rounded-xl w-2/3 text-center mb-4">
-                {turnSummary || "커맨드를 선택하고 전투 시작 버튼을 눌러주세요."}
+                {turnSummary || "커맨드를 선택하고 턴 실행 버튼을 눌러주세요."}
             </div>
 
             {/* GPT 전투 로그 */}
-            <div className="bg-gray-800 p-6 rounded-xl w-2/3 text-left min-h-[120px] overflow-y-auto">
+            <div className="bg-gray-800 p-6 rounded-xl w-2/3 text-left min-h-[120px] overflow-y-auto whitespace-pre-wrap">
                 {battleLogs.length > 0 ? (
                     battleLogs.map((log, idx) => <p key={idx}>{log}</p>)
                 ) : (
-                    <pre>전투 로그가 여기에 표시됩니다.</pre>
+                    <p>전투 로그가 여기에 표시됩니다.</p>
                 )}
             </div>
 
             <div className="flex gap-4 mt-6">
                 <button
                     onClick={startTurn}
-                    disabled={playerCurrentHp <= 0 || enemyCurrentHp <= 0} // 버튼 비활성화
-                    className={`bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-500
-                        ${(playerCurrentHp <= 0 || enemyCurrentHp <= 0) ? "opacity-50 cursor-not-allowed" : ""}` // 비활성화 스타일 추가
-                    }
+                    className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-500"
                 >
                     턴 실행
+                </button>
+                <button
+                    onClick={() => navigate("/pvp/match")}
+                    className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500"
+                >
+                    매칭 화면으로
                 </button>
             </div>
         </div>

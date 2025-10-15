@@ -14,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -114,9 +111,17 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         else if (enemyCommand.equals("회피") && myCommand.equals("필살기")) playerDamage = eDef * 3;
         else if (enemyCommand.equals("필살기") &&
                 (myCommand.equals("공격") || myCommand.equals("방어"))) playerDamage = eAtk * 2;
-        else if (myCommand.equals(enemyCommand) && (myCommand.equals("공격") || myCommand.equals("필살기"))) {
-            playerDamage = eAtk;
-            enemyDamage = atk;
+        else if (myCommand.equals(enemyCommand)) {
+            if (myCommand.equals("공격")) {
+                // 공격 vs 공격: 기본 피해
+                playerDamage = eAtk;
+                enemyDamage = atk;
+            } else if (myCommand.equals("필살기")) {
+                // 필살기 vs 필살기: 2배 피해
+                playerDamage = eAtk * 2;
+                enemyDamage = atk * 2;
+            }
+            // 방어 vs 방어, 회피 vs 회피는 피해 0으로 처리 (기존 else 문에서 처리될 가능성 높음)
         }
 
         // === HP 갱신 ===
@@ -124,7 +129,6 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         battle.setEnemyHp(Math.max(0, battle.getEnemyHp() - enemyDamage));
 
         // 1단계: 서버 계산 결과 로그 생성 (GPT 비의존)
-        // ----------------------------------------------------
         String resultLog = String.format(
                 "[%s의 %s]가 [%s의 %s]에게 입힌 피해: %d. 받은 피해: %d",
                 battle.getPlayer().getCharacterName(), myCommand,
@@ -133,15 +137,24 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         );
 
         // 2단계: GPT 해설 로그 생성 및 결합
-        // ----------------------------------------------------
-        Map<String, Object> gptData = Map.of(
-                "player", battle.getPlayer().getCharacterName(),
-                "enemy", battle.getEnemy().getCharacterName(),
-                "playerCommand", myCommand,
-                "enemyCommand", enemyCommand,
-                "playerDamage", playerDamage,
-                "enemyDamage", enemyDamage
-        );
+        Map<String, Object> gptData = new HashMap<>();
+        // 1. 규칙 - 행동 기반 묘사 강조용
+        gptData.put("command1", myCommand);
+        gptData.put("command2", enemyCommand);
+        // 2. 턴 정보 (플레이어/상대방 이름, 커맨드)
+        gptData.put("player", battle.getPlayer().getCharacterName());
+        gptData.put("playerCommand", myCommand);
+        gptData.put("enemy", battle.getEnemy().getCharacterName());
+        gptData.put("enemyCommand", enemyCommand);
+        // 3. HP 정보 (턴 종료 후 남은 HP)
+        gptData.put("playerHp", battle.getPlayerHp());
+        gptData.put("enemyHp", battle.getEnemyHp());
+        // 4. 피해 정보
+        gptData.put("playerDamage", playerDamage);
+        gptData.put("enemyDamage", enemyDamage);
+        // 5. 지시사항 1 강조용
+        gptData.put("command3", myCommand);
+        gptData.put("command4", enemyCommand);
 
         // 비동기 GPT 호출
         CompletableFuture<String> gptNoteFuture = openAIService.requestGPTPvpNote(gptData);
