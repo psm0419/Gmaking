@@ -35,13 +35,15 @@ public class CharacterController {
         return ResponseEntity.ok(list);
     }
 
+    // ---------------------------------------------------------------------------------
+
     /**
      * 캐릭터 생성 요청을 처리하는 메인 엔드포인트
      */
     @PostMapping("/create")
     public Mono<ResponseEntity<CharacterGenerateResponseVO>> generateCharacter(
             @RequestPart("image") MultipartFile image,
-            @RequestParam("userPrompt") String userPrompt,
+            // @RequestParam("userPrompt") String userPrompt,
             @RequestParam("characterName") String characterName,
             @RequestHeader("Authorization") String token) {
 
@@ -68,7 +70,7 @@ public class CharacterController {
         // 2. 요청 DTO 구성
         CharacterGenerateRequestVO requestVO = new CharacterGenerateRequestVO();
         requestVO.setImage(image);
-        requestVO.setUserPrompt(userPrompt);
+        // requestVO.setUserPrompt(userPrompt);
         requestVO.setCharacterName(characterName);
 
         try {
@@ -95,4 +97,7 @@ public class CharacterController {
         }
         return null;
     }
+
+    // ---------------------------------------------------------------------------------
+
 }

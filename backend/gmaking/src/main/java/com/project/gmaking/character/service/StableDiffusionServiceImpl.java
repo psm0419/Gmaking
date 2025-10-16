@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -29,13 +30,21 @@ public class StableDiffusionServiceImpl implements StableDiffusionService {
     public StableDiffusionServiceImpl(@Value("${sd.api.url}") String sdApiUrl) {
         this.sdApiUrl = sdApiUrl;
 
-        // WebClient 생성 + 타임아웃 10분 설정
+        // 이미지 크기 20MB 설정
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(20 * 1024 * 1024))
+                .build();
+
+        // WebClient 생성 + 타임아웃 15분 설정
         this.webClient = WebClient.builder()
                 .baseUrl(sdApiUrl)
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create()
-                                .responseTimeout(Duration.ofMinutes(10))
+                                .responseTimeout(Duration.ofMinutes(15))
                 ))
+                .exchangeStrategies(strategies)
                 .build();
     }
 
