@@ -305,9 +305,10 @@ public class PveBattleServiceImpl implements PveBattleService {
                 try {
                     noteMap = mapper.readValue(noteJson, new TypeReference<Map<String, Object>>() {});
                 } catch (Exception e) {
-                    noteMap = Map.of("note", "[GPT 호출 실패]");
+                    log.error("GPT Note JSON 파싱 실패: {}", e.getMessage(), e);
+                    noteMap = Map.of("note", "[GPT 호출 실패: JSON 오류]");
                 }
-                String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패]").toString();
+                String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패: JSON 오류]").toString();
 
                 // 마지막 턴이면 로그에 승리/패배 메시지 포함
                 String actionLog = String.format(
