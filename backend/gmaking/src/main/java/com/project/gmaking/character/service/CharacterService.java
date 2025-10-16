@@ -30,6 +30,5 @@ public class CharacterService {
         return characterStatDAO.getCharacterStat(characterId);
     }
 
-
 }
 

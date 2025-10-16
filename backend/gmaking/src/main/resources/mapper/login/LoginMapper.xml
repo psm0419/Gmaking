@@ -13,10 +13,14 @@
 <!--        <result column="IMAGE_ID" property="imageId"/>-->
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="ROLE" property="role"/>
+
+        <result column="IS_CHARACTER_EXISTS" property="hasCharacter"/>
+        <result column="CHARACTER_IMG_URL" property="characterImageUrl"/>
     </resultMap>
 
     <select id="selectUserById" resultMap="loginResultMap">
         SELECT
+<<<<<<< HEAD
             USER_ID,
             USER_NAME,
             USER_EMAIL,
@@ -28,6 +32,23 @@
             CREATED_DATE
         FROM TB_USER
         WHERE USER_ID = #{userId}
+=======
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            CASE WHEN T2.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_CHARACTER_EXISTS,
+            T3.IMAGE_URL AS CHARACTER_IMG_URL
+        FROM TB_USER T1
+                 LEFT JOIN TB_CHARACTER T2 ON T1.USER_ID = T2.USER_ID
+                 LEFT JOIN TB_IMAGE T3 ON T2.IMAGE_ID = T3.IMAGE_ID
+        WHERE T1.USER_ID = #{userId}
+>>>>>>> 70cb8c38e5c902f714ca72978649163789b6013a
     </select>
 
     <insert id="register" parameterType="com.project.gmaking.login.vo.RegisterRequestVO">
@@ -83,17 +104,21 @@
 
     <select id="selectUserBySocialId" resultMap="loginResultMap">
         SELECT
-            USER_ID,
-            USER_NAME,
-            USER_EMAIL,
-            IS_EMAIL_VERIFIED,
-            USER_PASSWORD,
-            USER_NICKNAME,
-<!--            IMAGE_ID,-->
-            ROLE,
-            CREATED_DATE
-        FROM TB_USER
-        WHERE USER_ID = #{userId}
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            CASE WHEN T2.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_CHARACTER_EXISTS,
+            T3.IMAGE_URL AS CHARACTER_IMG_URL
+        FROM TB_USER T1
+                 LEFT JOIN TB_CHARACTER T2 ON T1.USER_ID = T2.USER_ID
+                 LEFT JOIN TB_IMAGE T3 ON T2.IMAGE_ID = T3.IMAGE_ID
+        WHERE T1.USER_ID = #{userId}
     </select>
 
     <insert id="insertSocialUser" parameterType="com.project.gmaking.login.vo.LoginVO">
@@ -130,5 +155,13 @@
         FROM TB_USER
         WHERE USER_EMAIL = #{userEmail}
     </select>
+
+    <update id="updateUserCharacterInfo">
+        UPDATE TB_USER
+        SET
+            HAS_CHARACTER = TRUE,
+            CHARACTER_IMAGE_URL = #{imageUrl}
+        WHERE USER_ID = #{userId}
+    </update>
 
 </mapper>

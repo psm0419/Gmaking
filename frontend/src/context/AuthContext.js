@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasCharacter, setHasCharacter] = useState(false); 
-
+    const [characterImageUrl, setCharacterImageUrl] = useState(null);
 
     const logout = useCallback(() => {
         // localStorage 비우기
@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setIsLoggedIn(false);
         setHasCharacter(false);
+        setCharacterImageUrl(null);
     }, []);
 
 
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }) => {
                     
                     setUser(currentUser);
                     setHasCharacter(currentUser.hasCharacter);
+                    setCharacterImageUrl(currentUser.characterImageUrl);
                     
                 } catch (e) {
                     console.error('Failed to construct user from valid token. Resetting state:', e);
@@ -76,6 +78,7 @@ export const AuthProvider = ({ children }) => {
                     setToken(null);
                     setUser(null);
                     setHasCharacter(false);
+                    setCharacterImageUrl(null);
                 }
             }
         } catch (error) {
@@ -85,6 +88,7 @@ export const AuthProvider = ({ children }) => {
             setToken(null);
             setUser(null);
             setHasCharacter(false);
+            setCharacterImageUrl(null);
         } finally {
             setIsLoading(false);
         }
@@ -167,31 +171,40 @@ export const AuthProvider = ({ children }) => {
         const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
         const userWithCharStatus = {
             ...userInfo,
-            hasCharacter: isUserWithCharacter
+            hasCharacter: isUserWithCharacter,
+            characterImageUrl: userInfo.characterImageUrl || null
         };
 
         setToken(receivedToken);
         setUser(userWithCharStatus || null);
         setIsLoggedIn(true);
         setHasCharacter(isUserWithCharacter);
+        setCharacterImageUrl(userInfo.characterImageUrl || null);
 
         localStorage.setItem('gmaking_token', receivedToken);        
     }, [setToken, setUser, setIsLoggedIn, setHasCharacter, logout]);
 
 
-    // 캐릭터 생성 후 상태를 true로 변경하는 함수
-    const setCharacterStatus = useCallback((status) => {
-        setHasCharacter(status);
+    const setCharacterCreated = useCallback((imageUrl) => { 
+        setHasCharacter(true);
+        setCharacterImageUrl(imageUrl); 
+
         if (user) {
-            setUser(prev => ({ ...prev, hasCharacter: status }));
+            setUser(prev => ({ 
+                ...prev, 
+                hasCharacter: true, 
+                characterImageUrl: imageUrl 
+            }));
         }
-    }, [user, setHasCharacter, setUser]);
+    }, [user, setHasCharacter, setUser, setCharacterImageUrl]);
 
 
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
-            hasCharacter, login, logout, setCharacterStatus, 
+            hasCharacter, characterImageUrl,
+            login, logout, 
+            setCharacterCreated, 
             withdrawUser, handleOAuth2Login  
         }}>
             {children}

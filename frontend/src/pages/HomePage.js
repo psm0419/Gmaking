@@ -14,7 +14,7 @@ const GuideLink = ({ title }) => (
 );
 
 const HomePage = () => {
-    const { user, hasCharacter } = useAuth(); 
+    const { user, hasCharacter, characterImageUrl } = useAuth(); 
     const navigate = useNavigate(); 
 
     // 표시될 사용자 이름/닉네임
@@ -33,6 +33,10 @@ const HomePage = () => {
         { title: "[공지] 점검 완료 및 보상 지급", date: "2025.09.30" },
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
+
+    const handleNavigateToMyPage = () => {
+        navigate('/my-page'); 
+    };
 
     // 사용자 정보 요약 또는 캐릭터 생성 유도
     const renderCentralSection = () => {
@@ -64,8 +68,16 @@ const HomePage = () => {
         return (
             <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-yellow-400">
                 <div className="text-center">
-                    <div className="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-3 border-4 border-yellow-500">
-                        <User className="w-12 h-12 text-yellow-400" />
+                    <div className="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-3 border-4 border-yellow-500 overflow-hidden">
+                        {characterImageUrl ? (
+                            <img 
+                                src={characterImageUrl} 
+                                alt="사용자 캐릭터" 
+                                className="w-full h-full object-cover" 
+                            />
+                        ) : (
+                            <User className="w-12 h-12 text-yellow-400" />
+                        )}
                     </div>
                     <h3 className="text-3xl font-extrabold text-white mb-1">
                         {displayName}
@@ -79,7 +91,10 @@ const HomePage = () => {
                         <p>보유 코인: 99,999</p>
                         <p>최고 랭크: 다이아몬드 III</p>
                     </div>
-                    <button className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
+                    <button 
+                        className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition"
+                        onClick={handleNavigateToMyPage} 
+                    >
                         내 정보 보기
                     </button>
                 </div>

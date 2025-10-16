@@ -1,19 +1,29 @@
 import React, { useState } from 'react';
-import { Upload, Wand2, RefreshCw, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, Wand2, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react'; 
+import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+
+const API_BASE_URL = 'http://localhost:8080'; 
+
 const CharacterCreationPage = () => {
+    const navigate = useNavigate();
+    const { setCharacterCreated } = useAuth();
     const [imageFile, setImageFile] = useState(null);
     const [prompt, setPrompt] = useState('');
-    const [status, setStatus] = useState('pending');
+    const [characterName, setCharacterName] = useState(''); 
+    const [status, setStatus] = useState('pending'); 
     const [generatedImage, setGeneratedImage] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(''); 
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
-            setStatus('pending'); // 파일이 변경되면 상태 초기화
+            setStatus('pending'); 
+            setErrorMessage('');
 
             // 파일 미리보기 로직
             const reader = new FileReader();
@@ -25,29 +35,68 @@ const CharacterCreationPage = () => {
     const handleGenerate = async (e) => {
         e.preventDefault();
         
-        if (!imageFile || prompt.trim() === '') {
-            alert('이미지를 첨부하고 원하는 스타일을 입력해주세요.');
+        // 입력 유효성 검사
+        if (!imageFile || prompt.trim() === '' || characterName.trim() === '') {
+            alert('이미지를 첨부하고, 이름과 스타일을 모두 입력해주세요.');
+            return;
+        }
+
+        // JWT 토큰 확인
+        const token = localStorage.getItem('gmaking_token');
+        if (!token) {
+            alert('로그인이 필요합니다. (JWT 토큰 없음)');
+            setStatus('error');
+            setErrorMessage('로그인 토큰이 없어 요청을 보낼 수 없습니다.');
             return;
         }
 
         setStatus('generating');
+        setErrorMessage('');
+        setGeneratedImage(null);
 
-        // [핵심 로직 자리]
-        // 1. 이미지 업로드: 백엔드 API에 imageFile 전송
-        // 2. 백엔드 처리:
-        //    a. CNN 기반 이미지 분류 모델 적용
-        //    b. 결과 및 prompt를 Stable Diffusion/ControlNet API에 전송
-        //    c. 최종 캐릭터 이미지 반환
-        //
-        // **현재는 더미 로직입니다. 5초 후 성공 상태로 전환**
-        console.log('--- AI 캐릭터 생성 요청 시작 ---');
-        console.log('첨부 이미지:', imageFile.name);
-        console.log('생성 프롬프트:', prompt);
-
-        await new Promise(resolve => setTimeout(resolve, 5000)); 
+        // FormData 구성 (MultipartFile 및 @RequestParam 값 전송용)
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        formData.append('userPrompt', prompt);
+        formData.append('characterName', characterName);
         
-        setStatus('success');
-        setGeneratedImage('https://source.unsplash.com/random/500x500/?fantasy,character,portrait'); // 더미 생성 이미지
+        try {
+            // 백엔드 API 호출
+            const response = await fetch(`${API_BASE_URL}/api/character/create`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`, 
+                },
+                body: formData, 
+            });
+            
+            // 오류 응답 처리
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: '알 수 없는 서버 오류' }));
+                throw new Error(`캐릭터 생성 실패: ${errorData.message || response.statusText}`);
+            }
+
+            // 성공 응답 (CharacterGenerateResponseVO)
+            const result = await response.json();
+            
+            console.log('AI 캐릭터 생성 성공:', result);
+            
+            setStatus('success');
+            setGeneratedImage(result.imageUrl); 
+
+            setCharacterCreated(result.imageUrl); 
+
+            alert(`캐릭터 '${characterName}' 생성이 완료되었습니다! 메인 페이지로 이동합니다.`);
+            navigate('/');
+            
+        } catch (error) {
+            console.error('API 호출 중 오류 발생:', error.message);
+            setStatus('error');
+            setErrorMessage(error.message);
+            const reader = new FileReader();
+            reader.onloadend = () => setGeneratedImage(reader.result);
+            reader.readAsDataURL(imageFile);
+        }
     };
 
     return (
@@ -66,6 +115,20 @@ const CharacterCreationPage = () => {
                 </div>
 
                 <form onSubmit={handleGenerate} className="bg-gray-800 p-8 rounded-xl shadow-2xl space-y-6">
+                    
+                    {/* 0. 캐릭터 이름 입력 */}
+                    <div className="border-b border-gray-700 pb-6">
+                        <label htmlFor="name-input" className="block text-xl font-bold text-white mb-3">0. 캐릭터 이름</label>
+                        <input
+                            id="name-input"
+                            type="text"
+                            value={characterName}
+                            onChange={(e) => setCharacterName(e.target.value)}
+                            placeholder="캐릭터 이름을 입력하세요 (예: 불꽃 기사)"
+                            className="w-full p-4 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition"
+                            required
+                        />
+                    </div>
                     
                     {/* 1. 이미지 첨부 (ControlNet Input) */}
                     <div className="border-b border-gray-700 pb-6">
@@ -119,24 +182,33 @@ const CharacterCreationPage = () => {
                         </button>
                     </div>
 
-                    {/* 4. 결과 미리보기 */}
-                    {generatedImage && status === 'success' && (
-                        <div className="pt-6 border-t border-gray-700 text-center">
-                            <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                            <h3 className="text-2xl font-bold text-green-400 mb-4">캐릭터 생성 완료!</h3>
+                    {/* 4. 에러 메시지 표시 */}
+                    {status === 'error' && errorMessage && (
+                         <div className="p-4 bg-red-800 text-white rounded-lg flex items-center">
+                            <AlertTriangle className="w-6 h-6 mr-3 text-red-300" />
+                            <p className="font-semibold">오류 발생: {errorMessage}</p>
+                        </div>
+                    )}
+
+                    {/* 5. 결과 미리보기 */}
+                    {(generatedImage || status === 'success') && (
+                         <div className="pt-6 border-t border-gray-700 text-center">
+                             {status === 'success' ? (
+                                 <>
+                                     <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
+                                     <h3 className="text-2xl font-bold text-green-400 mb-4">캐릭터 생성 완료!</h3>
+                                 </>
+                             ) : (
+                                 <>
+                                    <h3 className="text-2xl font-bold text-white mb-4">기반 이미지 미리보기</h3>
+                                 </>
+                             )}
                             <img 
                                 src={generatedImage} 
-                                alt="생성된 캐릭터" 
+                                alt={status === 'success' ? "생성된 캐릭터" : "첨부된 기반 이미지"}
                                 className="mx-auto rounded-xl border-4 border-yellow-400 shadow-2xl"
-                                style={{ maxWidth: '300px' }}
+                                style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }}
                             />
-                            {/* 실제 구현 시, DB에 캐릭터를 저장하고 HomePage로 리다이렉트하는 버튼 추가 */}
-                            <button 
-                                onClick={() => alert('캐릭터 저장 로직 구현 예정')} 
-                                className="mt-4 px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition"
-                            >
-                                게임 시작하기
-                            </button>
                         </div>
                     )}
                 </form>

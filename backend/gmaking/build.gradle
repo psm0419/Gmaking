@@ -61,6 +61,12 @@ dependencies {
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Google Cloud Storage Client
+    implementation 'com.google.cloud:google-cloud-storage:2.35.0'
+
 }
 
 tasks.named('test') {
