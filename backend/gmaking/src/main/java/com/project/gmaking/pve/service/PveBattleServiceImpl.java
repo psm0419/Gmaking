@@ -330,7 +330,7 @@ public class PveBattleServiceImpl implements PveBattleService {
             // DB 기록
             battleLog.setIsWin(isWin ? "Y" : "N");
             battleLog.setTurnCount((long) (turn - 1));
-            battleDAO.insertBattleLog(battleLog);
+            battleDAO.updateBattleLogResult(battleLog);
 
             if (isWin) characterDAO.incrementStageClear(character.getCharacterId());
 

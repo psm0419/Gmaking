@@ -19,4 +19,7 @@ public interface PvpBattleDAO {
 
     // 배틀 로그 등록
     void insertBattleLog(BattleLogVO battleLog);
+
+    // 배틀 로그 결과 업데이트 (전투 종료 시)
+    void updateBattleLogResult(BattleLogVO battleLog);
 }
