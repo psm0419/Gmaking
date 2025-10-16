@@ -100,7 +100,7 @@ const Header = () => {
                             // 로그아웃 후 navigate를 통해 로그인 페이지로 이동합니다.
                             onClick={() => {
                                 logout();
-                                navigate('/login');
+                                navigate('/');
                             }}
                             className="px-3 py-1.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-200 flex items-center"
                         >
