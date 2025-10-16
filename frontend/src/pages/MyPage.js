@@ -16,15 +16,23 @@ import axiosInstance from "../api/axiosInstance";
 // 공통 baseUrl
 const BASE_URL = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
 
+const PROFILE_FALLBACK = `${BASE_URL}/images/profile/default.png`;
+const CHARACTER_FALLBACK = `${BASE_URL}/images/character/default.png`;
+
 // 이미지 경로 보정
-function toFullImageUrl(raw) {
-  let url = raw || "/images/character/placeholder.png";
-  if (/^https?:\/\//i.test(url)) return url;
-  url = url.replace(/^\/?static\//i, "/");
-  url = url.replace(/^\/?character\//i, "/images/character/");
-  if (url.startsWith("/")) return `${BASE_URL}${url}`;
-  if (url.startsWith("images/")) return `${BASE_URL}/${url}`;
-  return `${BASE_URL}/images/${url}`;
+function toFullImageUrl(raw, { kind } = {}) {
+  if (!raw) return kind === "profile" ? PROFILE_FALLBACK : CHARACTER_FALLBACK;
+  if (/^https?:\/\//i.test(raw)) return raw;
+
+  let url = String(raw).trim();
+  url = url
+    .replace(/^\/?static(?:\.images|\/images)?\//i, "/images/")
+    .replace(/^\/?images\//i, "/images/")
+    .replace(/^\/?profile\//i, "/images/profile/")
+    .replace(/^\/?character\//i, "/images/character/");
+
+  if (!url.startsWith("/")) url = `/${url}`;
+  return `${BASE_URL}${url}`;
 }
 
 /** 페이지 래퍼: 헤더 / 메인 / 푸터 */
@@ -63,12 +71,14 @@ export default function MyPage() {
           name: c.name,
           grade: c.grade,
           image: toFullImageUrl(
-            c.imageUrl || c.imageAddress || c.imagePath || c.imageName
+            c.imageUrl || c.imageAddress || c.imagePath || c.imageName,
+            { kind: "character" }
           ),
           hp: null,
           def: null,
           atk: null,
           critRate: null,
+          speed: null,
           speed: null,
         }));
 
@@ -99,6 +109,11 @@ export default function MyPage() {
     );
   }
 
+ const profileImageUrl = toFullImageUrl(
+   profile?.imageUrl || profile?.profileImage || profile?.imageName || profile?.imagePath,
+   { kind: "profile" }
+ );
+
   return (
     <div className="min-h-screen bg-gray-200/70 flex flex-col">
       <Header />
@@ -106,6 +121,7 @@ export default function MyPage() {
         <MyMain
           nickname={profile?.nickname ?? "마스터 님"}
           ticketCount={profile?.ticketCount ?? 0}
+          profileImageUrl={profileImageUrl}
           onPickClick={handlePick}
           characters={characters}
         />
@@ -119,6 +135,7 @@ export default function MyPage() {
 function MyMain({
   nickname = "마스터 님",
   ticketCount = 5,
+  profileImageUrl,
   onPickClick = () => {},
   characters = [],
 }) {
@@ -167,7 +184,16 @@ function MyMain({
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
           <div className="flex items-start gap-6">
             <div className="shrink-0 flex flex-col items-center">
-              <div className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-gray-300" />
+              <img
+                src={profileImageUrl || PROFILE_FALLBACK}
+                alt="프로필 이미지"
+                className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
+                 onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = PROFILE_FALLBACK;
+                }}
+              />
+
               <div className="mt-6 flex items-center gap-5 text-gray-800">
                 <NotificationBell />
                 <IconMail />

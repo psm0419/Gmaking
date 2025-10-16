@@ -26,6 +26,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        // 정적 리소스/루트/파비콘/프리플라이트는 필터 스킵
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+        return uri.startsWith("/images/")
+                || uri.startsWith("/static/")
+                || uri.startsWith("/css/")
+                || uri.startsWith("/js/")
+                || uri.equals("/")
+                || uri.equals("/index.html")
+                || uri.equals("/favicon.ico");
+    }
+
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -34,6 +49,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         // Request Header에서 토큰 추출
         String jwt = resolveToken(request);
+
+
 
         if (jwt == null) {
             System.out.println("[SEC] " + request.getMethod() + " " + request.getRequestURI() + " Authorization=null");
@@ -57,7 +74,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(userId, null, Collections.singletonList(authority));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            System.out.println("[SEC] auth set. userId=" + userId + ", role=" + role);
+        } else {
+            System.out.println("[SEC] token invalid or missing");
         }
+
+
 
         filterChain.doFilter(request, response);
     }

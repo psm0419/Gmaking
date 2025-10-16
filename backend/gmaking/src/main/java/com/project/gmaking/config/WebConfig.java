@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.upload.profile-dir:C:/Gmaking}")
+    @Value("${app.upload.profile-dir:D:/Gmaking}")
     private String baseDir;
 
     @Value("${app.upload.public-url-prefix:/images}")
@@ -18,10 +18,16 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 로컬 디스크 경로를 정적 URL로 공개
-        String location = Paths.get(baseDir).toUri().toString(); // file:///C:/upload/profile/
-        registry.addResourceHandler(urlPrefix + "/**")
+        // URL prefix 정규화: "/images/**"
+        String pattern = (urlPrefix.startsWith("/") ? urlPrefix : "/" + urlPrefix).replaceAll("/+$", "") + "/**";
+
+        // file: 로케이션은 디렉터리 끝에 슬래시 필요
+        String location = Paths.get(baseDir).toUri().toString();
+        if (!location.endsWith("/")) location += "/";   // 중요!
+
+        registry.addResourceHandler(pattern)
                 .addResourceLocations(location);
     }
+
 
 }

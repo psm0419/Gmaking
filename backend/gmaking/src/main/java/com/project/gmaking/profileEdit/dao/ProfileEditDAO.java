@@ -16,7 +16,9 @@ public interface ProfileEditDAO {
 
     // 비밀번호 해시 조회/변경
     String selectPasswordHash(@Param("userId") String userId);
-    int updatePasswordHash(@Param("userId") String userId, @Param("hash") String hash);
+
+    int updatePasswordHash(@Param("userId") String userId,
+                           @Param("passwordHash") String passwordHash);
 
     // 이미지 저장
     int insertImage(@Param("p") Map<String, Object> p);

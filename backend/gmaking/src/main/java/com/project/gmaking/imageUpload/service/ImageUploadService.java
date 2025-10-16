@@ -2,6 +2,7 @@ package com.project.gmaking.imageUpload.service;
 
 import com.project.gmaking.imageUpload.ImageKind;
 import com.project.gmaking.imageUpload.dao.ImageDAO;
+import com.project.gmaking.imageUpload.vo.ImageVO;
 import com.project.gmaking.storage.LocalStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,30 +19,24 @@ public class ImageUploadService {
     private final ImageDAO imageDAO;
 
     @Transactional
-    public Map<String,Object> saveFor(MultipartFile file, ImageKind kind, String actor) throws Exception {
-        // 디스크 저장
+    public ImageVO saveFor(MultipartFile file, ImageKind kind, String actor) throws Exception {
         String url = storage.save(file, kind.subDir);
         String imageName = storage.extractSavedName(url);
 
-        // tb_image INSERT
-        Map<String,Object> p = new HashMap<>();
-        p.put("imageOriginalName", file.getOriginalFilename());
-        p.put("imageUrl",  url);
-        p.put("imageName", imageName);
-        p.put("imageType", kind.code);   // ← DB에는 int 저장
-        p.put("createdBy", actor);
-        p.put("updatedBy", actor);
-        imageDAO.insertImage(p);         // p.imageId 채워짐
+        ImageVO image = ImageVO.builder()
+                .imageOriginalName(file.getOriginalFilename())
+                .imageUrl(url)
+                .imageName(imageName)
+                .imageType(kind.code)
+                .createdBy(actor)
+                .updatedBy(actor)
+                .build();
 
-        Integer imageId = (Integer) p.get("imageId");
-        if (imageId == null) throw new IllegalStateException("IMAGE_ID 생성 실패");
-
-        return Map.of(
-                "imageId", imageId,
-                "url", url,
-                "imageName", imageName,
-                "imageType", kind.code
-        );
+        int rows = imageDAO.insertImage(image);
+        if (rows != 1 || image.getImageId() == null) {
+            throw new IllegalStateException("IMAGE_ID 생성 실패");
+        }
+        return image;
     }
 
     // 사용 법 : var img = ImageUploadService.saveFor(file, ImageKind.타입(CHARACTER/MONSTER/PROFILE), actorUserId);
