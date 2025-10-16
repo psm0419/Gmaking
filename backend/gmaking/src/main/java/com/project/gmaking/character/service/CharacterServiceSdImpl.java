@@ -53,16 +53,18 @@ public class CharacterServiceSdImpl implements CharacterServiceSd {
         return animalMono.flatMap(predictedAnimal -> {
 
             // 2. Stable Diffusion 프롬프트 조합
-            String basePrompt = createPrompt(predictedAnimal, requestVO.getUserPrompt());
+            String basePrompt = createPrompt(predictedAnimal); // , requestVO.getUserPrompt());
+            String negativePrompt = "blurry, realistic, photo, 3d render, lowres, cropped, text, background, extra limbs, deformed, noise, bad pixel";
 
             // 3. Stable Diffusion 요청 VO 생성
             StableDiffusionRequestVO sdRequest = StableDiffusionRequestVO.builder()
                     .prompt(basePrompt)
-                    .steps(20)
-                    .width(256)
-                    .height(256)
+                    .negative_prompt(negativePrompt)
+                    .steps(35)
+                    .width(512)
+                    .height(512)
                     .cfg_scale(7.0)
-                    .sampler_index("Euler")
+                    .sampler_index("DPM++ 2M")
                     .batch_size(1)
                     .n_iter(1)
                     .send_images(true)
@@ -132,10 +134,31 @@ public class CharacterServiceSdImpl implements CharacterServiceSd {
 
     /**
      * 분류 결과와 사용자 입력을 결합하여 최종 프롬프트를 생성
-     */
-    private String createPrompt(String predictedAnimal, String userPrompt) {
-        // 프롬프트 로직
-        return String.format("%s, %s, digital art, highly detailed, fantasy, epic lighting", predictedAnimal, userPrompt);
-    }
 
+    private String createPrompt(String predictedAnimal) { // , String userPrompt) {
+        String style = """
+            highly detailed 2d pixel art of a fantasy game character, clean sprite sheet style,
+            full body, isolated on transparent background, perfect pixel alignment,
+            vibrant colors, smooth edges, masterpiece, trending on artstation, sharp details
+        """;
+
+        return String.format("%s, %s, 2d pixel, game character", predictedAnimal, style); // userPrompt);
+    }
+    */
+
+    private String createPrompt(String predictedAnimal) {
+        String positivePrompt = String.format("""
+                %s character, cute %s warrior, full body, facing forward,
+                2d pixel art, 16-bit style, game sprite, professional pixel character design,
+                clean edges, detailed shading, vibrant colors, smooth pixels, high quality, masterpiece
+                """, predictedAnimal, predictedAnimal);
+
+        String negativePrompt = """
+                blurry, realistic, photo, 3d render, lowres, bad anatomy, cropped,
+                text, watermark, signature, background, shadow, extra limbs, deformed, noise, bad pixel
+                """;
+
+        // StableDiffusionRequestVO 쪽에서 negative_prompt 필드를 지원한다면 여기서 함께 세팅 가능
+        return positivePrompt + " --neg " + negativePrompt;
+    }
 }

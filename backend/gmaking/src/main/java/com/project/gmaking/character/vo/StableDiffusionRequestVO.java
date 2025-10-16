@@ -8,6 +8,7 @@ import lombok.Data;
 public class StableDiffusionRequestVO {
 
     private String prompt;
+    private String negative_prompt;
     private int steps;
     private int width;
     private int height;
