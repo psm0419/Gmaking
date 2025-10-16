@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.pvp.dao.PvpBattleDAO">
+
+    <!-- PVP 배틀 로그 등록 -->
+    <insert id="insertBattleLog"
+            parameterType="com.project.gmaking.pve.vo.BattleLogVO"
+            useGeneratedKeys="true"
+            keyProperty="battleId">
+        INSERT INTO TB_BATTLE_LOG
+        (CHARACTER_ID, BATTLE_TYPE, OPPONENT_ID, IS_WIN, TURN_COUNT, CREATED_BY)
+        VALUES
+        (#{characterId}, #{battleType}, #{opponentId}, #{isWin}, #{turnCount}, #{createdBy})
+    </insert>
+
+    <update id="updateBattleLogResult" parameterType="com.project.gmaking.pve.vo.BattleLogVO">
+        UPDATE TB_BATTLE_LOG
+        SET
+        IS_WIN = #{isWin}, TURN_COUNT = #{turnCount}, CREATED_DATE = NOW()
+        WHERE
+        BATTLE_ID = #{battleId}
+    </update>
+
+</mapper>

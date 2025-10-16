@@ -3,11 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@stomp/stompjs": "^7.2.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.12.2",
+    "eslint": "^8.50.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react": "^7.32.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.544.0",
     "react": "^19.2.0",
@@ -15,10 +19,8 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.3",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4",
-    "eslint": "^8.50.0",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react": "^7.32.2"
+    "sockjs-client": "^1.6.1",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -26,14 +28,12 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  
   "proxy": "http://localhost:8080",
-
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
-    ]    
+    ]
   },
   "browserslist": {
     "production": [

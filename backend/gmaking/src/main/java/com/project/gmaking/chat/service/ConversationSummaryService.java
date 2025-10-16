@@ -63,17 +63,28 @@ public class ConversationSummaryService {
             return false;
         }
 
+        Integer lastTurnId = null;
+        DialogueVO last = logs.get(logs.size() - 1);
+
+        if (last != null) {
+            try {
+                lastTurnId = last.getMessageId();
+            } catch (NoSuchMethodError | Exception ignore) {
+                lastTurnId = last.getMessageId();
+            }
+        }
+
         // TB_Conversation_Summary는 summary만 저장 (memory_date/created_date는 DB default)
         ConversationSummaryVO vo = ConversationSummaryVO.builder()
                 .conversationId(convId)
-                .summary(summary)
-                .createdBy(actor)
+                .rollingSummary(summary)
+                .lastTurnId(lastTurnId)
                 .updatedBy(actor)
                 .build();
 
-        int inserted = conversationSummaryDAO.insert(vo);
-        if (inserted != 1) {
-            log.error("ConversationSummary: insert failed. convId={}", convId);
+        int inserted = conversationSummaryDAO.upsertRollingSummary(vo);
+        if (inserted <= 0) { // 0만 실패로 보고, 1(INSERT)·2(UPDATE) 모두 성공
+            log.error("ConversationSummary: insert failed. convId={}, rows={}", convId, inserted);
             return false;
         }
         return true;

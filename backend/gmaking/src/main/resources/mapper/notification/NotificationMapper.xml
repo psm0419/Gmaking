@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.notification.dao.NotificationDAO">
+    <resultMap id="NotifMap" type="com.project.gmaking.notification.vo.NotificationVO">
+        <id     column="NOTIFICATION_ID" property="notificationId"/>
+        <result column="USER_ID"         property="userId"/>
+        <result column="TYPE"            property="type"/>
+        <result column="TITLE"           property="title"/>
+        <result column="MESSAGE"         property="message"/>
+        <result column="LINK_URL"        property="linkUrl"/>
+        <result column="STATUS"          property="status"/>
+        <result column="DELIVERED_AT"    property="deliveredAt"/>
+        <result column="EXPIRES_AT"      property="expiresAt"/>
+        <result column="READ_AT"         property="readAt"/>
+        <result column="CREATED_DATE"    property="createdDate"/>
+        <result column="CREATED_BY"      property="createdBy"/>
+        <result column="UPDATED_DATE"    property="updatedDate"/>
+        <result column="UPDATED_BY"      property="updatedBy"/>
+        <result column="META_JSON"       property="metaJson"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO TB_NOTIFICATION
+            (USER_ID, TYPE, TITLE, MESSAGE, LINK_URL, STATUS,
+            CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY, EXPIRES_AT, META_JSON)
+        VALUES
+            (#{userId}, #{type}, #{title}, #{message}, #{linkUrl}, #{status},
+            NOW(), #{createdBy}, NOW(), #{updatedBy}, #{expiresAt}, #{metaJson})
+
+    </insert>
+    
+    <select id="selectUnread" resultMap="NotifMap">
+        SELECT * 
+        FROM TB_NOTIFICATION 
+        WHERE USER_ID = #{userId} 
+            AND STATUS = 'unread'
+            AND (EXPIRES_AT IS NULL OR EXPIRES_AT > NOW())
+        ORDER BY CREATED_DATE DESC, NOTIFICATION_ID DESC 
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <select id="countUnread" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_NOTIFICATION
+        WHERE USER_ID = #{userId} 
+            AND STATUS = 'unread'
+            AND (EXPIRES_AT IS NULL OR EXPIRES_AT > NOW())
+    </select>
+
+    <select id="selectRead" resultMap="NotifMap">
+        SELECT *
+        FROM TB_NOTIFICATION
+        WHERE USER_ID = #{userId}
+            AND STATUS = 'read'
+            AND (EXPIRES_AT IS NULL OR EXPIRES_AT > NOW())
+        ORDER BY CREATED_DATE DESC, NOTIFICATION_ID DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <update id="markRead">
+        UPDATE TB_NOTIFICATION
+        SET READ_AT = NOW(),
+            STATUS = 'read',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy}
+        WHERE NOTIFICATION_ID = #{id}
+            AND USER_ID = #{userId}
+            AND STATUS = 'unread'
+            AND READ_AT IS NULL
+    </update>
+
+    <update id="markAllRead">
+        UPDATE TB_NOTIFICATION
+            SET READ_AT = NOW(),
+            STATUS = 'read',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy}
+        WHERE USER_ID = #{userId}
+            AND STATUS = 'unread'
+            AND READ_AT IS NULL
+    </update>
+
+    <delete id="deleteExpired">
+        DELETE FROM TB_NOTIFICATION
+        WHERE EXPIRES_AT IS NOT NULL
+            AND EXPIRES_AT &lt; NOW()
+    </delete>
+
+    <update id="softDeleteOne">
+        UPDATE TB_NOTIFICATION
+        SET STATUS = 'deleted',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy}
+        WHERE USER_ID = #{userId}
+            AND NOTIFICATION_ID = #{id}
+            AND STATUS != 'deleted'
+    </update>
+
+    <update id="softDeleteAllRead">
+        UPDATE TB_NOTIFICATION
+        SET STATUS = 'deleted',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy}
+        WHERE USER_ID = #{userId}
+            AND STATUS = 'read'
+    </update>
+    
+
+</mapper>

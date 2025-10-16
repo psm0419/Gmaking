@@ -121,13 +121,15 @@ public class PveBattleServiceImpl implements PveBattleService {
             if (isPlayerAttack) monsterHp -= damage;
             else playerHp -= damage;
 
+            boolean isBattleOver = (playerHp <= 0 || monsterHp <= 0);
             // GPT 호출
             String noteJson = openAIService.requestGPTNote(Map.of(
-                    "actor", actor,
-                    "target", target,
-                    "damage", damage,
-                    "critical", critical
-            )).join();
+                            "actor", actor,
+                            "target", target,
+                            "damage", damage,
+                            "critical", critical
+                    ), "COMIC", isBattleOver //  기본 스타일 "COMIC"과 isBattleOver 전달
+            ).join();
 
             // 즉시 로그 출력
             System.out.println("[턴 " + turn + "] GPT note: " + noteJson);
@@ -203,190 +205,43 @@ public class PveBattleServiceImpl implements PveBattleService {
     }
 
     @Override
-    public void startBattleStreamWithOutputStream(Integer characterId, Integer mapId,
-                                                  String userId, ServletOutputStream out) {
-        try {
-            MonsterVO monster = encounterMonster(mapId);
-            CharacterVO character = characterDAO.selectCharacterById(characterId);
-            CharacterStatVO stat = character.getCharacterStat();
-
-            if (character == null || stat == null) {
-                sendEvent(out, "error", "캐릭터 정보를 불러오지 못했습니다.");
-                return;
-            }
-            // 연결 확인용 코멘트 전송
-            sendComment(out, "connected");
-
-            int playerHp = stat.getCharacterHp();
-            int monsterHp = monster.getMonsterHp();
-            int playerAtk = stat.getCharacterAttack();
-            int playerDef = stat.getCharacterDefense();
-            int playerSpeed = stat.getCharacterSpeed();
-            int playerCrit = stat.getCriticalRate();
-
-            int monsterAtk = monster.getMonsterAttack();
-            int monsterDef = monster.getMonsterDefense();
-            int monsterSpeed = monster.getMonsterSpeed();
-            int monsterCrit = monster.getMonsterCriticalRate();
-
-            boolean playerFirst = playerSpeed >= monsterSpeed;
-
-            List<String> logs = new ArrayList<>();
-            String initialLog = String.format("%s(HP:%s, 공격:%s, 방어:%s, 속도:%s, 크리티컬:%s)을 마주쳤다!",
-                    monster.getMonsterName(), monsterHp, monsterAtk, monsterDef, monsterSpeed, monsterCrit);
-            logs.add(initialLog);
-
-            // 초기 로그 전송
-            log.info("Sending initial log: {}", initialLog);
-            sendEvent(out, "turnLog", initialLog);
-            Thread.sleep(500);
-
-            // ★ 작은 지연과 heartbeat
-            for (int i = 0; i < 5; i++) {
-                Thread.sleep(100);
-                sendComment(out, "ping"); // 연결 유지
-            }
-
-            int turn = 1;
-            ObjectMapper mapper = new ObjectMapper();
-
-            BattleLogVO battleLog = new BattleLogVO();
-            battleLog.setCharacterId(character.getCharacterId());
-            battleLog.setOpponentId(monster.getMonsterId());
-            battleLog.setBattleType("PVE");
-            battleLog.setCreatedBy(userId);
-
-            while (playerHp > 0 && monsterHp > 0) {
-                boolean isPlayerAttack = (turn % 2 == 1) ? playerFirst : !playerFirst;
-                String actor, target;
-                int atk, def, critRate;
-
-                if (isPlayerAttack) {
-                    actor = character.getCharacterName();
-                    target = monster.getMonsterName();
-                    atk = playerAtk;
-                    def = monsterDef;
-                    critRate = playerCrit;
-                } else {
-                    actor = monster.getMonsterName();
-                    target = character.getCharacterName();
-                    atk = monsterAtk;
-                    def = playerDef;
-                    critRate = monsterCrit;
-                }
-
-                boolean critical = Math.random() * 100 < critRate;
-                int damage = Math.max(1, (critical ? atk * 2 : atk) - def);
-
-                if (isPlayerAttack) monsterHp -= damage;
-                else playerHp -= damage;
-
-                String noteJson;
-                try {
-                    noteJson = openAIService.requestGPTNote(Map.of(
-                            "actor", actor, "target", target, "damage", damage, "critical", critical
-                    )).join();
-                } catch (Exception e) {
-                    log.error("GPT 호출 실패: 턴 {}", turn, e);
-                    noteJson = "{\"note\":\"[GPT 호출 실패]\"}";
-                }
-
-                noteJson = noteJson.replaceAll("(?s)^```json\\s*(.*?)\\s*```$", "$1")
-                        .replaceAll("(?s)^```\\s*(.*?)\\s*```$", "$1").trim();
-                if (noteJson.isEmpty()) noteJson = "{\"note\":\"[GPT 호출 실패]\"}";
-                if (!noteJson.startsWith("{")) {
-                    noteJson = "{\"note\":\"" + noteJson.replace("\"", "\\\"") + "\"}";
-                }
-
-                Map<String, Object> noteMap;
-                try {
-                    noteMap = mapper.readValue(noteJson, new TypeReference<Map<String, Object>>() {});
-                } catch (Exception e) {
-                    noteMap = Map.of("note", "[GPT 호출 실패]");
-                }
-
-                String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패]").toString();
-                String line = String.format("턴 %d: %s가 공격으로 %d 데미지를 입힘 %s\n(플레이어HP:%d, 몬스터HP:%d)\n",
-                        turn, actor, damage, noteText, playerHp, monsterHp);
-                logs.add(line);
-
-                // 턴 로그 전송
-                log.info("Sending turn log [{}]", turn);
-                sendEvent(out, "turnLog", line);
-                log.info("Turn log [{}] sent successfully", turn);
-
-                // ★ 대기하면서 주기적으로 heartbeat 전송
-                for (int i = 0; i < 10; i++) {
-                    Thread.sleep(100);
-                    sendComment(out, "ping");
-                }
-                turn++;
-            }
-
-            boolean isWin = monsterHp <= 0;
-            String resultMsg = isWin ? "승리! 전투 종료!" : "패배... 다음에 다시 도전하세요!";
-            logs.add(resultMsg);
-
-            // 전투 결과 전송
-            log.info("Sending battle result: {}", resultMsg);
-            String resultJson = String.format("{\"isWin\":\"%s\",\"message\":\"%s\"}", isWin ? "Y" : "N", resultMsg);
-            sendEvent(out, "battleResult", resultJson);
-
-            // DB 저장
-            battleLog.setIsWin(isWin ? "Y" : "N");
-            battleLog.setTurnCount((long) (turn - 1));
-            battleDAO.insertBattleLog(battleLog);
-            Integer battleId = battleLog.getBattleId();
-
-            int turnNum = 1;
-            for (String log : logs) {
-                TurnLogVO turnLog = new TurnLogVO();
-                turnLog.setBattleId(battleId);
-                turnLog.setTurnNumber(turnNum++);
-                turnLog.setActionDetail(log);
-                turnLogDAO.insertTurnLog(turnLog);
-            }
-
-            if (isWin) characterDAO.incrementStageClear(character.getCharacterId());
-
-        } catch (Exception e) {
-            log.error("전투 스트리밍 중 오류 발생", e);
-        }
-    }
-
-    // 헬퍼 메서드
-    private void sendEvent(ServletOutputStream out, String eventName, String data) throws IOException {
-        String message = String.format("event: %s\ndata: %s\n\n", eventName, data);
-        out.write(message.getBytes(StandardCharsets.UTF_8));
-        out.flush();
-    }
-    // 새로운 헬퍼 메서드 추가
-    private void sendComment(ServletOutputStream out, String comment) throws IOException {
-        String message = String.format(": %s\n\n", comment);
-        out.write(message.getBytes(StandardCharsets.UTF_8));
-        out.flush();
-    }
-
-    @Override
-    public void startBattleWebSocket(WebSocketSession session, Integer characterId, MonsterVO monster, String userId) {
+    public void startBattleWebSocket(WebSocketSession session, Integer characterId, MonsterVO monster, String userId, String noteStyle) {
         try {
             CharacterVO character = characterDAO.selectCharacterById(characterId);
             CharacterStatVO stat = character.getCharacterStat();
 
-            int playerHp = stat.getCharacterHp();
-            int monsterHp = monster.getMonsterHp();
-            int playerAtk = stat.getCharacterAttack();
-            int playerDef = stat.getCharacterDefense();
-            int playerSpeed = stat.getCharacterSpeed();
-            int playerCrit = stat.getCriticalRate();
+            int playerHp = stat.getCharacterHp() != null ? stat.getCharacterHp() : 1;
+            int monsterHp = monster.getMonsterHp() != null ? monster.getMonsterHp() : 1;
+            int playerAtk = stat.getCharacterAttack() != null ? stat.getCharacterAttack() : 1;
+            int playerDef = stat.getCharacterDefense() != null ? stat.getCharacterDefense() : 1;
+            int playerSpeed = stat.getCharacterSpeed() != null ? stat.getCharacterSpeed() : 1;
+            int playerCrit = stat.getCriticalRate() != null ? stat.getCriticalRate() : 1;
 
-            int monsterAtk = monster.getMonsterAttack();
-            int monsterDef = monster.getMonsterDefense();
-            int monsterSpeed = monster.getMonsterSpeed();
-            int monsterCrit = monster.getMonsterCriticalRate();
+            int monsterAtk = monster.getMonsterAttack() != null ? monster.getMonsterAttack() : 0;
+            int monsterDef = monster.getMonsterDefense() != null ? monster.getMonsterDefense() : 0;
+            int monsterSpeed = monster.getMonsterSpeed() != null ? monster.getMonsterSpeed() : 0;
+            int monsterCrit = monster.getMonsterCriticalRate() != null ? monster.getMonsterCriticalRate() : 0;
 
             boolean playerFirst = playerSpeed >= monsterSpeed;
             ObjectMapper mapper = new ObjectMapper();
+
+            // 1. 몬스터 정보를 별도의 JSON 객체로 클라이언트에게 전송
+            //    프론트에서 이 정보를 받아 몬스터 스탯/이미지 영역을 업데이트합니다.
+            Map<String, Object> encounterData = Map.of(
+                    "type", "encounter",
+                    "monsterId", monster.getMonsterId(),
+                    "imageOriginalName", monster.getImageOriginalName(),
+                    "monsterName", monster.getMonsterName(),
+                    "imageId", monster.getImageId(),
+                    "monsterHp", monster.getMonsterHp(),
+                    "monsterAttack", monster.getMonsterAttack(),
+                    "monsterDefense", monster.getMonsterDefense(),
+                    "monsterSpeed", monster.getMonsterSpeed(),
+                    "monsterCriticalRate", monster.getMonsterCriticalRate()
+                    // MonsterVO에 있는 모든 필드를 필요에 따라 추가
+            );
+            session.sendMessage(new TextMessage(mapper.writeValueAsString(encounterData)));
+            log.info("클라이언트에게 몬스터 조우 정보 전송: {}", monster.getMonsterName());
 
             // 전투 기록 DB
             BattleLogVO battleLog = new BattleLogVO();
@@ -399,8 +254,16 @@ public class PveBattleServiceImpl implements PveBattleService {
             battleDAO.insertBattleLog(battleLog);
             Integer battleId = battleLog.getBattleId();
 
-            int turn = 1;
+            // 2. 초기 로그 (일반 로그 형태로 몬스터 조우 메시지를 한 번 더 전송)
+            List<String> logs = new ArrayList<>();
+            String initialLog = String.format("**전투 시작!** %s(HP:%s, 공격:%s, 방어:%s, 속도:%s)을(를) 마주쳤다!",
+                    monster.getMonsterName(), monsterHp, monsterAtk, monsterDef, monsterSpeed);
+            logs.add(initialLog);
 
+            // 초기 로그 전송 (클라이언트의 로그 창에 표시됨)
+            session.sendMessage(new TextMessage(initialLog));
+
+            int turn = 1;
             while (playerHp > 0 && monsterHp > 0) {
                 boolean isPlayerAttack = (turn % 2 == 1) ? playerFirst : !playerFirst;
                 String actor = isPlayerAttack ? character.getCharacterName() : monster.getMonsterName();
@@ -415,69 +278,78 @@ public class PveBattleServiceImpl implements PveBattleService {
                 if (isPlayerAttack) monsterHp -= damage;
                 else playerHp -= damage;
 
-                // GPT 호출
+                boolean isBattleOver = (playerHp <= 0 || monsterHp <= 0);
                 String noteJson = openAIService.requestGPTNote(Map.of(
-                        "actor", actor, "target", target, "damage", damage, "critical", critical
-                )).join();
+                                "actor", actor,
+                                "target", target,
+                                "damage", damage,
+                                "critical", critical
+                                // isBattleOver는 Map 대신 인자로 전달합니다.
+                        ), noteStyle, isBattleOver // styleKey와 isBattleOver 인자를 전달
+                ).join();
 
                 noteJson = noteJson.replaceAll("(?s)^```json\\s*(.*?)\\s*```$", "$1")
                         .replaceAll("(?s)^```\\s*(.*?)\\s*```$", "$1").trim();
+                if (noteJson.isEmpty()) noteJson = "{\"note\":\"[GPT 호출 실패]\"}";
                 if (!noteJson.startsWith("{")) {
                     noteJson = "{\"note\":\"" + noteJson.replace("\"", "\\\"") + "\"}";
                 }
 
+                // JSON이 닫히지 않은 경우 복구 로직
+                if (!noteJson.endsWith("}")) {
+                    noteJson += "}";
+                    log.warn("GPT 응답 JSON 복구됨: 닫는 괄호 '}' 추가됨");
+                }
+                
                 Map<String, Object> noteMap;
                 try {
                     noteMap = mapper.readValue(noteJson, new TypeReference<Map<String, Object>>() {});
                 } catch (Exception e) {
-                    noteMap = Map.of("note", "[GPT 호출 실패]");
+                    log.error("GPT Note JSON 파싱 실패: {}", e.getMessage(), e);
+                    noteMap = Map.of("note", "[GPT 호출 실패: JSON 오류]");
                 }
-                String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패]").toString();
+                String noteText = noteMap.getOrDefault("note", "[GPT 호출 실패: JSON 오류]").toString();
 
-                // 여기가 핵심: 기존 웹소켓 로그 형식처럼 합치기
+                // 마지막 턴이면 로그에 승리/패배 메시지 포함
                 String actionLog = String.format(
-                        "턴 %d: %s가 공격으로 %d 데미지를 입힘%s\n%s (플레이어HP:%d, 몬스터HP:%d)",
+                        "턴 %d: %s가 공격으로 %d 데미지를 입힘%s\n%s \n(플레이어HP:%d, 몬스터HP:%d)\n%s",
                         turn,
                         actor,
                         damage,
                         critical ? " 크리티컬 히트!" : "",
                         noteText,
                         playerHp,
-                        monsterHp
+                        monsterHp,
+                        ""
                 );
+                logs.add(actionLog);
 
                 // 프론트로 전송
-                Map<String, Object> message = Map.of(
-                        "type", "turn",
-                        "turn", turn,
-                        "log", actionLog,
-                        "playerHp", playerHp,
-                        "monsterHp", monsterHp
-                );
-                session.sendMessage(new TextMessage(mapper.writeValueAsString(message)));
+                session.sendMessage(new TextMessage(actionLog));
 
                 // DB 저장
                 TurnLogVO turnLog = new TurnLogVO();
                 turnLog.setBattleId(battleId);
                 turnLog.setTurnNumber(turn);
-                turnLog.setActionDetail(noteText);
+                turnLog.setActionDetail(actionLog);
                 turnLogDAO.insertTurnLog(turnLog);
 
-                Thread.sleep(1000); // 턴 간 딜레이
+                Thread.sleep(1000);
                 turn++;
             }
 
             boolean isWin = monsterHp <= 0;
+
+            // 전투 종료 메시지 전송
             Map<String, Object> result = Map.of(
                     "type", "end",
                     "result", isWin ? "win" : "lose"
             );
             session.sendMessage(new TextMessage(mapper.writeValueAsString(result)));
-
-            // 최종 DB 반영
+            // DB 기록
             battleLog.setIsWin(isWin ? "Y" : "N");
             battleLog.setTurnCount((long) (turn - 1));
-            battleDAO.insertBattleLog(battleLog);
+            battleDAO.updateBattleLogResult(battleLog);
 
             if (isWin) characterDAO.incrementStageClear(character.getCharacterId());
 
@@ -489,7 +361,5 @@ public class PveBattleServiceImpl implements PveBattleService {
             }
         }
     }
-
-
 
 }

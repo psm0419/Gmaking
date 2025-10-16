@@ -9,28 +9,15 @@ import java.util.List;
 @Mapper
 public interface ConversationSummaryDAO {
 
-    int insert(ConversationSummaryVO vo);
+    /** 없으면 INSERT, 있으면 UPDATE (CONVERSATION_ID가 PK) */
+    int upsertRollingSummary(ConversationSummaryVO vo);
 
-    ConversationSummaryVO selectById(@Param("memoryId") Integer memoryId);
+    /** PK(=CONVERSATION_ID) 단건 조회 */
+    ConversationSummaryVO selectByConversationId(@Param("conversationId") Integer conversationId);
 
-    /* 해당 대화의 가장 최근 롱메모리 한 건 */
-    ConversationSummaryVO selectLatestByConversationId(@Param("conversationId") Integer conversationId);
+    /** 요약만 갱신 (버전 +1, 길이 재계산) */
+    int updateSummaryByConversationId(ConversationSummaryVO vo);
 
-    /* 해당 대화의 롱메모리 목록 (최신순, 페이징) */
-    List<ConversationSummaryVO> selectByConversationId(
-            @Param("conversationId") Integer conversationId,
-            @Param("limit") Integer limit,
-            @Param("offset") Integer offset
-    );
-
-    /* 요약 내용만 갱신 */
-    int updateSummaryById(
-            @Param("memoryId") Integer memoryId,
-            @Param("summary") String summary,
-            @Param("updatedBy") String updatedBy
-    );
-
-    int deleteById(@Param("memoryId") Integer memoryId);
-
+    /** PK 삭제 */
     int deleteByConversationId(@Param("conversationId") Integer conversationId);
 }

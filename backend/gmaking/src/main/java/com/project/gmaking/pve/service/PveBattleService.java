@@ -1,13 +1,9 @@
 package com.project.gmaking.pve.service;
 
-import java.io.PrintWriter;
 import java.util.List;
 import com.project.gmaking.map.vo.MapVO;
 import com.project.gmaking.pve.vo.BattleLogVO;
 import com.project.gmaking.pve.vo.MonsterVO;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.socket.WebSocketSession;
 
 public interface PveBattleService {
@@ -22,8 +18,5 @@ public interface PveBattleService {
     // 전투
     BattleLogVO startBattle(Integer characterId, MonsterVO monster, String userId);
 
-    void startBattleStreamWithOutputStream(Integer characterId, Integer mapId,
-                                           String userId, ServletOutputStream out);
-
-    void startBattleWebSocket(WebSocketSession session, Integer characterId, MonsterVO monster, String userId);
+    void startBattleWebSocket(WebSocketSession session, Integer characterId, MonsterVO monster, String userId, String noteStyle);
 }

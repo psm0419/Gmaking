@@ -31,7 +31,6 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> withdraw(
             @Valid @RequestBody WithdrawRequestVO requestVO,
             Authentication authentication) {
-
         Map<String, Object> response = new HashMap<>();
         String authenticatedUserId = authentication.getName();
 
@@ -62,7 +61,41 @@ public class UserController {
             response.put("message", "회원 탈퇴 처리 중 예상치 못한 오류가 발생했습니다.");
             return ResponseEntity.internalServerError().body(response);
         }
+    }
 
+    /**
+     * 소셜 회원 탈퇴 요청 처리 (비밀번호 검증 불필요)
+     * - JWT로 인증된 사용자 ID만으로 탈퇴를 진행합니다.
+     * @param authentication JWT를 통해 인증된 사용자 정보
+     * @return 성공/실패 응답
+     */
+    @DeleteMapping("/withdraw/social")
+    public ResponseEntity<Map<String, Object>> withdrawSocial(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        // JWT에서 인증된 사용자 ID를 직접 사용
+        String authenticatedUserId = authentication.getName();
+
+        try {
+            // 서비스 계층에서 소셜 사용자 삭제 처리
+            loginService.withdrawSocialUser(authenticatedUserId);
+
+            response.put("success", true);
+            response.put("message", authenticatedUserId + "님의 계정 탈퇴가 완료되었습니다. (소셜 계정)");
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            // 사용자 없음 등의 오류 처리
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "회원 탈퇴 처리 중 예상치 못한 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
 }

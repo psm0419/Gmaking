@@ -5,25 +5,24 @@ import axiosInstance from "../api/axiosInstance";
 import useChatExit from "../hooks/useChatExit";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 
-const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
+const API_BASE = process.env.REACT_APP_API_BASE || "";
 
 /** API 경로 */
 const API = {
-  characters: "/chat/characters",
-  enter: (cid) => `/chat/${cid}/enter`,
-  chatSend: (cid) => `/chat/${cid}/send`,
+  characters: "/api/chat/characters",
+  enter: (cid) => `/api/chat/${cid}/enter`,
+  chatSend: (cid) => `/api/chat/${cid}/send`,
 };
 
 // 이미지 경로 보정
 function toFullImageUrl(raw) {
-  const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
   let url = raw || "/images/character/placeholder.png";
   if (/^https?:\/\//i.test(url)) return url;
   url = url.replace(/^\/?static\//i, "/");
   url = url.replace(/^\/?character\//i, "/images/character/");
-  if (url.startsWith("/")) return `${API_BASE}${url}`;
-  if (url.startsWith("images/")) return `${API_BASE}/${url}`;
-  return `${API_BASE}/images/${url}`;
+  if (url.startsWith("/")) return url;
+  if (url.startsWith("images/")) return `/${url}`;
+  return `/images/${url}`;
 }
 
 /** 응답 정규화: 서버 스키마가 약간 달라도 흡수 */
