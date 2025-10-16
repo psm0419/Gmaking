@@ -6,4 +6,5 @@ import com.project.gmaking.pve.vo.BattleLogVO;
 public interface PveBattleDAO {
 
     void insertBattleLog(BattleLogVO battleLog);
+    void updateBattleLogResult(BattleLogVO battleLog);
 }

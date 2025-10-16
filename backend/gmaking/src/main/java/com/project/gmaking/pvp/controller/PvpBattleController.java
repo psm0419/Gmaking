@@ -62,8 +62,14 @@ public class PvpBattleController {
             battle.setEnemyCommand(""); // 중앙 표시 초기화
             return ResponseEntity.ok(battle);
         }
-
+        // 1. 턴 진행 (HP, 로그 업데이트)
         PvpBattleVO updatedBattle = pvpBattleService.processTurn(battle, myCommand);
+
+        // 2. 전투 종료 여부 확인 및 DB 저장
+        if (updatedBattle.isBattleOver()) {
+            // 전투가 종료되었으면 최종 BattleLog를 DB에 저장합니다.
+            pvpBattleService.endBattle(updatedBattle);
+        }
         return ResponseEntity.ok(updatedBattle);
     }
 

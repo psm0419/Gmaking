@@ -25,4 +25,6 @@ public class MonsterVO {
     private String createdBy; // 생성자 (VARCHAR(50))
     private LocalDateTime updatedDate; // 수정 일자 (DATETIME)
     private String updatedBy; // 수정자 (VARCHAR(50))
+
+    private String imageOriginalName;
 }

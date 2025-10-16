@@ -16,4 +16,12 @@
         (#{characterId}, #{battleType}, #{opponentId}, #{isWin}, #{turnCount}, #{createdBy})
     </insert>
 
+    <update id="updateBattleLogResult" parameterType="com.project.gmaking.pve.vo.BattleLogVO">
+        UPDATE TB_BATTLE_LOG
+        SET
+        IS_WIN = #{isWin}, TURN_COUNT = #{turnCount}, CREATED_DATE = NOW()
+        WHERE
+        BATTLE_ID = #{battleId}
+    </update>
+
 </mapper>

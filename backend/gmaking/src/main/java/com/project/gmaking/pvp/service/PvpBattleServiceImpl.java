@@ -199,13 +199,13 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         // 프론트용 누적 로그
         battle.getLogs().add(finalLog);
 
-        // 턴 증가 및 종료 체크
-        battle.setTurn(battle.getTurn() + 1);
         // 종료 체크
         if (battle.getPlayerHp() <= 0 || battle.getEnemyHp() <= 0) {
             battle.setBattleOver(true);
+        } else{
+            // 전투 종료 아닐 시 턴 증가
+            battle.setTurn(battle.getTurn() + 1);
         }
-
         return battle;
     }
 
@@ -213,9 +213,12 @@ public class PvpBattleServiceImpl implements PvpBattleService{
     // 전투 종료
     @Override
     public void endBattle(PvpBattleVO result) {
+        // 1. 승패 판단
         boolean isWin = result.getEnemyHp() <= 0;
+
+        // 2. BattleLogVO 생성 및 DB 저장
         BattleLogVO log = new BattleLogVO(
-                null,
+                result.getBattleId(),
                 result.getPlayer().getCharacterId(),
                 "PVP",
                 result.getEnemy().getCharacterId(),
@@ -227,6 +230,9 @@ public class PvpBattleServiceImpl implements PvpBattleService{
                 null,
                 result.getLogs()
         );
-        pvpBattleDAO.insertBattleLog(log);
+        pvpBattleDAO.updateBattleLogResult(log);
+
+        // 3.  메모리 캐시에서 배틀 제거
+        activeBattles.removeIf(b -> b.getBattleId().equals(result.getBattleId()));
     }
 }
