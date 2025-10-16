@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function PvpMatchPage() {
     const navigate = useNavigate();
-    const userId = localStorage.getItem("userId");
+    // const userId = localStorage.getItem("userId"); //토큰에서 추출
     const token = localStorage.getItem("gmaking_token");
 
     const [myCharacters, setMyCharacters] = useState([]);
@@ -12,11 +13,36 @@ function PvpMatchPage() {
     const [selectedMyChar, setSelectedMyChar] = useState(null);
     const [selectedEnemyChar, setSelectedEnemyChar] = useState(null);
 
+    // 토큰에서 userId 추출
+    let userId = null;
+    if (token) {
+        try {
+            const decodedToken = jwtDecode(token);
+            // 'userId' 클레임 이름으로 사용자 ID를 추출합니다.
+            userId = decodedToken.userId;
+        } catch (e) {
+            console.error("JWT 토큰 디코딩 오류:", e);
+            // 토큰이 유효하지 않거나 만료되었을 경우 userId는 null로 유지됩니다.
+        }
+    }
+
     useEffect(() => {
+
+        // 토큰과 userId가 유효한지 확인합니다.
+        if (!token || !userId) {
+            alert("로그인이 필요합니다.");
+            navigate("/login"); // 로그인 페이지로 리디렉션
+            return;
+        }
+
         axios.get(`/api/character/list?userId=${userId}`, {
             headers: { Authorization: `Bearer ${token}` }
-        }).then(res => setMyCharacters(res.data));
-    }, []);
+        }).then(res => setMyCharacters(res.data))
+            .catch(err => {
+                console.error("캐릭터 목록 불러오기 실패:", err);
+                // 토큰 만료 등 인증 문제 시 처리 로직 추가 가능
+            });
+    }, [token, userId, navigate]);
 
     const findOpponent = () => {
         axios.get(`/api/pvp/match?userId=${userId}`)

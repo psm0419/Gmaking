@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function PveBattlePage() {
     const location = useLocation();
@@ -17,7 +18,7 @@ function PveBattlePage() {
     const socketRef = useRef(null);
 
     const token = localStorage.getItem("gmaking_token");
-    const userId = localStorage.getItem("userId");
+    // const userId = localStorage.getItem("userId"); //jwt토큰에서 추출하는 방식으로 변경
 
     const styles = [
         { key: "COMIC", label: "코믹 (현재 기본)" },
@@ -26,6 +27,22 @@ function PveBattlePage() {
         // 필요에 따라 스타일 추가
     ];
     const [noteStyle, setNoteStyle] = useState(styles[0].key);
+
+    // 토큰에서 userId 추출 로직 추가
+    let userId = null;
+    if (token) {
+        try {
+            const decodedToken = jwtDecode(token);
+            // 'JwtTokenProvider.java'의 createToken 메소드에서 'userId' 클레임을 사용했으므로
+            // 디코딩된 객체에서 해당 클레임 이름을 사용합니다.
+            userId = decodedToken.userId;
+            // 또는 'setSubject(userId)'로 설정된 'sub' 클레임을 사용할 수도 있습니다.
+            // userId = decodedToken.sub; 
+        } catch (e) {
+            console.error("토큰 디코딩 실패:", e);
+            // 토큰이 유효하지 않으면 userId는 null로 남습니다.
+        }
+    }
 
     useEffect(() => {
         if (mapId) {
@@ -42,6 +59,7 @@ function PveBattlePage() {
     useEffect(() => {
         if (!token || !userId) {
             alert("로그인이 필요합니다.");
+            navigate("/login");
             return;
         }
 

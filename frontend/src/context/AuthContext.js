@@ -15,8 +15,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = useCallback(() => {
         // localStorage 비우기
-        localStorage.removeItem('gmaking_token');
-        localStorage.removeItem('userId');
+        localStorage.removeItem('gmaking_token');        
 
         // 상태 초기화
         setToken(null);
@@ -109,8 +108,7 @@ export const AuthProvider = ({ children }) => {
                 setIsLoggedIn(true);
                 setHasCharacter(userWithCharStatus.hasCharacter); // 상태 업데이트
                 
-                localStorage.setItem('gmaking_token', receivedToken);
-                localStorage.setItem('userId', userInfo.userId);
+                localStorage.setItem('gmaking_token', receivedToken);                
                 return true;
             } else {
                 const msg = response.data?.message || '로그인 실패';
@@ -177,8 +175,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(true);
         setHasCharacter(isUserWithCharacter);
 
-        localStorage.setItem('gmaking_token', receivedToken);
-        localStorage.setItem('userId', userInfo.userId);
+        localStorage.setItem('gmaking_token', receivedToken);        
     }, [setToken, setUser, setIsLoggedIn, setHasCharacter, logout]);
 
 
