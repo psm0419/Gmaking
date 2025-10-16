@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@Service
 public class StableDiffusionServiceImpl implements StableDiffusionService {
 
     @Value("${sd.api.url}")

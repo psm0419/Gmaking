@@ -14,7 +14,7 @@
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="ROLE" property="role"/>
 
-        <result column="IS_CHARACTER_EXISTS" property="hasCharacter"/>
+        <result column="HAS_CHARACTER" property="hasCharacter"/>
         <result column="CHARACTER_IMG_URL" property="characterImageUrl"/>
     </resultMap>
 
@@ -29,11 +29,14 @@
             T1.IMAGE_ID,
             T1.ROLE,
             T1.CREATED_DATE,
-            CASE WHEN T2.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_CHARACTER_EXISTS,
-            T3.IMAGE_URL AS CHARACTER_IMG_URL
+            T1.HAS_CHARACTER,
+            (
+                SELECT T2.IMAGE_URL
+                FROM TB_IMAGE T2
+                WHERE T2.CREATED_BY = T1.USER_ID  AND T2.IMAGE_TYPE = 1
+                ORDER BY T2.IMAGE_ID DESC LIMIT 1
+            ) AS CHARACTER_IMG_URL
         FROM TB_USER T1
-                 LEFT JOIN TB_CHARACTER T2 ON T1.USER_ID = T2.USER_ID
-                 LEFT JOIN TB_IMAGE T3 ON T2.IMAGE_ID = T3.IMAGE_ID
         WHERE T1.USER_ID = #{userId}
     </select>
 
@@ -88,25 +91,6 @@
         WHERE USER_ID = #{userId}
     </update>
 
-    <select id="selectUserBySocialId" resultMap="loginResultMap">
-        SELECT
-            T1.USER_ID,
-            T1.USER_NAME,
-            T1.USER_EMAIL,
-            T1.IS_EMAIL_VERIFIED,
-            T1.USER_PASSWORD,
-            T1.USER_NICKNAME,
-            T1.IMAGE_ID,
-            T1.ROLE,
-            T1.CREATED_DATE,
-            CASE WHEN T2.USER_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_CHARACTER_EXISTS,
-            T3.IMAGE_URL AS CHARACTER_IMG_URL
-        FROM TB_USER T1
-                 LEFT JOIN TB_CHARACTER T2 ON T1.USER_ID = T2.USER_ID
-                 LEFT JOIN TB_IMAGE T3 ON T2.IMAGE_ID = T3.IMAGE_ID
-        WHERE T1.USER_ID = #{userId}
-    </select>
-
     <insert id="insertSocialUser" parameterType="com.project.gmaking.login.vo.LoginVO">
         INSERT INTO TB_USER (
             USER_ID,
@@ -127,19 +111,38 @@
         )
     </insert>
 
+    <select id="selectUserBySocialId" resultMap="loginResultMap">
+        SELECT
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            T1.HAS_CHARACTER,
+            T2.IMAGE_URL AS CHARACTER_IMG_URL
+        FROM TB_USER T1
+        LEFT JOIN TB_IMAGE T2 ON T1.CHARACTER_ID = T2.IMAGE_ID
+        WHERE T1.USER_ID = #{userId}
+    </select>
+
     <select id="selectUserByEmail" resultMap="loginResultMap">
         SELECT
-            USER_ID,
-            USER_NAME,
-            USER_EMAIL,
-            IS_EMAIL_VERIFIED,
-            USER_PASSWORD,
-            USER_NICKNAME,
-            IMAGE_ID,
-            ROLE,
-            CREATED_DATE
-        FROM TB_USER
-        WHERE USER_EMAIL = #{userEmail}
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            T1.HAS_CHARACTER, T2.IMAGE_URL AS CHARACTER_IMG_URL FROM TB_USER T1
+        LEFT JOIN TB_IMAGE T2 ON T1.CHARACTER_ID = T2.IMAGE_ID
+        WHERE T1.USER_EMAIL = #{userEmail}
     </select>
 
     <update id="updateUserCharacterInfo">

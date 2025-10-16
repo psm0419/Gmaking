@@ -15,7 +15,7 @@ public class LoginVO {
     private String userNickname;            // USER_NICKNAME
     private String role;                    // ROLE
     private LocalDateTime createdDate;      // CREATED_DATE
-
+    private Integer imageId;
     private boolean hasCharacter;
     private String characterImageUrl;
 }
