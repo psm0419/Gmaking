@@ -186,7 +186,7 @@ function PveBattlePage() {
                             alt={selectedCharacter.characterName}
                             className="w-32 h-32 mx-auto mb-2 border border-yellow-400 rounded-lg bg-white/10"
                         />
-                        <div className="text-sm mt-2 text-gray-200">
+                        <div className="text-l mt-2 text-gray-200">
                             <p>HP: {selectedCharacter.characterStat?.characterHp} / ATK: {selectedCharacter.characterStat?.characterAttack}/ DEF: {selectedCharacter.characterStat?.characterDefense}</p>
                             <p>SPEED: {selectedCharacter.characterStat?.characterSpeed} / CRITICAL: {selectedCharacter.characterStat?.criticalRate}%</p>
                         </div>
@@ -206,7 +206,7 @@ function PveBattlePage() {
                                     alt={opponentMonster.monsterName}
                                     className="w-32 h-32 mx-auto mb-2 border border-red-400 rounded-lg bg-white/10"
                                 />
-                                <div className="text-sm mt-2 text-gray-200">
+                                <div className="text-l mt-2 text-gray-200">
                                     <p>HP: {opponentMonster.monsterHp} / ATK: {opponentMonster.monsterAttack} / DEF: {opponentMonster.monsterDefense}</p>
                                     <p>SPEED: {opponentMonster.monsterSpeed} / CRITICAL: {opponentMonster.monsterCriticalRate}%</p>
                                 </div>

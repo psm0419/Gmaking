@@ -16,6 +16,7 @@ function PvpBattlePage() {
     const [battleId, setBattleId] = useState(null); // 배틀 ID 상태
     const [playerCurrentHp, setPlayerCurrentHp] = useState(myCharacter.characterStat.characterHp);
     const [enemyCurrentHp, setEnemyCurrentHp] = useState(enemyCharacter.characterStat.characterHp);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // 배틀 생성
     const startBattle = async () => {
@@ -35,6 +36,9 @@ function PvpBattlePage() {
     };
 
     const startTurn = async () => {
+        // 이미 처리 중이면 중복 실행 방지
+        if (isProcessing) return;
+
         // 전투 종료 상태 체크 (HP 0 이하이면 실행 차단)
         if (playerCurrentHp <= 0 || enemyCurrentHp <= 0) {
             alert("전투가 이미 종료되었습니다.");
@@ -45,6 +49,8 @@ function PvpBattlePage() {
             alert("커맨드를 선택하세요!");
             return;
         }
+        // 처리 시작: true로 설정
+        setIsProcessing(true);
 
         try {
             // battleId가 없으면 배틀 자동 생성
@@ -87,6 +93,9 @@ function PvpBattlePage() {
         } catch (err) {
             console.error(err);
             alert("턴 처리 중 오류 발생");
+        } finally {
+            // 처리 완료 (성공/실패 무관): false로 설정
+            setIsProcessing(false);
         }
     };
 
@@ -147,6 +156,36 @@ function PvpBattlePage() {
                         />
                     </div>
                 </div>
+                    {/* 상성표 */}
+                <div className="flex flex-col items-center justify-center w-2/5 text-center">
+                    <h3 className="text-xl font-bold text-yellow-400 mb-3">상성 규칙 (가위바위보)</h3>
+                    <div className="text-sm border border-gray-600 rounded p-3 bg-gray-800/80">
+                        <p className="text-green-400 font-semibold">
+                            공격 유형
+                        </p>
+                        <p className="text-gray-200">
+                            공격 VS 회피 (기본 피해)<br />
+                            필살기 VS 공격/방어 (공격력의 2배 피해)
+                        </p>
+
+                        <p className="text-red-400 font-semibold mt-3">
+                            방어 유형
+                        </p>
+                        <p className="text-gray-200">
+                            방어 VS 공격 (방어력의 2배 피해)<br />
+                            회피 VS 필살기 (방어력의 3배 피해)
+                        </p>
+
+                        <p className="text-blue-400 font-semibold mt-3">
+                            동일 커맨드
+                        </p>
+                        <p className="text-gray-200">
+                            공격 VS 공격(서로 기본 피해)<br />
+                            필살기 VS 필살기(서로 2배 피해)<br />
+                            방어 VS 방어, 회피 VS 회피: 피해 없음
+                        </p>
+                    </div>
+                </div>
 
                 {/* 상대 캐릭터 */}
                 <div className="text-center">
@@ -198,12 +237,14 @@ function PvpBattlePage() {
             <div className="flex gap-4 mt-6">
                 <button
                     onClick={startTurn}
+                    disabled={isProcessing || playerCurrentHp <= 0 || enemyCurrentHp <= 0}
                     className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-500"
                 >
-                    턴 실행
+                    {isProcessing ? "전투 중..." : "턴 실행"}
                 </button>
                 <button
                     onClick={() => navigate("/pvp/match")}
+                    disabled={isProcessing}
                     className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500"
                 >
                     매칭 화면으로

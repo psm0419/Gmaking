@@ -69,10 +69,10 @@ const MapSelection = () => {
                         <div
                             key={char.characterId}
                             onClick={() => setSelectedCharacterId(char.characterId)}
-                            className={`p-4 border rounded-lg cursor-pointer transition-colors duration-200 bg-white shadow-md
+                            className={`p-4 border border-gray-800 rounded-lg cursor-pointer transition-colors duration-200 bg-gray-800/50 shadow-md
                                 ${selectedCharacterId === char.characterId
                                     ? "border-yellow-400 ring-4 ring-yellow-400/50"
-                                    : "border-gray-300 hover:bg-gray-100"
+                                    : "border-gray-300 hover:bg-gray-700"
                                 }`}
                         >
                             <img
@@ -80,10 +80,10 @@ const MapSelection = () => {
                                 alt={char.characterName}
                                 className="w-24 h-24 mx-auto"
                             />
-                            <div className="font-bold text-lg mt-2 text-black">{char.characterName}</div>
+                            <div className="font-bold text-lg mt-2 text-gray-300">{char.characterName}</div>
                             {/* 스탯 포함 */}
                             {char.characterStat && (
-                                <div className="text-sm mt-1 text-gray-600">
+                                <div className="text-l mt-1 text-gray-300">
                                     HP: {char.characterStat.characterHp} / ATK: {char.characterStat.characterAttack} / DEF: {char.characterStat.characterDefense}<br></br>
                                     Speed: {char.characterStat.characterSpeed} / CRITICAL: {char.characterStat?.criticalRate}%
                                 </div>
@@ -137,7 +137,7 @@ const MapSelection = () => {
             <div className="flex gap-4 mt-4 flex-col items-center">                
                 <button
                     onClick={() => navigate("/")}
-                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500">                
+                    className="mt-10 bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500">                
                     홈으로
                 </button>
             </div>

@@ -118,23 +118,39 @@ function PvpMatchPage() {
                         상대 캐릭터
                     </h2>
                     <div className="flex gap-4 flex-wrap justify-center">
-                        {opponentCharacters.map(char => (
-                            <div
-                                key={char.characterId}
-                                onClick={() => setSelectedEnemyChar(char)}
-                                className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedEnemyChar?.characterId === char.characterId
+                        {/* 상대 캐릭터 목록이 비어있을 때 메시지 표시 */}
+                        {opponentCharacters.length === 0 ? (
+                            <div className="text-center w-full py-10">
+                                <p className="text-gray-400 text-lg">
+                                    상대방 찾기 버튼을 눌러주세요.
+                                </p>
+                                {/* 매칭 시도 후 캐릭터가 없는 경우 */}
+                                {opponentCharacters === null ? null : (
+                                    <p className="text-red-300 mt-2 font-semibold">
+                                        매칭 가능한 상대 캐릭터가 없습니다.
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            // 상대 캐릭터 목록이 있을 때 기존 렌더링 로직 사용 
+                            opponentCharacters.map(char => (
+                                <div
+                                    key={char.characterId}
+                                    onClick={() => setSelectedEnemyChar(char)}
+                                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedEnemyChar?.characterId === char.characterId
                                         ? "border-red-400 bg-red-500/10"
                                         : "border-gray-700 hover:border-red-300/50"
-                                    }`}
-                            >
-                                <img
-                                    src={`/images/character/${char.imageId}.png`}
-                                    alt={char.characterName}
-                                    className="w-24 h-24 object-contain mx-auto mb-2"
-                                />
-                                <div className="text-center text-sm font-medium">{char.characterName}</div>
-                            </div>
-                        ))}
+                                        }`}
+                                >
+                                    <img
+                                        src={`/images/character/${char.imageId}.png`}
+                                        alt={char.characterName}
+                                        className="w-24 h-24 object-contain mx-auto mb-2"
+                                    />
+                                    <div className="text-center text-sm font-medium">{char.characterName}</div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
