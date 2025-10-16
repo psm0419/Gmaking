@@ -19,7 +19,7 @@ public class LocalStorageService {
 
     // 프로필 이미지 저장 서비스
 
-    @Value("${app.upload.profile-dir:C:/Gmaking}")
+    @Value("${app.upload.profile-dir:D:/Gmaking-Img}")
     private String baseDir;  // 실제 저장 경로(서버 로컬 디스크)
 
     @Value("${app.upload.profile-url-prefix:/images}")
