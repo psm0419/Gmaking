@@ -210,20 +210,38 @@ public class PveBattleServiceImpl implements PveBattleService {
             CharacterVO character = characterDAO.selectCharacterById(characterId);
             CharacterStatVO stat = character.getCharacterStat();
 
-            int playerHp = stat.getCharacterHp();
-            int monsterHp = monster.getMonsterHp();
-            int playerAtk = stat.getCharacterAttack();
-            int playerDef = stat.getCharacterDefense();
-            int playerSpeed = stat.getCharacterSpeed();
-            int playerCrit = stat.getCriticalRate();
+            int playerHp = stat.getCharacterHp() != null ? stat.getCharacterHp() : 1;
+            int monsterHp = monster.getMonsterHp() != null ? monster.getMonsterHp() : 1;
+            int playerAtk = stat.getCharacterAttack() != null ? stat.getCharacterAttack() : 1;
+            int playerDef = stat.getCharacterDefense() != null ? stat.getCharacterDefense() : 1;
+            int playerSpeed = stat.getCharacterSpeed() != null ? stat.getCharacterSpeed() : 1;
+            int playerCrit = stat.getCriticalRate() != null ? stat.getCriticalRate() : 1;
 
-            int monsterAtk = monster.getMonsterAttack();
-            int monsterDef = monster.getMonsterDefense();
-            int monsterSpeed = monster.getMonsterSpeed();
-            int monsterCrit = monster.getMonsterCriticalRate();
+            int monsterAtk = monster.getMonsterAttack() != null ? monster.getMonsterAttack() : 0;
+            int monsterDef = monster.getMonsterDefense() != null ? monster.getMonsterDefense() : 0;
+            int monsterSpeed = monster.getMonsterSpeed() != null ? monster.getMonsterSpeed() : 0;
+            int monsterCrit = monster.getMonsterCriticalRate() != null ? monster.getMonsterCriticalRate() : 0;
 
             boolean playerFirst = playerSpeed >= monsterSpeed;
             ObjectMapper mapper = new ObjectMapper();
+
+            // 1. 몬스터 정보를 별도의 JSON 객체로 클라이언트에게 전송
+            //    프론트에서 이 정보를 받아 몬스터 스탯/이미지 영역을 업데이트합니다.
+            Map<String, Object> encounterData = Map.of(
+                    "type", "encounter",
+                    "monsterId", monster.getMonsterId(),
+                    "imageOriginalName", monster.getImageOriginalName(),
+                    "monsterName", monster.getMonsterName(),
+                    "imageId", monster.getImageId(),
+                    "monsterHp", monster.getMonsterHp(),
+                    "monsterAttack", monster.getMonsterAttack(),
+                    "monsterDefense", monster.getMonsterDefense(),
+                    "monsterSpeed", monster.getMonsterSpeed(),
+                    "monsterCriticalRate", monster.getMonsterCriticalRate()
+                    // MonsterVO에 있는 모든 필드를 필요에 따라 추가
+            );
+            session.sendMessage(new TextMessage(mapper.writeValueAsString(encounterData)));
+            log.info("클라이언트에게 몬스터 조우 정보 전송: {}", monster.getMonsterName());
 
             // 전투 기록 DB
             BattleLogVO battleLog = new BattleLogVO();
@@ -236,13 +254,13 @@ public class PveBattleServiceImpl implements PveBattleService {
             battleDAO.insertBattleLog(battleLog);
             Integer battleId = battleLog.getBattleId();
 
-            // 초기 로그
+            // 2. 초기 로그 (일반 로그 형태로 몬스터 조우 메시지를 한 번 더 전송)
             List<String> logs = new ArrayList<>();
-            String initialLog = String.format("%s(HP:%s, 공격:%s, 방어:%s, 속도:%s, 크리티컬:%s)을 마주쳤다!",
-                    monster.getMonsterName(), monsterHp, monsterAtk, monsterDef, monsterSpeed, monsterCrit);
+            String initialLog = String.format("**전투 시작!** %s(HP:%s, 공격:%s, 방어:%s, 속도:%s)을(를) 마주쳤다!",
+                    monster.getMonsterName(), monsterHp, monsterAtk, monsterDef, monsterSpeed);
             logs.add(initialLog);
 
-            // 초기 로그 전송
+            // 초기 로그 전송 (클라이언트의 로그 창에 표시됨)
             session.sendMessage(new TextMessage(initialLog));
 
             int turn = 1;

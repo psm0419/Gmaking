@@ -2,34 +2,97 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const MapSelection = () => {
     const [maps, setMaps] = useState([]);
+    const [characters, setCharacters] = useState([]); // 캐릭터 목록
+    const [selectedCharacterId, setSelectedCharacterId] = useState(null); // 선택된 캐릭터 ID
     const navigate = useNavigate();
+    const token = localStorage.getItem("gmaking_token");
+
+    // 토큰에서 userId 추출
+    let userId = null;
+    if (token) {
+        try {
+            const decodedToken = jwtDecode(token);
+            userId = decodedToken.userId;
+        } catch (e) {
+            console.error("토큰 디코딩 실패:", e);
+        }
+    }
 
     useEffect(() => {
-        // 맵 목록을 가져올 때, 모든 맵의 mapImageUrl은 절대 경로(http://localhost:8080/...)여야 합니다.
+        // 맵 목록 로드
         axios.get("/api/pve/maps", { withCredentials: true })
-            .then(res => {
-                // console.log("맵 응답 데이터:", res.data); // 디버깅 로그 유지
-                setMaps(res.data);
+            .then(res => setMaps(res.data))
+            .catch(err => console.error("맵 로드 실패:", err));
+
+        // 캐릭터 목록 로드
+        if (token && userId) {
+            axios.get(`/api/character/list?userId=${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
             })
-            .catch(err => console.error(err));
-    }, []);
+                .then(res => {
+                    const loadedCharacters = Array.isArray(res.data) ? res.data : [];
+                    setCharacters(loadedCharacters);
+                    // 캐릭터가 1개일 경우 자동 선택
+                    if (loadedCharacters.length === 1) {
+                        setSelectedCharacterId(loadedCharacters[0].characterId);
+                    }
+                })
+                .catch(err => console.error("캐릭터 목록 불러오기 실패:", err));
+        }
+    }, [token, userId]);
 
     const handleSelectMap = (mapId) => {
-        // 선택한 맵 ID를 가지고 전투 화면으로 이동
-        navigate("/pve/battle", { state: { mapId } });
+        if (!selectedCharacterId) {
+            alert("전투에 사용할 캐릭터를 먼저 선택해주세요!");
+            return;
+        }
+        // 선택한 맵 ID와 캐릭터 ID를 함께 전투 화면으로 이동
+        navigate("/pve/battle", { state: { mapId, characterId: selectedCharacterId } });
     };
 
     return (
         // 전체 배경을 어둡게, 최소 높이를 화면 크기로 설정
         <div className="bg-gray-900 min-h-screen text-white p-8">
-
             <h1 className="text-4xl font-extrabold mb-10 text-center text-yellow-400 border-b-2 border-yellow-400 pb-2">
-                PVE 전투 지역 선택
+                PVE 캐릭터, 전투 맵 선택
             </h1>
 
+            {/* 캐릭터 선택 영역 */}
+            <div className="mb-10 text-center">
+                <h2 className="text-2xl font-bold mb-4">내 캐릭터 선택</h2>
+                <div className="flex justify-center gap-4 flex-wrap">
+                    {characters.map(char => (
+                        <div
+                            key={char.characterId}
+                            onClick={() => setSelectedCharacterId(char.characterId)}
+                            className={`p-4 border rounded-lg cursor-pointer transition-colors duration-200 bg-white shadow-md
+                                ${selectedCharacterId === char.characterId
+                                    ? "border-yellow-400 ring-4 ring-yellow-400/50"
+                                    : "border-gray-300 hover:bg-gray-100"
+                                }`}
+                        >
+                            <img
+                                src={`/images/character/${char.imageId}.png`}
+                                alt={char.characterName}
+                                className="w-24 h-24 mx-auto"
+                            />
+                            <div className="font-bold text-lg mt-2 text-black">{char.characterName}</div>
+                            {/* 스탯 포함 */}
+                            {char.characterStat && (
+                                <div className="text-sm mt-1 text-gray-600">
+                                    HP: {char.characterStat.characterHp} / ATK: {char.characterStat.characterAttack} / DEF: {char.characterStat.characterDefense}<br></br>
+                                    Speed: {char.characterStat.characterSpeed} / CRITICAL: {char.characterStat?.criticalRate}%
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <h2 className="mb-10 text-center text-2xl font-bold mb-4">맵 선택</h2>
             {/* 맵 카드 컨테이너 */}
             <div className="flex justify-center gap-6 flex-wrap">
                 {maps.map((map) => (

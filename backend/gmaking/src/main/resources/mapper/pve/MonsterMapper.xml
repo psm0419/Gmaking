@@ -19,14 +19,30 @@
         <result column="CREATED_BY" property="createdBy"/>
         <result column="UPDATED_DATE" property="updatedDate"/>
         <result column="UPDATED_BY" property="updatedBy"/>
+        <result column="imageOriginalName" property="imageOriginalName"/>
     </resultMap>
 
-    <select id="getRandomMonsterByType" parameterType="string" resultMap="monsterResultMap">
-        SELECT *
-        FROM TB_MONSTER
-        WHERE MONSTER_TYPE = #{type}
-        ORDER BY RAND()
-        LIMIT 1
+    <select id="getRandomMonsterByType" resultMap="monsterResultMap">
+        SELECT
+        m.MONSTER_ID,
+        m.IMAGE_ID,
+        m.MONSTER_NAME,
+        m.MONSTER_TYPE,
+        m.MONSTER_HP,
+        m.MONSTER_ATTACK,
+        m.MONSTER_DEFENSE,
+        m.MONSTER_SPEED,
+        m.MONSTER_CRITICAL_RATE,
+        m.CREATED_DATE,
+        m.CREATED_BY,
+        m.UPDATED_DATE,
+        m.UPDATED_BY,
+        i.IMAGE_ORIGINAL_NAME AS imageOriginalName
+
+        FROM TB_MONSTER m
+        LEFT JOIN TB_IMAGE i ON m.IMAGE_ID = i.IMAGE_ID
+        WHERE m.MONSTER_TYPE = #{type}
+        ORDER BY RAND() LIMIT 1
     </select>
 
 </mapper>
