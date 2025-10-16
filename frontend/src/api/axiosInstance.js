@@ -1,21 +1,34 @@
 import axios from "axios";
 
+const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
+
 const api = axios.create({
-  baseURL: "", // 또는 "/api"
+  baseURL: API_BASE,
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("gmaking_token");
-  const hasBearer = token && token.startsWith("Bearer ");
-  const auth = hasBearer ? token : (token ? `Bearer ${token}` : null);
+  const auth = token
+    ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`)
+    : null;
 
-   console.log("📦 요청:", config.method?.toUpperCase(), config.url, "| token:", auth ? "있음" : "없음");
+  // 디버그 로그
+  console.log("📦 요청:", (config.method || "GET").toUpperCase(), config.baseURL + (config.url || ""), "| 토큰:", auth ? "있음" : "없음");
 
+  // Authorization 헤더
   if (auth) {
-      // 헤더 객체 보장
-      config.headers = config.headers || {};
-      config.headers.Authorization = auth;
+    config.headers = config.headers || {};
+    config.headers.Authorization = auth;
+  }
+
+  // FormData일 때는 Content-Type 제거 (브라우저가 자동 세팅)
+  if (config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers["Content-Type"];
+      delete config.headers["content-type"];
     }
+  }
+
   return config;
 });
 

@@ -10,7 +10,7 @@
         <result column="IS_EMAIL_VERIFIED" property="isEmailVerified"/>
         <result column="USER_PASSWORD" property="userPassword"/>
         <result column="USER_NICKNAME" property="userNickname"/>
-        <result column="IMAGE_ID" property="imageId"/>
+<!--        <result column="IMAGE_ID" property="imageId"/>-->
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="ROLE" property="role"/>
     </resultMap>
@@ -23,7 +23,7 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            IMAGE_ID,
+<!--            IMAGE_ID,-->
             ROLE,
             CREATED_DATE
         FROM TB_USER
@@ -89,7 +89,7 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            IMAGE_ID,
+<!--            IMAGE_ID,-->
             ROLE,
             CREATED_DATE
         FROM TB_USER
@@ -124,7 +124,7 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            IMAGE_ID,
+<!--            IMAGE_ID,-->
             ROLE,
             CREATED_DATE
         FROM TB_USER
