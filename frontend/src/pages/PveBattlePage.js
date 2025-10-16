@@ -212,7 +212,7 @@ function PveBattlePage() {
                                 </div>
                             </>
                         ) : (
-                            <p className="text-xl pt-10 text-gray-500">전투 시작 시 몬스터 조우...</p>
+                            <p className="text-xl pt-10 text-gray-400">전투 시작 시 몬스터 조우...</p>
                         )}
                     </div>
                 </div>
@@ -222,7 +222,7 @@ function PveBattlePage() {
 
             {/* GPT 노트 스타일 선택 */}
             <div className="mb-4 text-center">
-                <label className="mr-2">해설 스타일 선택:</label>
+                <label className="mr-2 font-bold">해설 스타일 선택:</label>
                 <select
                     value={noteStyle}
                     onChange={(e) => setNoteStyle(e.target.value)}

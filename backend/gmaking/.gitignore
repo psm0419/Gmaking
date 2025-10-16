@@ -35,3 +35,5 @@ out/
 
 ### VS Code ###
 .vscode/
+
+/backend/Gmaking/src/main/resources/gcp-service-key.json
