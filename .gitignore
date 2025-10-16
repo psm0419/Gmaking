@@ -13,6 +13,7 @@ out/
 backend/gmaking/gmaking/.env
 backend/gmaking/.env
 .env
+backend/gmaking/src/main/resources/gcp-service-key.json
 
 ### VS Code (React, Django에서 사용) ###
 .vscode/
