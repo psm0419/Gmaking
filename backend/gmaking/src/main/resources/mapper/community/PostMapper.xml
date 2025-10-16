@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.community.dao.PostDAO">
+    <resultMap id="postResultMap" type="com.project.gmaking.community.vo.PostVO">
+        <id property="postId" column="post_id" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="authorId" column="author_id" />
+
+        <result property="imageIds" column="image_ids"
+                javaType="java.util.List"
+                jdbcType="VARCHAR"
+                typeHandler="com.project.gmaking.config.JsonLongListTypeHandler" />
+
+        <result property="createdDate" column="created_date" />
+        <result property="updateDate" column="updated_date" />
+    </resultMap>
+
+    <insert id="insertPost" useGeneratedKeys="true" keyProperty="postId">
+        INSERT INTO tb_post(
+        title, content, author_id,
+        <if test="imageIds != null and !imageIds.isEmpty()">image_ids,</if>
+        created_date
+        ) VALUES (
+        #{title},
+        #{content},
+        #{authorId},
+        <if test="imageIds != null and !imageIds.isEmpty()">
+            #{imageIds, jdbcType=VARCHAR, typeHandler=com.project.gmaking.config.JsonLongListTypeHandler},
+        </if>
+        NOW()
+        )
+    </insert>
+
+    <update id="updatePost">
+        UPDATE tb_post
+        SET
+        title = #{title},
+        content = #{content},
+        image_ids = #{imageIds, jdbcType=VARCHAR, typeHandler=com.project.gmaking.config.JsonLongListTypeHandler},
+
+        updated_date = NOW()
+        WHERE post_id = #{postId}
+    </update>
+
+    <select id="selectPostById" resultMap="postResultMap">
+        SELECT post_id, title, content, author_id, created_date, updated_date, image_ids
+        FROM tb_post
+        WHERE post_id = #{postId}
+    </select>
+
+    <delete id="deletePost">
+        DELETE FROM tb_post
+        WHERE post_id = #{postId}
+    </delete>
+
+    <select id="selectPostList" resultMap="postResultMap">
+        SELECT post_id, title, author_id, created_date, image_ids, content, updated_date
+        FROM tb_post
+        ORDER BY post_id DESC
+    </select>
+
+    <select id="selectPostCount" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_post
+    </select>
+</mapper>

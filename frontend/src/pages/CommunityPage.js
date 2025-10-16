@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import { MessageSquare, ThumbsUp, Eye, Search, Plus, List, Tag } from 'lucide-react'; 
+import React, { useEffect, useState } from 'react';
+import { MessageSquare, ThumbsUp, Eye, Search, Plus, List, Tag, UserStar } from 'lucide-react'; 
 import Header from '../components/Header'; 
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
-// import { useAuth } from '../context/AuthContext'; // 필요하다면 주석 해제
+import { useAuth } from '../context/AuthContext'; 
+
+// API 기본 URL 설정
+const API_BASE_URL = 'http://localhost:8080/api/community';
 
 // 게시글 목록을 위한 서브 컴포넌트
-const PostItem = ({ type, title, author, views, likes, comments, date, id, navigate }) => {
+const PostItem = ({ type, title, authorId, date, postId, navigate }) => {
     const isNotice = type === 'notice';
     const tagColor = isNotice ? 'bg-red-600' : 'bg-yellow-600';
 
@@ -27,40 +30,28 @@ const PostItem = ({ type, title, author, views, likes, comments, date, id, navig
 
             {/* 정보 (모바일에서는 숨김) */}
             <div className="hidden sm:flex items-center text-sm text-gray-400 space-x-6 flex-shrink-0">
-                <span className="w-20 truncate text-center">{author}</span>
+                <span className="w-20 truncate text-center">{authorId}</span>
                 
                 <div className="flex items-center space-x-1.5 w-12 justify-center">
                     <Eye className="w-4 h-4 text-gray-500" />
-                    <span>{views}</span>
+                    <span>0</span>
                 </div>
                 
                 <div className="flex items-center space-x-1.5 w-12 justify-center">
                     <ThumbsUp className="w-4 h-4 text-gray-500" />
-                    <span>{likes}</span>
+                    <span>0</span>
                 </div>
                 
                 <div className="flex items-center space-x-1.5 w-12 justify-center">
                     <MessageSquare className="w-4 h-4 text-gray-500" />
-                    <span>{comments}</span>
+                    <span>0</span>
                 </div>
                 
-                <span className="w-20 text-center">{date}</span>
+                <span className="w-20 text-center">{new Date(date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '.').slice(0, -1)}</span>
             </div>
-            
         </div>
     );
 };
-
-// 더미 데이터
-const dummyPosts = [
-    { type: 'notice', title: '운영정책 개정 및 신규 업데이트 사전 안내', author: 'GM_게임맨', views: 8900, likes: 50, comments: 10, date: '2025.10.12' },
-    { type: 'notice', title: '10/14 (화) 임시 점검 완료 및 보상 지급', author: 'GM_게임맨', views: 7200, likes: 35, comments: 5, date: '2025.10.14' },
-    { type: 'free', title: 'AI 캐릭터 커스터마이징 기능 써보신 분 후기좀', author: '겜돌이99', views: 1240, likes: 120, comments: 45, date: '2025.10.14' },
-    { type: 'free', title: '밸런스 패치 이대로 괜찮은가? (의견 모음)', author: '현질러짱', views: 3500, likes: 250, comments: 98, date: '2025.10.13' },
-    { type: 'free', title: '다이아몬드 III 달성 팁 공유합니다! (인증샷)', author: '롤만하는애', views: 5800, likes: 450, comments: 112, date: '2025.10.12' },
-    { type: 'free', title: '오늘 저녁에 같이 파티하실 분 구해요!', author: '솔로탈출', views: 420, likes: 15, comments: 5, date: '2025.10.11' },
-    { type: 'free', title: '이번 이벤트 보상 효율 괜찮은가요?', author: '뉴비에요', views: 800, likes: 40, comments: 20, date: '2025.10.10' },
-];
 
 const categories = [
     { name: '전체', count: 1200 },
@@ -71,15 +62,125 @@ const categories = [
 ];
 
 const CommunityPage = () => {
-    // const { user } = useAuth();
-    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const [posts, setPosts] = useState([]); // 실제 게시글 목록
+    const [pagingInfo, setPagingInfo] = useState({
+        pageNum: 1,
+        amount: 10,
+        totalCount: 0,
+        startPage: 1,
+        endPage: 1,
+        prev: false,
+        next: false
+    });
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentKeyword, setCurrentKeyword] = useState('');
     const [activeCategory, setActiveCategory] = useState('전체');
 
+    // API 호출 함수
+    const fetchPosts = async(page, keyword = '') =>{
+        try{
+            let url = `${API_BASE_URL}?pageNum=${page}&amount=${pagingInfo.amount}`;
+            
+            if(keyword){
+                url += `&searchKeyword=${keyword}`;
+            }
+
+            const response = await fetch(url);
+
+            if(!response.ok){
+                throw new Error('네트워크 응답 실패');
+            }
+
+            const data = await response.json();
+
+            setPosts(data.list || []); 
+            setPagingInfo(data.pageNum || pagingInfo); // 페이징 정보 업데이트
+            setCurrentPage(page);
+
+        } catch(error){
+            console.error("게시글 목록 조회 실패:", error);
+        }
+    };
+    
+    // 글쓰기 버튼 클릭 핸들러
+    const handleCreatePostClick = () => {
+        if(!user){
+            // 로그인되어 있지 않다면
+            alert('게시글 작성을 위해 로그인이 필요합니다.');
+            navigate('/login');
+        } else{
+            // 로그인되어 있다면
+            navigate('/create-post');
+        }
+    }
+
+    // 검색 버튼/엔터 클릭 핸들러
     const handleSearch = (e) => {
         e.preventDefault();
-        // 실제 검색 로직 (API 호출 등)
-        console.log('Searching for:', searchTerm);
+        
+        // 검색 실행: vpdlwlfmf 1로 초기화하고, 입력된 검색어로 API 호출
+        fetchPosts(1, searchTerm);
+    };
+
+    // 페이지 번호 클릭 핸들러
+    const handlePageChange = (page) => {
+        if (page > 0 && page <= Math.ceil(pagingInfo.totalCount / pagingInfo.amount)) {
+            fetchPosts(page, currentKeyword);
+        }
+    };
+
+    // 컴포넌트 마운트 시 최초 데이터 로드
+    useEffect(() => {
+        // 최초 로딩 시, 기본 페이지(1)와 빈 검색어로 호출
+        fetchPosts(1, currentKeyword);
+    }, []);
+
+    const renderPagination = () => {
+        const pageNumbers = [];
+        for(let i = pagingInfo.startPage; i <= pagingInfo.endPage; i++){
+            pageNumbers.push(i);
+        }
+
+        return (
+            <div className="p-4 flex justify-center space-x-2">
+                {/* 이전 페이지 버튼 */}
+                {pagingInfo.prev && (
+                    <button 
+                        onClick={() => handlePageChange(pagingInfo.startPage - 1)} 
+                        className="px-3 py-1 text-white bg-gray-700 rounded hover:bg-gray-600"
+                    >
+                        &lt;
+                    </button>
+                )}
+
+                {/* 페이지 번호 */}
+                {pageNumbers.map(number => (
+                    <button
+                        key={number}
+                        onClick={() => handlePageChange(number)}
+                        className={`px-3 py-1 rounded transition 
+                            ${number === currentPage ? 'text-gray-900 bg-yellow-400 font-bold' : 'text-white bg-gray-800 hover:bg-gray-700'}`
+                        }
+                    >
+                        {number}
+                    </button>
+                ))}
+
+                {/* 다음 페이지 버튼 */}
+                {pagingInfo.next && (
+                    <button 
+                        onClick={() => handlePageChange(pagingInfo.endPage + 1)} 
+                        className="px-3 py-1 text-white bg-gray-700 rounded hover:bg-gray-600"
+                    >
+                        &gt;
+                    </button>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -90,7 +191,7 @@ const CommunityPage = () => {
                 
                 {/* 1. 페이지 제목 및 검색창 */}
                 <div className="mb-8 flex flex-col md:flex-row justify-between items-center border-b border-gray-700 pb-4">
-                    <h1 className="text-4xl font-extrabold text-yellow-400 mb-4 md:mb-0">커뮤니티</h1>
+                    <h1 className="text-4xl font-extrabold text-yellow-400 mb-4 md:mb-0">커뮤니티 ({pagingInfo.totalCount}건)</h1>
                     
                     {/* 검색 폼 */}
                     <form onSubmit={handleSearch} className="flex w-full md:w-96">
@@ -120,7 +221,7 @@ const CommunityPage = () => {
                                 {activeCategory} 게시글 목록
                             </h2>
                             <button 
-                                onClick={() => navigate('/create-post')}
+                                onClick={handleCreatePostClick}
                                 className="flex items-center px-4 py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-500 transition"
                             >
                                 <Plus className="w-5 h-5 mr-1" />
@@ -141,22 +242,28 @@ const CommunityPage = () => {
                         </div>
 
                         {/* 게시글 목록 */}
-                        <div className="divide-y divide-gray-700">
-                            {dummyPosts.map((post, index) => (
-                                <PostItem key={index} 
-                                            {...post} 
-                                            id={index + 1}
-                                            navigate={navigate}
-                                />
-                            ))}
+                        <div className="divide-y divide-gray-700 min-h-[300px]">
+                            {posts.length > 0 ? (
+                                posts.map((post) => (
+                                    <PostItem 
+                                        key={post.postId} 
+                                        type={'free'} 
+                                        title={post.title}
+                                        authorId={post.authorId}
+                                        date={post.createdDate}
+                                        postId={post.postId}
+                                        navigate={navigate}
+                                    />
+                                ))
+                            ) : (
+                                <div className="text-center p-10 text-gray-400">
+                                    {currentKeyword ? `'${currentKeyword}'에 대한 검색 결과가 없습니다.` : '등록된 게시글이 없습니다.'}
+                                </div>
+                            )}
                         </div>
 
-                        {/* 페이지네이션 (더미) */}
-                        <div className="p-4 flex justify-center space-x-2">
-                            <button className="px-3 py-1 text-yellow-400 bg-gray-700 rounded hover:bg-gray-600">1</button>
-                            <button className="px-3 py-1 text-white bg-gray-800 rounded hover:bg-gray-700">2</button>
-                            <button className="px-3 py-1 text-white bg-gray-800 rounded hover:bg-gray-700">3</button>
-                        </div>
+                        {/* 페이지네이션 */}
+                        {pagingInfo.totalCount > 0 && renderPagination()}
                     </div>
 
                     {/* 2-2. 사이드바 (오른쪽, 1/3 너비) */}
@@ -168,7 +275,7 @@ const CommunityPage = () => {
                                 🔥 HOT 인기 게시글
                             </h3>
                             <div className="space-y-3">
-                                {dummyPosts.slice(0, 3).map((post, index) => (
+                                {categories.slice(0, 3).map((post, index) => (
                                     <p key={index} className="text-gray-300 text-sm hover:text-yellow-400 transition cursor-pointer flex justify-between">
                                         <span className="font-medium truncate pr-2">{index + 1}. {post.title}</span>
                                         <span className="text-gray-500 flex-shrink-0"><ThumbsUp className="w-4 h-4 inline mr-1" />{post.likes}</span>

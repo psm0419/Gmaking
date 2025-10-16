@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { Send, FileText, ChevronDown, Tag, Image, X, Upload } from 'lucide-react'; 
 import Header from '../components/Header'; 
 import Footer from '../components/Footer';
-// import { useAuth } from '../context/AuthContext'; // 사용자 정보가 필요하다면 주석 해제
+import { useAuth } from '../context/AuthContext'; 
+import { useNavigate } from 'react-router-dom';
 
-const getPosts = () => {
-    const storedPosts = localStorage.getItem('mockPosts');
-    return storedPosts ? JSON.parse(storedPosts) : [];
-};
+// API 기본 URL 설정 (게시글 생성 API 엔드포인트)
+const API_CREATE_POST_URL = 'http://localhost:8080/api/community'; 
 
 const CreatePostPage = () => {
-    // const { user } = useAuth(); // 사용자 정보를 가져오는 훅 (필요 시)
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState('자유 게시판');
@@ -19,6 +20,7 @@ const CreatePostPage = () => {
     // 첨부된 이미지 파일 객체 목록 상태
     const [imageFiles, setImageFiles] = useState([]);
 
+    // 제출 결과 메시지 상태(성공/오류 알림용)
     const [submissionMessage, setSubmissionMessage] = useState(null);
     
     // 카테고리 목록
@@ -32,10 +34,10 @@ const CreatePostPage = () => {
         // 최대 5개 파일 제한
         if(newFiles.length > 5){
             // 사용자에게 알림 UI
-            console.error('이미지는 최대 5개까지 첨부할수 있습니다.');
-            // 5개까지만 유지
+            setSubmissionMessage({ type: 'error', text: '이미지는 최대 5개까지 첨부할 수 있습니다.'});
             setImageFiles(newFiles.slice(0,5));
         } else{
+            setSubmissionMessage(null);
             setImageFiles(newFiles);
         }
 
@@ -54,6 +56,11 @@ const CreatePostPage = () => {
         e.preventDefault();
         setSubmissionMessage(null);
         
+        if(!user || !user.userId){
+            setSubmissionMessage({ type: 'error', text: '로그인된 사용자 정보가 없어 게시글을 등록할 수 없습니다.' });
+            return;
+        }
+        
         if (!title.trim() || !content.trim()) {
             // alert 대신 사용할 메시지 UI
             setSubmissionMessage({ type: 'error', text: '제목과 내용을 모두 입력해 주세요.' });
@@ -62,50 +69,63 @@ const CreatePostPage = () => {
 
         setIsSubmitting(true);
 
-        try {
-            const imageUrls = imageFiles.map(file => URL.createObjectURL(file));
-            const currentPosts = getPosts();
-            const newPostId = currentPosts.length > 0 ? Math.max(...currentPosts.map(p => p.postId)) + 1 : 1;
+        // FormData 객체 생성
+        const formData = new FormData();
 
-            const newPost = {
-                postId: newPostId,
-                title: title,
-                content: content,
-                category: category,
-                imageUrls: imageUrls,
-                author: 'TestUser_12345',
-                createdDate: new Date().toDateString(),
-                views: 0,
-                likes: 0,
-                commentsCount: 0,
-            };
+        // 텍스트 데이터추가
+        formData.append('title', title);
+        formData.append('content', content);
+        formData.append('category', category);
+        formData.append('authorId', user.userId);
 
-            currentPosts.push(newPost);
-            localStorage.setItem('mockPosts', JSON.stringify(currentPosts));
+        // 이미지 파일 추가
+        imageFiles.forEach((file) => {
+            formData.append('files', file);
+        });
 
-            // 🚀 임시 성공 로직: 1초 후 완료
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        try{
+            const response = await fetch(API_CREATE_POST_URL, {
+                method: 'POST',
+                body: formData,
+            });
 
-            // 성공 후 메시지 표시 및 상태 초기화
-            setSubmissionMessage({ type: 'success', text: `게시글이 성공적으로 등록되었습니다. (ID: ${newPostId})` });
-            
-            setTitle('');
-            setContent('');
-            setCategory('자유 게시판');
-            
-            // 모든 Object URL 해제
-            imageFiles.forEach(file => URL.revokeObjectURL(file));
-            setImageFiles([]);
+            if(response.ok){
+                // 게시글 등록 성공
+                setSubmissionMessage({
+                    type: 'success',
+                    text: `게시글이 성공적으로 등록되었습니다. 게시판으로 이동합니다.`
+                });
 
-            console.log(`[프론트엔드] 등록 완료! 로컬에 저장된 게시글: ${newPostId}`);
-            
-        } catch (error) {
+                // 상태 초기화
+                setTitle('');
+                setContent('');
+                setCategory('자유 게시판');
+                setImageFiles([]);
+
+                // 1초 후 게시글 목록 페이지로 이동
+                setTimeout(() => {
+                    navigate('/community');
+                }, 1000);
+
+            } else {
+                // 서버 에러 처리
+                const errorText = await response.text();
+                console.error("게시글 등록 실패 응답:", errorText);
+                throw new Error(`게시글 등록에 실패했습니다. (상태 코드: ${response.status})`);
+            }
+        } catch(error) {
             console.error('게시글 등록 중 오류 발생:', error);
-            setSubmissionMessage({ type: 'error', text: '게시글 등록 중 알 수 없는 오류가 발생했습니다.' });
-        } finally {
+            setSubmissionMessage({
+                type: ' error',
+                text: error.message || '게시글 등록 중 알 수 없는 오류가 발생했습니다.'
+            });
+        } finally{
             setIsSubmitting(false);
-        }
+        } 
     };
+
+    // 이미지 파일을 미리보기 URL로 변환하는 함수
+    const getPreviewUrl = (file) => URL.createObjectURL(file);
 
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
@@ -221,7 +241,7 @@ const CreatePostPage = () => {
                                 {imageFiles.map((file, index) => (
                                     <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-500 shadow-md">
                                         <img
-                                            src={URL.createObjectURL(file)}
+                                            src={getPreviewUrl(file)}
                                             alt={`첨부 이미지 ${index + 1}`}
                                             className="w-full h-full object-cover"
                                         />
@@ -239,17 +259,17 @@ const CreatePostPage = () => {
                         )}
                     </div>
 
-                    {/* 작성자 정보 (더미) */}
+                    {/* 작성자 정보 */}
                     <div className="text-right text-sm text-gray-500 pt-2 border-t border-gray-700">
-                        작성자: 현재 로그인 사용자 닉네임
+                        작성자: {user?.userNickname || '로그인 필요'}
                     </div>
 
                     {/* 제출 버튼 */}
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !user}
                         className={`w-full flex items-center justify-center py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 ${
-                            isSubmitting 
+                            isSubmitting || !user
                                 ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
                                 : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
                         }`}
