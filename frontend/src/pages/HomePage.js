@@ -97,6 +97,12 @@ const HomePage = () => {
                     >
                         내 정보 보기
                     </button>
+                    <button 
+                        className="mt-4 w-full py-2 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition"
+                        onClick={() => navigate('/create-character')}
+                    >
+                        캐릭터 추가 생성
+                    </button>
                 </div>
             </div>
         );
