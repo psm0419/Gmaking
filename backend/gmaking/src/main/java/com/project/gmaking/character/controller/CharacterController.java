@@ -1,7 +1,7 @@
 package com.project.gmaking.character.controller;
 
-import com.project.gmaking.character.service.CharacterServiceSd;
 import com.project.gmaking.character.service.CharacterService;
+import com.project.gmaking.character.service.CharacterServiceGpt;
 import com.project.gmaking.character.vo.CharacterGenerateRequestVO;
 import com.project.gmaking.character.vo.CharacterGenerateResponseVO;
 import com.project.gmaking.character.vo.CharacterVO;
@@ -23,7 +23,7 @@ import java.util.List;
 public class CharacterController {
 
     private final CharacterService characterService;
-    private final CharacterServiceSd characterServicesd;
+    private final CharacterServiceGpt characterServicegpt;
     private final JwtTokenProvider tokenProvider;
 
     private static final String BEARER_PREFIX = "Bearer ";
@@ -43,7 +43,7 @@ public class CharacterController {
     @PostMapping("/create")
     public Mono<ResponseEntity<CharacterGenerateResponseVO>> generateCharacter(
             @RequestPart("image") MultipartFile image,
-            // @RequestParam("userPrompt") String userPrompt,
+            @RequestParam(value = "userPrompt", required = false) String userPrompt,
             @RequestParam("characterName") String characterName,
             @RequestHeader("Authorization") String token) {
 
@@ -66,24 +66,30 @@ public class CharacterController {
             return Mono.just(ResponseEntity.status(401).body(null));
         }
 
-
-        // 2. 요청 DTO 구성
         CharacterGenerateRequestVO requestVO = new CharacterGenerateRequestVO();
         requestVO.setImage(image);
-        // requestVO.setUserPrompt(userPrompt);
+        requestVO.setUserPrompt(userPrompt);
         requestVO.setCharacterName(characterName);
 
         try {
             // 3. 서비스 로직 실행
-            return characterServicesd.generateCharacter(requestVO, userId)
+            return characterServicegpt.generateCharacter(requestVO, userId)
                     .map(response -> ResponseEntity.ok(response))
-                    .onErrorReturn(
-                            // 런타임 오류 시 400 Bad Request 반환
-                            e -> e instanceof RuntimeException,
-                            ResponseEntity.badRequest().build()
-                    );
+                    .onErrorResume(e -> {
+                        System.err.println("캐릭터 생성 중 런타임 오류 발생: " + e.getMessage());
+
+                        // GPT/DALL-E API 오류일 경우, 403 Forbidden을 받은 것으로 가정
+                        if (e.getMessage() != null && e.getMessage().contains("403 Forbidden")) {
+                            // 클라이언트에게 403 Forbidden을 반환하여, API 키 문제나 정책 문제임을 알림
+                            return Mono.just(ResponseEntity.status(403).build());
+                        }
+
+                        // 그 외 런타임 오류 (이미지 분류 실패 등)는 400 Bad Request 반환
+                        return Mono.just(ResponseEntity.badRequest().build());
+                    });
         } catch (IOException e) {
             // 파일 처리 중 오류 시 500 Internal Server Error
+            System.err.println("캐릭터 생성 요청 중 IO 오류 발생: " + e.getMessage());
             return Mono.just(ResponseEntity.internalServerError().build());
         }
     }
