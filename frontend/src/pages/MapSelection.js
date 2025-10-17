@@ -76,7 +76,7 @@ const MapSelection = () => {
                                 }`}
                         >
                             <img
-                                src={`/images/character/${char.imageId}.png`}
+                                src={char.imageUrl}
                                 alt={char.characterName}
                                 className="w-24 h-24 mx-auto"
                             />
