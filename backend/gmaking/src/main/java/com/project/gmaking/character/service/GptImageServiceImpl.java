@@ -51,7 +51,7 @@ public class GptImageServiceImpl implements GptImageService {
             Highly detailed 2D pixel art, 16-bit style game sprite of a fantasy warrior character.
             The main subject is a %s, named '%s'.
             User's specific request: %s.
-            Focus on full body, transparent background, vibrant colors, clean edges.
+            Focus on full body, white background, vibrant colors, clean edges.
             """, predictedAnimal, characterName, userPrompt != null && !userPrompt.isEmpty() ? userPrompt : "No extra details. Make it a cute warrior.");
 
         // 2. DALL-E API 요청 바디 구성

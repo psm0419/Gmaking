@@ -16,6 +16,8 @@ public class LoginVO {
     private String role;                    // ROLE
     private LocalDateTime createdDate;      // CREATED_DATE
     private Integer imageId;
+
+    private String characterName;
     private boolean hasCharacter;
     private String characterImageUrl;
 }
