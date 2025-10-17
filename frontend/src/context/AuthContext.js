@@ -187,13 +187,24 @@ export const AuthProvider = ({ children }) => {
         }
     }, [user]);
 
+    const updateUserNickname = useCallback((newNickname) => {
+        setUser(prevUser => {
+            if (!prevUser) return null;
+            return {
+                ...prevUser,
+                userNickname: newNickname, 
+            };
+        });
+    }, []);
+
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
             hasCharacter, characterImageUrl,
             login, logout, 
             setCharacterCreated, 
-            withdrawUser, handleOAuth2Login  
+            withdrawUser, handleOAuth2Login,
+            updateUserNickname
         }}>
             {children}
         </AuthContext.Provider>
