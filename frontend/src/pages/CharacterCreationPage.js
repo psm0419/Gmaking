@@ -126,7 +126,7 @@ const CharacterCreationPage = () => {
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <Upload className="w-8 h-8 mb-3 text-yellow-400" />
                                     <p className="mb-2 text-sm text-gray-400">
-                                        <span className="font-semibold">클릭하여 업로드</span>하거나 드래그하세요.
+                                        <span className="font-semibold">곰, 독수리, 펭귄, 거북이 사진 중 하나를 클릭하여 업로드</span>하세요. 
                                     </p>
                                     <p className="text-xs text-gray-500">JPG, PNG (최대 5MB)</p>
                                     {imageFile && <p className="mt-2 text-yellow-400">첨부된 파일: {imageFile.name}</p>}
