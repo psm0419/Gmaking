@@ -204,7 +204,7 @@ export const AuthProvider = ({ children }) => {
             login, logout, 
             setCharacterCreated, 
             withdrawUser, handleOAuth2Login,
-            updateUserNickname
+            updateUserNickname, setToken
         }}>
             {children}
         </AuthContext.Provider>
