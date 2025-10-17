@@ -48,11 +48,11 @@ public class ProfileEditController {
         return ResponseEntity.noContent().build(); // 204
     }
 
-    /** 프로필 이미지 업로드 (multipart/form-data; file 필드명 고정) */
-    @PostMapping(value = "/profile/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Map<String, Object> upload(Authentication auth,
-                                      @RequestPart("file") MultipartFile file) throws Exception {
-        String userId = auth.getName();
-        return service.uploadProfile(userId, file);    // { "url": "/images/profile/xxx.png" }
-    }
+//    /** 프로필 이미지 업로드 (multipart/form-data; file 필드명 고정) */
+//    @PostMapping(value = "/profile/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public Map<String, Object> upload(Authentication auth,
+//                                      @RequestPart("file") MultipartFile file) throws Exception {
+//        String userId = auth.getName();
+//        return service.uploadProfile(userId, file);    // { "url": "/images/profile/xxx.png" }
+//    }
 }

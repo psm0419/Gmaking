@@ -1,98 +1,103 @@
+// src/pages/MyPage.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
-
+import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
+// 🔔 분리된 웹알림 컴포넌트
+import NotificationBell from "../components/notifications/NotificationBell";
 
-const BASE_URL = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
+const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 
-const token = localStorage.getItem("gmaking_token");
-
-const AUTH =
-  token ? { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` } : undefined;
-
-// ===== 이미지 경로 보정(폴백 없음) =====
-function toFullImageUrl(raw, { kind } = {}) {
-  if (!raw) return null; // 폴백 제거
-  if (/^https?:\/\//i.test(raw)) return raw;
-
-  let url = String(raw).trim();
-  url = url
-    .replace(/^\/?static(?:\.images|\/images)?\//i, "/images/")
-    .replace(/^\/?images\//i, "/images/")
-    .replace(/^\/?profile\//i, "/images/profile/")
-    .replace(/^\/?character\//i, "/images/character/");
-
-  if (!url.startsWith("/")) url = `/${url}`;
-  return `${BASE_URL}${url}`;
+/* ──────────────────────────────────────────────────────────────── */
+/* 페이지 스켈레톤                                                   */
+/* ──────────────────────────────────────────────────────────────── */
+export default function MyPage() {
+  return (
+    <div className="min-h-screen bg-gray-200/70 flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <MyMain />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
-/* ------------------------------------------------------------------ */
-/* 간단 API 래퍼 (요청마다 Authorization 인라인 부착)                  */
-/* ------------------------------------------------------------------ */
-const apiGet = (url, config = {}) =>
-  axios.get(url, { ...config, headers: { ...(config.headers || {}), ...(AUTH ? AUTH : {}) } });
+/* ──────────────────────────────────────────────────────────────── */
+/* 메인                                                             */
+/* ──────────────────────────────────────────────────────────────── */
+function MyMain() {
+  const navigate = useNavigate();
 
-const apiPatch = (url, data = null, config = {}) =>
-  axios.patch(url, data, { ...config, headers: { ...(config.headers || {}), ...(AUTH ? AUTH : {}) } });
-
-/* 서버 API (필요시 경로 맞춰 수정) */
-const getMyPageSummary = (limit = 6) =>
-  apiGet(`${BASE_URL}/api/my-page/summary?limit=${encodeURIComponent(limit)}`);
-
-const getCharacterStats = (characterId) =>
-  apiGet(`${BASE_URL}/api/characters/${encodeURIComponent(characterId)}/stats`);
-
-/* ------------------------------------------------------------------ */
-/* 페이지 컴포넌트                                                    */
-/* ------------------------------------------------------------------ */
-export default function MyPage() {
-  const handlePick = () => {
-    alert("뽑으러가기!");
-  };
-
-  // 서버 데이터 상태
-  const [profile, setProfile] = useState(null);
+  const [nickname, setNickname] = useState("마스터 님");
+  const [ticketCount, setTicketCount] = useState(0);
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [characters, setCharacters] = useState([]);
+  const [selected, setSelected] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 로그인(토큰) 여부만 체크
+  // PVP 모달
+  const [pvpModalOpen, setPvpModalOpen] = useState(false);
+  const [pvpModalData, setPvpModalData] = useState(null);
+
+  const token = localStorage.getItem("gmaking_token");
+  let userId = null;
+  if (token) {
+    try {
+      const raw = token.startsWith("Bearer ") ? token.slice(7) : token;
+      const decoded = jwtDecode(raw);
+      userId = decoded?.userId ?? null;
+    } catch (e) {
+      console.error("토큰 디코딩 실패 : ", e);
+    }
+  }
+
+  // 서버에서 요약 데이터 가져오기
   useEffect(() => {
     if (!token) {
-      alert("로그인 정보가 없습니다. 로그인 페이지로 이동합니다.");
-      window.location.href = "/login";
+      navigate("/login");
+      return;
     }
-  }, []);
 
-  // 마이페이지 데이터 로드
-  useEffect(() => {
+    const headers = {
+      Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+    };
+
     (async () => {
       try {
         setLoading(true);
-        const res = await getMyPageSummary(6);
-        const data = res.data;
+        const { data } = await axios.get("/api/my-page/summary", {
+            headers,
+            params: { limit: 50 }, // 7개 이상이면 넉넉히
+        });
 
-        setProfile(data?.profile ?? null);
+        const p = data?.profile ?? null;
+        setNickname(p?.nickname ?? "마스터 님");
+        setTicketCount(p?.ticketCount ?? 0);
+        setProfileImageUrl(p?.imageUrl ?? null);
 
-        const cards = (data?.characters ?? []).map((c) => ({
-          id: c.characterId,
-          name: c.name,
-          grade: c.grade,
-          image: toFullImageUrl(c.imageUrl, { kind: "character" }),
-          hp: null,
-          def: null,
-          atk: null,
-          critRate: null,
-          speed: null,
-        }));
-
+        const cards = (data?.characters ?? []).map((c) => {
+          const stat = c.characterStatVO || c.characterStat || null;
+          return {
+            id: c.characterId ?? c.id,
+            name: c.name ?? c.characterName ?? "",
+            grade: c.grade ?? c.rarity ?? null,
+            imageUrl: c.imageUrl ?? c.image ?? null,
+            hp: stat?.hp ?? null,
+            attack: stat?.attack ?? null,
+            defense: stat?.defense ?? null,
+            speed: stat?.speed ?? null,
+            criticalRate: stat?.criticalRate ?? null,
+            characterStatVO: stat,
+          };
+        });
         setCharacters(cards);
         setError(null);
       } catch (e) {
@@ -102,11 +107,18 @@ export default function MyPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [token, navigate]);
+
+  const onOpenCharacter = (c) => setSelected(c);
+
+  const onChat = () => selected?.id && navigate(`/chat-entry/${selected.id}`);
+  const onGrow = () => {};
+  const onSend = () => {};
+  const onPickClick = () => navigate('/create-character'); // 필요 시 '/gacha' 등으로 이동
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-200/70 flex items-center justify-center">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-gray-700">
         로딩 중...
       </div>
     );
@@ -114,81 +126,13 @@ export default function MyPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-200/70 flex items-center justify-center text-red-600">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-red-600">
         {error}
       </div>
     );
   }
 
-  const profileImageUrl = toFullImageUrl(
-    profile?.imageUrl || profile?.profileImage || profile?.imageName || profile?.imagePath,
-    { kind: "profile" }
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-200/70 flex flex-col">
-      <Header />
-      <main className="flex-1">
-        <MyMain
-          nickname={profile?.nickname ?? "마스터 님"}
-          ticketCount={profile?.ticketCount ?? 0}
-          profileImageUrl={profileImageUrl}
-          onPickClick={handlePick}
-          characters={characters}
-        />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 메인 섹션                                                           */
-/* ------------------------------------------------------------------ */
-function MyMain({
-  nickname = "마스터 님",
-  ticketCount = 5,
-  profileImageUrl,
-  onPickClick = () => {},
-  characters = [],
-}) {
-  const [selected, setSelected] = useState(null);
-  const statCache = useRef(new Map());
-  const navigate = useNavigate();
-
-  // 스탯 조회 (VO 키 → 프론트 키로 매핑)
-  const fetchStats = async (characterId) => {
-    if (statCache.current.has(characterId)) return statCache.current.get(characterId);
-    try {
-      const { data } = await getCharacterStats(characterId);
-      const stats = {
-        hp: data.characterHp,
-        atk: data.characterAttack,
-        def: data.characterDefense,
-        speed: data.characterSpeed,
-        critRate: data.criticalRate,
-      };
-      statCache.current.set(characterId, stats);
-      return stats;
-    } catch (e) {
-      console.error(e);
-      return { _statsError: "스탯을 불러오지 못했습니다." };
-    }
-  };
-
-  const onOpenCharacter = async (c) => {
-    setSelected({ ...c, _statsLoading: true });
-    const stats = await fetchStats(c.id);
-    setSelected({ ...c, ...stats, _statsLoading: false });
-  };
-
-  const onChat = () => {
-    if (selected?.id) navigate(`/chat-entry/${selected.id}`);
-    else alert("캐릭터를 먼저 선택하세요!");
-  };
-
-  const onGrow = () => alert(`${selected?.name} 성장시키기`);
-  const onSend = () => alert(`${selected?.name} 보내기`);
+  const safeProfileSrc = profileImageUrl || DEFAULT_PROFILE_IMG;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
@@ -197,21 +141,26 @@ function MyMain({
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
           <div className="flex items-start gap-6">
             <div className="shrink-0 flex flex-col items-center">
-              {/* 폴백 제거: 이미지가 있으면 렌더링 */}
-              {profileImageUrl && (
-                <img
-                  src={profileImageUrl}
-                  alt="프로필 이미지"
-                  className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
-                  onError={(e) => {
-                    // 폴백 사용 안 함: 표시만 숨김
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
+              {/* 이미지 주소가 있을 때만 렌더, 에러 시 폴백 */}
+              <img
+                src={safeProfileSrc}
+                alt="프로필 이미지"
+                className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
+                onError={(e) => {
+                  if (e.currentTarget.dataset.fallbackApplied) return;
+                  e.currentTarget.dataset.fallbackApplied = "1";
+                  e.currentTarget.src = DEFAULT_PROFILE_IMG;
+                }}
+              />
 
               <div className="mt-6 flex items-center gap-5 text-gray-800">
-                <NotificationBell />
+                {/* 분리된 컴포넌트 삽입 */}
+                <NotificationBell
+                  onOpenPvpModal={(data) => {
+                    setPvpModalData(data);
+                    setPvpModalOpen(true);
+                  }}
+                />
                 <IconMail />
                 <MoreMenuInline />
               </div>
@@ -239,9 +188,7 @@ function MyMain({
         )}
       </div>
 
-      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">
-        내 캐릭터
-      </h2>
+      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">내 캐릭터</h2>
 
       <CharacterSection
         characters={characters}
@@ -249,25 +196,29 @@ function MyMain({
         onPickClick={onPickClick}
         onOpenCharacter={onOpenCharacter}
       />
+
+      <PvpResultModal
+        open={pvpModalOpen}
+        data={pvpModalData}
+        onClose={() => setPvpModalOpen(false)}
+      />
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* 캐릭터 상세 패널                                                    */
-/* ------------------------------------------------------------------ */
+/* ──────────────────────────────────────────────────────────────── */
+/* 캐릭터 상세 패널                                                   */
+/* ──────────────────────────────────────────────────────────────── */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
-  const {
-    name,
-    grade,
-    hp,
-    def,
-    atk,
-    critRate,
-    speed,
-    _statsLoading,
-    _statsError,
-  } = character ?? {};
+  const name = character?.name ?? character?.characterName;
+  const grade = character?.grade;
+  const hp = character?.hp;
+  const def = character?.defense;
+  const atk = character?.attack;
+  const speed = character?.speed;
+  const critRate = character?.criticalRate;
+  const _statsLoading = false;
+  const _statsError = null;
   const fmt = (v) => (v == null ? "-" : `${v}`);
 
   return (
@@ -278,27 +229,15 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
         </h3>
         <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-gray-800">
           <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-          등급 {fmt(grade)}
+          등급 등급 {fmt(grade)}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">체력</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(hp)}</div>
-        </div>
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">방어력</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(def)}</div>
-        </div>
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">공격력</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(atk)}</div>
-        </div>
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">속도</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(speed)}</div>
-        </div>
+        <StatCard label="체력" value={fmt(hp)} />
+        <StatCard label="방어력" value={fmt(def)} />
+        <StatCard label="공격력" value={fmt(atk)} />
+        <StatCard label="속도" value={fmt(speed)} />
       </div>
 
       <div className="mt-3 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
@@ -355,9 +294,18 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* 내 캐릭터 섹션                                                      */
-/* ------------------------------------------------------------------ */
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{value}</div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* 내 캐릭터 섹션                                                     */
+/* ──────────────────────────────────────────────────────────────── */
 function CharacterSection({ characters = [], selectedId, onPickClick, onOpenCharacter }) {
   const hasCharacters = characters.length > 0;
 
@@ -411,372 +359,21 @@ function CharacterCard({ character, active, onClick }) {
         aria-label={character.name}
       >
         <div className="w-full h-full p-3 flex items-center justify-center">
-          {/* 폴백 없음: 이미지 주소가 있으면만 렌더 */}
-          {character.image && (
-            <img
-              src={character.image}
-              alt={character.name}
-              className="max-h-full max-w-full object-contain"
-              onError={(e) => {
-                // 폴백 없이 숨김 처리
-                e.currentTarget.style.opacity = 0;
-              }}
-            />
-          )}
-        </div>
-      </button>
-      <div className="mt-2 text-lg font-medium text-gray-900">{character.name}</div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 알림 벨 (axiosInstance 제거, 순수 axios + 인라인 JWT)               */
-/* ------------------------------------------------------------------ */
-function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const [gearOpen, setGearOpen] = useState(false);
-  const [tab, setTab] = useState("new"); // 'new' | 'read'
-  const [badge, setBadge] = useState(0);
-  const [unread, setUnread] = useState([]); // [{id, title, linkUrl, type, status, meta, createdDate}]
-  const [read, setRead] = useState([]);
-  const [isBulkWorking, setIsBulkWorking] = useState(false);
-  const navigate = useNavigate();
-
-  const btnRef = useRef(null);
-  const popRef = useRef(null);
-  const gearRef = useRef(null);
-  /** @type {React.MutableRefObject<Client | null>} */
-  const stompRef = useRef(null);
-  const startedRef = useRef(false);
-  const subRef = useRef(null);
-
-  // ===== REST helpers =====
-  const fetchUnreadCount = async () => {
-    const { data } = await apiGet(`${BASE_URL}/api/notifications/unread/count`);
-    return typeof data?.count === "number" ? data.count : 0;
-  };
-  const fetchUnread = async ({ limit = 20, offset = 0 } = {}) => {
-    const { data } = await apiGet(
-      `${BASE_URL}/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
-    );
-    return data;
-  };
-  const fetchRead = async ({ limit = 20, offset = 0 } = {}) => {
-    const { data } = await apiGet(
-      `${BASE_URL}/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
-    );
-    return data;
-  };
-
-  // 읽음 처리 (단건 / 전체)
-  const markRead = async (id) => {
-    await apiPatch(`${BASE_URL}/api/notifications/${encodeURIComponent(id)}/read`);
-  };
-  const markAllReadApi = async () => {
-    await apiPatch(`${BASE_URL}/api/notifications/read-all`);
-  };
-
-  // 소프트 삭제 (STATUS='deleted')
-  const softDeleteOne = async (id) => {
-    await apiPatch(`${BASE_URL}/api/notifications/${encodeURIComponent(id)}/delete`);
-  };
-  const softDeleteAllRead = async () => {
-    await apiPatch(`${BASE_URL}/api/notifications/read/delete`);
-  };
-
-  const normalizeList = (arr) =>
-    (arr || []).map((n) => ({
-      id: n.id,
-      title: n.title || "알림",
-      linkUrl: n.linkUrl || null,
-      type: n.type,
-      status: n.status, // 'unread' | 'read'
-      meta: typeof n.metaJson === "string" ? safeJson(n.metaJson) : n.metaJson || {},
-      createdDate: n.createdDate,
-    }));
-
-  const refreshAll = async () => {
-    const [cnt, u, r] = await Promise.all([
-      fetchUnreadCount(),
-      fetchUnread({ limit: 20, offset: 0 }),
-      fetchRead({ limit: 20, offset: 0 }),
-    ]);
-    setBadge(cnt ?? 0);
-    setUnread(normalizeList(u));
-    setRead(normalizeList(r));
-  };
-
-  // === PVP 결과 모달 상태 ===
-  const [pvpOpen, setPvpOpen] = useState(false);
-  const [pvpData, setPvpData] = useState(null);
-
-  // 알림→PVP 모달 데이터 가져오기
-  const fetchPvpModal = async (notificationId) => {
-    const { data } = await apiGet(
-      `${BASE_URL}/api/notifications/${encodeURIComponent(notificationId)}/pvp-modal`
-    );
-    return data;
-  };
-
-  // 초기 로드 + STOMP 연결
-  useEffect(() => {
-    if (!token) return;
-
-    refreshAll().catch(console.error);
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    const sockUrl = `${BASE_URL}/notify-ws`;
-    const client = new Client({
-      webSocketFactory: () => new SockJS(sockUrl),
-      connectHeaders: AUTH || {}, // 인라인 헤더
-      debug: () => {},
-      reconnectDelay: 0,
-      heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000,
-      onConnect: () => {
-        subRef.current = client.subscribe("/user/queue/notifications", () => {
-          refreshAll().catch(console.error);
-        });
-      },
-      onStompError: (frame) => console.error("STOMP error", frame?.headers, frame?.body),
-    });
-
-    client.activate();
-    stompRef.current = client;
-
-    return () => {
-      try { subRef.current?.unsubscribe(); } catch {}
-      subRef.current = null;
-      try { stompRef.current?.deactivate(); } catch {}
-      stompRef.current = null;
-      startedRef.current = false;
-    };
-  }, []);
-
-  // 알림창 닫기
-  useEffect(() => {
-    if (!open) return;
-
-    const onDocPointer = (e) => {
-      const popEl = popRef.current;
-      const btnEl = btnRef.current;
-      if (!popEl) return;
-
-      const target = e.target;
-      const clickedInsidePop = popEl.contains(target);
-      const clickedOnButton = btnEl && btnEl.contains(target);
-      if (clickedInsidePop || clickedOnButton) return;
-
-      setOpen(false);
-      setGearOpen(false);
-    };
-
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        setGearOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", onDocPointer);
-    document.addEventListener("touchstart", onDocPointer, { passive: true });
-    document.addEventListener("keydown", onKey);
-
-    return () => {
-      document.removeEventListener("mousedown", onDocPointer);
-      document.removeEventListener("touchstart", onDocPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  // “모두 읽음”
-  const markAllRead = async () => {
-    if (unread.length === 0) return;
-    setIsBulkWorking(true);
-    try {
-      await markAllReadApi();
-      await refreshAll();
-    } catch (e) {
-      console.error(e);
-      alert("모두 읽음 처리에 실패했습니다.");
-    } finally {
-      setIsBulkWorking(false);
-    }
-  };
-
-  // 개별 알림 클릭(읽음 처리 & 이동/모달)
-  const onClickItem = async (n) => {
-    try {
-      if (n.status !== "read") {
-        await markRead(n.id);
-      }
-      if (n.type === "PVP_RESULT") {
-        const data = await fetchPvpModal(n.id);
-        setPvpData(data);
-        setPvpOpen(true);
-      } else if (n.linkUrl) {
-        navigate(n.linkUrl);
-      }
-    } finally {
-      await refreshAll().catch(console.error);
-    }
-  };
-
-  // 읽은 알림 개별 삭제(소프트)
-  const onDeleteRead = async (id) => {
-    try {
-      await softDeleteOne(id);
-      setRead((prev) => prev.filter((n) => n.id !== id));
-    } catch (e) {
-      console.error(e);
-      alert("알림 삭제에 실패했습니다.");
-    }
-  };
-
-  return (
-    <div className="relative">
-      <button
-        ref={btnRef}
-        onClick={() => { setOpen((v) => !v); setGearOpen(false); }}
-        className="relative rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
-        aria-label="알림 열기"
-      >
-        <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z"
-            stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+          <img
+            src={character?.imageUrl}
+            alt={character?.name ?? ""}
+            className="max-h-full max-w-full object-contain"
           />
-        </svg>
-        {badge > 0 && (
-          <span className="absolute -right-1 -top-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">
-            {badge}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        <div ref={popRef} className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl">
-          <div className="flex items-center justify-between px-3 py-2 border-b">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setTab("new")}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  tab === "new" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
-                }`}
-              >
-                새 알림
-              </button>
-              <button
-                onClick={() => setTab("read")}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  tab === "read" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
-                }`}
-              >
-                읽은 알림
-              </button>
-            </div>
-
-            <div className="relative">
-              <button
-                ref={gearRef}
-                onClick={() => setGearOpen((v) => !v)}
-                className="p-1.5 rounded hover:bg-gray-100 active:bg-gray-200"
-                aria-label="알림 설정"
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
-                    stroke="currentColor" strokeWidth="1.2"
-                  />
-                </svg>
-              </button>
-
-              {gearOpen && (
-                <div className="absolute left-full top-0 ml-2 w-48 rounded-lg border bg-white shadow-lg overflow-hidden z-[60] origin-top-left">
-                  <button
-                    onClick={async () => {
-                      setIsBulkWorking(true);
-                      try { await markAllReadApi(); await refreshAll(); }
-                      catch (e) { console.error(e); alert("모두 읽음 처리에 실패했습니다."); }
-                      finally { setIsBulkWorking(false); setGearOpen(false); }
-                    }}
-                    disabled={isBulkWorking}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
-                  >
-                    모두 읽음
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      if (!window.confirm("읽은 알림을 모두 삭제하시겠습니까?")) return;
-                      setIsBulkWorking(true);
-                      try { await softDeleteAllRead(); await refreshAll(); }
-                      catch (e) { console.error(e); alert("읽은 알림 전체 삭제에 실패했습니다."); }
-                      finally { setIsBulkWorking(false); setGearOpen(false); }
-                    }}
-                    disabled={isBulkWorking}
-                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
-                  >
-                    읽은 알림 전체 삭제
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="max-h-80 overflow-auto p-3">
-            {(tab === "new" ? unread : read).length === 0 ? (
-              <div className="py-16 text-center text-gray-500">
-                {tab === "new" ? "새 알림이 없어요" : "읽은 알림이 없어요"}
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {(tab === "new" ? unread : read).map((n) => (
-                  <li
-                    key={n.id}
-                    tabIndex={0}
-                    role="button"
-                    onClick={() => onClickItem(n)}
-                    className="relative group cursor-pointer rounded-md px-3 py-3 border border-gray-200 bg-white transition-colors duration-150 hover:bg-sky-50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-                  >
-                    <p className="pr-8 text-sm text-gray-900">{n.title}</p>
-
-                    {tab === "read" && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteRead(n.id); }}
-                        aria-label="알림 삭제"
-                        title="알림 삭제"
-                        className="absolute right-2 top-2 rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </div>
-      )}
-
-      {/* PVP 결과 모달 */}
-      <PvpResultModal
-        open={pvpOpen}
-        data={pvpData}
-        onClose={() => setPvpOpen(false)}
-      />
+      </button>
+      <div className="mt-2 text-lg font-medium text-gray-900">{character?.name}</div>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* 아이콘/유틸                                                         */
-/* ------------------------------------------------------------------ */
+/* ──────────────────────────────────────────────────────────────── */
+/* 아이콘/유틸                                                       */
+/* ──────────────────────────────────────────────────────────────── */
 function IconMail(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -802,7 +399,7 @@ function MoreMenuInline() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logout?.();
     } finally {
       setOpen(false);
       navigate("/login");
@@ -922,9 +519,7 @@ function IconMore(props) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* PVP 결과 모달                                                       */
-/* ------------------------------------------------------------------ */
+/* (선택) PVP 결과 모달 — 스타일 업그레이드 */
 function PvpResultModal({ open, data, onClose }) {
   const overlayRef = useRef(null);
   useEffect(() => {
@@ -936,10 +531,11 @@ function PvpResultModal({ open, data, onClose }) {
 
   if (!open) return null;
 
-  const result = data?.result === "WIN" ? "승리" : "패배";
-  const opponentNickname = data?.opponentNickname ?? data?.opponentUserId ?? "상대";
-  const characterName = data?.opponentCharacterName ?? "-";
-  const img = toFullImageUrl(data?.opponentImageUrl, { kind: "character" });
+  const resultText = data?.result === "WIN" ? "승리" : "패배";
+  const badgeCls =
+    data?.result === "WIN"
+      ? "bg-green-100 text-green-700"
+      : "bg-red-100 text-red-700";
 
   const stat = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
 
@@ -951,54 +547,35 @@ function PvpResultModal({ open, data, onClose }) {
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center justify-between">
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
           <h3 className="text-xl font-semibold">전투 결과</h3>
-          <button
-            onClick={onClose}
-            className="rounded-full px-3 py-1 text-sm border hover:bg-zinc-50"
-          >
+          <button onClick={onClose} className="rounded-full px-3 py-1 text-sm border hover:bg-zinc-50">
             닫기
           </button>
         </div>
 
         <div className="p-6 space-y-6">
-          {/* 상대 캐릭터 요약: 폴백 없이 주소 있으면만 렌더 */}
-          <div className="flex items-center gap-4">
-            {img && (
-              <img
-                src={img}
-                alt="상대 캐릭터"
-                className="w-20 h-20 rounded-2xl object-cover border bg-white"
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-              />
-            )}
-            <div className="min-w-0">
-              <div className="text-lg font-semibold truncate">
-                {characterName}
-                <span className="text-zinc-400 text-base ml-2">({opponentNickname})</span>
-              </div>
-              <div
-                className={`inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-sm
-                ${data?.result === "WIN" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-              >
-                {result}
-              </div>
+          <div className="flex items-center gap-3">
+            <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm ${badgeCls}`}>
+              {resultText}
+            </div>
+            <div className="text-sm text-zinc-500">
+              전투 ID: {data?.battleId ?? "-"}
             </div>
           </div>
 
-          {/* 스탯 */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <Stat label="LV"  value={stat(data?.level)} />
-            <Stat label="HP"  value={stat(data?.hp)} />
-            <Stat label="ATK" value={stat(data?.atk)} />
-            <Stat label="DEF" value={stat(data?.def)} />
-            <Stat label="SPD" value={stat(data?.spd)} />
-            <Stat label="CRIT" value={stat(data?.crit, "%")} />
+            <ModalStat label="LV"  value={stat(data?.level)} />
+            <ModalStat label="HP"  value={stat(data?.hp)} />
+            <ModalStat label="ATK" value={stat(data?.atk)} />
+            <ModalStat label="DEF" value={stat(data?.def)} />
+            <ModalStat label="SPD" value={stat(data?.spd)} />
+            <ModalStat label="CRIT" value={stat(data?.crit, "%")} />
           </div>
 
-          <div className="text-xs text-zinc-500">
-            전투 ID: {data?.battleId ?? "-"} · 알림 ID: {data?.notificationId ?? "-"}
+          <div className="text-sm text-zinc-600">
+            상대: <b>{data?.opponentNickname ?? "-"}</b>
           </div>
         </div>
       </div>
@@ -1006,22 +583,11 @@ function PvpResultModal({ open, data, onClose }) {
   );
 }
 
-function Stat({ label, value }) {
+function ModalStat({ label, value }) {
   return (
-    <div className="rounded-xl border p-3 text-center bg-white/80">
+    <div className="rounded-xl border border-zinc-200 p-3 text-center bg-white/90">
       <div className="text-xs text-zinc-500">{label}</div>
       <div className="text-lg font-semibold">{value}</div>
     </div>
   );
-}
-
-/* ------------------------------------------------------------------ */
-/* 유틸                                                                */
-/* ------------------------------------------------------------------ */
-function safeJson(s) {
-  try {
-    return JSON.parse(s || "{}");
-  } catch {
-    return {};
-  }
 }

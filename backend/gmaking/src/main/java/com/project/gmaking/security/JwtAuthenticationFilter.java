@@ -25,19 +25,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final String BEARER_PREFIX = "Bearer ";
 
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        // 정적 리소스/루트/파비콘/프리플라이트는 필터 스킵
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
-        return uri.startsWith("/images/")
-                || uri.startsWith("/static/")
-                || uri.startsWith("/css/")
-                || uri.startsWith("/js/")
-                || uri.equals("/")
-                || uri.equals("/index.html")
-                || uri.equals("/favicon.ico");
-    }
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) {
+//        String uri = request.getRequestURI();
+//        // 정적 리소스/루트/파비콘/프리플라이트는 필터 스킵
+//        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+//        return uri.startsWith("/images/")
+//                || uri.startsWith("/static/")
+//                || uri.startsWith("/css/")
+//                || uri.startsWith("/js/")
+//                || uri.equals("/")
+//                || uri.equals("/index.html")
+//                || uri.equals("/favicon.ico");
+//    }
 
 
     @Override

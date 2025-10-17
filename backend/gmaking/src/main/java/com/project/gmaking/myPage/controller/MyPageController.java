@@ -53,7 +53,7 @@ public class MyPageController {
     //요약 한번에 맏고 싶으면
     @GetMapping("/summary")
     public MyPageSummaryVO summary(
-            @RequestParam(defaultValue = "6") int previewSize,
+            @RequestParam(defaultValue = "50") int previewSize,
             Authentication authentication
     ) {
         String userId = currentUserId(authentication);

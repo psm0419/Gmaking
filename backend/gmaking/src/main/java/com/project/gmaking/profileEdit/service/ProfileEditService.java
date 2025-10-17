@@ -1,7 +1,7 @@
 package com.project.gmaking.profileEdit.service;
 
-import com.project.gmaking.imageUpload.ImageKind;
-import com.project.gmaking.imageUpload.service.ImageUploadService;
+//import com.project.gmaking.imageUpload.ImageKind;
+//import com.project.gmaking.imageUpload.service.ImageUploadService;
 import com.project.gmaking.profileEdit.dao.ProfileEditDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,7 +17,7 @@ import java.util.Map;
 public class ProfileEditService {
     private final ProfileEditDAO dao;
     private final PasswordEncoder passwordEncoder;
-    private final ImageUploadService imageUploadService;
+//    private final ImageUploadService imageUploadService;
 
     // 프로필 조회
     @Transactional(readOnly = true)
@@ -61,12 +61,12 @@ public class ProfileEditService {
     }
 
     // 프로필 이미지 업로드
-    public Map<String, Object> uploadProfile(String userId, MultipartFile file) throws Exception {
-        // enum만 넘기면 dir/code 자동 적용
-        var img = imageUploadService.saveFor(file, ImageKind.PROFILE, userId);
-
-        dao.updateUserImage(userId, img.getImageId());
-        return Map.of("url", img.getImageUrl());
-    }
+//    public Map<String, Object> uploadProfile(String userId, MultipartFile file) throws Exception {
+//        // enum만 넘기면 dir/code 자동 적용
+//        var img = imageUploadService.saveFor(file, ImageKind.PROFILE, userId);
+//
+//        dao.updateUserImage(userId, img.getImageId());
+//        return Map.of("url", img.getImageUrl());
+//    }
 
 }
