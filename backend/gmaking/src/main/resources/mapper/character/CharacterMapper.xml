@@ -11,6 +11,7 @@
         <result property="userId" column="USER_ID"/>
         <result property="characterName" column="CHARACTER_NAME"/>
         <result property="imageId" column="IMAGE_ID"/>
+        <result property="imageUrl" column="IMAGE_URL"/>
         <result property="characterPersonalityId" column="CHARACTER_PERSONALITY_ID"/>
         <result property="backgroundInfo" column="BACKGROUND_INFO"/>
         <result property="gradeId" column="GRADE_ID"/>
