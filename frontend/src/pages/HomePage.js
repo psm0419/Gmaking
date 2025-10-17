@@ -18,9 +18,8 @@ const HomePage = () => {
     const { user } = useAuth();
     const hasCharacter = !!user?.hasCharacter;
     const characterImageUrl = user?.characterImageUrl || null;
-
     const displayName = user?.userNickname || user?.userName || user?.userId;
-    const roleColor = user?.role === 'ADMIN' ? 'text-red-400' : 'text-yellow-400';
+
 
     // 슬라이드 배너 및 이벤트 더미 데이터 
     const slideBanner = {
@@ -79,9 +78,6 @@ const HomePage = () => {
                     <h3 className="text-3xl font-extrabold text-white mb-1">
                         {displayName}
                     </h3>
-                    <p className="text-sm text-gray-400 mb-4">
-                        역할: <span className={roleColor}>{user?.role}</span> | UID: {user?.userId}
-                    </p>
                     
                     <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm">
                         <p>접속 시간: 124시간</p>
