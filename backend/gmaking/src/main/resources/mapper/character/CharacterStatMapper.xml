@@ -19,4 +19,26 @@
         WHERE CHARACTER_ID = #{characterId}
     </select>
 
+    <insert id="insertCharacterStat" parameterType="com.project.gmaking.character.vo.CharacterStatVO">
+        INSERT INTO TB_CHARACTER_STAT (
+        CHARACTER_ID,
+        CHARACTER_HP,
+        CHARACTER_ATTACK,
+        CHARACTER_DEFENSE,
+        CHARACTER_SPEED,
+        CRITICAL_RATE,
+        CREATED_BY,
+        UPDATED_BY
+        )
+        VALUES (
+        #{characterId},
+        #{characterHp},
+        #{characterAttack},
+        #{characterDefense},
+        #{characterSpeed},
+        #{criticalRate},
+        #{createdBy},
+        #{updatedBy}
+        )
+    </insert>
 </mapper>

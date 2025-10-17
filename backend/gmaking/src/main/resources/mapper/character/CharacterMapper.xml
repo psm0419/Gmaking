@@ -154,27 +154,38 @@
                )
     </insert>
 
-    <insert id="insertCharacter">
+    <insert id="insertCharacter" parameterType="com.project.gmaking.character.vo.CharacterVO"
+            useGeneratedKeys="true"
+            keyProperty="characterId"
+            keyColumn="CHARACTER_ID">
         INSERT INTO tb_character (
-            user_id,
-            character_name,
-            image_id,
-            grade_id,
-            character_personality_id,
-            evolution_step,
-            total_stage_clears,
-            created_by
+        user_id,
+        character_name,
+        image_id,
+        grade_id,
+        character_personality_id,
+        evolution_step,
+        total_stage_clears,
+        created_by
         )
         VALUES (
-                #{userId},
-                #{characterName},
-                #{imageId},
-                1,
-                0,
-                1,
-                1,
-                #{userId}
-               )
+        #{userId},
+        #{characterName},
+        #{imageId},
+        1,
+        0,
+        1,
+        1,
+        #{createdBy}
+        )
     </insert>
+
+    <!-- grade_id 업데이트 쿼리 -->
+    <update id="updateGradeId">
+        UPDATE tb_character
+        SET grade_id = #{gradeId},
+        updated_date = NOW()
+        WHERE character_id = #{characterId}
+    </update>
 
 </mapper>
