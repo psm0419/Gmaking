@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.gmaking.character.dao.CharacterDAO;
 import com.project.gmaking.character.vo.CharacterVO;
+import com.project.gmaking.notification.facade.NotificationFacade;
 import com.project.gmaking.pve.dao.TurnLogDAO;
 import com.project.gmaking.pve.service.OpenAIService;
 import com.project.gmaking.pve.vo.TurnLogVO;
@@ -11,6 +12,7 @@ import com.project.gmaking.pve.vo.BattleLogVO;
 import com.project.gmaking.pvp.dao.PvpBattleDAO;
 import com.project.gmaking.pvp.vo.PvpBattleVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PvpBattleServiceImpl implements PvpBattleService{
@@ -27,6 +30,9 @@ public class PvpBattleServiceImpl implements PvpBattleService{
     private final TurnLogDAO turnLogDAO;
     private final ObjectMapper mapper;
     private final OpenAIService openAIService;
+
+    // 알림 파사드 주입
+    private final NotificationFacade notificationFacade;
 
     // 메모리 캐시용
     private final List<PvpBattleVO> activeBattles = new ArrayList<>();
@@ -232,7 +238,39 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         );
         pvpBattleDAO.updateBattleLogResult(log);
 
+        // 알림 발송 (양측)
+        sendPvpResultNotifications(result, isWin);
+
         // 3.  메모리 캐시에서 배틀 제거
         activeBattles.removeIf(b -> b.getBattleId().equals(result.getBattleId()));
     }
+
+    // 전투 종료 알림
+    private void sendPvpResultNotifications(PvpBattleVO result, boolean isWin) {
+        final String actor = "system";
+
+        String myUserId = safe(result.getPlayer().getUserId());
+        String enemyUserId = safe(result.getEnemy().getUserId());
+        String myName = safeName(result.getPlayer().getCharacterName());
+        String enemyName = safeName(result.getEnemy().getCharacterName());
+        long battleId = result.getBattleId();
+
+        String myWinYn = isWin ? "Y" : "N";
+        String enemyWinYn = isWin ? "N" : "Y";
+
+        try {
+            // 내 알림
+            notificationFacade.pvpResult(myUserId, myWinYn, enemyUserId, enemyName, battleId, actor);
+
+            // 상대 알림
+            notificationFacade.pvpResult(enemyUserId, enemyWinYn, myUserId, myName, battleId, actor);
+        } catch (Exception e) {
+            log.error("[PVP] notification failed (myUserId={}, enemyUserId={}, battleId={})",
+                    myUserId, enemyUserId, battleId, e);  // ★ 스택트레이스 포함
+        }
+    }
+
+    // null 방어
+    private String safe(String s) {return (s == null) ? "-" : s;}
+    private String safeName(String s) {return (s == null || s.isBlank()) ? "-" : s;}
 }
