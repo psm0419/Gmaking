@@ -4,6 +4,12 @@ import axios from "axios";
 
 const commands = ["공격", "방어", "회피", "필살기"];
 
+// 이미지 URL 처리 유틸
+const getCharacterImage = (char) =>
+    char.imageUrl?.startsWith("http")
+        ? char.imageUrl
+        : `/images/character/${char.imageId}.png`;
+
 function PvpBattlePage() {
     const { state } = useLocation();
     const { myCharacter, enemyCharacter } = state || {};
@@ -13,101 +19,17 @@ function PvpBattlePage() {
     const [enemyCommand, setEnemyCommand] = useState(null);
     const [battleLogs, setBattleLogs] = useState([]);
     const [turnSummary, setTurnSummary] = useState("");
-    const [battleId, setBattleId] = useState(null); // 배틀 ID 상태
+    const [battleId, setBattleId] = useState(null);
     const [playerCurrentHp, setPlayerCurrentHp] = useState(myCharacter.characterStat.characterHp);
     const [enemyCurrentHp, setEnemyCurrentHp] = useState(enemyCharacter.characterStat.characterHp);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // 배틀 생성
-    const startBattle = async () => {
-        try {
-            const response = await axios.post("/api/pvp/battle", {
-                myCharacterId: myCharacter.characterId,
-                enemyCharacterId: enemyCharacter.characterId
-            });
-
-            // 서버에서 반환한 battleId 저장
-            setBattleId(response.data.battleId); // 서버에서 반환된 실제 배틀 ID
-            setBattleLogs(response.data.log || []);
-        } catch (err) {
-            console.error(err);
-            alert("배틀 생성 실패");
-        }
-    };
-
-    const startTurn = async () => {
-        // 이미 처리 중이면 중복 실행 방지
-        if (isProcessing) return;
-
-        // 전투 종료 상태 체크 (HP 0 이하이면 실행 차단)
-        if (playerCurrentHp <= 0 || enemyCurrentHp <= 0) {
-            alert("전투가 이미 종료되었습니다.");
-            return;
-        }
-
-        if (!myCommand) {
-            alert("커맨드를 선택하세요!");
-            return;
-        }
-        // 처리 시작: true로 설정
-        setIsProcessing(true);
-
-        try {
-            // battleId가 없으면 배틀 자동 생성
-            let currentBattleId = battleId;
-            if (!battleId) {
-                const startResponse = await axios.post("/api/pvp/battle", {
-                    myCharacterId: myCharacter.characterId,
-                    enemyCharacterId: enemyCharacter.characterId
-                });
-                currentBattleId = startResponse.data.battleId;
-                setBattleId(currentBattleId);
-                setBattleLogs(startResponse.data.log || []);
-            }
-
-            // 턴 실행 API 호출
-            const turnResponse = await axios.post("/api/pvp/turn", {
-                battleId: currentBattleId,
-                command: myCommand
-            });
-
-            // 서버 응답에서 실제 상대방 커맨드를 가져옵니다.
-            const actualEnemyCommand = turnResponse.data.enemyCommand;
-
-            // 상대방 커맨드를 상태에 저장하고 중앙 요약에 사용합니다.
-            setEnemyCommand(actualEnemyCommand);
-            setTurnSummary(`${myCharacter.characterName}의 ${myCommand} VS ${enemyCharacter.characterName}의 ${actualEnemyCommand}`);
-
-            const logs = turnResponse.data.logs || [
-                `${myCharacter.characterName}가 ${myCommand} 시도`,
-                `${enemyCharacter.characterName}가 ${actualEnemyCommand} 시도` // 로그의 기본값도 서버 응답을 사용
-            ];
-            setBattleLogs(logs);
-
-            // 서버 응답에서 최신 HP 반영
-            setPlayerCurrentHp(turnResponse.data.playerHp);
-            setEnemyCurrentHp(turnResponse.data.enemyHp);
-
-            setMyCommand(null); // 선택 초기화
-
-        } catch (err) {
-            console.error(err);
-            alert("턴 처리 중 오류 발생");
-        } finally {
-            // 처리 완료 (성공/실패 무관): false로 설정
-            setIsProcessing(false);
-        }
-    };
-
-    // 체력 퍼센트 계산 함수
+    // 체력 퍼센트 계산
     const calcHpPercent = (current, max) => Math.max(0, Math.round((current / max) * 100));
 
-    // HP bar 컴포넌트
     const HpBar = ({ current, max }) => {
         const percent = calcHpPercent(current, max);
-        const barColor =
-            percent > 60 ? "bg-green-500" :
-                percent > 30 ? "bg-yellow-500" : "bg-red-500";
+        const barColor = percent > 60 ? "bg-green-500" : percent > 30 ? "bg-yellow-500" : "bg-red-500";
 
         return (
             <div className="w-40 bg-gray-700 rounded-full h-4 mt-2">
@@ -120,6 +42,56 @@ function PvpBattlePage() {
         );
     };
 
+    // 턴 실행
+    const startTurn = async () => {
+        if (isProcessing) return;
+        if (playerCurrentHp <= 0 || enemyCurrentHp <= 0) {
+            alert("전투가 종료되었습니다.");
+            return;
+        }
+        if (!myCommand) {
+            alert("커맨드를 선택하세요!");
+            return;
+        }
+
+        setIsProcessing(true);
+
+        try {
+            // 배틀 ID 없으면 생성
+            let currentBattleId = battleId;
+            if (!battleId) {
+                const startResponse = await axios.post("/api/pvp/battle", {
+                    myCharacterId: myCharacter.characterId,
+                    enemyCharacterId: enemyCharacter.characterId
+                });
+                currentBattleId = startResponse.data.battleId;
+                setBattleId(currentBattleId);
+                setBattleLogs(startResponse.data.log || []);
+            }
+
+            // 턴 실행
+            const turnResponse = await axios.post("/api/pvp/turn", {
+                battleId: currentBattleId,
+                command: myCommand
+            });
+
+            const actualEnemyCommand = turnResponse.data.enemyCommand;
+            setEnemyCommand(actualEnemyCommand);
+            setTurnSummary(`${myCharacter.characterName}의 ${myCommand} VS ${enemyCharacter.characterName}의 ${actualEnemyCommand}`);
+
+            setBattleLogs(turnResponse.data.logs || []);
+            setPlayerCurrentHp(turnResponse.data.playerHp);
+            setEnemyCurrentHp(turnResponse.data.enemyHp);
+
+            setMyCommand(null);
+        } catch (err) {
+            console.error(err);
+            alert("턴 처리 중 오류 발생");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     return (
         <div className="flex flex-col items-center p-8 text-white bg-gray-900 min-h-screen">
             <h1 className="text-3xl font-bold mb-4">PVP 전투</h1>
@@ -128,11 +100,9 @@ function PvpBattlePage() {
                 {/* 내 캐릭터 */}
                 <div className="text-center">
                     <div className="flex justify-center">
-                        <img src={`/images/character/${myCharacter.imageId}.png`} className="w-40 h-40" />
+                        <img src={getCharacterImage(myCharacter)} className="w-40 h-40" />
                     </div>
                     <p className="text-xl mt-2">{myCharacter.characterName}</p>
-
-                    {/* 내 캐릭터 스탯 표시 */}
                     <p className="text-sm text-gray-400 text-xl">
                         공격력: {myCharacter.characterStat.characterAttack}  방어력: {myCharacter.characterStat.characterDefense}
                     </p>
@@ -148,53 +118,30 @@ function PvpBattlePage() {
                             </button>
                         ))}
                     </div>
-                    {/* 체력바 표시 */}
                     <div className="flex justify-center">
-                        <HpBar
-                            current={playerCurrentHp}
-                            max={myCharacter.characterStat.characterHp}
-                        />
+                        <HpBar current={playerCurrentHp} max={myCharacter.characterStat.characterHp} />
                     </div>
                 </div>
-                    {/* 상성표 */}
+
+                {/* 상성표 */}
                 <div className="flex flex-col items-center justify-center w-2/5 text-center">
                     <h3 className="text-xl font-bold text-yellow-400 mb-3">상성 규칙 (가위바위보)</h3>
                     <div className="text-sm border border-gray-600 rounded p-3 bg-gray-800/80">
-                        <p className="text-green-400 font-semibold">
-                            공격 유형
-                        </p>
-                        <p className="text-gray-200">
-                            공격 VS 회피 (기본 피해)<br />
-                            필살기 VS 공격/방어 (공격력의 2배 피해)
-                        </p>
-
-                        <p className="text-red-400 font-semibold mt-3">
-                            방어 유형
-                        </p>
-                        <p className="text-gray-200">
-                            방어 VS 공격 (방어력의 2배 피해)<br />
-                            회피 VS 필살기 (방어력의 3배 피해)
-                        </p>
-
-                        <p className="text-blue-400 font-semibold mt-3">
-                            동일 커맨드
-                        </p>
-                        <p className="text-gray-200">
-                            공격 VS 공격(서로 기본 피해)<br />
-                            필살기 VS 필살기(서로 2배 피해)<br />
-                            방어 VS 방어, 회피 VS 회피: 피해 없음
-                        </p>
+                        <p className="text-green-400 font-semibold">공격 유형</p>
+                        <p className="text-gray-200">공격 VS 회피 (기본 피해)<br />필살기 VS 공격/방어 (공격력의 2배 피해)</p>
+                        <p className="text-red-400 font-semibold mt-3">방어 유형</p>
+                        <p className="text-gray-200">방어 VS 공격 (방어력의 2배 피해)<br />회피 VS 필살기 (방어력의 3배 피해)</p>
+                        <p className="text-blue-400 font-semibold mt-3">동일 커맨드</p>
+                        <p className="text-gray-200">공격 VS 공격(서로 기본 피해)<br />필살기 VS 필살기(서로 2배 피해)<br />방어 VS 방어, 회피 VS 회피: 피해 없음</p>
                     </div>
                 </div>
 
                 {/* 상대 캐릭터 */}
                 <div className="text-center">
                     <div className="flex justify-center">
-                        <img src={`/images/character/${enemyCharacter.imageId}.png`} className="w-40 h-40" />
+                        <img src={getCharacterImage(enemyCharacter)} className="w-40 h-40" />
                     </div>
                     <p className="text-xl mt-2">{enemyCharacter.characterName}</p>
-
-                    {/* 상대 스탯 */}
                     <p className="text-sm text-gray-400 text-xl">
                         공격력: {enemyCharacter.characterStat.characterAttack}  방어력: {enemyCharacter.characterStat.characterDefense}
                     </p>
@@ -210,12 +157,8 @@ function PvpBattlePage() {
                             </button>
                         ))}
                     </div>
-                    {/* 체력바 표시 */}
                     <div className="flex justify-center">
-                        <HpBar
-                            current={enemyCurrentHp}
-                            max={enemyCharacter.characterStat.characterHp}
-                        />
+                        <HpBar current={enemyCurrentHp} max={enemyCharacter.characterStat.characterHp} />
                     </div>
                 </div>
             </div>
@@ -225,13 +168,9 @@ function PvpBattlePage() {
                 {turnSummary || "커맨드를 선택하고 턴 실행 버튼을 눌러주세요."}
             </div>
 
-            {/* GPT 전투 로그 */}
+            {/* 전투 로그 */}
             <div className="bg-gray-800 p-6 rounded-xl w-2/3 text-left min-h-[120px] overflow-y-auto whitespace-pre-wrap">
-                {battleLogs.length > 0 ? (
-                    battleLogs.map((log, idx) => <p key={idx}>{log}</p>)
-                ) : (
-                    <p>전투 로그가 여기에 표시됩니다.</p>
-                )}
+                {battleLogs.length > 0 ? battleLogs.map((log, idx) => <p key={idx}>{log}</p>) : <p>전투 로그가 여기에 표시됩니다.</p>}
             </div>
 
             <div className="flex gap-4 mt-6">
