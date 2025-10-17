@@ -26,10 +26,10 @@ public interface CharacterDAO {
 
     void insertImage(ImageVO imageVO);
 
-    Long insertCharacter(
-            @Param("userId") String userId,
-            @Param("characterName") String characterName,
-            @Param("imageId") Long imageId);
+    void insertCharacter(CharacterVO characterVO);
 
+    // grade_id 업데이트 메서드
+    void updateGradeId(@Param("gradeId") Integer gradeId,
+                       @Param("characterId") Integer characterId);
 }
 

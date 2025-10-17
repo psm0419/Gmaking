@@ -11,7 +11,7 @@ public class CharacterVO {
 
     private Integer characterId; // 캐릭터 ID (CHARACTER_ID)
     private String userId; // 사용자 ID (USER_ID)
-    private String imageId; // 캐릭터 이미지 ID (IMAGE_ID)
+    private Long imageId; // 캐릭터 이미지 ID (IMAGE_ID)
     private Integer characterPersonalityId; // 캐릭터 성격 ID (CHARACTER_PERSONALITY_ID)
     private String imageUrl;
     private String characterName; // 캐릭터 이름 (CHARACTER_NAME)
