@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import axiosInstance from "../api/axiosInstance";
+import { useAuth } from '../context/AuthContext';
 
 // ===== BASE URL & 프로필 전용 폴백/정규화 =====
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
@@ -89,13 +90,13 @@ function useImeInputRef(initial = "", { maxLen } = {}) {
 // ===== 메인 페이지 =====
 export default function SettingPage() {
   const { setMsg, Toast } = useToast();
-
+  const { updateUserNickname } = useAuth();
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState("");
 
   // 입력: IME 안전 훅
   const nicknameIme = useImeInputRef("", { maxLen: 10 });
-
+  
   const currentPwIme = useImeInputRef("");
   const newPwIme     = useImeInputRef("");
   const newPw2Ime    = useImeInputRef("");
@@ -134,6 +135,7 @@ export default function SettingPage() {
     if (v.length < 2 || v.length > 10) return setMsg("닉네임은 2~10자입니다.");
     try {
       await axiosInstance.patch("/mypage/profile/nickname", { nickname: v });
+      updateUserNickname(v);
       setMsg("닉네임이 저장되었습니다.");
     } catch (e) {
       setMsg(e?.response?.data?.message || "닉네임 저장 실패");
