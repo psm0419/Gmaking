@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
-// 🔔 분리된 웹알림 컴포넌트
+// 분리된 웹알림 컴포넌트
 import NotificationBell from "../components/notifications/NotificationBell";
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
