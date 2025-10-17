@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { notificationsApi } from "../api/notificationApi";
 
 // 분리된 웹알림 컴포넌트
 import NotificationBell from "../components/notifications/NotificationBell";
@@ -40,6 +41,7 @@ function MyMain() {
   const [characters, setCharacters] = useState([]);
   const [selected, setSelected] = useState(null);
   const [repId, setRepId] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0); // ✅ 추가
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -103,6 +105,7 @@ function MyMain() {
         setCharacters(cards);
         setError(null);
 
+        // ✅ 대표 캐릭터 조회
         try {
           const rep = await axios.get(
             "/api/my-page/representative-character",
@@ -111,6 +114,14 @@ function MyMain() {
           setRepId(rep?.data?.characterId ?? null);
         } catch (e) {
           console.warn("대표 캐릭터 조회 실패", e);
+        }
+
+        // ✅ 초기 알림 개수 조회 (분리된 알림 시스템이라도 진입 시 1회 조회)
+        try {
+          const n = await notificationsApi.count();
+          setUnreadCount(Number(n ?? 0));
+        } catch (e) {
+          console.warn("초기 알림 개수 조회 실패", e);
         }
       } catch (e) {
         console.error(e);
@@ -199,6 +210,9 @@ function MyMain() {
               <div className="mt-6 flex items-center gap-5 text-gray-800">
                 {/* 분리된 컴포넌트 삽입 */}
                 <NotificationBell
+                  initialCount={unreadCount}                // ✅ 초기값 표시
+                  token={token}                              // ✅ WS 인증/연결에 사용
+                  onUpdateCount={(n) => setUnreadCount(n)}  // ✅ 내부 변경 외부 반영
                   onOpenPvpModal={(data) => {
                     setPvpModalData(data);
                     setPvpModalOpen(true);

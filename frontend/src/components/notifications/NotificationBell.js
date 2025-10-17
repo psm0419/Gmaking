@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import useNotificationsSocket from '../../hooks/useNotificationsSocket';
 import { notificationsApi as api } from '../../api/notificationApi';
 
-export default function NotificationBell({ onOpenPvpModal }) {
+export default function NotificationBell({
+  onOpenPvpModal,
+  initialCount = 0,         // ✅ 초기 카운트 받기
+  token,                    // ✅ 훅/WS에서 필요하면 사용
+  onUpdateCount,            // ✅ 카운트 변경시 부모에 알려주기
+}) {
   const [open, setOpen] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
   const [tab, setTab] = useState("new"); // 'new' | 'read'
@@ -11,14 +16,26 @@ export default function NotificationBell({ onOpenPvpModal }) {
   const [read, setRead] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
+  const [badgeCount, setBadgeCount] = useState(initialCount); // ✅ 뱃지 카운트
+
   const btnRef = useRef(null);
   const popRef = useRef(null);
   const navigate = useNavigate();
 
-  // 실시간 수신: unread 리스트 맨 앞에 삽입
+  // initialCount가 바뀌면 반영
+  useEffect(() => {
+    setBadgeCount(initialCount ?? 0);
+  }, [initialCount]);
+
+  // 실시간 수신: unread 리스트 맨 앞에 삽입 + 뱃지 + 부모에 통지
   useNotificationsSocket((payload) => {
     setUnread((prev) => [{ ...payload, status: "unread" }, ...prev]);
-  });
+    setBadgeCount((c) => {
+      const next = (c ?? 0) + 1;
+      onUpdateCount?.(next);
+      return next;
+    });
+  }, token); // 훅이 두 번째 인자를 받는다면 token 전달 (무시해도 문제없음)
 
   // 목록 동기화
   const refreshLists = async () => {
@@ -26,8 +43,11 @@ export default function NotificationBell({ onOpenPvpModal }) {
       setLoading(true);
       setErr(null);
       const [u, r] = await Promise.all([api.unread(), api.read()]);
-      setUnread(u);
-      setRead(r);
+      setUnread(u ?? []);
+      setRead(r ?? []);
+      const next = (u ?? []).length;
+      setBadgeCount(next);
+      onUpdateCount?.(next);
     } catch (e) {
       console.error(e);
       setErr("알림을 불러오지 못했습니다.");
@@ -63,41 +83,89 @@ export default function NotificationBell({ onOpenPvpModal }) {
   }, [open]);
 
   // 동작들
-  const badge = unread.length;
+  const badge = badgeCount > 99 ? "99+" : badgeCount; // 보기 좋게 제한 (선택)
+
+  const decBadge = (n = 1) => {
+    setBadgeCount((c) => {
+      const next = Math.max(0, (c ?? 0) - n);
+      onUpdateCount?.(next);
+      return next;
+    });
+  };
 
   const handleMarkRead = async (id) => {
+    // 낙관적 업데이트
     const target = unread.find((n) => n.id === id);
-    setUnread((p) => p.filter((n) => n.id !== id));
+    const nextUnread = unread.filter((n) => n.id !== id);
+    setUnread(nextUnread);
     if (target) setRead((p) => [{ ...target, status: "read" }, ...p]);
-    try { await api.markRead(id); } catch (e) { console.error(e); refreshLists(); }
+
+    // 뱃지 감소
+    if (target) decBadge(1);
+
+    try {
+      await api.markRead(id);
+    } catch (e) {
+      console.error(e);
+      // 실패 시 목록 재동기화 (뱃지도 함께 정합성 맞춰짐)
+      refreshLists();
+    }
   };
 
   const handleOpen = async (n) => {
     await handleMarkRead(n.id);
     if (n.type === "PVP_RESULT" && onOpenPvpModal) {
-      try { const data = await api.pvpModal(n.id); onOpenPvpModal(data); }
-      catch (e) { console.error(e); }
+      try {
+        const data = await api.pvpModal(n.id);
+        onOpenPvpModal(data);
+      } catch (e) {
+        console.error(e);
+      }
     } else if (n.linkUrl) {
       navigate(n.linkUrl);
     }
   };
 
   const handleDeleteOne = async (id) => {
+    // 삭제 대상이 unread에 있으면 뱃지 감소
+    const wasUnread = unread.some((x) => x.id === id);
     setUnread((p) => p.filter((n) => n.id !== id));
     setRead((p) => p.filter((n) => n.id !== id));
-    try { await api.deleteOne(id); } catch (e) { console.error(e); refreshLists(); }
+    if (wasUnread) decBadge(1);
+
+    try {
+      await api.deleteOne(id);
+    } catch (e) {
+      console.error(e);
+      refreshLists();
+    }
   };
 
   const handleMarkAllRead = async () => {
-    setRead((p) => [...unread.map((n) => ({ ...n, status: "read" })), ...p]);
+    // 낙관적 처리
+    const moved = unread.map((n) => ({ ...n, status: "read" }));
+    setRead((p) => [...moved, ...p]);
     setUnread([]);
-    try { await api.markAllRead(); } catch (e) { console.error(e); refreshLists(); }
+    // 뱃지 0
+    if (badgeCount > 0) decBadge(badgeCount);
+
+    try {
+      await api.markAllRead();
+    } catch (e) {
+      console.error(e);
+      refreshLists();
+    }
   };
 
   const handleDeleteAllRead = async () => {
     const prev = read;
     setRead([]);
-    try { await api.deleteAllRead(); } catch (e) { console.error(e); setRead(prev); }
+    try {
+      await api.deleteAllRead();
+    } catch (e) {
+      console.error(e);
+      setRead(prev);
+    }
   };
 
   return (
@@ -111,7 +179,7 @@ export default function NotificationBell({ onOpenPvpModal }) {
         <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
           <path d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        {badge > 0 && (
+        {badgeCount > 0 && (
           <span className="absolute -right-1 -top-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">
             {badge}
           </span>
