@@ -19,7 +19,7 @@ const OAuth2RedirectHandler = () => {
             const role = queryParams.get('role');
             const hasCharacter = queryParams.get('hasCharacter');
             const userEmail = queryParams.get('userEmail');
-
+            const characterImageUrl = queryParams.get('characterImageUrl');
             try {
                 if (token && userId) {
                     const userInfo = { 
@@ -27,7 +27,8 @@ const OAuth2RedirectHandler = () => {
                         userName: userNickname,
                         role, 
                         hasCharacter: hasCharacter === 'true' || hasCharacter === true, 
-                        userEmail
+                        userEmail,
+                        characterImageUrl,
                     };
 
                     if (!isCancelled) {
@@ -64,7 +65,7 @@ const OAuth2RedirectHandler = () => {
         return () => {
             isCancelled = true; 
         };
-        
+
     }, [location, handleOAuth2Login, navigate]);
 
     return (
