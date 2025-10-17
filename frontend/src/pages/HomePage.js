@@ -14,10 +14,11 @@ const GuideLink = ({ title }) => (
 );
 
 const HomePage = () => {
-    const { user, hasCharacter, characterImageUrl } = useAuth(); 
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const hasCharacter = !!user?.hasCharacter;
+    const characterImageUrl = user?.characterImageUrl || null;
 
-    // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const roleColor = user?.role === 'ADMIN' ? 'text-red-400' : 'text-yellow-400';
 
@@ -33,10 +34,6 @@ const HomePage = () => {
         { title: "[공지] 점검 완료 및 보상 지급", date: "2025.09.30" },
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
-
-    const handleNavigateToMyPage = () => {
-        navigate('/my-page'); 
-    };
 
     // 사용자 정보 요약 또는 캐릭터 생성 유도
     const renderCentralSection = () => {
@@ -93,7 +90,7 @@ const HomePage = () => {
                     </div>
                     <button 
                         className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition"
-                        onClick={handleNavigateToMyPage} 
+                        onClick={() => navigate('/my-page')}
                     >
                         내 정보 보기
                     </button>

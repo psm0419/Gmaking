@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { loginApi, withdrawUserApi, withdrawSocialUserApi } from '../api/authApi';
 import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from 'react-router-dom'; 
 
 const AuthContext = createContext();
 
@@ -17,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         // localStorage 비우기
         localStorage.removeItem('gmaking_token');
         localStorage.removeItem('userId');
-        localStorage.removeItem('characterImageUrl');
+        localStorage.removeItem('character_image_url');
 
         // 상태 초기화
         setToken(null);
@@ -27,12 +26,11 @@ export const AuthProvider = ({ children }) => {
         setCharacterImageUrl(null);
     }, []);
 
-
     useEffect(() => {
         const storedToken = localStorage.getItem('gmaking_token');
-        const storedImage = localStorage.getItem('character_image_url');
         const storedHasCharacter = localStorage.getItem('has_character') === 'true'; 
-
+        const storedImage = localStorage.getItem('character_image_url');
+        
         if (!storedToken) {
             setIsLoading(false);
             return;
@@ -46,8 +44,8 @@ export const AuthProvider = ({ children }) => {
             if (userPayload.exp && userPayload.exp < now) {
                 console.log('🔸 JWT expired — clearing token');
                 localStorage.removeItem('gmaking_token');
-                localStorage.removeItem('character_image_url'); 
                 localStorage.removeItem('has_character');
+                localStorage.removeItem('character_image_url'); 
 
                 setIsLoggedIn(false);
                 setToken(null);
@@ -82,14 +80,13 @@ export const AuthProvider = ({ children }) => {
                     setToken(storedToken);
                     setUser(currentUser);
                     setHasCharacter(currentUser.hasCharacter);
-                    setHasCharacter(currentUser.hasCharacter);
                     setCharacterImageUrl(currentUser.characterImageUrl);
                     
                 } catch (e) {
                     console.error('Failed to construct user from valid token. Resetting state:', e);
                     localStorage.removeItem('gmaking_token');
-                    localStorage.removeItem('character_image_url');
                     localStorage.removeItem('has_character');
+                    localStorage.removeItem('character_image_url');
 
                     setIsLoggedIn(false);
                     setToken(null);
@@ -101,9 +98,9 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('JWT 디코딩 실패:', error);
             localStorage.removeItem('gmaking_token');
-            localStorage.removeItem('character_image_url');
             localStorage.removeItem('has_character');
-
+            localStorage.removeItem('character_image_url');
+            
             setIsLoggedIn(false);
             setToken(null);
             setUser(null);
@@ -136,7 +133,7 @@ export const AuthProvider = ({ children }) => {
 
                 localStorage.setItem('gmaking_token', receivedToken);
                 localStorage.setItem('userId', userInfo.userId);
-                localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl || '');
+                localStorage.setItem('character_image_url', userWithCharStatus.characterImageUrl || '');
 
                 return true;
             } else {
@@ -205,14 +202,14 @@ export const AuthProvider = ({ children }) => {
         };
 
         setToken(receivedToken);
-        setUser(userWithCharStatus);
+        setUser(userWithCharStatus || null);
         setIsLoggedIn(true);
-        setHasCharacter(isUserWithCharacter);
-        setCharacterImageUrl(imageUrl); 
+        setHasCharacter(userWithCharStatus.hasCharacter); 
+        setCharacterImageUrl(userWithCharStatus.characterImageUrl);
 
         localStorage.setItem('gmaking_token', receivedToken);
         localStorage.setItem('userId', userInfo.userId);
-        localStorage.setItem('character_image_url', imageUrl || '');
+        localStorage.setItem('character_image_url', userWithCharStatus.characterImageUrl || '');
     }, []);
 
 
