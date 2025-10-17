@@ -1,46 +1,54 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "=//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.project.gmaking.community.dao.PostImageDAO">
     <resultMap id="imageResultMap" type="com.project.gmaking.community.vo.PostImageVO">
-        <id property="imageId" column="image_id" />
-        <result property="postId" column="post_id" />
-        <result property="imageOriginalName" column="image_original_name" />
-        <result property="imageUrl" column="image_url" />
-        <result property="imageName" column="image_name" />
-        <result property="imageType" column="image_type" />
-        <result property="createdDate" column="created_date" />
-        <result property="createdBy" column="created_by" />
-        <result property="updatedDate" column="updated_date" />
-        <result property="upddatedBy" column="updated_by" />
+        <id property="imageId" column="IMAGE_ID" />
+        <result property="imageOriginalName" column="IMAGE_ORIGINAL_NAME" />
+        <result property="imageUrl" column="IMAGE_URL" />
+        <result property="imageName" column="IMAGE_NAME" />
+        <result property="imageType" column="IMAGE_TYPE" />
+        <result property="createdDate" column="CREATED_DATE" />
+        <result property="createdBy" column="CREATED_BY" />
+        <result property="updatedDate" column="UPDATED_DATE" />
+        <result property="updatedBy" column="UPDATED_BY" />
     </resultMap>
 
     <insert id="insertImage" useGeneratedKeys="true" keyProperty="imageId">
-        INSERT INTO tb_image (
-            post_id, image_original_name, image_url, image_name, image_type, created_date, created_by
+        INSERT INTO TB_IMAGE (
+        IMAGE_ORIGINAL_NAME, IMAGE_URL, IMAGE_NAME, IMAGE_TYPE, CREATED_DATE, CREATED_BY
         ) VALUES (
-            #{postId}, #{imageOriginalName}, #{imageUrl}, #{imageName}, #{imageType}, NOW(), #{createdBy}
+        #{imageOriginalName}, #{imageUrl}, #{imageName}, #{imageType}, NOW(), #{createdBy}
         )
     </insert>
 
-    <update id="updateImagePostId">
-        UPDATE tb_image
-        SET post_id = #{postId}
-        WHERE image_id IN
+    <update id="updateImage">
+        UPDATE **TB_IMAGE** SET
+        IMAGE_ORIGINAL_NAME = #{imageOriginalName},
+        IMAGE_URL = #{imageUrl},
+        IMAGE_NAME = #{imageName},
+        IMAGE_TYPE = #{imageType},
+        UPDATED_DATE = NOW(),
+        UPDATED_BY = #{updatedBy}
+        WHERE IMAGE_ID = #{imageId}
+    </update>
+
+    <select id="selectImagesByIds" resultMap="imageResultMap">
+        SELECT
+        IMAGE_ID, IMAGE_ORIGINAL_NAME, IMAGE_URL, IMAGE_NAME, IMAGE_TYPE,
+        CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM **TB_IMAGE**
+        WHERE IMAGE_ID IN
         <foreach item="id" collection="imageIds" open="(" separator="," close=")">
             #{id}
         </foreach>
-        AND post_id IS NULL
-    </update>
-
-    <select id="selectImagesByPostId" resultMap="imageResultMap">
-        SELECT *
-        FROM tb_image
-        WHERE post_id = #{postId}
     </select>
 
-    <delete id="deleteImagesByPostId">
-        DELETE FROM tb_image
-        WHERE post_id = #{postId}
+    <delete id="deleteImagesByIds">
+        DELETE FROM **TB_IMAGE**
+        WHERE IMAGE_ID IN
+        <foreach item="id" collection="imageIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </delete>
+
 </mapper>

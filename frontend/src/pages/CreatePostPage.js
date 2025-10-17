@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Send, FileText, ChevronDown, Tag, Image, X, Upload } from 'lucide-react'; 
-import Header from '../components/Header'; 
-import Footer from '../components/Footer';
-import { useAuth } from '../context/AuthContext'; 
+import { Send, FileText, ChevronDown, Tag, Image, X, Upload } from 'lucide-react';
+import Header from '../components/Header'; // 기존 구조로 복원
+import Footer from '../components/Footer'; // 기존 구조로 복원
+import { useAuth } from '../context/AuthContext'; // 기존 구조로 복원
 import { useNavigate } from 'react-router-dom';
 
 // API 기본 URL 설정 (게시글 생성 API 엔드포인트)
-const API_CREATE_POST_URL = 'http://localhost:8080/api/community'; 
+const API_CREATE_POST_URL = 'http://localhost:8080/community';
 
 const CreatePostPage = () => {
-    const { user } = useAuth();
+    // AuthContext의 user, isLoading을 사용합니다.
+    const { user, isLoading } = useAuth();
     const navigate = useNavigate();
 
     const [title, setTitle] = useState('');
@@ -33,7 +34,6 @@ const CreatePostPage = () => {
 
         // 최대 5개 파일 제한
         if(newFiles.length > 5){
-            // 사용자에게 알림 UI
             setSubmissionMessage({ type: 'error', text: '이미지는 최대 5개까지 첨부할 수 있습니다.'});
             setImageFiles(newFiles.slice(0,5));
         } else{
@@ -41,13 +41,11 @@ const CreatePostPage = () => {
             setImageFiles(newFiles);
         }
 
-        // 파일 선택 후 input 값 초기화(같은 파일을 다시 선택 가능하도록)
         e.target.value = null;
     };
 
     // 이미지 파일 제거 처리
     const handleRemoveImage = (indexToRemove) => {
-        // 객체 URL 해제 (메모리 누수 방지)
         URL.revokeObjectURL(imageFiles[indexToRemove]);
         setImageFiles(imageFiles.filter((_, index) => index !== indexToRemove));
     };
@@ -56,41 +54,83 @@ const CreatePostPage = () => {
         e.preventDefault();
         setSubmissionMessage(null);
         
+        // 1. 사용자 및 제목/내용 검증
+        // isLoading 상태를 추가로 확인합니다.
+        if (isLoading) {
+            setSubmissionMessage({ type: 'error', text: '사용자 정보를 로딩 중입니다. 잠시 후 다시 시도해 주세요.' });
+            return;
+        }
+
         if(!user || !user.userId){
             setSubmissionMessage({ type: 'error', text: '로그인된 사용자 정보가 없어 게시글을 등록할 수 없습니다.' });
             return;
         }
         
         if (!title.trim() || !content.trim()) {
-            // alert 대신 사용할 메시지 UI
             setSubmissionMessage({ type: 'error', text: '제목과 내용을 모두 입력해 주세요.' });
             return;
         }
 
         setIsSubmitting(true);
 
-        // FormData 객체 생성
-        const formData = new FormData();
+        // 2. JWT 토큰 가져오기 
+        const token = localStorage.getItem('gmaking_token');
+        
+        if (!token) {
+            setIsSubmitting(false);
+            setSubmissionMessage({ type: 'error', text: '인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.' });
+            return;
+        }
+        
+        // ⭐️ [Client Log 1] 요청 전송 전 사용자 ID 및 토큰 존재 여부 확인
+        console.log("-----------------------------------------");
+        console.log("⭐️ [Client Log] 게시글 등록 요청 시작");
+        console.log(`User ID: ${user.userId}`);
+        console.log(`Token Found: ${token ? 'Yes' : 'No'}`);
+        console.log("-----------------------------------------");
 
-        // 텍스트 데이터추가
+
+        // 3. FormData 객체 생성 및 데이터 추가
+        const formData = new FormData();
         formData.append('title', title);
         formData.append('content', content);
         formData.append('category', category);
-        formData.append('authorId', user.userId);
-
-        // 이미지 파일 추가
+        // 서버에서 JWT를 통해 인증된 사용자 ID를 사용하므로, 
+        // 클라이언트에서 authorId를 명시적으로 보내는 것은 보안상 권장되지 않으므로 제거합니다.
+        // formData.append('authorId', user.userId); 
+        
         imageFiles.forEach((file) => {
             formData.append('files', file);
         });
 
+        // ⭐️ [Client Log 2] FormData에 담긴 데이터 확인
+        console.log("⭐️ [Client Log] FormData Content:");
+        console.log(`- title: ${title}`);
+        console.log(`- content: ${content.substring(0, Math.min(content.length, 30))}...`);
+        console.log(`- files count: ${imageFiles.length}`);
+        
+        for (let [key, value] of formData.entries()) {
+            console.log(`- FormData item: ${key}: ${value instanceof File ? value.name : value}`);
+        }
+        console.log("-----------------------------------------");
+
         try{
             const response = await fetch(API_CREATE_POST_URL, {
                 method: 'POST',
+                // ⭐️ Authorization 헤더 추가 (가장 중요)
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
                 body: formData,
             });
-
+            
+            // ⭐️ [Client Log 3] 서버 응답 상태 확인
+            console.log(`⭐️ [Client Log] 서버 응답 상태 코드: ${response.status}`);
+            
             if(response.ok){
-                // 게시글 등록 성공
+                const responseData = await response.json();
+                console.log("⭐️ [Client Log] 게시글 등록 성공 응답 데이터:", responseData);
+
                 setSubmissionMessage({
                     type: 'success',
                     text: `게시글이 성공적으로 등록되었습니다. 게시판으로 이동합니다.`
@@ -108,24 +148,43 @@ const CreatePostPage = () => {
                 }, 1000);
 
             } else {
-                // 서버 에러 처리
-                const errorText = await response.text();
-                console.error("게시글 등록 실패 응답:", errorText);
-                throw new Error(`게시글 등록에 실패했습니다. (상태 코드: ${response.status})`);
+                // 서버 에러 처리 (401 Unauthorized, 403 Forbidden 포함)
+                let errorText = await response.text();
+                
+                // ⭐️ [Client Log 4] 실패 시 응답 본문 확인
+                console.error("❌ [Client Log] 게시글 등록 실패 응답 본문:", errorText);
+                
+                if (response.status === 401 || response.status === 403) {
+                    errorText = '세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요. (인증 오류)';
+                } else {
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorText = errorJson.message || errorText;
+                    } catch (e) {
+                        // JSON이 아닐 경우 텍스트 그대로 사용
+                    }
+                }
+                
+                throw new Error(errorText || `게시글 등록에 실패했습니다. (상태 코드: ${response.status})`);
             }
         } catch(error) {
             console.error('게시글 등록 중 오류 발생:', error);
             setSubmissionMessage({
-                type: ' error',
+                type: 'error',
                 text: error.message || '게시글 등록 중 알 수 없는 오류가 발생했습니다.'
             });
         } finally{
             setIsSubmitting(false);
-        } 
+        }
     };
 
     // 이미지 파일을 미리보기 URL로 변환하는 함수
     const getPreviewUrl = (file) => URL.createObjectURL(file);
+
+    // 로딩 중이거나 사용자가 없을 때 버튼을 비활성화/표시
+    const isButtonDisabled = isSubmitting || !user || isLoading;
+    const authorName = isLoading ? '로딩 중...' : (user?.userNickname || '로그인 필요');
+
 
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
@@ -261,15 +320,15 @@ const CreatePostPage = () => {
 
                     {/* 작성자 정보 */}
                     <div className="text-right text-sm text-gray-500 pt-2 border-t border-gray-700">
-                        작성자: {user?.userNickname || '로그인 필요'}
+                        작성자: {authorName}
                     </div>
 
                     {/* 제출 버튼 */}
                     <button
                         type="submit"
-                        disabled={isSubmitting || !user}
+                        disabled={isButtonDisabled}
                         className={`w-full flex items-center justify-center py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 ${
-                            isSubmitting || !user
+                            isButtonDisabled
                                 ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
                                 : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
                         }`}

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 
 // API 기본 URL 설정
-const API_BASE_URL = 'http://localhost:8080/api/community';
+const API_BASE_URL = 'http://localhost:8080/community';
 
 // 게시글 목록을 위한 서브 컴포넌트
 const PostItem = ({ type, title, authorId, date, postId, navigate }) => {

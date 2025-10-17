@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 모든 요청에 대해 JWT 토큰을 검증하고 인증 정보를 SecurityContext에 저장하는 필터
@@ -23,6 +24,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokenProvider;
     private final String AUTHORIZATION_HEADER = "Authorization";
     private final String BEARER_PREFIX = "Bearer ";
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        return method.equalsIgnoreCase("GET") &&
+                path.startsWith("/community");
+    }
 
 
     @Override

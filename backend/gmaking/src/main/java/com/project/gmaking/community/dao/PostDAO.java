@@ -22,11 +22,9 @@ public interface PostDAO {
     int deletePost(Long postId);
 
     // 전체/특정 조건의 게시글 목록을 조회
-    List<PostVO> selectPostList();
+    List<PostVO> selectPostList(PostPagingVO pagingVO);
 
     // 페이징을 위한 전체 게시글 수를 조회
-    int selectPostCount();
+    int selectPostCount(PostPagingVO pagingVO);
 
-    // 페이징 처리된 게시글 목록을 조회
-    List<PostVO> selectPostList(PostPagingVO pagingVO);
 }

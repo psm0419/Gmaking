@@ -13,6 +13,10 @@ public class PostPagingVO {
     private int pageNum = 1; // 현재 페이지 번호(기본 1)
     private int amount = 10; // 페이지당 게시글 수(기본 10)
 
+    private String userId;
+    private String searchType;
+    private String keyword;
+
     // 계산된 필드
     private int totalCount;         // 전체 게시글 수
     private int startPage;          // 시작 페이지 번호
@@ -24,6 +28,15 @@ public class PostPagingVO {
     public PostPagingVO(int pageNum, int amount){
         this.pageNum = pageNum;
         this.amount = amount;
+    }
+
+    // 검색 필터링 조건까지 포함하는 생성자
+    public PostPagingVO(int pageNum, int amount, String userId, String searchType, String keyword){
+        this.pageNum = pageNum;
+        this.amount = amount;
+        this.userId = userId;
+        this.searchType = searchType;
+        this.keyword = keyword;
     }
 
     // LIMIT 절의 OFFSET 계산

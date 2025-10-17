@@ -13,11 +13,17 @@ public class PostVO {
     private Long postId;
     private String title;
     private String content;
-    private String authorId;
+    private String userId;
 
     private List<Long> imageIds;
+    private String categoryCode;
+    private Long viewCount;
+    private Long likeCount;
+    private String isDeleted;
 
     private LocalDateTime createdDate;
+    private String createdBy;
     private LocalDateTime updatedDate;
+    private String updatedBy;
 }
 

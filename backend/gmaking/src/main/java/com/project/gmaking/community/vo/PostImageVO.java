@@ -10,11 +10,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PostImageVO {
     private Long imageId;
-    private Long postId;
     private String imageOriginalName;
     private String imageUrl;
     private String imageName;
-    private String imageType;
+    private long imageType;
     private LocalDateTime createdDate;
     private String createdBy;
     private LocalDateTime updatedDate;

@@ -14,18 +14,13 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
-<<<<<<< HEAD
 import CommunityPage from './pages/CommunityPage';
 import CreatePostPage from './pages/CreatePostPage';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PostDetailPage from './pages/PostDetailPage';
-=======
 import ProfileEditPage from'./pages/ProfileEditPage';
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PvpMatchPage from './pages/PvpMatchPage';
 import PvpBattlePage from './pages/PvpBattlePage';
->>>>>>> 3bceeb2a17c9a1a57da056e5b8fa56f68fd3a5ea
 
 
 // ProtectedRoute: 로그인 확인

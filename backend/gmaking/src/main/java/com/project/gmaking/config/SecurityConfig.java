@@ -102,6 +102,9 @@ public class SecurityConfig {
                         // 회원탈퇴
                         .requestMatchers("/api/user/withdraw").authenticated()
 
+                        // 커뮤니티
+                        .requestMatchers(HttpMethod.GET, "/community/**").permitAll()
+
                         // 나머지 모든 요청은 인증된 사용자에게만 허용
                         .anyRequest().authenticated()
                 )
