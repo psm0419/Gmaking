@@ -1,27 +1,25 @@
-
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { getMyPageSummary, getCharacterStats } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
-
-// ===== 알림: STOMP + SockJS 직접 연결(별도 helpers 없이) =====
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-// 공통 axios (JWT 인터셉터 사용)
-import axiosInstance from "../api/axiosInstance";
 
-// 공통 baseUrl
+import axios from "axios";
+
+
 const BASE_URL = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
 
-const PROFILE_FALLBACK = `${BASE_URL}/images/profile/default.png`;
-const CHARACTER_FALLBACK = `${BASE_URL}/images/character/default.png`;
+const token = localStorage.getItem("gmaking_token");
 
-// 이미지 경로 보정
+const AUTH =
+  token ? { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` } : undefined;
+
+// ===== 이미지 경로 보정(폴백 없음) =====
 function toFullImageUrl(raw, { kind } = {}) {
-  if (!raw) return kind === "profile" ? PROFILE_FALLBACK : CHARACTER_FALLBACK;
+  if (!raw) return null; // 폴백 제거
   if (/^https?:\/\//i.test(raw)) return raw;
 
   let url = String(raw).trim();
@@ -35,7 +33,25 @@ function toFullImageUrl(raw, { kind } = {}) {
   return `${BASE_URL}${url}`;
 }
 
-/** 페이지 래퍼: 헤더 / 메인 / 푸터 */
+/* ------------------------------------------------------------------ */
+/* 간단 API 래퍼 (요청마다 Authorization 인라인 부착)                  */
+/* ------------------------------------------------------------------ */
+const apiGet = (url, config = {}) =>
+  axios.get(url, { ...config, headers: { ...(config.headers || {}), ...(AUTH ? AUTH : {}) } });
+
+const apiPatch = (url, data = null, config = {}) =>
+  axios.patch(url, data, { ...config, headers: { ...(config.headers || {}), ...(AUTH ? AUTH : {}) } });
+
+/* 서버 API (필요시 경로 맞춰 수정) */
+const getMyPageSummary = (limit = 6) =>
+  apiGet(`${BASE_URL}/api/my-page/summary?limit=${encodeURIComponent(limit)}`);
+
+const getCharacterStats = (characterId) =>
+  apiGet(`${BASE_URL}/api/characters/${encodeURIComponent(characterId)}/stats`);
+
+/* ------------------------------------------------------------------ */
+/* 페이지 컴포넌트                                                    */
+/* ------------------------------------------------------------------ */
 export default function MyPage() {
   const handlePick = () => {
     alert("뽑으러가기!");
@@ -49,7 +65,6 @@ export default function MyPage() {
 
   // 로그인(토큰) 여부만 체크
   useEffect(() => {
-    const token = localStorage.getItem("gmaking_token");
     if (!token) {
       alert("로그인 정보가 없습니다. 로그인 페이지로 이동합니다.");
       window.location.href = "/login";
@@ -70,10 +85,7 @@ export default function MyPage() {
           id: c.characterId,
           name: c.name,
           grade: c.grade,
-          image: toFullImageUrl(
-            c.imageUrl || c.imageAddress || c.imagePath || c.imageName,
-            { kind: "character" }
-          ),
+          image: toFullImageUrl(c.imageUrl, { kind: "character" }),
           hp: null,
           def: null,
           atk: null,
@@ -130,7 +142,9 @@ export default function MyPage() {
   );
 }
 
-/** 마이페이지 메인 */
+/* ------------------------------------------------------------------ */
+/* 메인 섹션                                                           */
+/* ------------------------------------------------------------------ */
 function MyMain({
   nickname = "마스터 님",
   ticketCount = 5,
@@ -183,15 +197,18 @@ function MyMain({
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
           <div className="flex items-start gap-6">
             <div className="shrink-0 flex flex-col items-center">
-              <img
-                src={profileImageUrl || PROFILE_FALLBACK}
-                alt="프로필 이미지"
-                className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = PROFILE_FALLBACK;
-                }}
-              />
+              {/* 폴백 제거: 이미지가 있으면 렌더링 */}
+              {profileImageUrl && (
+                <img
+                  src={profileImageUrl}
+                  alt="프로필 이미지"
+                  className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
+                  onError={(e) => {
+                    // 폴백 사용 안 함: 표시만 숨김
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
 
               <div className="mt-6 flex items-center gap-5 text-gray-800">
                 <NotificationBell />
@@ -236,7 +253,9 @@ function MyMain({
   );
 }
 
-/* ===== 캐릭터 상세 패널 ===== */
+/* ------------------------------------------------------------------ */
+/* 캐릭터 상세 패널                                                    */
+/* ------------------------------------------------------------------ */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
   const {
     name,
@@ -249,7 +268,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
     _statsLoading,
     _statsError,
   } = character ?? {};
-  const fmt = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
+  const fmt = (v) => (v == null ? "-" : `${v}`);
 
   return (
     <section className="rounded-2xl border border-black/10 bg-gradient-to-b from-gray-100 to-gray-200 p-6 shadow-sm">
@@ -336,7 +355,9 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
   );
 }
 
-/* ===== 내 캐릭터 섹션 ===== */
+/* ------------------------------------------------------------------ */
+/* 내 캐릭터 섹션                                                      */
+/* ------------------------------------------------------------------ */
 function CharacterSection({ characters = [], selectedId, onPickClick, onOpenCharacter }) {
   const hasCharacters = characters.length > 0;
 
@@ -390,14 +411,18 @@ function CharacterCard({ character, active, onClick }) {
         aria-label={character.name}
       >
         <div className="w-full h-full p-3 flex items-center justify-center">
-          <img
-            src={character.image}
-            alt={character.name}
-            className="max-h-full max-w-full object-contain"
-            onError={(e) => {
-              e.currentTarget.style.opacity = 0;
-            }}
-          />
+          {/* 폴백 없음: 이미지 주소가 있으면만 렌더 */}
+          {character.image && (
+            <img
+              src={character.image}
+              alt={character.name}
+              className="max-h-full max-w-full object-contain"
+              onError={(e) => {
+                // 폴백 없이 숨김 처리
+                e.currentTarget.style.opacity = 0;
+              }}
+            />
+          )}
         </div>
       </button>
       <div className="mt-2 text-lg font-medium text-gray-900">{character.name}</div>
@@ -405,7 +430,9 @@ function CharacterCard({ character, active, onClick }) {
   );
 }
 
-/* 알림 벨 */
+/* ------------------------------------------------------------------ */
+/* 알림 벨 (axiosInstance 제거, 순수 axios + 인라인 JWT)               */
+/* ------------------------------------------------------------------ */
 function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
@@ -424,38 +451,38 @@ function NotificationBell() {
   const startedRef = useRef(false);
   const subRef = useRef(null);
 
-  // ===== REST helpers (JWT 인터셉터 적용된 axiosInstance 사용) =====
+  // ===== REST helpers =====
   const fetchUnreadCount = async () => {
-    const { data } = await axiosInstance.get("/api/notifications/unread/count");
+    const { data } = await apiGet(`${BASE_URL}/api/notifications/unread/count`);
     return typeof data?.count === "number" ? data.count : 0;
   };
   const fetchUnread = async ({ limit = 20, offset = 0 } = {}) => {
-    const { data } = await axiosInstance.get(
-      `/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
+    const { data } = await apiGet(
+      `${BASE_URL}/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
     );
     return data;
   };
   const fetchRead = async ({ limit = 20, offset = 0 } = {}) => {
-    const { data } = await axiosInstance.get(
-      `/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
+    const { data } = await apiGet(
+      `${BASE_URL}/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
     );
     return data;
   };
 
   // 읽음 처리 (단건 / 전체)
   const markRead = async (id) => {
-    await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/read`);
+    await apiPatch(`${BASE_URL}/api/notifications/${encodeURIComponent(id)}/read`);
   };
   const markAllReadApi = async () => {
-    await axiosInstance.patch(`/api/notifications/read-all`);
+    await apiPatch(`${BASE_URL}/api/notifications/read-all`);
   };
 
   // 소프트 삭제 (STATUS='deleted')
   const softDeleteOne = async (id) => {
-    await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/delete`);
+    await apiPatch(`${BASE_URL}/api/notifications/${encodeURIComponent(id)}/delete`);
   };
   const softDeleteAllRead = async () => {
-    await axiosInstance.patch(`/api/notifications/read/delete`);
+    await apiPatch(`${BASE_URL}/api/notifications/read/delete`);
   };
 
   const normalizeList = (arr) =>
@@ -464,7 +491,7 @@ function NotificationBell() {
       title: n.title || "알림",
       linkUrl: n.linkUrl || null,
       type: n.type,
-      status: n.status, // 'unread' | 'read' (deleted는 서버에서 제외)
+      status: n.status, // 'unread' | 'read'
       meta: typeof n.metaJson === "string" ? safeJson(n.metaJson) : n.metaJson || {},
       createdDate: n.createdDate,
     }));
@@ -486,15 +513,14 @@ function NotificationBell() {
 
   // 알림→PVP 모달 데이터 가져오기
   const fetchPvpModal = async (notificationId) => {
-    const { data } = await axiosInstance.get(
-      `/api/notifications/${encodeURIComponent(notificationId)}/pvp-modal`
+    const { data } = await apiGet(
+      `${BASE_URL}/api/notifications/${encodeURIComponent(notificationId)}/pvp-modal`
     );
     return data;
   };
 
   // 초기 로드 + STOMP 연결
   useEffect(() => {
-    const token = localStorage.getItem("gmaking_token");
     if (!token) return;
 
     refreshAll().catch(console.error);
@@ -504,9 +530,7 @@ function NotificationBell() {
     const sockUrl = `${BASE_URL}/notify-ws`;
     const client = new Client({
       webSocketFactory: () => new SockJS(sockUrl),
-      connectHeaders: {
-        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
-      },
+      connectHeaders: AUTH || {}, // 인라인 헤더
       debug: () => {},
       reconnectDelay: 0,
       heartbeatIncoming: 10000,
@@ -541,12 +565,10 @@ function NotificationBell() {
       if (!popEl) return;
 
       const target = e.target;
-      // 팝오버 내부나 버튼을 누른 경우는 무시
       const clickedInsidePop = popEl.contains(target);
       const clickedOnButton = btnEl && btnEl.contains(target);
       if (clickedInsidePop || clickedOnButton) return;
 
-      // 바깥 클릭 → 닫기
       setOpen(false);
       setGearOpen(false);
     };
@@ -558,7 +580,6 @@ function NotificationBell() {
       }
     };
 
-    // mousedown/touchstart로 빠르게 감지
     document.addEventListener("mousedown", onDocPointer);
     document.addEventListener("touchstart", onDocPointer, { passive: true });
     document.addEventListener("keydown", onKey);
@@ -570,7 +591,7 @@ function NotificationBell() {
     };
   }, [open]);
 
-  // “모두 읽음” (서버 일괄 처리)
+  // “모두 읽음”
   const markAllRead = async () => {
     if (unread.length === 0) return;
     setIsBulkWorking(true);
@@ -592,7 +613,6 @@ function NotificationBell() {
         await markRead(n.id);
       }
       if (n.type === "PVP_RESULT") {
-        // 링크로 이동하지 않고 모달 오픈
         const data = await fetchPvpModal(n.id);
         setPvpData(data);
         setPvpOpen(true);
@@ -608,14 +628,12 @@ function NotificationBell() {
   const onDeleteRead = async (id) => {
     try {
       await softDeleteOne(id);
-      setRead((prev) => prev.filter((n) => n.id !== id)); // 즉시 UI 반영
+      setRead((prev) => prev.filter((n) => n.id !== id));
     } catch (e) {
       console.error(e);
       alert("알림 삭제에 실패했습니다.");
     }
   };
-
-  const visible = tab === "new" ? unread : read;
 
   return (
     <div className="relative">
@@ -691,7 +709,6 @@ function NotificationBell() {
                     모두 읽음
                   </button>
 
-                  {/* 읽은 알림 전체 소프트 삭제 */}
                   <button
                     onClick={async () => {
                       if (!window.confirm("읽은 알림을 모두 삭제하시겠습니까?")) return;
@@ -711,7 +728,7 @@ function NotificationBell() {
           </div>
 
           <div className="max-h-80 overflow-auto p-3">
-            { (tab === "new" ? unread : read).length === 0 ? (
+            {(tab === "new" ? unread : read).length === 0 ? (
               <div className="py-16 text-center text-gray-500">
                 {tab === "new" ? "새 알림이 없어요" : "읽은 알림이 없어요"}
               </div>
@@ -727,7 +744,6 @@ function NotificationBell() {
                   >
                     <p className="pr-8 text-sm text-gray-900">{n.title}</p>
 
-                    {/* 읽은 탭에서만 X(소프트 삭제) */}
                     {tab === "read" && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onDeleteRead(n.id); }}
@@ -758,8 +774,9 @@ function NotificationBell() {
   );
 }
 
-
-/* 기타 메일 아이콘 */
+/* ------------------------------------------------------------------ */
+/* 아이콘/유틸                                                         */
+/* ------------------------------------------------------------------ */
 function IconMail(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -792,7 +809,6 @@ function MoreMenuInline() {
     }
   };
 
-  // 버튼 기준 위치 계산 (뷰포트 기준 fixed)
   const updatePosition = () => {
     const btn = btnRef.current;
     const panel = panelRef.current;
@@ -800,11 +816,11 @@ function MoreMenuInline() {
 
     const r = btn.getBoundingClientRect();
     const margin = 8;
-    const OFFSET_Y = -5;  // 버튼 아래 여백
+    const OFFSET_Y = -5;
     const OFFSET_X = 150;
 
     let pw = panel.offsetWidth;
-    let left = r.left + r.width / 2 - pw / 2  + OFFSET_X;
+    let left = r.left + r.width / 2 - pw / 2 + OFFSET_X;
     left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
     const top = r.bottom + OFFSET_Y;
     setPos({ top, left, width: pw });
@@ -816,7 +832,6 @@ function MoreMenuInline() {
       l2 = Math.max(margin, Math.min(l2, window.innerWidth - pw - margin));
       setPos((p) => (p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }));
     });
-
   };
 
   useLayoutEffect(() => {
@@ -834,7 +849,7 @@ function MoreMenuInline() {
       const b = btnRef.current;
       if (!p) return;
       if (p.contains(e.target) || b?.contains?.(e.target)) return;
-      setOpen(false); // 바깥 클릭 닫기
+      setOpen(false);
     };
 
     window.addEventListener("resize", onResizeScroll);
@@ -854,7 +869,6 @@ function MoreMenuInline() {
 
   return (
     <div className="relative inline-flex">
-      {/* 버튼 */}
       <button
         ref={btnRef}
         type="button"
@@ -865,7 +879,6 @@ function MoreMenuInline() {
         <IconMore />
       </button>
 
-      {/* 팝오버: 백드롭/어둡게 처리 없음 */}
       {open &&
         createPortal(
           <div
@@ -875,7 +888,6 @@ function MoreMenuInline() {
             className="fixed z-[100] w-64 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
-            {/* 작은 화살표 (옵션) */}
             <div className="absolute -top-2 left-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow" />
 
             <div className="px-4 py-3 border-b text-sm text-gray-600">더보기</div>
@@ -900,8 +912,6 @@ function MoreMenuInline() {
   );
 }
 
-
-/* 더보기 아이콘 */
 function IconMore(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -912,7 +922,9 @@ function IconMore(props) {
   );
 }
 
-/** PVP 결과 모달 */
+/* ------------------------------------------------------------------ */
+/* PVP 결과 모달                                                       */
+/* ------------------------------------------------------------------ */
 function PvpResultModal({ open, data, onClose }) {
   const overlayRef = useRef(null);
   useEffect(() => {
@@ -951,14 +963,16 @@ function PvpResultModal({ open, data, onClose }) {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* 상대 캐릭터 요약 */}
+          {/* 상대 캐릭터 요약: 폴백 없이 주소 있으면만 렌더 */}
           <div className="flex items-center gap-4">
-            <img
-              src={img}
-              alt="상대 캐릭터"
-              className="w-20 h-20 rounded-2xl object-cover border bg-white"
-              onError={(e) => { e.currentTarget.src = CHARACTER_FALLBACK; }}
-            />
+            {img && (
+              <img
+                src={img}
+                alt="상대 캐릭터"
+                className="w-20 h-20 rounded-2xl object-cover border bg-white"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+              />
+            )}
             <div className="min-w-0">
               <div className="text-lg font-semibold truncate">
                 {characterName}
@@ -983,7 +997,6 @@ function PvpResultModal({ open, data, onClose }) {
             <Stat label="CRIT" value={stat(data?.crit, "%")} />
           </div>
 
-          {/* 전투 ID 표기(옵션) */}
           <div className="text-xs text-zinc-500">
             전투 ID: {data?.battleId ?? "-"} · 알림 ID: {data?.notificationId ?? "-"}
           </div>
@@ -1002,7 +1015,9 @@ function Stat({ label, value }) {
   );
 }
 
-/* ===== 유틸 ===== */
+/* ------------------------------------------------------------------ */
+/* 유틸                                                                */
+/* ------------------------------------------------------------------ */
 function safeJson(s) {
   try {
     return JSON.parse(s || "{}");
