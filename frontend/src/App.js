@@ -15,22 +15,12 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
-<<<<<<< HEAD
 import CommunityPage from './pages/CommunityPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
 import ProfileEditPage from'./pages/ProfileEditPage';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PvpMatchPage from './pages/PvpMatchPage';
 import PvpBattlePage from './pages/PvpBattlePage';
-=======
-import ProfileEditPage from'./pages/ProfileEditPage';
-import PvpMatchPage from './pages/PvpMatchPage';
-import PvpBattlePage from './pages/PvpBattlePage';
-import CommunityPage from './pages/CommunityPage';
-import CreatePostPage from './pages/CreatePostPage';
-import PostDetailPage from './pages/PostDetailPage';
->>>>>>> 5f196fb51f847db553ab8f2c14d14431ab2a827c
 
 
 // ProtectedRoute: 로그인 확인
@@ -90,41 +80,13 @@ function App() {
                 <Route path="/pvp/match" element={<PvpMatchPage />} />
                 <Route path="/pvp/battle" element={<PvpBattlePage />} />
                 <Route path="/my-page/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
-                       
+                <Route path="/community" element={<ProtectedRoute><CommunityPage/></ProtectedRoute>} />
+                <Route path="/create-post" element={<ProtectedRoute><CreatePostPage/></ProtectedRoute>} />
+                <Route path="/community/:postId" element={<ProtectedRoute><PostDetailPage/></ProtectedRoute>} /> 
+                                  
                 {/* 그 외 모든 경로를 메인으로 이동 */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-
-                {/* 커뮤니티 페이지 */}
-                <Route
-                    path="/community"
-                    element={
-                        <ProtectedRoute>
-                            <CommunityPage/>
-                        </ProtectedRoute>
-                    } 
-                />
-
-                {/* 새 게시글 작성 페이지 */}
-                <Route
-                    path="/create-post"
-                    element={
-                        <ProtectedRoute>
-                            <CreatePostPage/>
-                        </ProtectedRoute>
-                    } 
-                />
-
-                {/* 게시글 상세 페이지 */}
-                <Route
-                    path="/community/:postId"
-                    element={
-                        <ProtectedRoute>
-                            <PostDetailPage/>
-                        </ProtectedRoute>
-                    } 
-                />
-
-            </Routes>
+                <Route path="*" element={<Navigate to="/" replace />} />  
+            </Routes>     
         </Router>
     );
 }
