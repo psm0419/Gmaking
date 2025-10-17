@@ -13,22 +13,28 @@
         <result column="IMAGE_ID" property="imageId"/>
         <result column="CREATED_DATE" property="createdDate"/>
         <result column="ROLE" property="role"/>
+
+        <result column="HAS_CHARACTER" property="hasCharacter"/>
+        <result column="CHARACTER_IMG_URL" property="characterImageUrl"/>
     </resultMap>
 
     <select id="selectUserById" resultMap="loginResultMap">
         SELECT
-            USER_ID,
-            USER_NAME,
-            USER_EMAIL,
-            IS_EMAIL_VERIFIED,
-            USER_PASSWORD,
-            USER_NICKNAME,
-            IMAGE_ID,
-            ROLE,
-            CREATED_DATE
-        FROM TB_USER
-        WHERE USER_ID = #{userId}
-    </select>
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            T1.HAS_CHARACTER,
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL  FROM TB_USER T1
+            LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
+            LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
+        WHERE T1.USER_ID = #{userId}
+        ORDER BY TBC.CREATED_DATE DESC LIMIT 1 </select>
 
     <insert id="register" parameterType="com.project.gmaking.login.vo.RegisterRequestVO">
         INSERT INTO TB_USER (
@@ -40,19 +46,19 @@
             USER_NICKNAME,
             ROLE
         ) VALUES (
-            #{userId},
-            #{userName},
-            #{userEmail},
-            'N',
-            #{userPassword},
-            #{userNickname},
-             'USER'
-        )
+                    #{userId},
+                    #{userName},
+                    #{userEmail},
+                    'N',
+                    #{userPassword},
+                    #{userNickname},
+                    'USER'
+                )
     </insert>
 
     <select id="checkDuplicate" resultType="int">
         SELECT
-            COUNT(*)
+        COUNT(*)
         FROM TB_USER
         WHERE
         <choose>
@@ -81,21 +87,6 @@
         WHERE USER_ID = #{userId}
     </update>
 
-    <select id="selectUserBySocialId" resultMap="loginResultMap">
-        SELECT
-            USER_ID,
-            USER_NAME,
-            USER_EMAIL,
-            IS_EMAIL_VERIFIED,
-            USER_PASSWORD,
-            USER_NICKNAME,
-            IMAGE_ID,
-            ROLE,
-            CREATED_DATE
-        FROM TB_USER
-        WHERE USER_ID = #{userId}
-    </select>
-
     <insert id="insertSocialUser" parameterType="com.project.gmaking.login.vo.LoginVO">
         INSERT INTO TB_USER (
             USER_ID,
@@ -106,29 +97,61 @@
             USER_NICKNAME,
             ROLE
         ) VALUES (
-            #{userId},
-            #{userName},
-            #{userEmail},
-            'Y',
-            #{userPassword},
-            #{userNickname},
-            'USER'
-        )
+                     #{userId},
+                     #{userName},
+                     #{userEmail},
+                     'Y',
+                     #{userPassword},
+                     #{userNickname},
+                     'USER'
+                 )
     </insert>
+
+    <select id="selectUserBySocialId" resultMap="loginResultMap">
+        SELECT
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            T1.HAS_CHARACTER,
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL
+        FROM TB_USER T1
+                 LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
+                 LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
+        WHERE T1.USER_ID = #{userId}
+        ORDER BY TBC.CREATED_DATE DESC LIMIT 1
+    </select>
 
     <select id="selectUserByEmail" resultMap="loginResultMap">
         SELECT
-            USER_ID,
-            USER_NAME,
-            USER_EMAIL,
-            IS_EMAIL_VERIFIED,
-            USER_PASSWORD,
-            USER_NICKNAME,
-            IMAGE_ID,
-            ROLE,
-            CREATED_DATE
-        FROM TB_USER
-        WHERE USER_EMAIL = #{userEmail}
+            T1.USER_ID,
+            T1.USER_NAME,
+            T1.USER_EMAIL,
+            T1.IS_EMAIL_VERIFIED,
+            T1.USER_PASSWORD,
+            T1.USER_NICKNAME,
+            T1.IMAGE_ID,
+            T1.ROLE,
+            T1.CREATED_DATE,
+            T1.HAS_CHARACTER,
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL
+        FROM TB_USER T1
+                 LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
+                 LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
+        WHERE T1.USER_EMAIL = #{userEmail}
+        ORDER BY TBC.CREATED_DATE DESC LIMIT 1
     </select>
+
+    <update id="updateUserCharacterInfo">
+        UPDATE TB_USER
+        SET
+            HAS_CHARACTER = TRUE
+        WHERE USER_ID = #{userId}
+    </update>
 
 </mapper>

@@ -74,13 +74,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String userId = oauth2Attributes.getLoginVO().getUserId();
         String role = oauth2Attributes.getLoginVO().getRole();
         String userNickname = oauth2Attributes.getLoginVO().getUserNickname();
+        boolean hasCharacter = oauth2Attributes.getLoginVO().isHasCharacter();
+        String characterImageUrl = oauth2Attributes.getLoginVO().getCharacterImageUrl();
 
         // JWT 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname);
+        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname, hasCharacter, characterImageUrl);
         log.info(">>> [OAuth2 Success] JWT Token issued for user: {}", userId);
 
         // 리다이렉션 URL 생성 및 실행
-        String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes);
+        String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes, hasCharacter, characterImageUrl);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
@@ -94,21 +96,27 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     /**
      * JWT 토큰과 사용자 정보를 포함하는 리다이렉션 URL 생성
      */
-    private String buildTargetUrl(String jwtToken, OAuth2Attributes oauth2Attributes) {
+    private String buildTargetUrl(String jwtToken, OAuth2Attributes oauth2Attributes, boolean hasCharacter, String characterImageUrl) {
         String userId = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserId(), StandardCharsets.UTF_8);
         String nickname = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserNickname(), StandardCharsets.UTF_8);
         String role = URLEncoder.encode(oauth2Attributes.getLoginVO().getRole(), StandardCharsets.UTF_8);
         String userEmail = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserEmail(), StandardCharsets.UTF_8);
-        String hasCharacter = "false";
+        String hasCharacterString = String.valueOf(hasCharacter);
 
-        return String.format("%s?token=%s&userId=%s&nickname=%s&role=%s&hasCharacter=%s&userEmail=%s",
+        String encodedCharacterImageUrl = "";
+        if (characterImageUrl != null) {
+            encodedCharacterImageUrl = URLEncoder.encode(characterImageUrl, StandardCharsets.UTF_8);
+        }
+
+        return String.format("%s?token=%s&userId=%s&nickname=%s&role=%s&hasCharacter=%s&userEmail=%s&characterImageUrl=%s",
                 FRONTEND_REDIRECT_URI,
                 jwtToken,
                 userId,
                 nickname,
                 role,
-                hasCharacter,
-                userEmail
+                hasCharacterString,
+                userEmail,
+                encodedCharacterImageUrl
         );
     }
 

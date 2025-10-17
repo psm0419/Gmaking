@@ -42,6 +42,8 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
+
+
     /**
      * Spring Security에서 사용할 CORS 설정 Bean
      * http://localhost:3000 에서의 요청을 허용
@@ -83,7 +85,9 @@ public class SecurityConfig {
 
                         // 웹알림
                         .requestMatchers("/notify-ws/**").permitAll()
-                        .requestMatchers("/api/dev/**").authenticated()
+                        // 마이 페이지 수정
+                        .requestMatchers("/mypage/profile/**").authenticated()
+                        .requestMatchers("/mypage/account").authenticated()
 
                         // /api/** 전체 허용 (이 한 줄로 다 처리됨)
                         .requestMatchers("/api/**").permitAll()

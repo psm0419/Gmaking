@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
@@ -14,6 +15,7 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
+<<<<<<< HEAD
 import CommunityPage from './pages/CommunityPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
@@ -21,6 +23,14 @@ import ProfileEditPage from'./pages/ProfileEditPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PvpMatchPage from './pages/PvpMatchPage';
 import PvpBattlePage from './pages/PvpBattlePage';
+=======
+import ProfileEditPage from'./pages/ProfileEditPage';
+import PvpMatchPage from './pages/PvpMatchPage';
+import PvpBattlePage from './pages/PvpBattlePage';
+import CommunityPage from './pages/CommunityPage';
+import CreatePostPage from './pages/CreatePostPage';
+import PostDetailPage from './pages/PostDetailPage';
+>>>>>>> 5f196fb51f847db553ab8f2c14d14431ab2a827c
 
 
 // ProtectedRoute: 로그인 확인

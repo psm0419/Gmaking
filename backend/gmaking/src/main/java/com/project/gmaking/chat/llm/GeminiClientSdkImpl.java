@@ -7,27 +7,36 @@ import com.google.genai.types.HttpOptions;
 
 import com.project.gmaking.chat.constant.DialogueSender;
 import com.project.gmaking.chat.vo.DialogueVO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@Slf4j
 @Component
 public class GeminiClientSdkImpl implements LlmClient{
 
-    private static final String MODEL_NAME = "gemini-2.0-flash";
+    @Value("${gemini.api.key:}")
+    private String apiKey;
+
+    @Value("${gemini.model.name:gemini-2.0-flash}")
+    private String modelName;
 
     /**.env의 GOOGLE_API_KEY 사용 (System.getenv로 직접 읽음) */
     private Client buildClient() {
+        if (apiKey == null || apiKey.isBlank()) {
+            // 여기까지 오면 .env 로드/WD 문제이므로 명확히 터뜨려 원인 노출
+            throw new IllegalStateException(
+                    "Gemini API key is missing. Check 'google.api.key' or env 'GEMINI_API_KEY'."
+            );
+        }
         return Client.builder()
-                .apiKey(System.getenv("GOOGLE_API_KEY"))
-                .httpOptions(
-                        HttpOptions.builder()
-                                .apiVersion("v1")
-                                .build()          // ← 이거 추가!
-                )
+                .apiKey(apiKey)
+                .httpOptions(HttpOptions.builder().apiVersion("v1").build())
                 .build();
     }
+
 
     @Override
     public String chat(String systemPrompt, String userMessage) throws Exception {
@@ -76,7 +85,7 @@ public class GeminiClientSdkImpl implements LlmClient{
         );
 
         // 3) 모델 호출
-        GenerateContentResponse res = client.models.generateContent(MODEL_NAME, contents, null);
+        GenerateContentResponse res = client.models.generateContent(modelName, contents, null);
         String text = res.text();
         return (text == null || text.isBlank()) ? "빈 응답입니다." : text.trim();
     }

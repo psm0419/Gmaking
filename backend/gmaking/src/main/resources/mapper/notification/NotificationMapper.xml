@@ -25,25 +25,25 @@
             (USER_ID, TYPE, TITLE, MESSAGE, LINK_URL, STATUS,
             CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY, EXPIRES_AT, META_JSON)
         VALUES
-            (#{userId}, #{type}, #{title}, #{message}, #{linkUrl}, #{status},
+            (#{userId}, #{type}, #{title}, #{message, jdbcType=LONGVARCHAR}, #{linkUrl}, #{status},
             NOW(), #{createdBy}, NOW(), #{updatedBy}, #{expiresAt}, #{metaJson})
 
     </insert>
-    
+
     <select id="selectUnread" resultMap="NotifMap">
-        SELECT * 
-        FROM TB_NOTIFICATION 
-        WHERE USER_ID = #{userId} 
+        SELECT *
+        FROM TB_NOTIFICATION
+        WHERE USER_ID = #{userId}
             AND STATUS = 'unread'
             AND (EXPIRES_AT IS NULL OR EXPIRES_AT > NOW())
-        ORDER BY CREATED_DATE DESC, NOTIFICATION_ID DESC 
+        ORDER BY CREATED_DATE DESC, NOTIFICATION_ID DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
-    
+
     <select id="countUnread" resultType="int">
         SELECT COUNT(*)
         FROM TB_NOTIFICATION
-        WHERE USER_ID = #{userId} 
+        WHERE USER_ID = #{userId}
             AND STATUS = 'unread'
             AND (EXPIRES_AT IS NULL OR EXPIRES_AT > NOW())
     </select>
@@ -105,6 +105,6 @@
         WHERE USER_ID = #{userId}
             AND STATUS = 'read'
     </update>
-    
+
 
 </mapper>

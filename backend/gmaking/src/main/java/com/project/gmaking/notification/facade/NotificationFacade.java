@@ -28,7 +28,7 @@ public class NotificationFacade {
                 "amount", amount
         ));
         return notificationService.create(
-                userId, PURCHASE, title, null, link,
+                userId, PURCHASE, title, /* message */ "", link,
                 LocalDateTime.now().plusDays(30), meta, actor
         );
     }
@@ -40,7 +40,7 @@ public class NotificationFacade {
         String link  = "/ranking?characterId=" + characterId;;
         String meta  = json(Map.of("rank", rank));
         return notificationService.create(
-                userId, "RANKING", title, null, link,
+                userId, "RANKING", title, /* message */ "", link,
                 LocalDateTime.now().plusDays(7), meta, actor
         );
     }
@@ -50,32 +50,70 @@ public class NotificationFacade {
         String title = "새 댓글이 달렸습니다";
         String link  = "/community/posts/" + postId;
         String meta  = json(Map.of("postId", postId, "commenter", commenter));
-        return notificationService.create(targetUserId, "COMMENT", title, null, link,
+        return notificationService.create(targetUserId, "COMMENT", title, /* message */ "", link,
                 LocalDateTime.now().plusDays(14), meta, actor);
     }
 
-    public Long pvpResult(String targetUserId, String isWinYn, String opponentUserId, String opponentName, long battleId, String actor) {
-        boolean win = toBoolYn(isWinYn);
-        String name = safeName(opponentName, 18);
+    public Long pvpResult(
+            String targetUserId,
+            String isWinYn,
+            String opponentUserId,
+            String opponentName,
+            long battleId,
+            String actor
+    ) {
+        if (targetUserId == null || targetUserId.isBlank()) {
+            throw new IllegalArgumentException("targetUserId is required");
+        }
 
-        String title = String.format("%s%s의 전투에서 %s했습니다.",
-                name, josaGwaWa(name), win ? "승리" : "패배");
+        final boolean win = toBoolYn(isWinYn);
+        final String name = safeName(opponentName, 18); // 표시는 18자, 원본은 meta에 보존
+        final String title = String.format(
+                "%s%s의 전투에서 %s했습니다.", name, josaGwaWa(name), win ? "승리" : "패배"
+        );
 
-        String link = null;
+        // 링크 기본값: 리플레이/상세가 있다면 연결, 없으면 null 유지
+        // 필요 없으면 아래 한 줄을 null로 바꾸면 됨
+        final String link = "/pvp/battles/" + battleId;
 
-        String meta = json(Map.of(
+        final String meta = json(Map.of(
                 "battleId", battleId,
                 "opponentUserId", opponentUserId,
-                "opponentName", opponentName,
-                "isWin", upYn(isWinYn),
-                "result", win ? "WIN" : "LOSE"
+                "opponentName", opponentName,   // 원본 보존
+                "displayOpponentName", name,    // 잘린 표시명
+                "isWin", win ? "WIN" : "LOSE",
+                "isWinYn", upYn(isWinYn)        // Y/N도 같이 넣어 호환성 유지
         ));
 
-        return notificationService.create(targetUserId, "PVP_RESULT", title, null, link, java.time.LocalDateTime.now().plusDays(30), meta, actor);
+        final String safeActor = (actor == null || actor.isBlank()) ? "system" : actor;
+
+        return notificationService.create(
+                targetUserId, "PVP_RESULT", title, /* message */ "", link,
+                java.time.LocalDateTime.now().plusDays(30), meta, safeActor
+        );
+    }
+
+    /** 편하게 쓰라고 boolean 오버로드도 제공 */
+    public Long pvpResult(
+            String targetUserId,
+            boolean isWin,
+            String opponentUserId,
+            String opponentName,
+            long battleId,
+            String actor
+    ) {
+        return pvpResult(
+                targetUserId,
+                isWin ? "Y" : "N",
+                opponentUserId,
+                opponentName,
+                battleId,
+                actor
+        );
     }
 
     private String json(Object o) {
-        try { return new ObjectMapper().writeValueAsString(o); }
+        try { return om.writeValueAsString(o); }
         catch (Exception e) { return "{}"; }
     }
 

@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { loginApi, withdrawUserApi, withdrawSocialUserApi } from '../api/authApi';
 import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from 'react-router-dom'; 
 
 const AuthContext = createContext();
 
@@ -11,23 +10,26 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasCharacter, setHasCharacter] = useState(false); 
-
+    const [characterImageUrl, setCharacterImageUrl] = useState(null);
 
     const logout = useCallback(() => {
         // localStorage 비우기
         localStorage.removeItem('gmaking_token');        
+        localStorage.removeItem('characterImageUrl');
 
         // 상태 초기화
         setToken(null);
         setUser(null);
         setIsLoggedIn(false);
         setHasCharacter(false);
+        setCharacterImageUrl(null);
     }, []);
-
 
     useEffect(() => {
         const storedToken = localStorage.getItem('gmaking_token');
-
+        const storedHasCharacter = localStorage.getItem('has_character') === 'true'; 
+        const storedImage = localStorage.getItem('character_image_url');
+        
         if (!storedToken) {
             setIsLoading(false);
             return;
@@ -41,10 +43,14 @@ export const AuthProvider = ({ children }) => {
             if (userPayload.exp && userPayload.exp < now) {
                 console.log('🔸 JWT expired — clearing token');
                 localStorage.removeItem('gmaking_token');
+                localStorage.removeItem('has_character');
+                localStorage.removeItem('character_image_url'); 
+
                 setIsLoggedIn(false);
                 setToken(null);
                 setUser(null);
                 setHasCharacter(false);
+                setCharacterCreated(false);
             } else {
                 // 토큰은 유효하지만, 사용자 객체 생성 시 오류 방지
                 try {
@@ -57,34 +63,48 @@ export const AuthProvider = ({ children }) => {
                         role: userPayload.role,
                         userName: userPayload.userName || userPayload.name,
                         userNickname: userPayload.userNickname || userPayload.nickname,
-                        
-                        hasCharacter: userPayload.hasCharacter === true || userPayload.hasCharacter === 'true',
+                        hasCharacter:
+                            userPayload.hasCharacter === true ||
+                            userPayload.hasCharacter === 'true' ||
+                            storedHasCharacter,
+                        characterImageUrl:
+                            userPayload.characterImageUrl || storedImage || null,
                     };
                     
                     // 필수 필드 검증
                     if (!currentUser.userId) {
                         throw new Error("JWT payload is missing a critical userId.");
                     }
-                    
+
+                    setToken(storedToken);
                     setUser(currentUser);
                     setHasCharacter(currentUser.hasCharacter);
+                    setCharacterImageUrl(currentUser.characterImageUrl);
                     
                 } catch (e) {
                     console.error('Failed to construct user from valid token. Resetting state:', e);
                     localStorage.removeItem('gmaking_token');
+                    localStorage.removeItem('has_character');
+                    localStorage.removeItem('character_image_url');
+
                     setIsLoggedIn(false);
                     setToken(null);
                     setUser(null);
                     setHasCharacter(false);
+                    setCharacterImageUrl(null);
                 }
             }
         } catch (error) {
             console.error('JWT 디코딩 실패:', error);
             localStorage.removeItem('gmaking_token');
+            localStorage.removeItem('has_character');
+            localStorage.removeItem('character_image_url');
+            
             setIsLoggedIn(false);
             setToken(null);
             setUser(null);
             setHasCharacter(false);
+            setCharacterImageUrl(null);
         } finally {
             setIsLoading(false);
         }
@@ -100,15 +120,19 @@ export const AuthProvider = ({ children }) => {
                 
                 const userWithCharStatus = { 
                     ...userInfo, 
-                    hasCharacter: userInfo.hasCharacter || false 
+                    hasCharacter: userInfo.hasCharacter || false,
+                    characterImageUrl: userInfo.characterImageUrl || null
                 };
 
                 setToken(receivedToken);
                 setUser(userWithCharStatus || null);
                 setIsLoggedIn(true);
-                setHasCharacter(userWithCharStatus.hasCharacter); // 상태 업데이트
-                
+                setHasCharacter(userWithCharStatus.hasCharacter); 
+                setCharacterImageUrl(userWithCharStatus.characterImageUrl);
+
                 localStorage.setItem('gmaking_token', receivedToken);                
+                localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl || '');
+
                 return true;
             } else {
                 const msg = response.data?.message || '로그인 실패';
@@ -164,34 +188,51 @@ export const AuthProvider = ({ children }) => {
 
     // OAuth2 로그인 처리 함수
     const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
-        const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
+        const isUserWithCharacter =
+            userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
+
+        const imageUrl = userInfo.characterImageUrl || userInfo.character_image_url || null;
+
         const userWithCharStatus = {
             ...userInfo,
-            hasCharacter: isUserWithCharacter
+            hasCharacter: isUserWithCharacter,
+            characterImageUrl: imageUrl
         };
 
         setToken(receivedToken);
         setUser(userWithCharStatus || null);
         setIsLoggedIn(true);
-        setHasCharacter(isUserWithCharacter);
+        setHasCharacter(userWithCharStatus.hasCharacter); 
+        setCharacterImageUrl(userWithCharStatus.characterImageUrl);
 
         localStorage.setItem('gmaking_token', receivedToken);        
-    }, [setToken, setUser, setIsLoggedIn, setHasCharacter, logout]);
+        localStorage.setItem('character_image_url', imageUrl || '');
+    }, []);
 
 
-    // 캐릭터 생성 후 상태를 true로 변경하는 함수
-    const setCharacterStatus = useCallback((status) => {
-        setHasCharacter(status);
+    const setCharacterCreated = useCallback((imageUrl) => { 
+        setHasCharacter(true);
+        setCharacterImageUrl(imageUrl); 
+
+        localStorage.setItem('has_character', 'true');
+        localStorage.setItem('character_image_url', imageUrl);
+
         if (user) {
-            setUser(prev => ({ ...prev, hasCharacter: status }));
+            setUser(prev => ({ 
+                ...prev, 
+                hasCharacter: true, 
+                characterImageUrl: imageUrl 
+            }));
         }
-    }, [user, setHasCharacter, setUser]);
+    }, [user, setHasCharacter, setUser, setCharacterImageUrl]);
 
 
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
-            hasCharacter, login, logout, setCharacterStatus, 
+            hasCharacter, characterImageUrl,
+            login, logout, 
+            setCharacterCreated, 
             withdrawUser, handleOAuth2Login  
         }}>
             {children}

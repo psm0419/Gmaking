@@ -134,4 +134,46 @@
         ORDER BY c.UPDATED_DATE DESC
     </select>
 
+    <insert id="insertImage" parameterType="com.project.gmaking.character.vo.ImageVO"
+            useGeneratedKeys="true"
+            keyProperty="imageId">
+        INSERT INTO tb_image (
+            image_original_name,
+            image_url,
+            image_name,
+            image_type,
+            created_by
+        )
+        VALUES (
+                   #{imageOriginalName},
+                   #{imageUrl},
+                   #{imageName},
+                   #{imageType},
+                   #{createdBy}
+               )
+    </insert>
+
+    <insert id="insertCharacter">
+        INSERT INTO tb_character (
+            user_id,
+            character_name,
+            image_id,
+            grade_id,
+            character_personality_id,
+            evolution_step,
+            total_stage_clears,
+            created_by
+        )
+        VALUES (
+                #{userId},
+                #{characterName},
+                #{imageId},
+                1,
+                0,
+                1,
+                1,
+                #{userId}
+               )
+    </insert>
+
 </mapper>
