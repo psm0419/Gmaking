@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
@@ -15,8 +16,6 @@ import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
 import ProfileEditPage from'./pages/ProfileEditPage';
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PvpMatchPage from './pages/PvpMatchPage';
 import PvpBattlePage from './pages/PvpBattlePage';
 import CommunityPage from './pages/CommunityPage';
