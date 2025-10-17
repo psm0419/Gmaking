@@ -24,7 +24,7 @@ public class NotificationService {
 
 
     @Transactional
-    public Long create(String userId,
+    public Integer create(String userId,
                        String type,
                        String title,
                        String message,

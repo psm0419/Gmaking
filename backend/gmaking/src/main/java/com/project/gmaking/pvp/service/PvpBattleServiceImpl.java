@@ -253,7 +253,7 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         String enemyUserId = safe(result.getEnemy().getUserId());
         String myName = safeName(result.getPlayer().getCharacterName());
         String enemyName = safeName(result.getEnemy().getCharacterName());
-        long battleId = result.getBattleId();
+        Integer battleId = result.getBattleId();
 
         String myWinYn = isWin ? "Y" : "N";
         String enemyWinYn = isWin ? "N" : "Y";

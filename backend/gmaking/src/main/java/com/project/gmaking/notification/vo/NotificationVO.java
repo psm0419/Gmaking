@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class NotificationVO {
-    private Long notificationId;
+    private Integer notificationId;
     private String userId;
     private String type;
     private String title;

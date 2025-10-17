@@ -1,6 +1,5 @@
 package com.project.gmaking.notification.facade;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.gmaking.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ public class NotificationFacade {
     private final ObjectMapper om = new ObjectMapper();
 
     // 구매 알림
-    public Long purchase(String userId, String orderId, String itemName, long amount, String actor) {
+    public Integer purchase(String userId, String orderId, String itemName, long amount, String actor) {
         String title = String.format("%s 를 구매했습니다.", orderId);
 
         String link = "/orders";
@@ -34,7 +33,7 @@ public class NotificationFacade {
     }
 
     // 랭크
-    public Long ranking(String userId, int characterId, String characterName, int rank, String actor) {
+    public Integer ranking(String userId, int characterId, String characterName, int rank, String actor) {
         String name = safeName(characterName, 10);
         String title = String.format("%s%s가 랭크 %d위에 올랐습니다.", name, josaEGa(name), rank);
         String link  = "/ranking?characterId=" + characterId;;
@@ -46,7 +45,7 @@ public class NotificationFacade {
     }
 
     // 댓글 : 해당 글로 이동
-    public Long comment(String targetUserId, long postId, String commenter, String actor) {
+    public Integer comment(String targetUserId, Integer postId, String commenter, String actor) {
         String title = "새 댓글이 달렸습니다";
         String link  = "/community/posts/" + postId;
         String meta  = json(Map.of("postId", postId, "commenter", commenter));
@@ -54,12 +53,12 @@ public class NotificationFacade {
                 LocalDateTime.now().plusDays(14), meta, actor);
     }
 
-    public Long pvpResult(
+    public Integer pvpResult(
             String targetUserId,
             String isWinYn,
             String opponentUserId,
             String opponentName,
-            long battleId,
+            Integer battleId,
             String actor
     ) {
         if (targetUserId == null || targetUserId.isBlank()) {
@@ -94,12 +93,12 @@ public class NotificationFacade {
     }
 
     /** 편하게 쓰라고 boolean 오버로드도 제공 */
-    public Long pvpResult(
+    public Integer pvpResult(
             String targetUserId,
             boolean isWin,
             String opponentUserId,
             String opponentName,
-            long battleId,
+            Integer battleId,
             String actor
     ) {
         return pvpResult(

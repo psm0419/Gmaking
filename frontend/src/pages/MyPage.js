@@ -1,4 +1,4 @@
-// src/pages/MyPage.jsx
+
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -79,7 +79,6 @@ export default function MyPage() {
           atk: null,
           critRate: null,
           speed: null,
-          speed: null,
         }));
 
         setCharacters(cards);
@@ -109,10 +108,10 @@ export default function MyPage() {
     );
   }
 
- const profileImageUrl = toFullImageUrl(
-   profile?.imageUrl || profile?.profileImage || profile?.imageName || profile?.imagePath,
-   { kind: "profile" }
- );
+  const profileImageUrl = toFullImageUrl(
+    profile?.imageUrl || profile?.profileImage || profile?.imageName || profile?.imagePath,
+    { kind: "profile" }
+  );
 
   return (
     <div className="min-h-screen bg-gray-200/70 flex flex-col">
@@ -188,7 +187,7 @@ function MyMain({
                 src={profileImageUrl || PROFILE_FALLBACK}
                 alt="프로필 이미지"
                 className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
-                 onError={(e) => {
+                onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = PROFILE_FALLBACK;
                 }}
@@ -481,6 +480,18 @@ function NotificationBell() {
     setRead(normalizeList(r));
   };
 
+  // === PVP 결과 모달 상태 ===
+  const [pvpOpen, setPvpOpen] = useState(false);
+  const [pvpData, setPvpData] = useState(null);
+
+  // 알림→PVP 모달 데이터 가져오기
+  const fetchPvpModal = async (notificationId) => {
+    const { data } = await axiosInstance.get(
+      `/api/notifications/${encodeURIComponent(notificationId)}/pvp-modal`
+    );
+    return data;
+  };
+
   // 초기 로드 + STOMP 연결
   useEffect(() => {
     const token = localStorage.getItem("gmaking_token");
@@ -574,21 +585,19 @@ function NotificationBell() {
     }
   };
 
-  // 개별 알림 클릭(읽음 처리 & 이동/알림)
+  // 개별 알림 클릭(읽음 처리 & 이동/모달)
   const onClickItem = async (n) => {
     try {
       if (n.status !== "read") {
         await markRead(n.id);
       }
-      if (n.linkUrl) {
+      if (n.type === "PVP_RESULT") {
+        // 링크로 이동하지 않고 모달 오픈
+        const data = await fetchPvpModal(n.id);
+        setPvpData(data);
+        setPvpOpen(true);
+      } else if (n.linkUrl) {
         navigate(n.linkUrl);
-      } else if (n.type === "PVP_RESULT") {
-        const m = n.meta || {};
-        alert(
-          `${m.opponentName ?? m.opponentUserId ?? "상대"}과/와의 전투에서 ${
-            m.result === "WIN" ? "승리" : "패배"
-          }했습니다 (전투ID: ${m.battleId ?? "-"})`
-        );
       }
     } finally {
       await refreshAll().catch(console.error);
@@ -738,6 +747,13 @@ function NotificationBell() {
           </div>
         </div>
       )}
+
+      {/* PVP 결과 모달 */}
+      <PvpResultModal
+        open={pvpOpen}
+        data={pvpData}
+        onClose={() => setPvpOpen(false)}
+      />
     </div>
   );
 }
@@ -799,7 +815,6 @@ function MoreMenuInline() {
       let l2 = r.left + r.width / 2 - pw / 2 + OFFSET_X;
       l2 = Math.max(margin, Math.min(l2, window.innerWidth - pw - margin));
       setPos((p) => (p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }));
-
     });
 
   };
@@ -894,6 +909,96 @@ function IconMore(props) {
       <circle cx="12" cy="12" r="1.7" fill="currentColor" />
       <circle cx="18" cy="12" r="1.7" fill="currentColor" />
     </svg>
+  );
+}
+
+/** PVP 결과 모달 */
+function PvpResultModal({ open, data, onClose }) {
+  const overlayRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && onClose?.();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const result = data?.result === "WIN" ? "승리" : "패배";
+  const opponentNickname = data?.opponentNickname ?? data?.opponentUserId ?? "상대";
+  const characterName = data?.opponentCharacterName ?? "-";
+  const img = toFullImageUrl(data?.opponentImageUrl, { kind: "character" });
+
+  const stat = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === overlayRef.current) onClose?.(); }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b flex items-center justify-between">
+          <h3 className="text-xl font-semibold">전투 결과</h3>
+          <button
+            onClick={onClose}
+            className="rounded-full px-3 py-1 text-sm border hover:bg-zinc-50"
+          >
+            닫기
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* 상대 캐릭터 요약 */}
+          <div className="flex items-center gap-4">
+            <img
+              src={img}
+              alt="상대 캐릭터"
+              className="w-20 h-20 rounded-2xl object-cover border bg-white"
+              onError={(e) => { e.currentTarget.src = CHARACTER_FALLBACK; }}
+            />
+            <div className="min-w-0">
+              <div className="text-lg font-semibold truncate">
+                {characterName}
+                <span className="text-zinc-400 text-base ml-2">({opponentNickname})</span>
+              </div>
+              <div
+                className={`inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-sm
+                ${data?.result === "WIN" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+              >
+                {result}
+              </div>
+            </div>
+          </div>
+
+          {/* 스탯 */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <Stat label="LV"  value={stat(data?.level)} />
+            <Stat label="HP"  value={stat(data?.hp)} />
+            <Stat label="ATK" value={stat(data?.atk)} />
+            <Stat label="DEF" value={stat(data?.def)} />
+            <Stat label="SPD" value={stat(data?.spd)} />
+            <Stat label="CRIT" value={stat(data?.crit, "%")} />
+          </div>
+
+          {/* 전투 ID 표기(옵션) */}
+          <div className="text-xs text-zinc-500">
+            전투 ID: {data?.battleId ?? "-"} · 알림 ID: {data?.notificationId ?? "-"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="rounded-xl border p-3 text-center bg-white/80">
+      <div className="text-xs text-zinc-500">{label}</div>
+      <div className="text-lg font-semibold">{value}</div>
+    </div>
   );
 }
 
