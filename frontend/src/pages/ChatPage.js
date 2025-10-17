@@ -251,14 +251,17 @@ export default function ChatPage() {
       <Header />
 
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-300/60 p-6 shadow-inner">
-          <div className="w-full h-full rounded-[36px] bg-white overflow-hidden relative flex">
+        <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-800 p-6 shadow-inner translate-y-8">
+          <div className="w-full h-full rounded-[36px] bg-gray-800 overflow-hidden relative flex">
             {/* ===== 사이드바 ===== */}
-            <aside className="w-[300px] bg-neutral-700 text-white relative overflow-hidden isolate">
-              <div className="absolute inset-y-0 left-[-60px] w-[60px] bg-neutral-700 rounded-l-[48px]" />
-              <div className="flex flex-col items-center pt-10 gap-6">
+            <aside className="w-[300px] bg-neutral-700 text-white relative flex flex-col rounded-tl-[36px] rounded-bl-[36px]">
+              {/* 둥근 가장자리 장식 (스크롤 방해 안 하도록) */}
+
+
+              {/* 스크롤 영역 */}
+              <div className="flex-1 overflow-y-auto pt-10 pb-6 px-2 relative z-10 no-scrollbar">
                 {loading ? (
-                  <div className="text-sm text-neutral-300">로드 중…</div>
+                  <div className="text-sm text-neutral-300 text-center">로드 중…</div>
                 ) : characters.length === 0 ? (
                   <div className="px-4 text-center text-neutral-300 text-sm">
                     캐릭터가 없어요.
@@ -266,21 +269,24 @@ export default function ChatPage() {
                     마이페이지에서 생성해 주세요.
                   </div>
                 ) : (
-                  characters.map((c, idx) => (
-                    <AvatarItem
-                      key={c.id}
-                      selected={selectedIdx === idx}
-                      onClick={() => setSelectedIdx(idx)}
-                      imageUrl={c.imageUrl}
-                      name={c.name}
-                    />
-                  ))
+                  <div className="flex flex-col items-center gap-6 pr-2">
+                    {characters.map((c, idx) => (
+                      <AvatarItem
+                        key={c.id}
+                        selected={selectedIdx === idx}
+                        onClick={() => setSelectedIdx(idx)}
+                        imageUrl={c.imageUrl}
+                        name={c.name}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             </aside>
 
+
             {/* ===== 채팅 본문 ===== */}
-            <section className="flex-1 flex flex-col">
+            <section className="flex-1 flex flex-col bg-white">
               <div className="flex items-center justify-between px-6 py-4 border-b">
                 <div className="font-semibold text-lg">
                   {selectedCharacter ? selectedCharacter.name : "캐릭터"}
@@ -350,7 +356,9 @@ function AvatarItem({ selected = false, onClick, imageUrl, name }) {
       type="button"
       onClick={onClick}
       className={`group relative w-[220px] h-[110px] rounded-2xl transition-all
-                  ${selected ? "bg-neutral-600 ring-2 ring-white/40" : "bg-neutral-800 hover:bg-neutral-700"}`}
+                ${selected
+                  ? "bg-neutral-600 ring-2 ring-amber-400"
+                    : "bg-neutral-800 hover:bg-neutral-700"}`}
       title={name}
     >
       <div className="absolute left-4 top-1/2 -translate-y-1/2 w-[72px] h-[72px] rounded-full bg-white ring-2 ring-neutral-500 overflow-hidden">
@@ -368,7 +376,9 @@ function AvatarItem({ selected = false, onClick, imageUrl, name }) {
         )}
       </div>
       <div className="absolute left-[100px] right-3 top-1/2 -translate-y-1/2">
-        <div className="line-clamp-2 text-left text-sm font-medium text-white/90">
+        <div className={`line-clamp-2 text-left text-sm font-medium ${
+          selected ? "text-amber-400" : "text-white/90"
+        }`}>
           {name}
         </div>
         <div className="text-[11px] text-white/50 mt-1">클릭하여 전환</div>

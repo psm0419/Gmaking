@@ -184,7 +184,7 @@ export default function ChatEntryPage() {
       <Header />
 
       <main className="flex-1 flex items-center justify-center">
-        <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-300/60 p-6 shadow-inner">
+        <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-800 p-6 p-6 shadow-inner transform translate-y-8">
           <div className="w-full h-full min-h-0 rounded-[36px] bg-white overflow-hidden relative flex">
             {/* 좌측: 선택/검색 */}
             <aside className="w-[420px] border-r bg-white/60 p-6 flex flex-col gap-4 min-h-0">
@@ -200,7 +200,7 @@ export default function ChatEntryPage() {
                 />
               </div>
 
-              <div className="mt-2 grid grid-cols-1 gap-3 overflow-y-auto pr-1" style={{ maxHeight: 440 }}>
+              <div className="mt-2 grid grid-cols-1 gap-3 overflow-y-auto pr-1 no-scrollbar" style={{ maxHeight: 440 }}>
                 {loading && <div className="text-sm text-gray-500">로딩 중…</div>}
                 {!loading && error && <div className="text-sm text-red-500">{error}</div>}
                 {!loading && !error && filtered.length === 0 && (
