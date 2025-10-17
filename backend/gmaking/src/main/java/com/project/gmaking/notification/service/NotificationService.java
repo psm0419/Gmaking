@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,17 +55,18 @@ public class NotificationService {
         // 커밋 후에만 stomp 로 1:1 전송
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override public void afterCommit() {
-                Map<String, Object> payload = Map.of(
-                        "id", vo.getNotificationId(),
-                        "type", vo.getType(),
-                        "title", vo.getTitle(),
-                        "message", vo.getMessage(),
-                        "linkUrl", vo.getLinkUrl(),
-                        "status", vo.getStatus(),      // unread
-                        "metaJson", vo.getMetaJson(),
-                        "createdDate", vo.getCreatedDate()
-                );
-                // 온라인이면 토스트; 오프라인이면 그냥 무시(REST로 미읽음 보전)
+                // null 허용되는 Map 사용 (HashMap/LinkedHashMap 아무거나 가능)
+                Map<String, Object> payload = new java.util.LinkedHashMap<>();
+
+                payload.put("id",          vo.getNotificationId());
+                payload.put("type",        vo.getType());
+                payload.put("title",       vo.getTitle());
+                payload.put("message",     vo.getMessage());     // null 가능
+                payload.put("linkUrl",     vo.getLinkUrl());     // null 가능
+                payload.put("status",      vo.getStatus());
+                payload.put("metaJson",    vo.getMetaJson());    // null 가능
+                payload.put("createdDate", vo.getCreatedDate());
+
                 simp.convertAndSendToUser(userId, "/queue/notifications", payload);
             }
         });
