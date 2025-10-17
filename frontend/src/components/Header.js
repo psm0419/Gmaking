@@ -21,6 +21,7 @@ const Header = () => {
         { name: '고객지원', icon: LifeBuoy, link: '#' },
         { name: 'PVE', icon: LifeBuoy, link: 'pve/maps' },
         { name: 'PVP', icon: LifeBuoy, link: 'pvp/match' },
+        { name: '로그', icon: LifeBuoy, link: 'logs' },
     ];
 
     // 회원 탈퇴 핸들러

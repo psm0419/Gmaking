@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.pve.dao.PveBattleDAO">
+    <!-- 캐릭터별 배틀 로그 조회 -->
+    <select id="selectBattleLogsByCharacterId"
+            parameterType="int"
+            resultType="com.project.gmaking.pve.vo.BattleLogVO">
+        SELECT
+        BATTLE_ID,
+        CHARACTER_ID,
+        BATTLE_TYPE,
+        OPPONENT_ID,
+        IS_WIN,
+        TURN_COUNT,
+        CREATED_DATE,
+        CREATED_BY,
+        UPDATED_DATE,
+        UPDATED_BY
+        FROM TB_BATTLE_LOG
+        WHERE CHARACTER_ID = #{characterId}
+        ORDER BY CREATED_DATE DESC
+    </select>
+</mapper>
