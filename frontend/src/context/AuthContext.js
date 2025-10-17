@@ -193,23 +193,27 @@ export const AuthProvider = ({ children }) => {
 
     // OAuth2 로그인 처리 함수
     const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
-        const isUserWithCharacter = userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
+        const isUserWithCharacter =
+            userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
+
+        const imageUrl = userInfo.characterImageUrl || userInfo.character_image_url || null;
+
         const userWithCharStatus = {
             ...userInfo,
             hasCharacter: isUserWithCharacter,
-            characterImageUrl: userInfo.characterImageUrl || null
+            characterImageUrl: imageUrl
         };
 
         setToken(receivedToken);
-        setUser(userWithCharStatus || null);
+        setUser(userWithCharStatus);
         setIsLoggedIn(true);
         setHasCharacter(isUserWithCharacter);
-        setCharacterImageUrl(userInfo.characterImageUrl || null);
+        setCharacterImageUrl(imageUrl); 
 
         localStorage.setItem('gmaking_token', receivedToken);
         localStorage.setItem('userId', userInfo.userId);
-        localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl || '');
-    }, [setToken, setUser, setIsLoggedIn, setHasCharacter, setCharacterImageUrl, logout]);
+        localStorage.setItem('character_image_url', imageUrl || '');
+    }, []);
 
 
     const setCharacterCreated = useCallback((imageUrl) => { 
