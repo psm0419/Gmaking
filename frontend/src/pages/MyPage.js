@@ -39,6 +39,7 @@ function MyMain() {
   const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [characters, setCharacters] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [repId, setRepId] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,14 +69,15 @@ function MyMain() {
 
     const headers = {
       Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+      "Content-Type": "application/json",
     };
 
     (async () => {
       try {
         setLoading(true);
         const { data } = await axios.get("/api/my-page/summary", {
-            headers,
-            params: { limit: 50 }, // 7개 이상이면 넉넉히
+          headers,
+          params: { limit: 50 }, // 7개 이상이면 넉넉히
         });
 
         const p = data?.profile ?? null;
@@ -100,6 +102,16 @@ function MyMain() {
         });
         setCharacters(cards);
         setError(null);
+
+        try {
+          const rep = await axios.get(
+            "/api/my-page/representative-character",
+            { headers }
+          );
+          setRepId(rep?.data?.characterId ?? null);
+        } catch (e) {
+          console.warn("대표 캐릭터 조회 실패", e);
+        }
       } catch (e) {
         console.error(e);
         setError("마이페이지 데이터를 불러오지 못했습니다.");
@@ -114,7 +126,38 @@ function MyMain() {
   const onChat = () => selected?.id && navigate(`/chat-entry/${selected.id}`);
   const onGrow = () => {};
   const onSend = () => {};
-  const onPickClick = () => navigate('/create-character'); // 필요 시 '/gacha' 등으로 이동
+  const onPickClick = () => navigate("/create-character"); // 필요 시 '/gacha' 등으로 이동
+
+  const setRepresentative = async (characterId) => {
+    if (!characterId) return;
+    try {
+      const headers = {
+        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+      await axios.patch(
+        "/api/my-page/representative-character",
+        { characterId },
+        { headers }
+      );
+      setRepId(characterId);
+    } catch (e) {
+      alert(e?.response?.data?.message || "대표 캐릭터 설정에 실패했습니다.");
+    }
+  };
+
+  const clearRepresentative = async () => {
+    try {
+      const headers = {
+        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+      await axios.delete("/api/my-page/representative-character", { headers });
+      setRepId(null);
+    } catch (e) {
+      alert(e?.response?.data?.message || "대표 캐릭터 해제에 실패했습니다.");
+    }
+  };
 
   if (loading) {
     return (
@@ -195,6 +238,9 @@ function MyMain() {
         selectedId={selected?.id}
         onPickClick={onPickClick}
         onOpenCharacter={onOpenCharacter}
+        repId={repId}
+        onSetRep={setRepresentative}
+        onClearRep={clearRepresentative}
       />
 
       <PvpResultModal
@@ -229,7 +275,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
         </h3>
         <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-gray-800">
           <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-          등급 등급 {fmt(grade)}
+          등급 {fmt(grade)}
         </span>
       </div>
 
@@ -306,14 +352,24 @@ function StatCard({ label, value }) {
 /* ──────────────────────────────────────────────────────────────── */
 /* 내 캐릭터 섹션                                                     */
 /* ──────────────────────────────────────────────────────────────── */
-function CharacterSection({ characters = [], selectedId, onPickClick, onOpenCharacter }) {
+function CharacterSection({
+  characters = [],
+  selectedId,
+  onPickClick,
+  onOpenCharacter,
+  repId,
+  onSetRep,
+  onClearRep,
+}) {
   const hasCharacters = characters.length > 0;
 
   if (!hasCharacters) {
     return (
       <section className="rounded-md bg-gray-300 min-h-[340px] flex items-center justify-center">
         <div className="text-center px-6 py-12">
-          <div className="text-2xl md:text-3xl text-gray-800 mb-6">내 캐릭터를 뽑아주세요!</div>
+          <div className="text-2xl md:text-3xl text-gray-800 mb-6">
+            내 캐릭터를 뽑아주세요!
+          </div>
           <button
             onClick={onPickClick}
             className="px-8 py-3 rounded bg-white border text-gray-900 text-lg hover:bg-gray-50 active:bg-gray-100 transition"
@@ -333,13 +389,18 @@ function CharacterSection({ characters = [], selectedId, onPickClick, onOpenChar
             key={c.id}
             character={c}
             active={selectedId === c.id}
+            isRep={repId === c.id}
             onClick={() => onOpenCharacter?.(c)}
+            onSetRep={() => onSetRep?.(c.id)}
+            onClearRep={() => onClearRep?.()}
           />
         ))}
+
         <button
           onClick={onPickClick}
           className="aspect-square rounded-2xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition"
           aria-label="캐릭터 추가"
+          type="button"
         >
           <span className="text-7xl leading-none text-gray-900">+</span>
         </button>
@@ -348,15 +409,18 @@ function CharacterSection({ characters = [], selectedId, onPickClick, onOpenChar
   );
 }
 
-function CharacterCard({ character, active, onClick }) {
+function CharacterCard({ character, active, onClick, isRep, onSetRep, onClearRep }) {
   return (
     <div className="select-none">
       <button
+        type="button"
         onClick={onClick}
         className={`aspect-square w-full rounded-2xl overflow-hidden bg-white border ${
-          active ? "border-sky-400 ring-2 ring-sky-300" : "border-gray-200 hover:border-gray-300"
+          active
+            ? "border-sky-400 ring-2 ring-sky-300"
+            : "border-gray-200 hover:border-gray-300"
         } active:scale-[0.99] transition`}
-        aria-label={character.name}
+        aria-label={character?.name ?? ""}
       >
         <div className="w-full h-full p-3 flex items-center justify-center">
           <img
@@ -366,7 +430,38 @@ function CharacterCard({ character, active, onClick }) {
           />
         </div>
       </button>
-      <div className="mt-2 text-lg font-medium text-gray-900">{character?.name}</div>
+
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="text-lg font-medium text-gray-900 truncate">
+          {character?.name}
+        </div>
+        {isRep && (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+            ★ 대표
+          </span>
+        )}
+      </div>
+
+      {/* 대표 버튼 */}
+      <div className="mt-2">
+        {isRep ? (
+          <button
+            type="button"
+            onClick={onClearRep}
+            className="w-full rounded-lg border px-3 py-2 text-sm font-semibold bg-white hover:bg-gray-50"
+          >
+            대표 해제
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onSetRep}
+            className="w-full rounded-lg border px-3 py-2 text-sm font-semibold bg-white hover:bg-gray-50"
+          >
+            대표로 지정
+          </button>
+        )}
+      </div>
     </div>
   );
 }

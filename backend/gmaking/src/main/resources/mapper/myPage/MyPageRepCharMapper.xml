@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.myPage.dao.MyPageRepCharDAO">
+
+    <!-- 현재 대표 캐릭터 조회 -->
+    <select id="selectRepresentativeCharacterId" resultType="java.lang.Integer">
+        SELECT CHARACTER_ID
+        FROM tb_user
+        WHERE USER_ID = #{userId}
+        LIMIT 1
+    </select>
+
+    <!-- 캐릭터 소유권 확인 -->
+    <select id="existsMyCharacter" resultType="int">
+        SELECT EXISTS(
+        SELECT 1
+        FROM tb_character c
+        WHERE c.CHARACTER_ID = #{characterId}
+        AND c.USER_ID       = #{userId}
+        )
+    </select>
+
+    <!-- 대표 캐릭터 설정-->
+    <update id="updateRepresentativeCharacter">
+        UPDATE tb_user u
+        SET u.CHARACTER_ID = #{characterId},
+        u.HAS_CHARACTER = 1
+        WHERE u.USER_ID = #{userId}
+        AND EXISTS (
+        SELECT 1 FROM tb_character c
+        WHERE c.CHARACTER_ID = #{characterId}
+        AND c.USER_ID       = #{userId}
+        )
+    </update>
+
+    <!-- 대표 캐릭터 해제 -->
+    <update id="clearRepresentativeCharacter">
+        UPDATE tb_user
+        SET CHARACTER_ID = NULL,
+        HAS_CHARACTER = 0
+        WHERE USER_ID = #{userId}
+    </update>
+
+</mapper>

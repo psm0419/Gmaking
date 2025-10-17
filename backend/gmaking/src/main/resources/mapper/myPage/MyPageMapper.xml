@@ -72,4 +72,6 @@
         SELECT COUNT(*) FROM tb_character WHERE user_id = #{userId}
     </select>
 
+<!--  대표 캐릭  -->
+
 </mapper>
