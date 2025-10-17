@@ -21,7 +21,7 @@ public interface ProfileEditDAO {
                            @Param("passwordHash") String passwordHash);
 
     // 이미지 저장
-    int insertImage(@Param("p") Map<String, Object> p);
+    int insertImage(Map<String, Object> p);
 
     //유저 프로필 이미지 교체
     int updateUserImage(@Param("userId") String userId, @Param("imageId") Integer imageId);

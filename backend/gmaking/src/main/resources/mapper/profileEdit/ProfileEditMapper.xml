@@ -34,13 +34,17 @@
 
 
     <!-- 이미지 저장 -->
-    <insert id="insertImage" parameterType="map" useGeneratedKeys="true" keyProperty="p.imageId">
+    <insert id="insertImage" parameterType="map"
+            useGeneratedKeys="true" keyProperty="imageId">
         INSERT INTO tb_image
             (IMAGE_ORIGINAL_NAME, IMAGE_URL, IMAGE_NAME, IMAGE_TYPE,
             CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY)
         VALUES
-            (#{p.imageOriginalName}, #{p.imageUrl}, #{p.imageName}, #{p.imageType},
-            NOW(), #{p.createdBy}, NOW(), #{p.updatedBy})
+            (#{imageOriginalName},
+            #{imageUrl},
+            #{imageName},
+            #{imageType, jdbcType=INTEGER},
+            NOW(), #{createdBy}, NOW(), #{updatedBy})
     </insert>
 
     <update id="updateUserImage">

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import axiosInstance from "../api/axiosInstance";
@@ -100,8 +101,7 @@ export default function SettingPage() {
   const currentPwIme = useImeInputRef("");
   const newPwIme     = useImeInputRef("");
   const newPw2Ime    = useImeInputRef("");
-  const deleteTextIme= useImeInputRef("");
-  const deletePwIme  = useImeInputRef("");
+
 
   // 이미지 업로드
   const fileRef = useRef(null);
@@ -195,20 +195,10 @@ export default function SettingPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    const deleteText = deleteTextIme.value;
-    const deletePw = deletePwIme.value;
-    if (deleteText !== "DELETE")
-      return setMsg('확인 문구로 "DELETE"를 입력하세요');
-    try {
-      await axiosInstance.delete("/mypage/account", {
-        data: { password: deletePw },
-      });
-      setMsg("회원탈퇴가 완료되었습니다.");
-    } catch (e) {
-      console.error(e);
-      setMsg(e?.response?.data?.message || "회원탈퇴 실패");
-    }
+  const navigate = useNavigate();
+  const goWithdraw = () => {
+    setShowDelete(false);
+    navigate("/withdraw")
   };
 
   // ===== 공통 UI 파트 =====
@@ -440,27 +430,10 @@ export default function SettingPage() {
             onClick={() => setShowDelete(false)}
           />
           <div className="relative w-[92%] max-w-lg bg-[#121827] border border-white/10 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-lg font-semibold">정말 탈퇴하시겠어요?</h3>
-            <p className="text-sm text-white/60 mt-1">
-              확인을 위해 아래 입력창에{" "}
-              <span className="text-red-400 font-semibold">DELETE</span> 를
-              입력하고 비밀번호를 입력하세요.
+            <h3 className="text-lg font-semibold">정말 탈퇴하시겠습니까?</h3>
+            <p className="text-sm text-white/60 mt-2">
+                탈퇴를 누르면 회원탈퇴 절차 페이지로 이동합니다.
             </p>
-            <div className="mt-4 grid gap-3">
-              <input
-                {...deleteTextIme.bind}
-                placeholder="DELETE"
-                className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-red-400/60"
-              />
-              <input
-                type="password"
-                {...deletePwIme.bind}
-                autoComplete="off"
-                name="pw_delete_manual"
-                placeholder="비밀번호"
-                className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-red-400/60"
-              />
-            </div>
             <div className="mt-5 flex gap-3 justify-end">
               <button
                 className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10"
@@ -469,8 +442,8 @@ export default function SettingPage() {
                 취소
               </button>
               <button
-                className="px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold"
-                onClick={handleDeleteAccount}
+                 className="px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold"
+                onClick={goWithdraw}
               >
                 영구 탈퇴
               </button>
