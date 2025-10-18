@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
                 const userWithCharStatus = { 
                     ...userInfo, 
                     hasCharacter: userInfo.hasCharacter || false,
-                    characterImageUrl: userInfo.characterImageUrl || userInfo.character_image_url || null
+                    characterImageUrl: userInfo.characterImageUrl || null
                 };
 
                 setToken(receivedToken);
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }) => {
         const isUserWithCharacter =
             userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
 
-        const imageUrl = userInfo.characterImageUrl || userInfo.character_image_url || null;
+        const imageUrl = userInfo.characterImageUrl || null;
 
         const userWithCharStatus = {
             ...userInfo,
@@ -197,6 +197,24 @@ export const AuthProvider = ({ children }) => {
         });
     }, []);
 
+    // 대표 캐릭터 변경 후 이미지 URL 갱신
+    const updateRepresentativeCharacter = useCallback((imageUrl, characterId) => {
+        localStorage.setItem('characterImageUrl', imageUrl);
+
+        setCharacterImageUrl(imageUrl);
+        setHasCharacter(true);
+
+        // user 상태도 함께 갱신
+        if (user) {
+            setUser(prev => ({
+                ...prev,
+                characterImageUrl: imageUrl,
+                hasCharacter: true,
+                characterId: characterId,
+            }));
+        }
+    }, [user]);
+
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
@@ -204,7 +222,7 @@ export const AuthProvider = ({ children }) => {
             login, logout, 
             setCharacterCreated, 
             withdrawUser, handleOAuth2Login,
-            updateUserNickname, setToken
+            updateUserNickname, updateRepresentativeCharacter, setToken
         }}>
             {children}
         </AuthContext.Provider>
