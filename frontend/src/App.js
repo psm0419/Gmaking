@@ -21,6 +21,8 @@ import PvpBattlePage from './pages/PvpBattlePage';
 import CommunityPage from './pages/CommunityPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
+import BattleLogList from './pages/BattleLogList';
+import TurnLogList from './pages/TurnLogList';
 
 
 // ProtectedRoute: 로그인 확인
@@ -80,7 +82,9 @@ function App() {
                 <Route path="/pvp/match" element={<PvpMatchPage />} />
                 <Route path="/pvp/battle" element={<PvpBattlePage />} />
                 <Route path="/my-page/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
-                       
+                <Route path="/logs" element={<BattleLogList />} />
+                <Route path="/logs/turns/:battleId" element={<TurnLogList />} />
+
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
 

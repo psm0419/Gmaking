@@ -169,7 +169,7 @@ function PvpBattlePage() {
             </div>
 
             {/* 전투 로그 */}
-            <div className="bg-gray-800 p-6 rounded-xl w-2/3 text-left min-h-[120px] overflow-y-auto whitespace-pre-wrap">
+            <div className="bg-gray-800 p-6 rounded-xl w-2/3 text-left overflow-y-auto whitespace-pre-wrap max-h-64">
                 {battleLogs.length > 0 ? battleLogs.map((log, idx) => <p key={idx}>{log}</p>) : <p>전투 로그가 여기에 표시됩니다.</p>}
             </div>
 
@@ -187,6 +187,13 @@ function PvpBattlePage() {
                     className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500"
                 >
                     매칭 화면으로
+                </button>
+                <button
+                    onClick={() => navigate("/")}
+                    disabled={isProcessing}
+                    className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500"
+                >
+                    홈으로
                 </button>
             </div>
         </div>
