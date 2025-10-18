@@ -1,9 +1,9 @@
-import React from "react";
-// 가정: 이 컴포넌트들은 별도의 파일에 정의되어 있다고 가정합니다.
-// 실제 프로젝트 환경에 맞게 경로를 수정해 주세요.
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Ticket, Egg } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
+
 
 /** 공통 카드 - 디자인 개선 버전 */
 function ShopCard({ title, children, onClick, className = "" }) {
@@ -44,13 +44,45 @@ function ProfileBar({ name = "마스터 님", incubatorCount = 0 }) {
 }
 
 export default function ShopPage() {
+
+  const [profile, setProfile] = useState({ name: "마스터 님", incubatorCount:0 })
+
+  const token = localStorage.getItem("gmaking_token");
+
+  let userId = null;
+
+  if (token) {
+    try {
+        const decodedToken = jwtDecode(token);
+        userId = decodedToken.userId;
+    } catch (e) {
+        console.error("샾 페이지 토큰 실패 : ", e);
+    }
+  }
+
+  useEffect(() => {
+    if(!token || !userId) return;
+
+    fetch(`/api/shop/profile?userId=${encodeURIComponent(userId)}`, {
+        headers: {
+            Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`
+        },
+    })
+        .then((r) => r.json())
+        .then((data) => {
+            // setProfile
+        })
+        .catch(() => {});
+  }, [token, userId]);
+
+
   const handleBuy = (sku) => {
     // TODO: 결제/구매 연동
     alert(`${sku} 구매하기`);
   };
 
   return (
-    // 전체 배경을 은은한 회색(zinc-50)으로 설정
+
     <div className="min-h-screen flex flex-col bg-zinc-50 text-zinc-900">
       <Header />
 

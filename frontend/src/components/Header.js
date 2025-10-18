@@ -15,7 +15,7 @@ const Header = () => {
     // 카테고리 메뉴 항목
     const categories = [
         { name: '공지사항', icon: Bell, link: '#' },
-        { name: '상점', icon: ShoppingCart, link: '#' },
+        { name: '상점', icon: ShoppingCart, link: '/shop' },
         { name: '랭킹', icon: Award, link: '#' },
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
         { name: '고객지원', icon: LifeBuoy, link: '#' },
