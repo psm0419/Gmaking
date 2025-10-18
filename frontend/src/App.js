@@ -24,7 +24,6 @@ import PostDetailPage from './pages/PostDetailPage';
 import BattleLogList from './pages/BattleLogList';
 import TurnLogList from './pages/TurnLogList';
 
-
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
     const { isLoggedIn, isLoading } = useAuth(); 
@@ -89,34 +88,13 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
 
                 {/* 커뮤니티 페이지 */}
-                <Route
-                    path="/community"
-                    element={
-                        <ProtectedRoute>
-                            <CommunityPage/>
-                        </ProtectedRoute>
-                    } 
-                />
+                <Route path="/community" element={<ProtectedRoute><CommunityPage/></ProtectedRoute>} />
 
                 {/* 새 게시글 작성 페이지 */}
-                <Route
-                    path="/create-post"
-                    element={
-                        <ProtectedRoute>
-                            <CreatePostPage/>
-                        </ProtectedRoute>
-                    } 
-                />
+                <Route path="/create-post" element={<ProtectedRoute><CreatePostPage/></ProtectedRoute>} />
 
                 {/* 게시글 상세 페이지 */}
-                <Route
-                    path="/community/:postId"
-                    element={
-                        <ProtectedRoute>
-                            <PostDetailPage/>
-                        </ProtectedRoute>
-                    } 
-                />
+                <Route path="/community/:postId" element={<ProtectedRoute><PostDetailPage/></ProtectedRoute>} />
 
             </Routes>
         </Router>
