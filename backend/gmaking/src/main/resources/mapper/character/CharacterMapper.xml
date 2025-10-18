@@ -123,12 +123,9 @@
     <!--  캐릭터 목록 조회  -->
     <select id="selectCharactersForChat" parameterType="string" resultType="map">
         SELECT
-            c.CHARACTER_ID AS id,
+            c.CHARACTER_ID   AS id,
             c.CHARACTER_NAME AS name,
-            CASE
-                WHEN i.IMAGE_NAME IS NULL THEN NULL
-                ELSE CONCAT('/static/character/', i.IMAGE_NAME)
-            END AS imageUrl
+            i.IMAGE_URL      AS imageUrl
         FROM TB_CHARACTER c
         LEFT JOIN TB_IMAGE i ON c.IMAGE_ID = i.IMAGE_ID
         WHERE c.USER_ID = #{userId}

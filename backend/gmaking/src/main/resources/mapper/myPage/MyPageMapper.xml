@@ -8,60 +8,61 @@
         <result property="userId"        column="user_id"/>
         <result property="nickname"      column="user_nickname"/>
         <result property="email"         column="user_email"/>
-        <result property="emailVerified" column="is_email_verified"/>
-        <!-- createdDate는 VO에 없으므로 제거하거나 VO에 필드 추가 -->
-        <!-- <result property="createdDate"   column="created_date"/> -->
         <result property="role"          column="role"/>
         <result property="imageUrl"      column="image_url"/>
         <result property="ticketCount"   column="ticket_count"/>
     </resultMap>
 
-    <!-- 캐릭터 카드 매핑 -->
+    <!-- 캐릭터 카드 + 스탯 매핑 -->
     <resultMap id="CharacterCardVOMap" type="com.project.gmaking.myPage.vo.CharacterCardVO">
         <result property="characterId"   column="character_id"/>
         <result property="name"          column="character_name"/>
         <result property="evolutionStep" column="evolution_step"/>
         <result property="grade"         column="grade"/>
         <result property="imageUrl"      column="image_url"/>
+
+        <!-- association: VO 필드명/타입/내부 프로퍼티 전부 VO에 맞추기 -->
+        <association property="characterStatVO"
+                     javaType="com.project.gmaking.myPage.vo.MypageCharacterStatVO">
+            <result column="character_hp"       property="hp"/>
+            <result column="character_attack"   property="attack"/>
+            <result column="character_defense"  property="defense"/>
+            <result column="character_speed"    property="speed"/>
+            <result column="critical_rate"      property="criticalRate"/>
+        </association>
     </resultMap>
 
-    <!-- 프로필: tb_user + tb_image -->
+    <!-- 프로필: image_url 그대로 -->
     <select id="selectProfile" resultMap="MyPageProfileVOMap">
         SELECT
         u.user_id,
         u.user_nickname,
         u.user_email,
-        (u.is_email_verified = 'Y') AS is_email_verified,
-        u.created_date,
         u.role,
-        /* ⬇⬇ 여기 수정: 존재하지 않는 u.ticket_count 대신 0 고정 */
         0 AS ticket_count,
-        CASE
-        WHEN i.image_name IS NULL THEN NULL
-        ELSE CONCAT('/static/profile/', i.image_name)
-        END AS image_url
+        i.image_url AS image_url
         FROM tb_user u
         LEFT JOIN tb_image i ON u.image_id = i.image_id
         WHERE u.user_id = #{userId}
         LIMIT 1
     </select>
 
-    <!-- 캐릭터 목록: tb_character + tb_image (+ 등급명 조인 권장) -->
+    <!-- 캐릭터 목록: image_url 그대로 + 스탯 포함 -->
     <select id="selectCharacters" resultMap="CharacterCardVOMap">
         SELECT
         c.character_id,
         c.character_name,
         c.evolution_step,
-        /* 등급명을 원하면: g.grade_name AS grade 로 변경하고 등급 테이블 조인 */
         c.grade_id AS grade,
-        CASE
-        WHEN img.image_name IS NULL THEN NULL
-        /* 실제 경로에 맞게 prefix 조정 */
-        ELSE CONCAT('/static/character/', img.image_name)
-        END AS image_url
+        img.image_url AS image_url,
+        s.character_hp,
+        s.character_attack,
+        s.character_defense,
+        s.character_speed,
+        s.critical_rate
         FROM tb_character c
         LEFT JOIN tb_image img ON c.image_id = img.image_id
-        /* LEFT JOIN tb_grade g ON g.grade_id = c.grade_id */
+        LEFT JOIN tb_character_stat s ON s.character_id = c.character_id
         WHERE c.user_id = #{userId}
         ORDER BY c.updated_date DESC
         LIMIT #{limit} OFFSET #{offset}
@@ -70,5 +71,7 @@
     <select id="countCharacters" resultType="int">
         SELECT COUNT(*) FROM tb_character WHERE user_id = #{userId}
     </select>
+
+<!--  대표 캐릭  -->
 
 </mapper>

@@ -1,0 +1,18 @@
+<!--<?xml version="1.0" encoding="UTF-8" ?>-->
+<!--<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">-->
+
+<!--<mapper namespace="com.project.gmaking.imageUpload.dao.ImageDAO">-->
+<!--    <insert id="insertImage" parameterType="com.project.gmaking.imageUpload.vo.ImageVO">-->
+<!--        INSERT INTO tb_image-->
+<!--        (IMAGE_ORIGINAL_NAME, IMAGE_URL, IMAGE_NAME, IMAGE_TYPE,-->
+<!--        CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY)-->
+<!--        VALUES-->
+<!--        (#{imageOriginalName}, #{imageUrl}, #{imageName}, #{imageType},-->
+<!--        NOW(), #{createdBy}, NOW(), #{updatedBy})-->
+
+<!--        &lt;!&ndash; 생성 키를 INT로 확실히 받음 &ndash;&gt;-->
+<!--        <selectKey keyProperty="imageId" resultType="int" order="AFTER">-->
+<!--            SELECT CAST(LAST_INSERT_ID() AS SIGNED)-->
+<!--        </selectKey>-->
+<!--    </insert>-->
+<!--</mapper>-->
