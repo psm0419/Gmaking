@@ -1,58 +1,59 @@
+// src/hooks/useNotificationsSocket.js
 import { useEffect, useRef } from "react";
 import { Client as StompClient } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-/**
- * 서버가 convertAndSendToUser("/queue/notifications")로 보내는 알림을 수신
- * onMessage(payload) 콜백에 알림 JSON을 넘겨줌
- */
 export default function useNotificationsSocket(onMessage) {
   const clientRef = useRef(null);
-  const reconnectRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("gmaking_token");
-    if (!token) return;
+    // 1) 백엔드 BASE URL
+    const API_BASE =
+      (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
+      process.env.REACT_APP_API_BASE ||
+      "http://localhost:8080";
 
-    const headers = {
-      Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
-    };
+    // 2) 토큰
+    const raw = localStorage.getItem("gmaking_token");
+    if (!raw) return; // 토큰 없으면 연결 안 함
 
+    const bearer = raw.startsWith("Bearer ") ? raw : `Bearer ${raw}`;
+    const tokenParam = encodeURIComponent(raw.replace(/^Bearer\s+/i, ""));
+
+    // 3) SockJS는 http:// 로
+    const sockUrl = `${API_BASE}/notify-ws?token=${tokenParam}`;
+
+    // 4) STOMP 클라이언트
     const client = new StompClient({
-      webSocketFactory: () => new SockJS("/notify-ws"),
-      connectHeaders: headers,
+      webSocketFactory: () => new SockJS(sockUrl),
+      connectHeaders: { Authorization: bearer },
+      reconnectDelay: 3000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
       debug: () => {},
       onConnect: () => {
         client.subscribe("/user/queue/notifications", (frame) => {
           try {
-            const body = JSON.parse(frame.body || "{}");
-            onMessage?.(body);
+            const data = frame && frame.body ? JSON.parse(frame.body) : {};
+            if (typeof onMessage === "function") onMessage(data);
           } catch (e) {
-            console.error("알림 파싱 실패", e);
+            console.error("알림 JSON 파싱 실패", e);
           }
         });
       },
-      onStompError: scheduleReconnect,
-      onWebSocketClose: scheduleReconnect,
+      onStompError: (frame) => {
+        console.warn("STOMP ERROR:", frame?.headers?.message, frame?.body);
+      },
+      onWebSocketClose: (evt) => {
+        console.warn("WebSocket closed:", evt && evt.code, evt && evt.reason);
+      },
     });
-
-    function scheduleReconnect() {
-      if (reconnectRef.current) return;
-      reconnectRef.current = setTimeout(() => {
-        reconnectRef.current = null;
-        client.activate();
-      }, 3000);
-    }
 
     clientRef.current = client;
     client.activate();
 
     return () => {
-      if (reconnectRef.current) {
-        clearTimeout(reconnectRef.current);
-        reconnectRef.current = null;
-      }
-      try { clientRef.current?.deactivate(); } catch {}
+      try { clientRef.current && clientRef.current.deactivate(); } catch {}
       clientRef.current = null;
     };
   }, [onMessage]);
