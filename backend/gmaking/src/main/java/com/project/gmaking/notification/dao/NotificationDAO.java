@@ -51,9 +51,10 @@ public interface NotificationDAO {
                           @Param("updatedBy") String updatedBy);
 
     // pvp 결과 모달용
-    NotificationVO selectOneByIdAndUserForPvp (
+    NotificationVO selectOneByIdAndUserForPvp(
             @Param("notificationId") Integer notificationId,
             @Param("userId") String userId
     );
+
 
 }

@@ -249,26 +249,54 @@ public class PvpBattleServiceImpl implements PvpBattleService{
     private void sendPvpResultNotifications(PvpBattleVO result, boolean isWin) {
         final String actor = "system";
 
-        String myUserId = safe(result.getPlayer().getUserId());
-        String enemyUserId = safe(result.getEnemy().getUserId());
-        String myName = safeName(result.getPlayer().getCharacterName());
-        String enemyName = safeName(result.getEnemy().getCharacterName());
-        Integer battleId = result.getBattleId();
+        var me    = result.getPlayer();
+        var enemy = result.getEnemy();
 
-        String myWinYn = isWin ? "Y" : "N";
-        String enemyWinYn = isWin ? "N" : "Y";
+        var myStat = (me != null) ? me.getCharacterStat() : null;
+        var enStat = (enemy != null) ? enemy.getCharacterStat() : null;
 
-        try {
-            // 내 알림
-            notificationFacade.pvpResult(myUserId, myWinYn, enemyUserId, enemyName, battleId, actor);
+        // 내 알림 (상대 정보를 opponent*, 재대결 seed는 수신자=나)
+        notificationFacade.pvpResult(
+                me != null ? me.getUserId() : null,
+                isWin,
+                enemy != null ? enemy.getUserId() : null,
+                enemy != null ? enemy.getCharacterName() : null,
+                result.getBattleId(),
+                enemy != null ? enemy.getCharacterId() : null,      // opponentCharacterId
+                enemy != null ? enemy.getImageUrl() : null,         // opponentImageUrl
+                me != null ? me.getUserId() : null,                 // requesterUserId (수신자=나)
+                me != null ? me.getCharacterId() : null,            // requesterCharacterId
+                null,                                               // level (없으면 null)
+                enStat != null ? enStat.getCharacterHp()      : null,
+                enStat != null ? enStat.getCharacterAttack()  : null,
+                enStat != null ? enStat.getCharacterDefense() : null,
+                enStat != null ? enStat.getCharacterSpeed()   : null,
+                enStat != null ? enStat.getCriticalRate()     : null,
+                actor
+        );
 
-            // 상대 알림
-            notificationFacade.pvpResult(enemyUserId, enemyWinYn, myUserId, myName, battleId, actor);
-        } catch (Exception e) {
-            log.error("[PVP] notification failed (myUserId={}, enemyUserId={}, battleId={})",
-                    myUserId, enemyUserId, battleId, e);  // ★ 스택트레이스 포함
-        }
+        // 상대 알림 (반대로 내가 상대 입장에서 opponent*)
+        notificationFacade.pvpResult(
+                enemy != null ? enemy.getUserId() : null,
+                !isWin,
+                me != null ? me.getUserId() : null,
+                me != null ? me.getCharacterName() : null,
+                result.getBattleId(),
+                me != null ? me.getCharacterId() : null,
+                me != null ? me.getImageUrl() : null,
+                enemy != null ? enemy.getUserId() : null,           // requesterUserId
+                enemy != null ? enemy.getCharacterId() : null,      // requesterCharacterId
+                null,
+                myStat != null ? myStat.getCharacterHp()      : null,
+                myStat != null ? myStat.getCharacterAttack()  : null,
+                myStat != null ? myStat.getCharacterDefense() : null,
+                myStat != null ? myStat.getCharacterSpeed()   : null,
+                myStat != null ? myStat.getCriticalRate()     : null,
+                actor
+        );
     }
+
+
 
     // null 방어
     private String safe(String s) {return (s == null) ? "-" : s;}

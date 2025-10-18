@@ -19,6 +19,7 @@ public class NotificationVO {
     private String message;
     private String linkUrl;
     private String status;
+
     private LocalDateTime deliveredAt;
     private LocalDateTime expiresAt;
     private LocalDateTime readAt;

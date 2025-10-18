@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useNotificationsSocket from '../../hooks/useNotificationsSocket';
-import { notificationsApi as api } from '../../api/notificationApi';
+import useNotificationsSocket from "../../hooks/useNotificationsSocket";
+import { notificationsApi as api } from "../../api/notificationApi";
 
 export default function NotificationBell({
-  onOpenPvpModal,
-  initialCount = 0,         // ✅ 초기 카운트 받기
-  token,                    // ✅ 훅/WS에서 필요하면 사용
-  onUpdateCount,            // ✅ 카운트 변경시 부모에 알려주기
+  onOpenPvpModal,          // 있어도 되고 없어도 됨 (내부에서 모달 열어줌)
+  initialCount = 0,
+  token,
+  onUpdateCount,
 }) {
   const [open, setOpen] = useState(false);
   const [gearOpen, setGearOpen] = useState(false);
@@ -16,26 +16,111 @@ export default function NotificationBell({
   const [read, setRead] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
-  const [badgeCount, setBadgeCount] = useState(initialCount); // ✅ 뱃지 카운트
+  const [badgeCount, setBadgeCount] = useState(initialCount);
+
+  // ✅ PVP 모달 로컬 상태
+  const [pvpOpen, setPvpOpen] = useState(false);
+  const [pvpData, setPvpData] = useState(null);
 
   const btnRef = useRef(null);
   const popRef = useRef(null);
   const navigate = useNavigate();
 
-  // initialCount가 바뀌면 반영
+  // --- utils ---
+  const fmtDate = (v) => {
+    try {
+      const d = typeof v === "string" ? new Date(v) : v;
+      if (!(d instanceof Date) || isNaN(d)) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+      return "";
+    }
+  };
+
+  // metaJson robust flattener (서버 평탄화 필드 우선)
+  function normalizePvpModal(raw) {
+    const parseMeta = () => {
+      try {
+        const v = raw?.metaJson ?? raw?.metaJSON ?? raw?.meta;
+        if (!v) return {};
+        if (typeof v === "string") return JSON.parse(v);
+        return v;
+      } catch {
+        return {};
+      }
+    };
+    const meta = parseMeta();
+
+    const getPath = (obj, path) => {
+      try { return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj); }
+      catch { return undefined; }
+    };
+
+    const candidates = [
+      "opponent.character.stats",
+      "opponent.stats",
+      "opponent",
+      "enemy.stats",
+      "enemy",
+      "target.stats",
+      "target",
+      "opponentCharacter.stats",
+      "opponentStatus",
+    ];
+    let found = {};
+    for (const p of candidates) {
+      const v = getPath(meta, p);
+      if (v && typeof v === "object") { found = v; break; }
+    }
+
+    const normalizeNum = (x) => {
+      if (x == null) return null;
+      const n = Number(x);
+      return Number.isFinite(n) ? n : null;
+    };
+    const pick = (o, keys) => { for (const k of keys) if (o?.[k] != null) return o[k]; return null; };
+
+    const level = normalizeNum(raw?.level ?? pick(found, ["level","lv","LEVEL","LV"]));
+    const hp    = normalizeNum(raw?.hp    ?? pick(found, ["hp","HP","health","Health"]));
+    const atk   = normalizeNum(raw?.atk   ?? pick(found, ["atk","ATK","attack","Attack"]));
+    const def   = normalizeNum(raw?.def   ?? pick(found, ["def","DEF","defense","Defense"]));
+    const spd   = normalizeNum(raw?.spd   ?? pick(found, ["spd","SPD","speed","Speed"]));
+    const crit  = normalizeNum(raw?.crit  ?? pick(found, ["crit","CRIT","critical","Critical","critRate","crit_rate"]));
+
+    return {
+      battleId: raw?.battleId ?? null,
+      result: raw?.result ?? (raw?.isWinYn === "Y" ? "WIN" : raw?.isWinYn === "N" ? "LOSE" : null),
+      opponentUserId: raw?.opponentUserId ?? null,
+      opponentNickname: raw?.opponentNickname ?? null,
+      opponentCharacterId: raw?.opponentCharacterId ?? null,
+      opponentCharacterName: raw?.opponentCharacterName ?? null,
+      opponentImageUrl: raw?.opponentImageUrl ?? meta?.opponentImageUrl ?? null, // 메타 백업
+      level, hp, atk, def, spd, crit,
+    };
+  }
+
+  // initialCount 반영
   useEffect(() => {
     setBadgeCount(initialCount ?? 0);
   }, [initialCount]);
 
-  // 실시간 수신: unread 리스트 맨 앞에 삽입 + 뱃지 + 부모에 통지
-  useNotificationsSocket((payload) => {
-    setUnread((prev) => [{ ...payload, status: "unread" }, ...prev]);
-    setBadgeCount((c) => {
-      const next = (c ?? 0) + 1;
-      onUpdateCount?.(next);
-      return next;
-    });
-  }, token); // 훅이 두 번째 인자를 받는다면 token 전달 (무시해도 문제없음)
+  // 실시간 수신: 중복 가드 + 뱃지 증가
+  useNotificationsSocket(
+    (payload) => {
+      setUnread((prev) => {
+        const id = payload?.id ?? payload?.notificationId;
+        if (id && prev.some((n) => n.id === id)) return prev;
+        return [{ ...payload, id, status: "unread" }, ...prev];
+      });
+      setBadgeCount((c) => {
+        const next = (c ?? 0) + 1;
+        onUpdateCount?.(next);
+        return next;
+      });
+    },
+    token
+  );
 
   // 목록 동기화
   const refreshLists = async () => {
@@ -56,7 +141,7 @@ export default function NotificationBell({
     }
   };
 
-  // 팝업 열릴 때 동기화 + 바깥 클릭 닫기
+  // 팝업 열기 시 동기화 + 바깥 클릭 닫기
   useEffect(() => {
     if (!open) return;
     refreshLists();
@@ -72,18 +157,19 @@ export default function NotificationBell({
     };
     const onKey = (e) => e.key === "Escape" && (setOpen(false), setGearOpen(false));
 
+    const touchOptions = { passive: true };
     document.addEventListener("mousedown", onDocPointer);
-    document.addEventListener("touchstart", onDocPointer, { passive: true });
+    document.addEventListener("touchstart", onDocPointer, touchOptions);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onDocPointer);
-      document.removeEventListener("touchstart", onDocPointer);
+      document.removeEventListener("touchstart", onDocPointer, touchOptions);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
-  // 동작들
-  const badge = badgeCount > 99 ? "99+" : badgeCount; // 보기 좋게 제한 (선택)
+  // 뱃지
+  const badge = badgeCount > 99 ? "99+" : badgeCount;
 
   const decBadge = (n = 1) => {
     setBadgeCount((c) => {
@@ -94,30 +180,39 @@ export default function NotificationBell({
   };
 
   const handleMarkRead = async (id) => {
-    // 낙관적 업데이트
     const target = unread.find((n) => n.id === id);
     const nextUnread = unread.filter((n) => n.id !== id);
     setUnread(nextUnread);
     if (target) setRead((p) => [{ ...target, status: "read" }, ...p]);
-
-    // 뱃지 감소
     if (target) decBadge(1);
 
     try {
       await api.markRead(id);
     } catch (e) {
       console.error(e);
-      // 실패 시 목록 재동기화 (뱃지도 함께 정합성 맞춰짐)
-      refreshLists();
+      // 서버 에러일 때만 강복구
+      if (!e?.response || e.response.status >= 500) {
+        refreshLists();
+      }
     }
   };
 
   const handleOpen = async (n) => {
     await handleMarkRead(n.id);
-    if (n.type === "PVP_RESULT" && onOpenPvpModal) {
+
+    if (n.type === "PVP_RESULT") {
       try {
-        const data = await api.pvpModal(n.id);
-        onOpenPvpModal(data);
+        const raw = await api.pvpModal(n.id);
+        console.log("[PVP raw]", raw);
+        console.log("[PVP metaJson]", raw?.metaJson); // 없을 수도 있음 (정상)
+        const data = normalizePvpModal(raw);
+
+        // A) 부모 콜백도 있으면 호출 (선택)
+        onOpenPvpModal?.(data);
+
+        // B) 내부 모달도 항상 열어줌 (확실히 뜨도록)
+        setPvpData(data);
+        setPvpOpen(true);
       } catch (e) {
         console.error(e);
       }
@@ -127,7 +222,6 @@ export default function NotificationBell({
   };
 
   const handleDeleteOne = async (id) => {
-    // 삭제 대상이 unread에 있으면 뱃지 감소
     const wasUnread = unread.some((x) => x.id === id);
     setUnread((p) => p.filter((n) => n.id !== id));
     setRead((p) => p.filter((n) => n.id !== id));
@@ -142,11 +236,9 @@ export default function NotificationBell({
   };
 
   const handleMarkAllRead = async () => {
-    // 낙관적 처리
     const moved = unread.map((n) => ({ ...n, status: "read" }));
     setRead((p) => [...moved, ...p]);
     setUnread([]);
-    // 뱃지 0
     if (badgeCount > 0) decBadge(badgeCount);
 
     try {
@@ -172,12 +264,21 @@ export default function NotificationBell({
     <div className="relative">
       <button
         ref={btnRef}
-        onClick={() => { setOpen((v) => !v); setGearOpen(false); }}
+        onClick={() => {
+          setOpen((v) => !v);
+          setGearOpen(false);
+        }}
         className="relative rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
         aria-label="알림 열기"
       >
         <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
-          <path d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
         {badgeCount > 0 && (
           <span className="absolute -right-1 -top-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">
@@ -187,7 +288,13 @@ export default function NotificationBell({
       </button>
 
       {open && (
-        <div ref={popRef} className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl">
+        <div
+          ref={popRef}
+          className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="notif-title"
+        >
           <div className="flex items-center justify-between px-3 py-2 border-b">
             <div className="flex items-center gap-2">
               <button
@@ -212,17 +319,18 @@ export default function NotificationBell({
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6" />
-                  <path d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z" stroke="currentColor" strokeWidth="1.2" />
+                  <path
+                    d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                  />
                 </svg>
               </button>
 
               {gearOpen && (
-                <div className="absolute right-50 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-[0_12px_28px_rgba(0,0,0,0.14)] overflow-hidden z-[60] origin-top-right">
+                <div className="absolute right-0 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-[0_12px_28px_rgba(0,0,0,0.14)] overflow-hidden z-[60] origin-top-right">
                   <div className="absolute -top-2 right-4 w-0 h-0 border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-white drop-shadow" />
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50"
-                  >
+                  <button onClick={handleMarkAllRead} className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50">
                     전체 읽음 처리
                   </button>
                   <button
@@ -237,6 +345,7 @@ export default function NotificationBell({
           </div>
 
           <div className="max-h-80 overflow-auto p-3">
+            <h2 id="notif-title" className="sr-only">알림</h2>
             {loading && <div className="py-8 text-center text-gray-500">불러오는 중…</div>}
             {err && !loading && <div className="py-8 text-center text-red-600">{err}</div>}
             {!loading && !err && (tab === "new" ? unread : read).length === 0 && (
@@ -258,14 +367,17 @@ export default function NotificationBell({
                       <p className="text-sm text-gray-900">{n.title}</p>
                       {n.message && <p className="mt-1 text-xs text-gray-600">{n.message}</p>}
                       {n.createdDate && (
-                        <p className="mt-1 text-[11px] text-gray-400">{String(n.createdDate).replace("T", " ")}</p>
+                        <p className="mt-1 text-[11px] text-gray-400">{fmtDate(n.createdDate)}</p>
                       )}
                     </div>
 
                     <div className="absolute right-2 top-2 flex items-center gap-1">
                       {tab === "new" && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleMarkRead(n.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkRead(n.id);
+                          }}
                           aria-label="읽음 처리"
                           title="읽음 처리"
                           className="rounded p-1 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
@@ -276,7 +388,10 @@ export default function NotificationBell({
                         </button>
                       )}
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteOne(n.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteOne(n.id);
+                        }}
                         aria-label="알림 삭제"
                         title="알림 삭제"
                         className="rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
@@ -293,6 +408,8 @@ export default function NotificationBell({
           </div>
         </div>
       )}
+
+
     </div>
   );
 }
