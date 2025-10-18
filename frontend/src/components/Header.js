@@ -24,17 +24,6 @@ const Header = () => {
         { name: '로그', icon: LifeBuoy, link: 'logs' },
     ];
 
-    // 회원 탈퇴 핸들러
-    const handleWithdraw = () => {
-        if (!user) {
-            alert("로그인 상태가 아닙니다.");
-        }
-
-        if (window.confirm("정말 계정 탈퇴를 진행하시겠습니까?")) {
-            navigate('/withdraw');
-        }
-    };
-
     if (isLoading) {
         return (
             <header className="bg-gray-800 shadow-xl sticky top-0 z-20">
@@ -108,14 +97,6 @@ const Header = () => {
                         >
                             <LogOut className="w-4 h-4 mr-1.5" />
                             로그아웃
-                        </button>
-                        {/* --- 회원 탈퇴 버튼 --- */}
-                        <button
-                            onClick={handleWithdraw}
-                            className="text-sm px-3 py-1.5 bg-gray-600 text-gray-300 font-semibold rounded-lg hover:bg-gray-700 transition duration-200 flex items-center"
-                        >
-                            <XCircle className="w-4 h-4 mr-1.5" />
-                            탈퇴
                         </button>
                     </div>
                 ) : (
