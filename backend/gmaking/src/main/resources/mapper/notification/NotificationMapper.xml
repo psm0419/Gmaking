@@ -109,25 +109,25 @@
     <select id="selectOneByIdAndUserForPvp"
             resultType="com.project.gmaking.notification.vo.NotificationVO">
         SELECT
-            n.NOTIFICATION_ID AS notificationId,
-            n.USER_ID         AS userId,
-            n.TYPE            AS type,
-            n.TITLE           AS title,
-            n.MESSAGE         AS message,
-            n.LINK_URL        AS linkUrl,
-            n.STATUS          AS status,
-            n.DELIVERED_AT    AS deliveredAt,
-            n.EXPIRES_AT      AS expiresAt,
-            n.READ_AT         AS readAt,
-            n.CREATED_DATE    AS createdDate,
-            n.CREATED_BY      AS createdBy,
-            n.UPDATED_DATE    AS updatedDate,
-            n.UPDATED_BY      AS updatedBy,
-            CAST(n.META_JSON AS CHAR) AS metaJson
+        n.NOTIFICATION_ID AS notificationId,
+        n.USER_ID         AS userId,
+        n.TYPE            AS type,
+        n.TITLE           AS title,
+        n.MESSAGE         AS message,
+        n.LINK_URL        AS linkUrl,
+        n.STATUS          AS status,
+        n.DELIVERED_AT    AS deliveredAt,
+        n.EXPIRES_AT      AS expiresAt,
+        n.READ_AT         AS readAt,
+        n.CREATED_DATE    AS createdDate,
+        n.CREATED_BY      AS createdBy,
+        n.UPDATED_DATE    AS updatedDate,
+        n.UPDATED_BY      AS updatedBy,
+        CAST(n.META_JSON AS CHAR CHARACTER SET utf8mb4) AS metaJson
         FROM TB_NOTIFICATION n
         WHERE n.NOTIFICATION_ID = #{notificationId}
-            AND n.USER_ID = #{userId}
-            AND n.TYPE = 'PVP_RESULT'
+        AND n.USER_ID = #{userId}
+        AND n.TYPE = 'PVP_RESULT'
         LIMIT 1
     </select>
 

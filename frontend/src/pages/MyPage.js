@@ -9,8 +9,9 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { notificationsApi } from "../api/notificationApi";
 
-// 분리된 웹알림 컴포넌트
+// 분리된 웹알림 컴포넌트 + 분리된 PVP 결과 모달
 import NotificationBell from "../components/notifications/NotificationBell";
+import PvpResultModal from "../components/notifications/PvpResultModal"; // ← 경로 확인
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 
@@ -41,10 +42,9 @@ function MyMain() {
   const [characters, setCharacters] = useState([]);
   const [selected, setSelected] = useState(null);
   const [repId, setRepId] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0); // ✅ 추가
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // 알림
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // PVP 모달
   const [pvpModalOpen, setPvpModalOpen] = useState(false);
@@ -61,6 +61,9 @@ function MyMain() {
       console.error("토큰 디코딩 실패 : ", e);
     }
   }
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // 서버에서 요약 데이터 가져오기
   useEffect(() => {
@@ -79,7 +82,7 @@ function MyMain() {
         setLoading(true);
         const { data } = await axios.get("/api/my-page/summary", {
           headers,
-          params: { limit: 50 }, // 7개 이상이면 넉넉히
+          params: { limit: 50 },
         });
 
         const p = data?.profile ?? null;
@@ -105,18 +108,17 @@ function MyMain() {
         setCharacters(cards);
         setError(null);
 
-        // ✅ 대표 캐릭터 조회
+        // 대표 캐릭터 조회
         try {
-          const rep = await axios.get(
-            "/api/my-page/representative-character",
-            { headers }
-          );
+          const rep = await axios.get("/api/my-page/representative-character", {
+            headers,
+          });
           setRepId(rep?.data?.characterId ?? null);
         } catch (e) {
           console.warn("대표 캐릭터 조회 실패", e);
         }
 
-        // ✅ 초기 알림 개수 조회 (분리된 알림 시스템이라도 진입 시 1회 조회)
+        // 초기 알림 개수 조회
         try {
           const n = await notificationsApi.count();
           setUnreadCount(Number(n ?? 0));
@@ -137,7 +139,7 @@ function MyMain() {
   const onChat = () => selected?.id && navigate(`/chat-entry/${selected.id}`);
   const onGrow = () => {};
   const onSend = () => {};
-  const onPickClick = () => navigate("/create-character"); // 필요 시 '/gacha' 등으로 이동
+  const onPickClick = () => navigate("/create-character");
 
   const setRepresentative = async (characterId) => {
     if (!characterId) return;
@@ -195,7 +197,7 @@ function MyMain() {
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
           <div className="flex items-start gap-6">
             <div className="shrink-0 flex flex-col items-center">
-              {/* 이미지 주소가 있을 때만 렌더, 에러 시 폴백 */}
+              {/* 프로필 이미지 */}
               <img
                 src={safeProfileSrc}
                 alt="프로필 이미지"
@@ -208,11 +210,11 @@ function MyMain() {
               />
 
               <div className="mt-6 flex items-center gap-5 text-gray-800">
-                {/* 분리된 컴포넌트 삽입 */}
+                {/* 알림 벨 */}
                 <NotificationBell
-                  initialCount={unreadCount}                // ✅ 초기값 표시
-                  token={token}                              // ✅ WS 인증/연결에 사용
-                  onUpdateCount={(n) => setUnreadCount(n)}  // ✅ 내부 변경 외부 반영
+                  initialCount={unreadCount}
+                  token={token}
+                  onUpdateCount={(n) => setUnreadCount(n)}
                   onOpenPvpModal={(data) => {
                     setPvpModalData(data);
                     setPvpModalOpen(true);
@@ -257,6 +259,7 @@ function MyMain() {
         onClearRep={clearRepresentative}
       />
 
+      {/* 분리된 PVP 결과 모달 사용 */}
       <PvpResultModal
         open={pvpModalOpen}
         data={pvpModalData}
@@ -344,7 +347,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
           <button
             onClick={onSend}
             disabled={_statsLoading}
-            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow_sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
           >
             보내기
           </button>
@@ -379,14 +382,14 @@ function CharacterSection({
 
   if (!hasCharacters) {
     return (
-      <section className="rounded-md bg-gray-300 min-h-[340px] flex items-center justify-center">
+      <section className="rounded-md bg-gray-300 min-h-[340px] flex items-center justify_center">
         <div className="text-center px-6 py-12">
           <div className="text-2xl md:text-3xl text-gray-800 mb-6">
             내 캐릭터를 뽑아주세요!
           </div>
           <button
             onClick={onPickClick}
-            className="px-8 py-3 rounded bg-white border text-gray-900 text-lg hover:bg-gray-50 active:bg-gray-100 transition"
+            className="px-8 py-3 rounded bg_white border text-gray-900 text-lg hover:bg-gray-50 active:bg-gray-100 transition"
           >
             뽑으러가기
           </button>
@@ -625,78 +628,5 @@ function IconMore(props) {
       <circle cx="12" cy="12" r="1.7" fill="currentColor" />
       <circle cx="18" cy="12" r="1.7" fill="currentColor" />
     </svg>
-  );
-}
-
-/* (선택) PVP 결과 모달 — 스타일 업그레이드 */
-function PvpResultModal({ open, data, onClose }) {
-  const overlayRef = useRef(null);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && onClose?.();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const resultText = data?.result === "WIN" ? "승리" : "패배";
-  const badgeCls =
-    data?.result === "WIN"
-      ? "bg-green-100 text-green-700"
-      : "bg-red-100 text-red-700";
-
-  const stat = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
-
-  return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose?.(); }}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
-          <h3 className="text-xl font-semibold">전투 결과</h3>
-          <button onClick={onClose} className="rounded-full px-3 py-1 text-sm border hover:bg-zinc-50">
-            닫기
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm ${badgeCls}`}>
-              {resultText}
-            </div>
-            <div className="text-sm text-zinc-500">
-              전투 ID: {data?.battleId ?? "-"}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <ModalStat label="LV"  value={stat(data?.level)} />
-            <ModalStat label="HP"  value={stat(data?.hp)} />
-            <ModalStat label="ATK" value={stat(data?.atk)} />
-            <ModalStat label="DEF" value={stat(data?.def)} />
-            <ModalStat label="SPD" value={stat(data?.spd)} />
-            <ModalStat label="CRIT" value={stat(data?.crit, "%")} />
-          </div>
-
-          <div className="text-sm text-zinc-600">
-            상대: <b>{data?.opponentNickname ?? "-"}</b>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ModalStat({ label, value }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 p-3 text-center bg-white/90">
-      <div className="text-xs text-zinc-500">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
-    </div>
   );
 }

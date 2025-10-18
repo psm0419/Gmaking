@@ -1,5 +1,6 @@
 package com.project.gmaking.notification.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.gmaking.notification.dao.NotificationDAO;
 import com.project.gmaking.notification.vo.NotificationVO;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,7 @@ import java.util.Map;
 public class NotificationService {
     private final NotificationDAO notificationDAO;
     private final SimpMessagingTemplate simp;
-
-
+    private final ObjectMapper objectMapper;
 
 
     @Transactional
@@ -119,6 +119,73 @@ public class NotificationService {
     private int sanitizeLimit(int limit) {
         if (limit <= 0) return 20;
         return Math.min(limit, 100);
+    }
+
+
+    // pvp 모달 채워넣기
+    @Transactional
+    public Integer createPvpResultNotification(
+            String targetUserId,
+            boolean isWin,
+            Integer battleId,
+            String opponentUserId,
+            String opponentNickname,
+            Integer opponentCharacterId,   // NEW
+            String opponentImageUrl,       // NEW
+            String requesterUserId,        // NEW
+            Integer requesterCharacterId,  // NEW
+            Integer level, Integer hp, Integer atk, Integer def, Integer spd, Integer crit,
+            String actor
+    ) {
+        var meta = objectMapper.createObjectNode();
+
+        // 기본 승패/식별
+        meta.put("isWin",   isWin ? "WIN" : "LOSE");
+        meta.put("isWinYn", isWin ? "Y"   : "N");
+        meta.put("battleId", battleId);
+
+        // 상대(모달에 보여줄 대상)
+        meta.put("opponentUserId", opponentUserId);
+        meta.put("opponentName", opponentNickname);
+        meta.put("displayOpponentName", opponentNickname);
+        if (opponentCharacterId != null) meta.put("opponentCharacterId", opponentCharacterId);
+        if (opponentImageUrl != null && !opponentImageUrl.isBlank()) {
+            meta.put("opponentImageUrl", opponentImageUrl);
+        }
+
+        // 재대결용 시드(수신자 본인)
+        if (requesterUserId != null)      meta.put("requesterUserId", requesterUserId);
+        if (requesterCharacterId != null) meta.put("requesterCharacterId", requesterCharacterId);
+
+        // (옵션) 스탯
+        if (level != null) meta.put("level", level);
+        if (hp    != null) meta.put("hp", hp);
+        if (atk   != null) meta.put("atk", atk);
+        if (def   != null) meta.put("def", def);
+        if (spd   != null) meta.put("spd", spd);
+        if (crit  != null) meta.put("crit", crit);
+
+        var s = meta.putObject("stats");
+        if (level != null) s.put("level", level);
+        if (hp    != null) s.put("hp", hp);
+        if (atk   != null) s.put("atk", atk);
+        if (def   != null) s.put("def", def);
+        if (spd   != null) s.put("spd", spd);
+        if (crit  != null) s.put("crit", crit);
+
+        String title = opponentNickname + "와의 전투에서 " + (isWin ? "승리" : "패배") + "했습니다.";
+        String link  = "/pvp/battles/" + battleId;
+
+        return create(
+                targetUserId,
+                "PVP_RESULT",
+                title,
+                "",
+                link,
+                LocalDateTime.now().plusDays(30),
+                meta.toString(),
+                (actor == null || actor.isBlank()) ? "system" : actor
+        );
     }
 
 }
