@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Ticket, Egg } from "lucide-react";
-import { jwtDecode } from "jwt-decode";
+//import { jwtDecode } from "jwt-decode";
 
 
 /** 공통 카드 - 디자인 개선 버전 */
@@ -23,12 +23,19 @@ function ShopCard({ title, children, onClick, className = "" }) {
 }
 
 /** 상단 프로필 바 - 개선 버전 */
-function ProfileBar({ name = "마스터 님", incubatorCount = 0 }) {
+function ProfileBar({ name = "마스터 님", incubatorCount = 0, imageUrl }) {
   return (
     <div className="flex items-center gap-6 px-4 sm:px-6 lg:px-0">
-      <div className="h-20 w-20 rounded-full bg-zinc-300 flex items-center justify-center text-zinc-500 font-semibold text-xl">
-        ME
-      </div>
+      {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="me"
+                className="h-20 w-20 rounded-full object-cover border border-zinc-200"
+                onError={(e)=>{ e.currentTarget.src="/images/profile/default.png"; }}
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-zinc-300 flex items-center justify-center text-zinc-500 font-semibold text-xl">ME</div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6">
         <div className="text-3xl font-extrabold text-zinc-900">{name}</div>
         <div className="text-xl sm:text-2xl font-medium text-zinc-600 flex items-center">
@@ -47,7 +54,7 @@ export default function ShopPage() {
 
   const [profile, setProfile] = useState({ name: "마스터 님", incubatorCount:0 })
 
-  const token = localStorage.getItem("gmaking_token");
+  /* const token = localStorage.getItem("gmaking_token");
 
   let userId = null;
 
@@ -58,22 +65,42 @@ export default function ShopPage() {
     } catch (e) {
         console.error("샾 페이지 토큰 실패 : ", e);
     }
-  }
+  } */
+
+  const token = localStorage.getItem("gmaking_token")
 
   useEffect(() => {
-    if(!token || !userId) return;
+    if (!token) return;
+    const auth = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
 
-    fetch(`/api/shop/profile?userId=${encodeURIComponent(userId)}`, {
-        headers: {
-            Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`
-        },
+    fetch(`/api/shop/profile/me`, {
+      headers: { Authorization: auth, Accept: "application/json" },
+      credentials: "include",
     })
-        .then((r) => r.json())
-        .then((data) => {
-            // setProfile
+        .then(async (r) => {
+            if (r.status === 401) {
+                localStorage.removeItem("gmaking_token");
+                window.location.href = "/login";
+                return null;
+            }
+            if (!r.ok) {
+              const t = await r.text().catch(() => "");
+              throw new Error(`GET /profile/me ${r.status} ${t}`);
+            }
+            return r.json();
         })
-        .catch(() => {});
-  }, [token, userId]);
+        .then((data) => {
+            if (!data) return;
+            setProfile({
+                name: data.nickName ?? "마스터 님",
+                incubatorCount: Number(data.incubatorCount ?? 0),
+                profileImageUrl: data.profileImageUrl ?? null,
+            });
+        })
+        .catch((e) => {
+          console.error("프로필 로드 실패:", e);
+        });
+  }, [token]);
 
 
   const handleBuy = (sku) => {
@@ -88,7 +115,7 @@ export default function ShopPage() {
 
       <main className="flex-1 mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {/* 상단 프로필 */}
-        <ProfileBar name="마스터 님" incubatorCount={2} />
+        <ProfileBar name={profile.name} incubatorCount={profile.incubatorCount} imageUrl={profile.profileImageUrl}/>
 
         {/* --- 상품 카드 그리드 섹션 --- */}
         <section className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
