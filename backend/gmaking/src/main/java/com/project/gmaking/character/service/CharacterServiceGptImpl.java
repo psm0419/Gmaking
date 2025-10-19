@@ -129,7 +129,7 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             characterDAO.insertCharacter(characterVO);
             Integer characterId = characterVO.getCharacterId();
 
-            // characterStatVO 생성 및 DB 저장 (랜덤 스탯 부여 로직 가정)
+            // characterStatVO 생성 및 DB 저장
             Random random = new Random();
             CharacterStatVO statVO = new CharacterStatVO();
             statVO.setCharacterId(characterId);

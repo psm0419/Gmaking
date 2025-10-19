@@ -1,4 +1,3 @@
-// src/hooks/useNotificationsSocket.js
 import { useEffect, useRef } from "react";
 import { Client as StompClient } from "@stomp/stompjs";
 import SockJS from "sockjs-client";

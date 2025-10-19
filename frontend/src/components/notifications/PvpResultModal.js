@@ -1,4 +1,3 @@
-// src/components/notifications/PvpResultModal.jsx
 import React, { useEffect, useRef } from "react";
 
 export default function PvpResultModal({

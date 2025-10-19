@@ -1,4 +1,3 @@
-// src/pages/MyPage.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
