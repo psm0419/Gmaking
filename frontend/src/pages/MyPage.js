@@ -14,7 +14,6 @@ import NotificationBell from "../components/notifications/NotificationBell";
 import PvpResultModal from "../components/notifications/PvpResultModal"; // ← 경로 확인
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
-
 /* ──────────────────────────────────────────────────────────────── */
 /* 페이지 스켈레톤                                                   */
 /* ──────────────────────────────────────────────────────────────── */
@@ -35,6 +34,7 @@ export default function MyPage() {
 /* ──────────────────────────────────────────────────────────────── */
 function MyMain() {
   const navigate = useNavigate();
+  const { updateRepresentativeCharacter } = useAuth();
 
   const [nickname, setNickname] = useState("마스터 님");
   const [ticketCount, setTicketCount] = useState(0);
@@ -143,17 +143,28 @@ function MyMain() {
 
   const setRepresentative = async (characterId) => {
     if (!characterId) return;
+
     try {
       const headers = {
         Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
         "Content-Type": "application/json",
       };
+
       await axios.patch(
         "/api/my-page/representative-character",
         { characterId },
         { headers }
       );
+
+      const selectedChar = characters.find(c => c.id === characterId);
+      const updatedCharacterImageUrl = selectedChar?.imageUrl || null;
+
+      // 먼저 repId 상태 갱신
       setRepId(characterId);
+
+      // AuthContext와 localStorage 갱신
+      updateRepresentativeCharacter(updatedCharacterImageUrl, characterId);
+
     } catch (e) {
       alert(e?.response?.data?.message || "대표 캐릭터 설정에 실패했습니다.");
     }

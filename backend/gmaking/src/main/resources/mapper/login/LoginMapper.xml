@@ -30,11 +30,12 @@
             T1.ROLE,
             T1.CREATED_DATE,
             T1.HAS_CHARACTER,
-            TBI.IMAGE_URL AS CHARACTER_IMG_URL  FROM TB_USER T1
-            LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
-            LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL
+        FROM TB_USER T1
+                 LEFT JOIN TB_CHARACTER TBC ON T1.CHARACTER_ID = TBC.CHARACTER_ID
+                 LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
         WHERE T1.USER_ID = #{userId}
-        ORDER BY TBC.CREATED_DATE DESC LIMIT 1 </select>
+    </select>
 
     <insert id="register" parameterType="com.project.gmaking.login.vo.RegisterRequestVO">
         INSERT INTO TB_USER (
@@ -121,10 +122,9 @@
             T1.HAS_CHARACTER,
             TBI.IMAGE_URL AS CHARACTER_IMG_URL
         FROM TB_USER T1
-                 LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
+                 LEFT JOIN TB_CHARACTER TBC ON T1.CHARACTER_ID = TBC.CHARACTER_ID
                  LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
         WHERE T1.USER_ID = #{userId}
-        ORDER BY TBC.CREATED_DATE DESC LIMIT 1
     </select>
 
     <select id="selectUserByEmail" resultMap="loginResultMap">
