@@ -133,13 +133,38 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             Random random = new Random();
             CharacterStatVO statVO = new CharacterStatVO();
             statVO.setCharacterId(characterId);
-            statVO.setCharacterHp(100 + random.nextInt(50));
-            statVO.setCharacterAttack(10 + random.nextInt(5));
-            statVO.setCharacterDefense(5 + random.nextInt(3));
-            statVO.setCharacterSpeed(3 + random.nextInt(3));
-            statVO.setCriticalRate(5 + random.nextInt(5));
+            int hp = 100 + random.nextInt(201);      // 100~300
+            int attack = 1 + random.nextInt(201);    // 1~201
+            int defense = 1 + random.nextInt(101);   // 1~101
+            int speed = 1 + random.nextInt(101);     // 1~101
+            int critical = 1 + random.nextInt(101);  // 1~101
+
+            statVO.setCharacterHp(hp);
+            statVO.setCharacterAttack(attack);
+            statVO.setCharacterDefense(defense);
+            statVO.setCharacterSpeed(speed);
+            statVO.setCriticalRate(critical);
+
+            // 스탯 총합 계산
+            int totalStat = hp + attack + defense + speed + critical;
+
+            // 등급(grade_id) 결정
+            int gradeId;
+            if (totalStat <= 200) {
+                gradeId = 1;
+            } else if (totalStat <= 300) {
+                gradeId = 2;
+            } else if (totalStat <= 400) {
+                gradeId = 3;
+            } else {
+                gradeId = 4;
+            }
+
+            // 생성정보 설정
+            characterDAO.updateGradeId(gradeId, characterId);
             statVO.setCreatedDate(LocalDateTime.now());
             statVO.setCreatedBy(userId);
+
             characterStatDAO.insertCharacterStat(statVO);
 
             // 사용자 정보 업데이트 및 새 토큰 생성
