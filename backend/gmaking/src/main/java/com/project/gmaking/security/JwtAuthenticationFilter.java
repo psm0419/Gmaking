@@ -43,14 +43,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+
+        String uri = request.getRequestURI();
+
+        // 1. 토큰 검사에서 제외할 경로
+        if (uri.startsWith("/api/ranking") ||
+                uri.startsWith("/api/auth") ||
+                uri.startsWith("/api/pve/maps") ||
+                uri.startsWith("/images") ||
+                uri.startsWith("/static") ||
+                "OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
-        // Request Header에서 토큰 추출
+
+        // 2. Authorization 헤더에서 토큰 추출
         String jwt = resolveToken(request);
-
-
 
         if (jwt == null) {
             System.out.println("[SEC] " + request.getMethod() + " " + request.getRequestURI() + " Authorization=null");
@@ -59,28 +67,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     + " resolved jwt=" + jwt.substring(0, Math.min(12, jwt.length())) + "...");
         }
 
-        // 토큰 유효성 검증
+        // 3. 토큰 검증
         if (jwt != null && tokenProvider.validateToken(jwt)) {
 
             // 토큰에서 사용자 정보(ID, Role) 추출
             String userId = tokenProvider.getUserIdFromToken(jwt);
             String role = tokenProvider.getRoleFromToken(jwt);
 
-            // 인증 정보 생성 및 SecurityContext에 저장
-            // 여기서는 UserDetails 대신 권한 정보만 담은 간단한 인증 객체를 사용
+            // 인증 객체 생성
             SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role.toUpperCase());
-
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, Collections.singletonList(authority));
 
+            // SecurityContext에 등록
             SecurityContextHolder.getContext().setAuthentication(authentication);
             System.out.println("[SEC] auth set. userId=" + userId + ", role=" + role);
         } else {
             System.out.println("[SEC] token invalid or missing");
+            // 인증이 필요한 경로인데 토큰이 유효하지 않으면 401 반환
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
-
-
+        // 4. 다음 필터로 넘김
         filterChain.doFilter(request, response);
     }
 
