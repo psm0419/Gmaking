@@ -23,7 +23,11 @@ function BattleLogList() {
     }
 
     useEffect(() => {
-        if (!userId) return;
+        if (!token || !userId) {
+            alert("로그인이 필요합니다.");
+            navigate("/login");
+            return;
+        }
 
         // 전투 로그 불러오기
         axios.get(`/api/logs/${userId}`, {

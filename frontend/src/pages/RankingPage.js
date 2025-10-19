@@ -30,7 +30,7 @@ function RankingPage() {
     const renderTable = () => (
         <div className="bg-white shadow-md rounded-xl overflow-hidden">
             <table className="min-w-full text-center border-collapse">
-                <thead className="bg-gray-100 border-b">
+                <thead className="bg-gray-300 border-b">
                     <tr className="text-gray-700">
                         <th className="py-3 px-4">순위</th>
                         <th className="py-3 px-4">캐릭터명</th>

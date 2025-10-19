@@ -22,6 +22,11 @@ const MapSelection = () => {
     }
 
     useEffect(() => {
+        if (!token || !userId) {
+            alert("로그인이 필요합니다.");
+            navigate("/login");
+            return;
+        }
         // 맵 목록 로드
         axios.get("/api/pve/maps", { withCredentials: true })
             .then(res => setMaps(res.data))
