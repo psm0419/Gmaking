@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
           Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0;
         const storedIsAdFree = localStorage.getItem('isAdFree');
         const isAdFreeFromStorage =
-            storedIsAdFree === '1' || storedIsAdFree === 'true';
+          storedIsAdFree === '1' || storedIsAdFree === 'true';
 
         if (!storedToken) {
             setIsLoading(false);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
                 isAdFree:
                     userPayload.isAdFree === true ||
                     userPayload.isAdFree === 'true' ||
-                    storedIsAdFree,
+                    isAdFreeFromStorage,
             };
 
             if (!currentUser.userId) {
@@ -258,6 +258,38 @@ export const AuthProvider = ({ children }) => {
         }
     }, [user]);
 
+    // 부화권 구매 후 부화 패키지 개수 갱신
+    const updateIncubatorCount = useCallback((opts) => {
+      setIncubatorCount(prev => {
+        let next = 0;
+        if (opts?.set != null) {
+          next = Number(opts.set);
+        } else if (opts?.add != null) {
+          next = Number(prev ?? 0) + Number(opts.add);
+        } else {
+          next = Number(prev ?? 0);
+        }
+        if (!Number.isFinite(next) || next < 0) next = 0;
+
+        // user 상태 동기화
+        setUser(prevUser => prevUser ? { ...prevUser, incubatorCount: next } : prevUser);
+
+        // 로컬스토리지 반영
+        localStorage.setItem('incubatorCount', String(next));
+        return next;
+      });
+    }, []);
+
+    // 광고패스 갱신: on/off
+    const updateAdFree = useCallback(({ enabled } = {}) => {
+      const bool =
+        enabled === true || enabled === 'true' || enabled === 1 || enabled === '1';
+
+      setIsAdFree(bool);
+      setUser(prevUser => prevUser ? { ...prevUser, isAdFree: bool } : prevUser);
+      localStorage.setItem('isAdFree', bool ? '1' : '0');
+    }, []);
+
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
@@ -265,7 +297,8 @@ export const AuthProvider = ({ children }) => {
             login, logout, 
             setCharacterCreated, 
             withdrawUser, handleOAuth2Login,
-            updateUserNickname, updateRepresentativeCharacter, setToken
+            updateUserNickname, updateRepresentativeCharacter, setToken,
+            updateIncubatorCount, updateAdFree
         }}>
             {children}
         </AuthContext.Provider>

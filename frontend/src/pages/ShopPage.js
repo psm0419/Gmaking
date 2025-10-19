@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Ticket, Egg } from "lucide-react";
+import {useAuth} from "../context/AuthContext"
 
 // 공통 카드
 function ShopCard({ title, children, onClick, className = "" }) {
@@ -52,6 +53,7 @@ function ProfileBar({ name = "마스터 님", incubatorCount = 0, imageUrl }) {
 }
 
 export default function ShopPage() {
+  const { updateIncubatorCount, updateAdFree } = useAuth();
   const [profile, setProfile] = useState({
     name: "마스터 님",
     incubatorCount: 0,
@@ -127,22 +129,54 @@ export default function ShopPage() {
     return res.json();
   };
 
+  const addBySku = {
+    1: 0,   // 광고 제거
+    2: 5,   // 부화기 5개
+    3: 15,  // 부화기 15개
+  };
+
   // 구매 버튼 핸들러
   const handleBuy = async (productId, label) => {
     try {
       setLoadingSku(productId);
       const data = await purchase(productId, 1);
       if (!data) return;
-      setProfile((prev) => ({
-        ...prev,
-        name: data.nickName ?? prev.name,
-        incubatorCount: Number(data.incubatorCount ?? prev.incubatorCount),
-        profileImageUrl: data.profileImageUrl ?? prev.profileImageUrl,
-      }));
+
+      // 화면 상단 프로필 즉시 반영
+      setProfile((prev) => {
+        const nextCount =
+          typeof data.incubatorCount !== 'undefined'
+            ? Number(data.incubatorCount)
+            : Number(prev.incubatorCount) + (addBySku[productId] ?? 0);
+
+        return {
+          ...prev,
+          name: data.nickName ?? prev.name,
+          incubatorCount: nextCount,
+          profileImageUrl: data.profileImageUrl ?? prev.profileImageUrl,
+        };
+      });
+
+      // 전역(AuthContext) 반영
+      if (productId === 1) {
+        // 광고 제거 패스
+        updateAdFree?.({
+          enabled: data?.isAdFree ?? true,
+          expiresAt: data?.adFreeExpiry,
+        });
+      } else if (productId === 2 || productId === 3) {
+        // 부화기 증가
+        if (typeof data?.incubatorCount !== 'undefined') {
+          updateIncubatorCount?.({ set: Number(data.incubatorCount) });
+        } else {
+          updateIncubatorCount?.({ add: addBySku[productId] });
+        }
+      }
+
       alert(`${label} 구매 완료!`);
     } catch (e) {
-      console.error("구매 실패:", e);
-      alert("구매 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      console.error('구매 실패:', e);
+      alert('구매 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoadingSku(null);
     }
