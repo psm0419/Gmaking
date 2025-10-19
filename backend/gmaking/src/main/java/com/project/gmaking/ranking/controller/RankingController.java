@@ -2,6 +2,8 @@ package com.project.gmaking.ranking.controller;
 
 import com.project.gmaking.ranking.service.RankingService;
 import com.project.gmaking.ranking.vo.CharacterRankingVO;
+import com.project.gmaking.ranking.vo.PveRankingVO;
+import com.project.gmaking.ranking.vo.PvpRankingVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +18,12 @@ public class RankingController {
     private final RankingService rankingService;
 
     @GetMapping("/pvp")
-    public List<Map<String, Object>> getPvpRanking() {
+    public List<PvpRankingVO> getPvpRanking() {
         return rankingService.getPvpRanking();
     }
 
     @GetMapping("/pve")
-    public List<Map<String, Object>> getPveRanking() {
+    public List<PveRankingVO> getPveRanking() {
         return rankingService.getPveRanking();
     }
 

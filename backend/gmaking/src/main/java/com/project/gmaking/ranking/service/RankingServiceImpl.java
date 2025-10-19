@@ -2,6 +2,8 @@ package com.project.gmaking.ranking.service;
 
 import com.project.gmaking.ranking.dao.RankingDAO;
 import com.project.gmaking.ranking.vo.CharacterRankingVO;
+import com.project.gmaking.ranking.vo.PveRankingVO;
+import com.project.gmaking.ranking.vo.PvpRankingVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +17,12 @@ public class RankingServiceImpl implements RankingService {
     private final RankingDAO rankingDAO;
 
     @Override
-    public List<Map<String, Object>> getPvpRanking() {
+    public List<PvpRankingVO> getPvpRanking() {
         return rankingDAO.selectPvpRanking();
     }
 
     @Override
-    public List<Map<String, Object>> getPveRanking() {
+    public List<PveRankingVO> getPveRanking() {
         return rankingDAO.selectPveRanking();
     }
 

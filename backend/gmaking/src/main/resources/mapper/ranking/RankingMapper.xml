@@ -6,30 +6,31 @@
 <mapper namespace="com.project.gmaking.ranking.dao.RankingDAO">
 
     <!-- PVP 승리 랭킹 -->
-    <select id="selectPvpRanking" resultType="map">
+    <!-- PVP 승리 랭킹 -->
+    <select id="selectPvpRanking" resultType="com.project.gmaking.ranking.vo.PvpRankingVO">
         SELECT
-        c.USER_ID AS userId,
-        u.USER_NICKNAME AS nickname,
+        c.CHARACTER_NAME AS characterName,
+        u.USER_NICKNAME AS userNickname,
         COUNT(*) AS winCount
         FROM TB_BATTLE_LOG b
         JOIN TB_CHARACTER c ON b.CHARACTER_ID = c.CHARACTER_ID
         JOIN TB_USER u ON c.USER_ID = u.USER_ID
         WHERE b.BATTLE_TYPE = 'PVP'
         AND b.IS_WIN = 'Y'
-        GROUP BY c.USER_ID, u.USER_NICKNAME
+        GROUP BY c.CHARACTER_NAME, u.USER_NICKNAME
         ORDER BY winCount DESC
         LIMIT 50
     </select>
 
     <!-- PVE 클리어 랭킹 -->
-    <select id="selectPveRanking" resultType="map">
+    <select id="selectPveRanking" resultType="com.project.gmaking.ranking.vo.PveRankingVO">
         SELECT
-        u.USER_ID AS userId,
-        u.USER_NICKNAME AS nickname,
+        c.CHARACTER_NAME AS characterName,
+        u.USER_NICKNAME AS userNickname,
         SUM(c.TOTAL_STAGE_CLEARS) AS clearCount
         FROM TB_CHARACTER c
         JOIN TB_USER u ON c.USER_ID = u.USER_ID
-        GROUP BY u.USER_ID, u.USER_NICKNAME
+        GROUP BY c.CHARACTER_NAME, u.USER_NICKNAME
         ORDER BY clearCount DESC
         LIMIT 50
     </select>
