@@ -52,7 +52,9 @@ public class LoginController {
                 authenticatedUser.getRole(),
                 authenticatedUser.getUserNickname(),
                 authenticatedUser.isHasCharacter(),
-                authenticatedUser.getCharacterImageUrl()
+                authenticatedUser.getCharacterImageUrl(),
+                authenticatedUser.getIncubatorCount(),
+                authenticatedUser.isAdFree()
         );
 
         // 로그인 성공

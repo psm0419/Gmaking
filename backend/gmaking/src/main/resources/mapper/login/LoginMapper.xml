@@ -16,6 +16,8 @@
 
         <result column="HAS_CHARACTER" property="hasCharacter"/>
         <result column="CHARACTER_IMG_URL" property="characterImageUrl"/>
+        <result column="INCUBATOR_COUNT" property="incubatorCount"/>
+        <result column="IS_AD_FREE" property="isAdFree"/>
     </resultMap>
 
     <select id="selectUserById" resultMap="loginResultMap">
@@ -30,6 +32,8 @@
             T1.ROLE,
             T1.CREATED_DATE,
             T1.HAS_CHARACTER,
+            T1.INCUBATOR_COUNT,
+            T1.IS_AD_FREE,
             TBI.IMAGE_URL AS CHARACTER_IMG_URL
         FROM TB_USER T1
                  LEFT JOIN TB_CHARACTER TBC ON T1.CHARACTER_ID = TBC.CHARACTER_ID
@@ -120,6 +124,8 @@
             T1.ROLE,
             T1.CREATED_DATE,
             T1.HAS_CHARACTER,
+            T1.INCUBATOR_COUNT,
+            T1.IS_AD_FREE,
             TBI.IMAGE_URL AS CHARACTER_IMG_URL
         FROM TB_USER T1
                  LEFT JOIN TB_CHARACTER TBC ON T1.CHARACTER_ID = TBC.CHARACTER_ID
@@ -139,6 +145,8 @@
             T1.ROLE,
             T1.CREATED_DATE,
             T1.HAS_CHARACTER,
+            T1.INCUBATOR_COUNT,
+            T1.IS_AD_FREE,
             TBI.IMAGE_URL AS CHARACTER_IMG_URL
         FROM TB_USER T1
                  LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID

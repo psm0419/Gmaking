@@ -176,7 +176,9 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
                     updatedUser.getRole(),
                     updatedUser.getUserNickname(),
                     updatedUser.isHasCharacter(), // true로 업데이트됨
-                    updatedUser.getCharacterImageUrl() // URL로 업데이트됨
+                    updatedUser.getCharacterImageUrl(), // URL로 업데이트됨
+                    updatedUser.getIncubatorCount(),
+                    updatedUser.isAdFree()
             );
 
             // newToken 포함

@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 // 가이드 링크를 위한 서브 컴포넌트
 const GuideLink = ({ title }) => (
@@ -19,7 +21,26 @@ const HomePage = () => {
     const hasCharacter = !!user?.hasCharacter;
     const characterImageUrl = user?.characterImageUrl || null;
     const displayName = user?.userNickname || user?.userName || user?.userId;
+    const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
+      ? Number(user.incubatorCount)
+      : 0;
+    const isAdFree = !!user?.isAdFree;
 
+    useEffect(() => {
+      // 개발용 로그 — 배포 전엔 지우세요!
+      const t = localStorage.getItem('gmaking_token');
+      if (!t) {
+        console.log('[JWT] no token in localStorage');
+        return;
+      }
+      try {
+        const payload = jwtDecode(t);
+        console.log('[JWT payload]', payload);
+        console.log('[JWT] incubatorCount:', payload.incubatorCount, 'isAdFree:', payload.isAdFree);
+      } catch (e) {
+        console.error('[JWT] decode failed:', e);
+      }
+    }, []);
 
     // 슬라이드 배너 및 이벤트 더미 데이터
     const slideBanner = {
@@ -81,7 +102,9 @@ const HomePage = () => {
 
                     <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm">
                         <p>접속 시간: 124시간</p>
-                        <p>보유 코인: 99,999</p>
+                        <p>
+                            보유 부화권: {incubatorCount.toLocaleString()}개
+                        </p>
                         <p>최고 랭크: 다이아몬드 III</p>
                     </div>
                     <button

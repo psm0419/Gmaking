@@ -11,23 +11,35 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasCharacter, setHasCharacter] = useState(false); 
     const [characterImageUrl, setCharacterImageUrl] = useState(null);
+    const [incubatorCount, setIncubatorCount] = useState(null);
+    const [isAdFree, setIsAdFree] = useState(false);
 
     const logout = useCallback(() => {
         localStorage.removeItem('gmaking_token');    
         localStorage.removeItem('has_character');
         localStorage.removeItem('characterImageUrl');
+        localStorage.removeItem('incubatorCount');
+        localStorage.removeItem('isAdFree');
 
         setToken(null);
         setUser(null);
         setIsLoggedIn(false);
         setHasCharacter(false);
         setCharacterImageUrl(null);
+        setIncubatorCount(null);
+        setIsAdFree(false);
     }, []);
 
     useEffect(() => {
         const storedToken = localStorage.getItem('gmaking_token');
         const storedHasCharacter = localStorage.getItem('has_character') === 'true'; 
         const storedImage = localStorage.getItem('characterImageUrl');
+        const storedIncubatorCountRaw = localStorage.getItem('incubatorCount');
+        const storedIncubatorCount =
+          Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0;
+        const storedIsAdFree = localStorage.getItem('isAdFree');
+        const isAdFreeFromStorage =
+            storedIsAdFree === '1' || storedIsAdFree === 'true';
 
         if (!storedToken) {
             setIsLoading(false);
@@ -58,6 +70,13 @@ export const AuthProvider = ({ children }) => {
                     storedHasCharacter,
                 characterImageUrl:
                     userPayload.characterImageUrl || storedImage || null,
+                incubatorCount: userPayload.incubatorCount ?? (
+                    Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0
+                ),
+                isAdFree:
+                    userPayload.isAdFree === true ||
+                    userPayload.isAdFree === 'true' ||
+                    storedIsAdFree,
             };
 
             if (!currentUser.userId) {
@@ -69,6 +88,8 @@ export const AuthProvider = ({ children }) => {
             setUser(currentUser);
             setHasCharacter(currentUser.hasCharacter);
             setCharacterImageUrl(currentUser.characterImageUrl);
+            setIncubatorCount(currentUser.incubatorCount);
+            setIsAdFree(currentUser.isAdFree);
             
         } catch (error) {
             console.error('JWT 디코딩 실패 또는 사용자 정보 오류:', error);
@@ -88,7 +109,9 @@ export const AuthProvider = ({ children }) => {
                 const userWithCharStatus = { 
                     ...userInfo, 
                     hasCharacter: userInfo.hasCharacter || false,
-                    characterImageUrl: userInfo.characterImageUrl || null
+                    characterImageUrl: userInfo.characterImageUrl || null,
+                    incubatorCount: userInfo.incubatorCount || null,
+                    isAdFree: userInfo.isAdFree || false
                 };
 
                 setToken(receivedToken);
@@ -96,10 +119,14 @@ export const AuthProvider = ({ children }) => {
                 setIsLoggedIn(true);
                 setHasCharacter(userWithCharStatus.hasCharacter); 
                 setCharacterImageUrl(userWithCharStatus.characterImageUrl);
+                setIncubatorCount(userWithCharStatus.incubatorCount);
+                setIsAdFree(userWithCharStatus.isAdFree);
 
                 localStorage.setItem('gmaking_token', receivedToken);                
                 localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl || '');
                 localStorage.setItem('has_character', userWithCharStatus.hasCharacter ? 'true' : 'false');
+                localStorage.setItem('incubatorCount', String(userWithCharStatus.incubatorCount ?? 0));
+                localStorage.setItem('isAdFree', userWithCharStatus.isAdFree ? '1' : '0');
 
                 return true;
             } else {
@@ -153,10 +180,22 @@ export const AuthProvider = ({ children }) => {
 
         const imageUrl = userInfo.characterImageUrl || null;
 
+        const incubatorCount =
+          userInfo?.incubatorCount != null && !Number.isNaN(Number(userInfo.incubatorCount))
+            ? Number(userInfo.incubatorCount)
+            : (Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0);
+
+        const isUserAdFree =
+          userInfo?.isAdFree === true || userInfo?.isAdFree === 'true';
+
+
+
         const userWithCharStatus = {
             ...userInfo,
             hasCharacter: isUserWithCharacter,
-            characterImageUrl: imageUrl
+            characterImageUrl: imageUrl,
+            isAdFree: isUserAdFree,
+            incubatorCount
         };
 
         setToken(receivedToken);
@@ -164,10 +203,14 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(true);
         setHasCharacter(userWithCharStatus.hasCharacter); 
         setCharacterImageUrl(userWithCharStatus.characterImageUrl);
+        setIncubatorCount(userWithCharStatus.incubatorCount);
+        setIsAdFree(userWithCharStatus.isAdFree);
 
         localStorage.setItem('gmaking_token', receivedToken);        
         localStorage.setItem('characterImageUrl', imageUrl || '');
         localStorage.setItem('has_character', isUserWithCharacter ? 'true' : 'false');
+        localStorage.setItem('incubatorCount', String(incubatorCount ?? 0));
+        localStorage.setItem('isAdFree', isUserAdFree ? '1' : '0');
     }, []);
 
     // 캐릭터 생성 시 상태 갱신
@@ -218,7 +261,7 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
-            hasCharacter, characterImageUrl,
+            hasCharacter, characterImageUrl, incubatorCount, isAdFree,
             login, logout, 
             setCharacterCreated, 
             withdrawUser, handleOAuth2Login,

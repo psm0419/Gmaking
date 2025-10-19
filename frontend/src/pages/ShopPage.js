@@ -180,7 +180,7 @@ export default function ShopPage() {
                   30일간 광고 없이 이용
                 </p>
                 <div className="text-4xl font-extrabold tabular-nums text-violet-600">
-                  9,900 원
+                  4,900 원
                 </div>
                 <div className="text-sm mt-1 text-zinc-400">
                   월 자동 결제 가능

@@ -20,4 +20,6 @@ public class LoginVO {
     private String characterName;
     private boolean hasCharacter;
     private String characterImageUrl;
+    private Integer incubatorCount;
+    private boolean isAdFree;
 }
