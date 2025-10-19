@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.shop.dao.ShopPurchaseDAO">
+    <resultMap id="ProductVOMap" type="com.project.gmaking.shop.vo.ProductVO">
+        <result property="productId"      column="PRODUCT_ID"/>
+        <result property="productName"    column="PRODUCT_NAME"/>
+        <result property="productType"    column="PRODUCT_TYPE"/>
+        <result property="price"          column="PRICE"/>
+        <result property="currencyType"   column="CURRENCY_TYPE"/>
+        <result property="isSale"         column="IS_SALE"/>
+        <result property="durationDays"   column="DURATION_DAYS"/>
+        <result property="packSize"       column="PACK_SIZE"/>
+        <result property="grantProductId" column="GRANT_PRODUCT_ID"/>
+        <result property="salePrice"      column="SALE_PRICE"/>
+    </resultMap>
+
+    <!-- 상품 메타 조회 -->
+    <select id="selectProductMeta" parameterType="int" resultMap="ProductVOMap">
+        SELECT
+            PRODUCT_ID,
+            PRODUCT_NAME,
+            PRODUCT_TYPE,
+            PRICE,
+            CURRENCY_TYPE,
+            IS_SALE,
+            DURATION_DAYS,
+            PACK_SIZE,
+            GRANT_PRODUCT_ID,
+            SALE_PRICE
+        FROM tb_product
+        WHERE PRODUCT_ID = #{productId}
+    </select>
+
+    <!--  부화기 수량 증가  -->
+    <insert id="upsertIncubator">
+        INSERT INTO tb_user_inventory
+            (USER_ID, PRODUCT_ID, QUANTITY, ACQUIRED_DATE, UPDATED_DATE)
+        VALUES
+            (#{userId}, 4, #{quantity}, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            QUANTITY     = COALESCE(QUANTITY,0) + VALUES(QUANTITY),
+            UPDATED_DATE = NOW()
+    </insert>
+
+    <!-- 광고 제거 만료 -->
+    <select id="selectAdFreeMaxExpiry" parameterType="string" resultType="java.time.LocalDateTime">
+        SELECT MAX(EXPIRY_DATE)
+        FROM tb_user_inventory
+        WHERE USER_ID = #{userId}
+            AND PRODUCT_ID = 1
+    </select>
+
+    <!-- 광고 제거 인벤토리 -->
+    <insert id="upsertAdFreeInventory">
+        INSERT INTO tb_user_inventory
+            (USER_ID, PRODUCT_ID, QUANTITY, EXPIRY_DATE, ACQUIRED_DATE, UPDATED_DATE)
+        VALUES
+            (#{userId}, 1, #{quantity}, #{newExpiry}, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            QUANTITY     = COALESCE(QUANTITY,0) + VALUES(QUANTITY),
+            EXPIRY_DATE  = VALUES(EXPIRY_DATE),
+            UPDATED_DATE = NOW()
+    </insert>
+
+    <!-- 단일 유저 인큐베이터 합계 -->
+    <update id="refreshUserIncubatorCache" parameterType="string">
+        UPDATE tb_user u
+        LEFT JOIN (
+            SELECT USER_ID, COALESCE(SUM(QUANTITY),0) AS CNT
+            FROM tb_user_inventory
+            WHERE PRODUCT_ID IN (4,5) AND USER_ID = #{userId}
+            GROUP BY USER_ID
+        ) s ON s.USER_ID = u.USER_ID
+        SET u.INCUBATOR_COUNT = COALESCE(s.CNT, 0)
+        WHERE u.USER_ID = #{userId}
+    </update>
+
+    <update id="updateUserAdFree">
+        UPDATE tb_user
+        SET IS_AD_FREE = CASE
+        WHEN #{newExpiry} IS NOT NULL AND #{newExpiry} >= NOW() THEN 1
+        ELSE 0
+        END,
+        AD_FREE_EXPIRES_AT = #{newExpiry}
+        WHERE USER_ID = #{userId}
+    </update>
+
+
+</mapper>

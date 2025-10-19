@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.shop.dao.ShopProfileDAO">
+
+    <resultMap id="ShopProfileMap" type="com.project.gmaking.shop.vo.ShopProfileVO">
+        <result property="userId" column="USER_ID"/>
+        <result property="nickName" column="USER_NICKNAME"/>
+        <result property="profileImageUrl" column="PROFILE_IMAGE_URL"/>
+        <result property="incubatorCount" column="INCUBATOR_COUNT"/>
+    </resultMap>
+
+    <select id="selectShopProfile" parameterType="string" resultMap="ShopProfileMap">
+        SELECT
+            u.USER_ID,
+            u.USER_NICKNAME,
+            COALESCE(img.IMAGE_URL, '') AS PROFILE_IMAGE_URL,
+            u.INCUBATOR_COUNT
+        FROM tb_user u
+        LEFT JOIN tb_image img
+            ON img.IMAGE_ID = u.IMAGE_ID
+        WHERE u.USER_ID = #{userId}
+    </select>
+
+</mapper>

@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ShopProfile {
+public class ShopProfileVO {
     private String userId;
     private String nickName;
     private String profileImageUrl;
-    private int incubatorCount;  //
+    private int incubatorCount;  // 이후에 삭제
 }

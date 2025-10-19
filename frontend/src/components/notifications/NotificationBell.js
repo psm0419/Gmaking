@@ -328,7 +328,7 @@ export default function NotificationBell({
               </button>
 
               {gearOpen && (
-                <div className="absolute right-0 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-[0_12px_28px_rgba(0,0,0,0.14)] overflow-hidden z-[60] origin-top-right">
+                <div className="absolute right-55 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-[0_12px_28px_rgba(0,0,0,0.14)] overflow-hidden z-[60] origin-top-right">
                   <div className="absolute -top-2 right-4 w-0 h-0 border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-white drop-shadow" />
                   <button onClick={handleMarkAllRead} className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50">
                     전체 읽음 처리

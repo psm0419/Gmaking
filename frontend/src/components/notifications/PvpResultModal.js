@@ -46,7 +46,7 @@ export default function PvpResultModal({
       onViewLog(battleId);
       return;
     }
-    if (battleId) window.location.href = `/pvp/battles/${battleId}`;
+    if (battleId) window.location.href = `/logs/turns/${battleId}`;
   };
 
   return (
