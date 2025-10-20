@@ -9,13 +9,13 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [hasCharacter, setHasCharacter] = useState(false); 
+    const [hasCharacter, setHasCharacter] = useState(false);
     const [characterImageUrl, setCharacterImageUrl] = useState(null);
     const [incubatorCount, setIncubatorCount] = useState(null);
     const [isAdFree, setIsAdFree] = useState(false);
 
     const logout = useCallback(() => {
-        localStorage.removeItem('gmaking_token');    
+        localStorage.removeItem('gmaking_token');
         localStorage.removeItem('has_character');
         localStorage.removeItem('characterImageUrl');
         localStorage.removeItem('incubatorCount');
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const storedToken = localStorage.getItem('gmaking_token');
-        const storedHasCharacter = localStorage.getItem('has_character') === 'true'; 
+        const storedHasCharacter = localStorage.getItem('has_character') === 'true';
         const storedImage = localStorage.getItem('characterImageUrl');
         const storedIncubatorCountRaw = localStorage.getItem('incubatorCount');
         const storedIncubatorCount =
@@ -69,10 +69,10 @@ export const AuthProvider = ({ children }) => {
                     userPayload.hasCharacter === 'true' ||
                     storedHasCharacter,
                 characterImageUrl:
-                    userPayload.characterImageUrl || storedImage || null,
-                incubatorCount: userPayload.incubatorCount ?? (
-                    Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0
-                ),
+                  (storedImage && storedImage.trim() !== '')
+                      ? storedImage
+                      : (userPayload.characterImageUrl || null),
+                incubatorCount: (Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0),
                 isAdFree:
                     userPayload.isAdFree === true ||
                     userPayload.isAdFree === 'true' ||
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
             setCharacterImageUrl(currentUser.characterImageUrl);
             setIncubatorCount(currentUser.incubatorCount);
             setIsAdFree(currentUser.isAdFree);
-            
+
         } catch (error) {
             console.error('JWT 디코딩 실패 또는 사용자 정보 오류:', error);
             logout();
@@ -105,9 +105,9 @@ export const AuthProvider = ({ children }) => {
             const response = await loginApi(userId, userPassword);
             if (response.data && response.data.success) {
                 const { token: receivedToken, userInfo } = response.data;
-                
-                const userWithCharStatus = { 
-                    ...userInfo, 
+
+                const userWithCharStatus = {
+                    ...userInfo,
                     hasCharacter: userInfo.hasCharacter || false,
                     characterImageUrl: userInfo.characterImageUrl || null,
                     incubatorCount: userInfo.incubatorCount || null,
@@ -117,13 +117,15 @@ export const AuthProvider = ({ children }) => {
                 setToken(receivedToken);
                 setUser(userWithCharStatus);
                 setIsLoggedIn(true);
-                setHasCharacter(userWithCharStatus.hasCharacter); 
+                setHasCharacter(userWithCharStatus.hasCharacter);
                 setCharacterImageUrl(userWithCharStatus.characterImageUrl);
                 setIncubatorCount(userWithCharStatus.incubatorCount);
                 setIsAdFree(userWithCharStatus.isAdFree);
 
-                localStorage.setItem('gmaking_token', receivedToken);                
-                localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl || '');
+                localStorage.setItem('gmaking_token', receivedToken);
+                if (userWithCharStatus.characterImageUrl && userWithCharStatus.characterImageUrl.trim() !== '') {
+                  localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl.trim());
+                }
                 localStorage.setItem('has_character', userWithCharStatus.hasCharacter ? 'true' : 'false');
                 localStorage.setItem('incubatorCount', String(userWithCharStatus.incubatorCount ?? 0));
                 localStorage.setItem('isAdFree', userWithCharStatus.isAdFree ? '1' : '0');
@@ -174,7 +176,7 @@ export const AuthProvider = ({ children }) => {
     }, [token, logout]);
 
     // OAuth2 로그인 처리
-    const handleOAuth2Login = useCallback((receivedToken, userInfo) => { 
+    const handleOAuth2Login = useCallback((receivedToken, userInfo) => {
         const isUserWithCharacter =
             userInfo.hasCharacter === true || userInfo.hasCharacter === 'true';
 
@@ -201,31 +203,33 @@ export const AuthProvider = ({ children }) => {
         setToken(receivedToken);
         setUser(userWithCharStatus);
         setIsLoggedIn(true);
-        setHasCharacter(userWithCharStatus.hasCharacter); 
+        setHasCharacter(userWithCharStatus.hasCharacter);
         setCharacterImageUrl(userWithCharStatus.characterImageUrl);
         setIncubatorCount(userWithCharStatus.incubatorCount);
         setIsAdFree(userWithCharStatus.isAdFree);
 
-        localStorage.setItem('gmaking_token', receivedToken);        
-        localStorage.setItem('characterImageUrl', imageUrl || '');
+        localStorage.setItem('gmaking_token', receivedToken);
+        if (imageUrl && String(imageUrl).trim() !== '') {
+            localStorage.setItem('characterImageUrl', String(imageUrl).trim());
+        }
         localStorage.setItem('has_character', isUserWithCharacter ? 'true' : 'false');
         localStorage.setItem('incubatorCount', String(incubatorCount ?? 0));
         localStorage.setItem('isAdFree', isUserAdFree ? '1' : '0');
     }, []);
 
     // 캐릭터 생성 시 상태 갱신
-    const setCharacterCreated = useCallback((imageUrl) => { 
+    const setCharacterCreated = useCallback((imageUrl) => {
         setHasCharacter(true);
-        setCharacterImageUrl(imageUrl); 
+        setCharacterImageUrl(imageUrl);
 
         localStorage.setItem('has_character', 'true');
         localStorage.setItem('characterImageUrl', imageUrl);
 
         if (user) {
-            setUser(prev => ({ 
-                ...prev, 
-                hasCharacter: true, 
-                characterImageUrl: imageUrl 
+            setUser(prev => ({
+                ...prev,
+                hasCharacter: true,
+                characterImageUrl: imageUrl
             }));
         }
     }, [user]);
@@ -235,14 +239,16 @@ export const AuthProvider = ({ children }) => {
             if (!prevUser) return null;
             return {
                 ...prevUser,
-                userNickname: newNickname, 
+                userNickname: newNickname,
             };
         });
     }, []);
 
     // 대표 캐릭터 변경 후 이미지 URL 갱신
     const updateRepresentativeCharacter = useCallback((imageUrl, characterId) => {
-        localStorage.setItem('characterImageUrl', imageUrl);
+        if (imageUrl && String(imageUrl).trim() !== '') {
+          localStorage.setItem('characterImageUrl', String(imageUrl).trim());
+        }
 
         setCharacterImageUrl(imageUrl);
         setHasCharacter(true);
@@ -290,15 +296,49 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('isAdFree', bool ? '1' : '0');
     }, []);
 
+    const applyNewToken = useCallback(
+        (newToken) => {
+          if (!newToken) return;
+          localStorage.setItem('gmaking_token', newToken);
+          setToken(newToken);
+
+          try {
+            const p = jwtDecode(newToken);
+
+            if (p?.incubatorCount != null) {
+              updateIncubatorCount({ set: Number(p.incubatorCount) });
+            }
+            if (typeof p?.isAdFree !== 'undefined') {
+              updateAdFree({ enabled: p.isAdFree });
+            }
+
+            setUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    incubatorCount:
+                      p?.incubatorCount != null ? Number(p.incubatorCount) : prev.incubatorCount,
+                    isAdFree:
+                      typeof p?.isAdFree !== 'undefined' ? !!p.isAdFree : prev.isAdFree,
+                  }
+                : prev
+            );
+          } catch (e) {
+            console.warn('[applyNewToken] decode failed', e);
+          }
+        },
+        [updateIncubatorCount, updateAdFree]
+      );
+
     return (
-        <AuthContext.Provider value={{ 
-            isLoggedIn, token, user, isLoading, 
+        <AuthContext.Provider value={{
+            isLoggedIn, token, user, isLoading,
             hasCharacter, characterImageUrl, incubatorCount, isAdFree,
-            login, logout, 
-            setCharacterCreated, 
+            login, logout,
+            setCharacterCreated,
             withdrawUser, handleOAuth2Login,
             updateUserNickname, updateRepresentativeCharacter, setToken,
-            updateIncubatorCount, updateAdFree
+            updateIncubatorCount, updateAdFree, applyNewToken,
         }}>
             {children}
         </AuthContext.Provider>
