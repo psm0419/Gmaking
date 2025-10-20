@@ -24,6 +24,7 @@ import PostDetailPage from './pages/PostDetailPage';
 import BattleLogList from './pages/BattleLogList';
 import TurnLogList from './pages/TurnLogList';
 import RankingPage from './pages/RankingPage';
+import AiDebatePage from './pages/AiDebatePage';
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
@@ -85,6 +86,7 @@ function App() {
                 <Route path="/logs" element={<BattleLogList />} />
                 <Route path="/logs/turns/:battleId" element={<TurnLogList />} />
                 <Route path="/ranking" element={<RankingPage />} />
+                <Route path="/debate" element={<AiDebatePage />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
