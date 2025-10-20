@@ -22,28 +22,28 @@ const HomePage = () => {
     const characterImageUrl = user?.characterImageUrl || null;
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
-      ? Number(user.incubatorCount)
-      : 0;
+        ? Number(user.incubatorCount)
+        : 0;
     const isAdFree = !!user?.isAdFree;
 
     useEffect(() => {
-      // 개발용 로그 — 배포 전엔 지우세요!
-      const t = localStorage.getItem('gmaking_token');
-      if (!t) {
-        console.log('[JWT] no token in localStorage');
-        return;
-      }
-      try {
-        const payload = jwtDecode(t);
-        console.log('[JWT payload]', payload);
-        console.log('[JWT] incubatorCount:', payload.incubatorCount, 'isAdFree:', payload.isAdFree);
-      } catch (e) {
-        console.error('[JWT] decode failed:', e);
-      }
+        const t = localStorage.getItem('gmaking_token');
+        if (!t) {
+            console.log('[JWT] no token in localStorage');
+            return;
+        }
+        try {
+            const payload = jwtDecode(t);
+            console.log('[JWT payload]', payload);
+            console.log('[JWT] incubatorCount:', payload.incubatorCount, 'isAdFree:', payload.isAdFree);
+        } catch (e) {
+            console.error('[JWT] decode failed:', e);
+        }
     }, []);
 
     // 슬라이드 배너 및 이벤트 더미 데이터
     const slideBanner = {
+        img: process.env.PUBLIC_URL + "/GmakingMain.png",
         title: "겜만중 오픈 준비중",
         description: "더미",
     };
@@ -132,23 +132,20 @@ const HomePage = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
 
-                {/* 2-1. 슬라이드 배너 (Slide Banner) */}
-                <div
-                    className={`h-[400px] rounded-xl shadow-2xl p-10 flex flex-col justify-center bg-center bg-cover`}
-                    style={{backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/1200x400/?space,galaxy,game')`}}
-                >
-                    <div className="max-w-xl">
-                        <h2 className="text-5xl font-extrabold mb-3 leading-tight text-white">
-                            {slideBanner.title}
-                        </h2>
-                        <p className="text-gray-300 text-lg mb-6">
-                            {slideBanner.description}
-                        </p>
-                        <button className="px-8 py-3 bg-yellow-400 text-gray-900 text-xl font-bold rounded-lg shadow-lg hover:bg-yellow-500 transition duration-300">
+                {/* 슬라이드 배너 - 원본 크기 그대로 표시 */}
+                <div className="relative">
+                    <img
+                        src={slideBanner.img}
+                        alt="슬라이드 배너"
+                        className="block mx-auto w-full"
+                    />
+                    <div className="absolute bottom-6 left-6">
+                        <button className="px-6 py-2 bg-yellow-400 text-gray-900 text-lg font-bold rounded-lg shadow-lg hover:bg-yellow-500 transition duration-300">
                             자세히 보기
                         </button>
                     </div>
                 </div>
+
 
                 {/* 2-2. 배너 아래 3단 섹션: 이벤트 | 사용자 정보 | 가이드 */}
                 <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
