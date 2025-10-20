@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, XCircle } from 'lucide-react';
+import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, Swords, Footprints, Scroll } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
@@ -17,11 +17,11 @@ const Header = () => {
         { name: '공지사항', icon: Bell, link: '#' },
         { name: '상점', icon: ShoppingCart, link: '/shop' },
         { name: '랭킹', icon: Award, link: 'ranking' },
-        { name: '커뮤니티', icon: MessageSquare, link: '/community' },
+        { name: '커뮤니티', icon: MessageSquare, link: '/community' },        
+        { name: 'PVE', icon: Footprints, link: 'pve/maps' },
+        { name: 'PVP', icon: Swords, link: 'pvp/match' },
+        { name: '로그', icon: Scroll, link: 'logs' },
         { name: '고객지원', icon: LifeBuoy, link: '#' },
-        { name: 'PVE', icon: LifeBuoy, link: 'pve/maps' },
-        { name: 'PVP', icon: LifeBuoy, link: 'pvp/match' },
-        { name: '로그', icon: LifeBuoy, link: 'logs' },
     ];
 
     if (isLoading) {
