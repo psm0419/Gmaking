@@ -34,6 +34,7 @@ function PvpBattlePage() {
     const [playerCurrentHp, setPlayerCurrentHp] = useState(myCharacter.characterStat.characterHp);
     const [enemyCurrentHp, setEnemyCurrentHp] = useState(enemyCharacter.characterStat.characterHp);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [specialCooldown, setSpecialCooldown] = useState(0);
 
     // 체력 퍼센트 계산
     const calcHpPercent = (current, max) => Math.max(0, Math.round((current / max) * 100));
@@ -62,6 +63,12 @@ function PvpBattlePage() {
         }
         if (!myCommand) {
             alert("커맨드를 선택하세요!");
+            return;
+        }
+
+        // 필살기 쿨타임 중일 때 사용 불가
+        if (myCommand === "필살기" && specialCooldown > 0) {
+            alert(`필살기는 ${specialCooldown}턴 후 사용 가능합니다.`);
             return;
         }
 
@@ -94,6 +101,12 @@ function PvpBattlePage() {
             setPlayerCurrentHp(turnResponse.data.playerHp);
             setEnemyCurrentHp(turnResponse.data.enemyHp);
 
+            // 필살기 사용 시 쿨타임 2로 설정
+            if (myCommand === "필살기") setSpecialCooldown(3);
+
+            // 턴 종료 시 쿨타임 감소
+            setSpecialCooldown(prev => Math.max(0, prev - 1));
+
             setMyCommand(null);
         } catch (err) {
             console.error(err);
@@ -119,15 +132,27 @@ function PvpBattlePage() {
                     </p>
 
                     <div className="flex gap-2 mt-2 justify-center flex-wrap">
-                        {commands.map(cmd => (
-                            <button
-                                key={cmd}
-                                className={`px-3 py-1 rounded ${myCommand === cmd ? "bg-yellow-400 text-black" : "bg-gray-700"}`}
-                                onClick={() => setMyCommand(cmd)}
-                            >
-                                {cmd}
-                            </button>
-                        ))}
+                        {commands.map(cmd => {
+                            const isSpecial = cmd === "필살기";
+                            const isDisabled = isProcessing || (isSpecial && specialCooldown > 0);
+                            return (
+                                <button
+                                    key={cmd}
+                                    className={`px-3 py-1 rounded ${myCommand === cmd ? "bg-yellow-400 text-black" :
+                                            isDisabled ? "bg-gray-500 cursor-not-allowed text-gray-300" :
+                                                "bg-gray-700 hover:bg-gray-600"
+                                        }`}
+                                    onClick={() => !isDisabled && setMyCommand(cmd)}
+                                    disabled={isDisabled}
+                                >
+                                    {cmd}
+                                    {/* 쿨타임 표시 */}
+                                    {isSpecial && specialCooldown > 0 && (
+                                        <span className="ml-1 text-sm text-red-400">({specialCooldown})</span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                     <div className="flex justify-center">
                         <HpBar current={playerCurrentHp} max={myCharacter.characterStat.characterHp} />
