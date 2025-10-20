@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Ticket, Egg } from "lucide-react";
-import {useAuth} from "../context/AuthContext"
+import { useAuth } from "../context/AuthContext";
+import { jwtDecode } from "jwt-decode";
 
 // 공통 카드
 function ShopCard({ title, children, onClick, className = "" }) {
@@ -53,7 +54,30 @@ function ProfileBar({ name = "마스터 님", incubatorCount = 0, imageUrl }) {
 }
 
 export default function ShopPage() {
-  const { updateIncubatorCount, updateAdFree } = useAuth();
+  // ✅ Context에서 token/업데이트 함수 사용
+  const {
+    token: authToken,
+    updateIncubatorCount,
+    updateAdFree,
+    applyNewToken,
+  } = useAuth();
+
+  // (디버그) 토큰이 바뀌면 payload를 다시 확인
+  useEffect(() => {
+    const t = authToken;
+    if (!t) {
+      console.log("[JWT] no token in context");
+      return;
+    }
+    try {
+      const payload = jwtDecode(t);
+      console.log("[JWT payload]", payload);
+      console.log("[JWT] incubatorCount:", payload.incubatorCount, "isAdFree:", payload.isAdFree);
+    } catch (e) {
+      console.error("[JWT] decode failed:", e);
+    }
+  }, [authToken]);
+
   const [profile, setProfile] = useState({
     name: "마스터 님",
     incubatorCount: 0,
@@ -61,12 +85,10 @@ export default function ShopPage() {
   });
   const [loadingSku, setLoadingSku] = useState(null);
 
-  const token = localStorage.getItem("gmaking_token");
-
   // 프로필 로드
   useEffect(() => {
-    if (!token) return;
-    const auth = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    if (!authToken) return;
+    const auth = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
 
     fetch(`/api/shop/profile/me`, {
       headers: { Authorization: auth, Accept: "application/json" },
@@ -95,15 +117,15 @@ export default function ShopPage() {
       .catch((e) => {
         console.error("프로필 로드 실패:", e);
       });
-  }, [token]);
+  }, [authToken]);
 
-  // 구매 API
+  // 구매 API: 응답 헤더/바디에서 새 토큰 추출
   const purchase = async (productId, quantity = 1) => {
-    if (!token) {
+    if (!authToken) {
       window.location.href = "/login";
       return null;
     }
-    const auth = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    const auth = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
 
     const res = await fetch("/api/shop/purchase", {
       method: "POST",
@@ -121,19 +143,21 @@ export default function ShopPage() {
       window.location.href = "/login";
       return null;
     }
+
+    // ⬇️ 헤더에서 새 토큰 추출(서버가 노출해줄 때) — CORS에 exposed headers 필요
+    const headerToken =
+      res.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ||
+      res.headers.get("X-New-Token") ||
+      null;
+
     if (!res.ok) {
-      throw new Error(
-        `POST /purchase ${res.status} ${await res.text().catch(() => "")}`
-      );
+      throw new Error(`POST /purchase ${res.status} ${await res.text().catch(() => "")}`);
     }
-    return res.json();
+    const body = await res.json();
+    return { ...body, token: body?.token ?? headerToken };
   };
 
-  const addBySku = {
-    1: 0,   // 광고 제거
-    2: 5,   // 부화기 5개
-    3: 15,  // 부화기 15개
-  };
+  const addBySku = { 1: 0, 2: 5, 3: 15 };
 
   // 구매 버튼 핸들러
   const handleBuy = async (productId, label) => {
@@ -142,12 +166,15 @@ export default function ShopPage() {
       const data = await purchase(productId, 1);
       if (!data) return;
 
-      // 화면 상단 프로필 즉시 반영
+      // 1) 새 JWT 즉시 반영(헤더 or 바디)
+      if (data.token) applyNewToken(data.token);
+
+      // 2) 상단 프로필 즉시 반영(서버 값 우선)
       setProfile((prev) => {
         const nextCount =
-          typeof data.incubatorCount !== 'undefined'
+          data && data.incubatorCount != null
             ? Number(data.incubatorCount)
-            : Number(prev.incubatorCount) + (addBySku[productId] ?? 0);
+            : Number(prev.incubatorCount ?? 0) + (addBySku[productId] ?? 0);
 
         return {
           ...prev,
@@ -157,26 +184,21 @@ export default function ShopPage() {
         };
       });
 
-      // 전역(AuthContext) 반영
+      // 3) 전역(AuthContext) 동기화
       if (productId === 1) {
-        // 광고 제거 패스
-        updateAdFree?.({
-          enabled: data?.isAdFree ?? true,
-          expiresAt: data?.adFreeExpiry,
-        });
+        updateAdFree?.({ enabled: data?.isAdFree ?? true, expiresAt: data?.adFreeExpiry });
       } else if (productId === 2 || productId === 3) {
-        // 부화기 증가
-        if (typeof data?.incubatorCount !== 'undefined') {
-          updateIncubatorCount?.({ set: Number(data.incubatorCount) });
-        } else {
-          updateIncubatorCount?.({ add: addBySku[productId] });
-        }
+        updateIncubatorCount?.(
+          data && data.incubatorCount != null
+            ? { set: Number(data.incubatorCount) }
+            : { add: addBySku[productId] }
+        );
       }
 
       alert(`${label} 구매 완료!`);
     } catch (e) {
-      console.error('구매 실패:', e);
-      alert('구매 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      console.error("구매 실패:", e);
+      alert("구매 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setLoadingSku(null);
     }
@@ -196,34 +218,25 @@ export default function ShopPage() {
 
         {/* 상품 카드 그리드 */}
         <section className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {/* 1. 광고 제거 패스 (productId=1) */}
+          {/* 1. 광고 제거 패스 */}
           <ShopCard
             title="광고 제거 패스 (30일)"
             onClick={() => handleBuy(1, "광고 패스권(30일)")}
-            className={`border-t-4 border-violet-500 ${
-              loadingSku === 1 ? "opacity-60 cursor-wait" : ""
-            }`}
+            className={`border-t-4 border-violet-500 ${loadingSku === 1 ? "opacity-60 cursor-wait" : ""}`}
           >
             <div className="flex flex-col items-center">
               <div className="mb-8 rounded-3xl bg-violet-500 p-6 text-white shadow-lg transition group-hover:scale-105">
                 <Ticket className="h-14 w-14" />
               </div>
-
               <div className="mt-auto text-center w-full">
-                <p className="text-xl text-zinc-600 mb-2">
-                  30일간 광고 없이 이용
-                </p>
-                <div className="text-4xl font-extrabold tabular-nums text-violet-600">
-                  4,900 원
-                </div>
-                <div className="text-sm mt-1 text-zinc-400">
-                  월 자동 결제 가능
-                </div>
+                <p className="text-xl text-zinc-600 mb-2">30일간 광고 없이 이용</p>
+                <div className="text-4xl font-extrabold tabular-nums text-violet-600">4,900 원</div>
+                <div className="text-sm mt-1 text-zinc-400">월 자동 결제 가능</div>
               </div>
             </div>
           </ShopCard>
 
-          {/* 2. 부화기 패키지 (5개) productId=2 */}
+          {/* 2. 부화기 5개 */}
           <ShopCard
             title="🐣 부화기 패키지 (5개)"
             onClick={() => handleBuy(2, "부화기 패키지 (5개)")}
@@ -235,29 +248,23 @@ export default function ShopPage() {
                   <Egg className="absolute left-0 top-0 h-full w-full fill-yellow-300 stroke-yellow-600" />
                 </div>
               </div>
-
               <div className="mt-auto text-center w-full">
                 <p className="text-xl text-zinc-600 mb-2">기본 부화기 5개</p>
-                <div className="text-4xl font-extrabold tabular-nums text-zinc-900">
-                  6,000 원
-                </div>
+                <div className="text-4xl font-extrabold tabular-nums text-zinc-900">6,000 원</div>
                 <div className="text-sm mt-1 text-zinc-400">개당 1,200원</div>
               </div>
             </div>
           </ShopCard>
 
-          {/* 3. 부화기 대용량 (15개) productId=3 */}
+          {/* 3. 부화기 15개 */}
           <ShopCard
             title="💰 부화기 대용량 (15개)"
             onClick={() => handleBuy(3, "부화기 대용량 (15개)")}
-            className={`relative overflow-hidden border-t-4 border-sky-500 ${
-              loadingSku === 3 ? "opacity-60 cursor-wait" : ""
-            }`}
+            className={`relative overflow-hidden border-t-4 border-sky-500 ${loadingSku === 3 ? "opacity-60 cursor-wait" : ""}`}
           >
             <div className="absolute top-0 right-0 bg-sky-500 text-white text-xs font-bold px-4 py-1 transform rotate-45 translate-x-7 -translate-y-4 shadow-md">
               BEST
             </div>
-
             <div className="flex flex-col items-center">
               <div className="mb-8 rounded-3xl bg-sky-100 p-6 text-sky-600 shadow-md transition group-hover:scale-105">
                 <div className="relative h-14 w-14">
@@ -265,15 +272,10 @@ export default function ShopPage() {
                   <Egg className="absolute right-0 bottom-0 h-12 w-12 fill-sky-400 stroke-sky-700" />
                 </div>
               </div>
-
               <div className="mt-auto text-center w-full">
                 <p className="text-xl text-zinc-600 mb-2">추가 5% 할인 효과</p>
-                <div className="text-4xl font-extrabold tabular-nums text-sky-600">
-                  16,000 원
-                </div>
-                <div className="text-sm mt-1 text-zinc-400 line-through">
-                  원가 18,000원
-                </div>
+                <div className="text-4xl font-extrabold tabular-nums text-sky-600">16,000 원</div>
+                <div className="text-sm mt-1 text-zinc-400 line-through">원가 18,000원</div>
               </div>
             </div>
           </ShopCard>
@@ -281,49 +283,23 @@ export default function ShopPage() {
 
         {/* 안내 섹션 */}
         <div className="my-16 border-t-2 border-zinc-200"></div>
-
         <section className="px-4 lg:px-0">
-          <h2 className="text-3xl font-bold text-zinc-800 mb-8">
-            구매 전 꼭 확인하세요
-          </h2>
+          <h2 className="text-3xl font-bold text-zinc-800 mb-8">구매 전 꼭 확인하세요</h2>
           <div className="grid md:grid-cols-2 gap-8 p-6 bg-white rounded-xl shadow-sm">
             <div>
-              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">
-                💳 결제 및 환불 안내
-              </h3>
+              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">💳 결제 및 환불 안내</h3>
               <ul className="space-y-3 text-zinc-600 text-base">
-                <li className="flex items-start">
-                  <span className="mr-2 text-violet-500 font-bold">•</span>
-                  모든 상품은 **부가세(VAT)**가 포함된 금액입니다.
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 text-violet-500 font-bold">•</span>
-                  상품 구매 후 **7일 이내 사용하지 않은 상품**에 한해 환불이 가능합니다. (단, 기간제 상품은 제외)
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 text-violet-500 font-bold">•</span>
-                  자세한 환불 정책은 하단의 **[이용약관]**을 확인해 주세요.
-                </li>
+                <li className="flex items-start"><span className="mr-2 text-violet-500 font-bold">•</span>모든 상품은 **부가세(VAT)**가 포함된 금액입니다.</li>
+                <li className="flex items-start"><span className="mr-2 text-violet-500 font-bold">•</span>상품 구매 후 **7일 이내 사용하지 않은 상품**에 한해 환불이 가능합니다. (단, 기간제 상품은 제외)</li>
+                <li className="flex items-start"><span className="mr-2 text-violet-500 font-bold">•</span>자세한 환불 정책은 하단의 **[이용약관]**을 확인해 주세요.</li>
               </ul>
             </div>
-
             <div>
-              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">
-                ✨ 상품 사용 유의사항
-              </h3>
+              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">✨ 상품 사용 유의사항</h3>
               <ul className="space-y-3 text-zinc-600 text-base">
-                <li className="flex items-start">
-                  <span className="mr-2 text-sky-500 font-bold">•</span>
-                  **부화기**는 구매 즉시 계정에 지급되며, 미사용 시 유효기간이 없습니다.
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 text-sky-500 font-bold">•</span>
-                  **광고 제거 패스**는 구매일로부터 **30일**간 적용되며, 만료일 이후 광고가 다시 노출됩니다.
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2 text-sky-500 font-bold">•</span>
-                  지급이 지연될 경우, **고객 지원**을 통해 문의해 주세요.
-                </li>
+                <li className="flex items-start"><span className="mr-2 text-sky-500 font-bold">•</span>**부화기**는 구매 즉시 계정에 지급되며, 미사용 시 유효기간이 없습니다.</li>
+                <li className="flex items-start"><span className="mr-2 text-sky-500 font-bold">•</span>**광고 제거 패스**는 구매일로부터 **30일**간 적용되며, 만료일 이후 광고가 다시 노출됩니다.</li>
+                <li className="flex items-start"><span className="mr-2 text-sky-500 font-bold">•</span>지급이 지연될 경우, **고객 지원**을 통해 문의해 주세요.</li>
               </ul>
             </div>
           </div>

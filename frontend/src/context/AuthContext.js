@@ -290,6 +290,40 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('isAdFree', bool ? '1' : '0');
     }, []);
 
+    const applyNewToken = useCallback(
+        (newToken) => {
+          if (!newToken) return;
+          localStorage.setItem('gmaking_token', newToken);
+          setToken(newToken);
+
+          try {
+            const p = jwtDecode(newToken);
+
+            if (p?.incubatorCount != null) {
+              updateIncubatorCount({ set: Number(p.incubatorCount) });
+            }
+            if (typeof p?.isAdFree !== 'undefined') {
+              updateAdFree({ enabled: p.isAdFree });
+            }
+
+            setUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    incubatorCount:
+                      p?.incubatorCount != null ? Number(p.incubatorCount) : prev.incubatorCount,
+                    isAdFree:
+                      typeof p?.isAdFree !== 'undefined' ? !!p.isAdFree : prev.isAdFree,
+                  }
+                : prev
+            );
+          } catch (e) {
+            console.warn('[applyNewToken] decode failed', e);
+          }
+        },
+        [updateIncubatorCount, updateAdFree]
+      );
+
     return (
         <AuthContext.Provider value={{ 
             isLoggedIn, token, user, isLoading, 
@@ -298,7 +332,7 @@ export const AuthProvider = ({ children }) => {
             setCharacterCreated, 
             withdrawUser, handleOAuth2Login,
             updateUserNickname, updateRepresentativeCharacter, setToken,
-            updateIncubatorCount, updateAdFree
+            updateIncubatorCount, updateAdFree, applyNewToken,
         }}>
             {children}
         </AuthContext.Provider>
