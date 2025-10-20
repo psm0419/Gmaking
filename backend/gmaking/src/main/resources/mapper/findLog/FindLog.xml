@@ -9,18 +9,31 @@
             parameterType="int"
             resultType="com.project.gmaking.pve.vo.BattleLogVO">
         SELECT
-        BATTLE_ID,
-        CHARACTER_ID,
-        BATTLE_TYPE,
-        OPPONENT_ID,
-        IS_WIN,
-        TURN_COUNT,
-        CREATED_DATE,
-        CREATED_BY,
-        UPDATED_DATE,
-        UPDATED_BY
-        FROM TB_BATTLE_LOG
-        WHERE CHARACTER_ID = #{characterId}
-        ORDER BY CREATED_DATE DESC
+        b.BATTLE_ID,
+        b.CHARACTER_ID,
+        b.BATTLE_TYPE,
+        b.OPPONENT_ID,
+        b.IS_WIN,
+        b.TURN_COUNT,
+        b.CREATED_DATE,
+        b.CREATED_BY,
+        b.UPDATED_DATE,
+        b.UPDATED_BY,
+        c.CHARACTER_NAME AS characterName,
+
+        CASE
+        WHEN b.BATTLE_TYPE = 'PVP' THEN oc.CHARACTER_NAME
+        WHEN b.BATTLE_TYPE = 'PVE' THEN m.MONSTER_NAME
+        ELSE NULL
+        END AS opponentName
+
+        FROM TB_BATTLE_LOG b
+        LEFT JOIN TB_CHARACTER c ON b.CHARACTER_ID = c.CHARACTER_ID
+        LEFT JOIN TB_CHARACTER oc ON b.OPPONENT_ID = oc.CHARACTER_ID
+        LEFT JOIN TB_MONSTER m ON b.OPPONENT_ID = m.MONSTER_ID
+
+        WHERE b.CHARACTER_ID = #{characterId}
+        OR b.OPPONENT_ID = #{characterId}
+        ORDER BY b.CREATED_DATE DESC
     </select>
 </mapper>

@@ -11,6 +11,7 @@ function BattleLogList() {
     const [typeFilter, setTypeFilter] = useState("ALL"); // ALL / PVP / PVE
     const navigate = useNavigate();
     const token = localStorage.getItem("gmaking_token");
+    const myCharacterIds = Object.keys(characterMap).map(id => Number(id));
 
     let userId = null;
     if (token) {
@@ -57,11 +58,14 @@ function BattleLogList() {
     // 필터링: 타입 + 검색어
     const filteredLogs = battleLogs
         .filter(log => typeFilter === "ALL" || log.battleType === typeFilter)
-        .filter(log =>
-            (characterMap[log.characterId] || "")
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-        );
+        .filter(log => {
+            const lower = searchTerm.toLowerCase();
+            // 내 캐릭터 이름, 상대 이름 모두 검색 대상에 포함
+            return (
+                (log.characterName && log.characterName.toLowerCase().includes(lower)) ||
+                (log.opponentName && log.opponentName.toLowerCase().includes(lower))
+            );
+        });
 
     return (
         <div className="h-screen flex flex-col bg-gray-50">
@@ -109,29 +113,38 @@ function BattleLogList() {
                             : "전투 기록이 없습니다."}
                     </p>
                 ) : (
-                    <ul className="space-y-3">
-                        {filteredLogs.map((log) => (
-                            <li
-                                key={log.battleId}
-                                onClick={() => handleClickLog(log.battleId)}
-                                className={`cursor-pointer p-4 rounded-xl border transition-shadow duration-200 
-                                            hover:shadow-lg 
-                                            ${log.isWin === "Y" ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"}`}
-                            >
-                                <div className="flex justify-between items-center">
-                                    <span className="font-semibold text-lg">
-                                        [{log.battleType}] {characterMap[log.characterId] || `ID: ${log.characterId}`}
-                                    </span>
-                                    <span className={`font-bold ${log.isWin === "Y" ? "text-green-600" : "text-red-600"}`}>
-                                        {log.isWin === "Y" ? "승리" : "패배"}
-                                    </span>
-                                </div>
-                                <p className="text-gray-600 text-sm mt-1">
-                                    {log.createdDate}
-                                </p>
-                            </li>
-                        ))}
-                    </ul>
+                        <ul className="space-y-3">
+                            {filteredLogs.map((log) => {
+                                const isWin = log.isWin === "Y";
+                                const isAttack = myCharacterIds.includes(log.characterId);
+                                const roleLabel = isAttack ? "공격" : "방어";
+
+                                const myCharName = isAttack ? log.characterName : log.opponentName;
+                                const opponentName = isAttack ? log.opponentName : log.characterName;
+
+                                return (
+                                    <li
+                                        key={log.battleId}
+                                        onClick={() => handleClickLog(log.battleId)}
+                                        className={`cursor-pointer p-4 rounded-xl border transition-shadow duration-200 
+                            hover:shadow-lg 
+                            ${isWin ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"}`}
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-semibold text-lg">
+                                                [{log.battleType}] {myCharName} ({roleLabel}) vs {opponentName}
+                                            </span>
+                                            <span className={`font-bold ${isWin ? "text-green-600" : "text-red-600"}`}>
+                                                {isWin ? "승리" : "패배"}
+                                            </span>
+                                        </div>
+                                        <p className="text-gray-600 text-sm mt-1">
+                                            {log.createdDate}
+                                        </p>
+                                    </li>
+                                );
+                            })}
+                        </ul>
                 )}
             </div>
         </div>
