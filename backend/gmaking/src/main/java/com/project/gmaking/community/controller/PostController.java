@@ -73,7 +73,7 @@ public class PostController {
     @PostMapping("/view/{postId}")
     public ResponseEntity<Void> incrementViewCount(
             @PathVariable Long postId,
-            @AuthenticationPrincipal String userId, 
+            @AuthenticationPrincipal String userId,
             HttpServletRequest request
     ){
         try {

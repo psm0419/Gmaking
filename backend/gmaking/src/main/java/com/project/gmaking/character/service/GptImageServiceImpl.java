@@ -48,10 +48,12 @@ public class GptImageServiceImpl implements GptImageService {
 
         // 1. DALL-E에 전달할 프롬프트 조합 (GPT-4o의 LLM 능력 활용)
         String combinedPrompt = String.format("""
-            Highly detailed 2D pixel art, 16-bit style game sprite of a fantasy warrior character.
-            The main subject is a %s, named '%s'.
-            User's specific request: %s.
-            Focus on full body, transparent background, vibrant colors, clean edges.
+                Highly detailed 2D pixel art, 16-bit style character illustration of a fantasy warrior.
+                The main subject is a %s, named '%s'.
+                User's specific request: %s.
+                Focus on a single full-body character, centered, white background, vibrant colors, clean edges.
+                Only one character, no sprite sheet, no multiple poses, no color palette, no references around.
+                Full body visible, no cropping, extra margin around the character.
             """, predictedAnimal, characterName, userPrompt != null && !userPrompt.isEmpty() ? userPrompt : "No extra details. Make it a cute warrior.");
 
         // 2. DALL-E API 요청 바디 구성

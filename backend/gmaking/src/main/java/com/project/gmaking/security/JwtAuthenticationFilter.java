@@ -13,7 +13,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 모든 요청에 대해 JWT 토큰을 검증하고 인증 정보를 SecurityContext에 저장하는 필터

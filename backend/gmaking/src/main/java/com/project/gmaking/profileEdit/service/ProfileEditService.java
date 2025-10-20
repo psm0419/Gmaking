@@ -1,7 +1,7 @@
 package com.project.gmaking.profileEdit.service;
 
-import com.project.gmaking.imageUpload.ImageKind;
-import com.project.gmaking.imageUpload.service.ImageUploadService;
+import com.project.gmaking.character.service.GcsService;
+import com.project.gmaking.character.vo.ImageUploadResponseVO;
 import com.project.gmaking.profileEdit.dao.ProfileEditDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -17,7 +19,7 @@ import java.util.Map;
 public class ProfileEditService {
     private final ProfileEditDAO dao;
     private final PasswordEncoder passwordEncoder;
-    private final ImageUploadService imageUploadService;
+    private final GcsService gcsService;
 
     // 프로필 조회
     @Transactional(readOnly = true)
@@ -61,12 +63,37 @@ public class ProfileEditService {
     }
 
     // 프로필 이미지 업로드
-    public Map<String, Object> uploadProfile(String userId, MultipartFile file) throws Exception {
-        // enum만 넘기면 dir/code 자동 적용
-        var img = imageUploadService.saveFor(file, ImageKind.PROFILE, userId);
 
-        dao.updateUserImage(userId, img.getImageId());
-        return Map.of("url", img.getImageUrl());
+    public Map<String, Object> uploadProfile(String userId, MultipartFile file) throws Exception {
+        // GCS 업로드 (profile 폴더에 저장)
+        ImageUploadResponseVO uploaded = gcsService.uploadFile(file, "profile");
+
+        // TB_IMAGE insert (키 자동 생성)
+        Map<String, Object> p = new HashMap<>();
+        p.put("imageOriginalName", file.getOriginalFilename());
+        p.put("imageUrl", uploaded.getFileUrl());   // 공개 URL
+        p.put("imageName", uploaded.getFileName()); // 버킷 내부 경로
+        p.put("imageType", 0);
+        p.put("createdBy", userId);
+        p.put("updatedBy", userId);
+
+        dao.insertImage(p);
+
+        Object key = p.get("imageId");
+        if (key == null) throw new IllegalStateException("이미지 ID 생성에 실패했습니다.");
+
+        int imageId; // DB는 INT 이므로 최종적으로 int로 사용
+        if (key instanceof Number) {
+            imageId = ((Number) key).intValue(); // BigInteger, Long, Integer 모두 OK
+        } else {
+            imageId = Integer.parseInt(String.valueOf(key));
+        }
+
+        int updated = dao.updateUserImage(userId, imageId);
+        if (updated != 1) throw new IllegalStateException("사용자 프로필 이미지 갱신 실패");
+
+        // 프론트로 공개 URL 반환
+        return Map.of("url", uploaded.getFileUrl());
     }
 
 }

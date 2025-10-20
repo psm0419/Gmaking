@@ -11,6 +11,7 @@
         <result property="userId" column="USER_ID"/>
         <result property="characterName" column="CHARACTER_NAME"/>
         <result property="imageId" column="IMAGE_ID"/>
+        <result property="imageUrl" column="IMAGE_URL"/>
         <result property="characterPersonalityId" column="CHARACTER_PERSONALITY_ID"/>
         <result property="backgroundInfo" column="BACKGROUND_INFO"/>
         <result property="gradeId" column="GRADE_ID"/>
@@ -122,12 +123,9 @@
     <!--  캐릭터 목록 조회  -->
     <select id="selectCharactersForChat" parameterType="string" resultType="map">
         SELECT
-            c.CHARACTER_ID AS id,
+            c.CHARACTER_ID   AS id,
             c.CHARACTER_NAME AS name,
-            CASE
-                WHEN i.IMAGE_NAME IS NULL THEN NULL
-                ELSE CONCAT('/static/character/', i.IMAGE_NAME)
-            END AS imageUrl
+            i.IMAGE_URL      AS imageUrl
         FROM TB_CHARACTER c
         LEFT JOIN TB_IMAGE i ON c.IMAGE_ID = i.IMAGE_ID
         WHERE c.USER_ID = #{userId}
@@ -153,27 +151,38 @@
                )
     </insert>
 
-    <insert id="insertCharacter">
+    <insert id="insertCharacter" parameterType="com.project.gmaking.character.vo.CharacterVO"
+            useGeneratedKeys="true"
+            keyProperty="characterId"
+            keyColumn="CHARACTER_ID">
         INSERT INTO tb_character (
-            user_id,
-            character_name,
-            image_id,
-            grade_id,
-            character_personality_id,
-            evolution_step,
-            total_stage_clears,
-            created_by
+        user_id,
+        character_name,
+        image_id,
+        grade_id,
+        character_personality_id,
+        evolution_step,
+        total_stage_clears,
+        created_by
         )
         VALUES (
-                #{userId},
-                #{characterName},
-                #{imageId},
-                1,
-                0,
-                1,
-                1,
-                #{userId}
-               )
+        #{userId},
+        #{characterName},
+        #{imageId},
+        1,
+        0,
+        1,
+        1,
+        #{createdBy}
+        )
     </insert>
+
+    <!-- grade_id 업데이트 쿼리 -->
+    <update id="updateGradeId">
+        UPDATE tb_character
+        SET grade_id = #{gradeId},
+        updated_date = NOW()
+        WHERE character_id = #{characterId}
+    </update>
 
 </mapper>

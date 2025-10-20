@@ -44,9 +44,11 @@ public class JwtTokenProvider {
      * @param userNickname 사용자 닉네임
      * @param hasCharacter 캐릭터 생성 여부
      * @param characterImageUrl 캐릭터 이미지 URL
+     * @param incubatorCount 부화권수
+     * @param isAdFree 광고 패스권
      * @return JWT 문자열
      */
-    public String createToken(String userId, String role, String userNickname, boolean hasCharacter, String characterImageUrl) {
+    public String createToken(String userId, String role, String userNickname, boolean hasCharacter, String characterImageUrl, Integer incubatorCount, boolean isAdFree) {
         long now = (new Date()).getTime();
 
         Date validity = new Date(now + this.tokenValidityInMilliseconds);
@@ -58,6 +60,8 @@ public class JwtTokenProvider {
                 .claim("userNickname", userNickname)
                 .claim("hasCharacter", hasCharacter)
                 .claim("characterImageUrl", characterImageUrl)
+                .claim("incubatorCount", incubatorCount)
+                .claim("isAdFree", isAdFree)
                 .signWith(SignatureAlgorithm.HS512, key)
                 .setExpiration(validity)
                 .compact();

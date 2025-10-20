@@ -9,6 +9,9 @@ import com.project.gmaking.security.JwtTokenProvider;
 import io.jsonwebtoken.JwtException;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,60 +41,90 @@ public class CharacterController {
     // ---------------------------------------------------------------------------------
 
     /**
-     * 캐릭터 생성 요청을 처리하는 메인 엔드포인트
+     * 1단계: 미리보기 생성/재생성 API (DB 저장 X)
+     * POST /api/character/generate
      */
-    @PostMapping("/create")
-    public Mono<ResponseEntity<CharacterGenerateResponseVO>> generateCharacter(
+    @PostMapping(value = "/generate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<CharacterGenerateResponseVO>> generateCharacterPreview(
             @RequestPart("image") MultipartFile image,
-            @RequestParam(value = "userPrompt", required = false) String userPrompt,
-            @RequestParam("characterName") String characterName,
-            @RequestHeader("Authorization") String token) {
+            @RequestPart("characterName") String characterName,
+            @RequestPart(value = "userPrompt", required = false) String userPrompt,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authHeader) {
 
         String userId;
         try {
-            // 1. 토큰에서 "Bearer " 접두사 제거
-            String jwt = resolveToken(token);
-
-            // 토큰 유효성 검사 및 userId 추출
-            if (jwt == null || !tokenProvider.validateToken(jwt)) {
-                // 토큰이 없거나 유효하지 않으면 401 Unauthorized 응답
-                return Mono.just(ResponseEntity.status(401).body(null));
+            String token = resolveToken(authHeader);
+            if (token == null) {
+                return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
             }
-
-            userId = tokenProvider.getUserIdFromToken(jwt);
-
+            userId = tokenProvider.getUserIdFromToken(token);
         } catch (JwtException e) {
-            // 토큰 파싱 오류 (변조 등) 시 401 Unauthorized
-            System.err.println("JWT Parsing Error: " + e.getMessage());
-            return Mono.just(ResponseEntity.status(401).body(null));
+            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
         }
 
         CharacterGenerateRequestVO requestVO = new CharacterGenerateRequestVO();
         requestVO.setImage(image);
-        requestVO.setUserPrompt(userPrompt);
         requestVO.setCharacterName(characterName);
+        requestVO.setUserPrompt(userPrompt);
 
         try {
-            // 3. 서비스 로직 실행
-            return characterServicegpt.generateCharacter(requestVO, userId)
+            return characterServicegpt.generateCharacterPreview(requestVO, userId)
                     .map(response -> ResponseEntity.ok(response))
                     .onErrorResume(e -> {
-                        System.err.println("캐릭터 생성 중 런타임 오류 발생: " + e.getMessage());
+                        System.err.println("캐릭터 생성 미리보기 중 런타임 오류 발생: " + e.getMessage());
 
-                        // GPT/DALL-E API 오류일 경우, 403 Forbidden을 받은 것으로 가정
                         if (e.getMessage() != null && e.getMessage().contains("403 Forbidden")) {
-                            // 클라이언트에게 403 Forbidden을 반환하여, API 키 문제나 정책 문제임을 알림
                             return Mono.just(ResponseEntity.status(403).build());
                         }
 
-                        // 그 외 런타임 오류 (이미지 분류 실패 등)는 400 Bad Request 반환
                         return Mono.just(ResponseEntity.badRequest().build());
                     });
-        } catch (IOException e) {
-            // 파일 처리 중 오류 시 500 Internal Server Error
+        } catch (IOException e) { // generateCharacterPreview가 던지는 IOException 처리
             System.err.println("캐릭터 생성 요청 중 IO 오류 발생: " + e.getMessage());
             return Mono.just(ResponseEntity.internalServerError().build());
         }
+
+    }
+
+    /**
+     * 2단계: 최종 확정 API (DB 저장 O, 새 토큰 반환)
+     * POST /api/character/finalize
+     */
+    @PostMapping("/finalize")
+    public ResponseEntity<CharacterGenerateResponseVO> finalizeCharacter(
+            @RequestBody CharacterGenerateResponseVO finalData, // 최종 이미지 URL, predictedAnimal, characterName 포함
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authHeader) {
+
+        String userId;
+
+        try {
+            String token = resolveToken(authHeader);
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            userId = tokenProvider.getUserIdFromToken(token);
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            // DB 저장 및 새 토큰이 포함된 최종 응답 VO 반환
+            CharacterGenerateResponseVO finalResponse = characterServicegpt.finalizeCharacter(finalData, userId);
+
+            // 새 토큰을 포함한 최종 응답 반환
+            return ResponseEntity.ok(finalResponse);
+
+        } catch (Exception e) {
+            System.err.println("캐릭터 최종 확정 중 오류 발생: " + e.getMessage());
+
+            return ResponseEntity.internalServerError().body(CharacterGenerateResponseVO.builder()
+                    .characterName(finalData.getCharacterName())
+                    .imageUrl(finalData.getImageUrl())
+                    .predictedAnimal(finalData.getPredictedAnimal())
+                    .newToken(null)
+                    .build());
+        }
+
     }
 
     /**
@@ -103,7 +136,4 @@ public class CharacterController {
         }
         return null;
     }
-
-    // ---------------------------------------------------------------------------------
-
 }

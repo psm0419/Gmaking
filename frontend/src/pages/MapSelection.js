@@ -1,4 +1,3 @@
-// src/pages/MapSelection.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +21,24 @@ const MapSelection = () => {
         }
     }
 
+    // 등급 ID → 문자열 변환 함수
+    const getGradeLabel = (gradeId) => {
+        switch (gradeId) {
+            case 1: return "N";
+            case 2: return "R";
+            case 3: return "SR";
+            case 4: return "SSR";
+            case 5: return "UR";
+            default: return "-";
+        }
+    };
+
     useEffect(() => {
+        if (!token || !userId) {
+            alert("로그인이 필요합니다.");
+            navigate("/login");
+            return;
+        }
         // 맵 목록 로드
         axios.get("/api/pve/maps", { withCredentials: true })
             .then(res => setMaps(res.data))
@@ -76,11 +92,12 @@ const MapSelection = () => {
                                 }`}
                         >
                             <img
-                                src={`/images/character/${char.imageId}.png`}
+                                src={char.imageUrl}
                                 alt={char.characterName}
                                 className="w-24 h-24 mx-auto"
                             />
-                            <div className="font-bold text-lg mt-2 text-gray-300">{char.characterName}</div>
+                            <div className="font-bold text-lg mt-2 text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
+                        
                             {/* 스탯 포함 */}
                             {char.characterStat && (
                                 <div className="text-l mt-1 text-gray-300">

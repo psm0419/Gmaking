@@ -4,16 +4,26 @@ import { Upload, Wand2, RefreshCw, CheckCircle, AlertTriangle, Trophy } from 'lu
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { createCharacter } from '../api/characterCreationApi'; 
+import { generateCharacterPreview, finalizeCharacter } from '../api/characterCreationApi'; 
 
 const CharacterCreationPage = () => {
     const navigate = useNavigate();
-    const { setCharacterCreated } = useAuth();
+    const { setCharacterCreated, setToken, token } = useAuth(); 
     const [imageFile, setImageFile] = useState(null);
     const [characterName, setCharacterName] = useState('');
-    const [status, setStatus] = useState('pending');
+
+    // 'pending', 'generating', 'preview', 'finalizing', 'completed', 'error'
+    const [status, setStatus] = useState('pending'); 
     const [generatedImage, setGeneratedImage] = useState(null);
+    const [predictedAnimal, setPredictedAnimal] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // 미리보기/재생성 횟수 (최대 3회)
+    const [previewCount, setPreviewCount] = useState(0); 
+    // 사용자 추가 프롬프트
+    const [userPrompt, setUserPrompt] = useState(''); 
+    const [previewData, setPreviewData] = useState(null); 
+    
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -34,45 +44,94 @@ const CharacterCreationPage = () => {
 
         // 입력 유효성 검사
         if (!imageFile || characterName.trim() === '') {
-            alert('이미지를 첨부하고 캐릭터 이름을 입력해주세요.');
+            alert('이미지와 캐릭터 이름이 필요합니다.');
             return;
         }
-
-        // JWT 토큰 확인
-        const token = localStorage.getItem('gmaking_token');
-        if (!token) {
-            alert('로그인이 필요합니다. (JWT 토큰 없음)');
-            setStatus('error');
-            setErrorMessage('로그인 토큰이 없어 요청을 보낼 수 없습니다.');
+        
+        // 미리보기 횟수 제한 체크 (3회 초과 시 재생성 불가)
+        if (previewCount >= 3 && status === 'preview') {
+            setErrorMessage('이미지 미리보기는 최대 3회만 가능합니다. 최종 확정해주세요.');
             return;
         }
 
         setStatus('generating');
         setErrorMessage('');
-        setGeneratedImage(null);
+        
+        try {
+            // generateCharacterPreview API 호출
+            const response = await generateCharacterPreview(imageFile, characterName, token, userPrompt);
+            
+            // 응답 데이터 임시 저장
+            setPreviewData({
+                characterName: response.characterName,
+                imageUrl: response.imageUrl,
+                predictedAnimal: response.predictedAnimal
+            });
+            
+            // 응답으로 받은 이미지 URL로 미리보기 업데이트
+            setGeneratedImage(response.imageUrl); 
+            setPredictedAnimal(response.predictedAnimal);
+            setStatus('preview');
+            setPreviewCount(prev => prev + 1); // 미리보기 횟수 증가
+            
+        } catch (error) {
+            console.error("캐릭터 생성 미리보기 중 오류:", error);
+            setErrorMessage(error.message || '캐릭터 생성 미리보기 중 알 수 없는 오류가 발생했습니다.');
+            setStatus('error');
+        }
+    };
+
+    // 캐릭터 최종 확정 처리 (Finalize)
+    const handleFinalize = async (e) => {
+        e.preventDefault();
+        setErrorMessage('');
+
+        if (!characterName.trim() || !generatedImage || status !== 'preview') {
+            setErrorMessage('캐릭터 이름 입력과 이미지 생성을 먼저 완료해야 합니다.');
+            return;
+        }
+
+        // 로딩 상태
+        setStatus('finalizing'); 
 
         try {
-            // API 모듈 호출
-            const result = await createCharacter(imageFile, characterName, token);
+            const finalCharacterData = { 
+                characterName: characterName,
+                imageUrl: generatedImage,
+                predictedAnimal: predictedAnimal, 
+            };
 
-            console.log('AI 캐릭터 생성 성공:', result);
-
-            setStatus('success');
-            setGeneratedImage(result.imageUrl);
-            setCharacterCreated(result.imageUrl);
-
-            alert(`캐릭터 '${characterName}' 생성이 완료되었습니다!`);
-        } catch (error) {
-            console.error('API 호출 중 오류 발생:', error.message);
-            setStatus('error');
-            setErrorMessage(error.message);
-
-            // 실패 시, 업로드한 원본 이미지 미리보기 복원
-            if (imageFile) {
-                const reader = new FileReader();
-                reader.onloadend = () => setGeneratedImage(reader.result);
-                reader.readAsDataURL(imageFile);
+            // 최종 확정 API 호출
+            const response = await finalizeCharacter(finalCharacterData, token); 
+            
+            // Auth Context와 LocalStorage 업데이트
+            setCharacterCreated(response.imageUrl); 
+            
+            // setToken useAuth에서 가져옴.
+            if (response.newToken) {
+                setToken(response.newToken); // ❗ 이 부분이 setToken is not a function 오류의 원인이었습니다.
+                localStorage.setItem('gmaking_token', response.newToken);
             }
+
+            // 최종 상태 변경 및 완료 메시지
+            setStatus('completed');
+            // navigate('/');
+
+        } catch (error) {
+            console.error('캐릭터 최종 확정 중 오류:', error);
+            
+            let displayMessage = '캐릭터 최종 확정 실패: 다시 시도해 주세요.';
+            
+            if (error.message) {
+                if (error.message.includes('Duplicate entry')) {
+                    displayMessage = `캐릭터 이름 '${characterName}'(이)가 이미 존재합니다. 다른 이름을 사용해주세요.`;
+                } else {
+                    displayMessage = error.message;
+                }
+            }
+            
+            setErrorMessage(displayMessage);
+            setStatus('preview');
         }
     };
 
@@ -81,131 +140,163 @@ const CharacterCreationPage = () => {
     }, [navigate]);
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
+        <div className="min-h-screen flex flex-col bg-gray-900">
             <Header />
-            
-            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
-                <div className="text-center mb-10">
-                    <h1 className="text-4xl font-extrabold text-yellow-400 flex items-center justify-center mb-3">
-                        <Wand2 className="w-10 h-10 mr-3" />
-                        AI 기반 캐릭터 생성
-                    </h1>
-                    <p className="text-gray-400 text-lg">
-                        자신의 이미지로 기반을 만들고, AI가 자동으로 스타일을 입혀 캐릭터를 만드세요.
-                    </p>
-                </div>
+            <main className="flex-grow p-4 sm:p-8 flex items-center justify-center">
+                <form onSubmit={handleGenerate} className="w-full max-w-4xl bg-gray-800 p-6 sm:p-10 rounded-2xl shadow-2xl space-y-8 text-white">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-yellow-400">나만의 캐릭터 만들기</h2>
+                    <p className="text-center text-gray-400">동물 이미지를 기반으로 AI가 캐릭터를 생성해 드립니다.</p>
 
-                <form onSubmit={handleGenerate} className="bg-gray-800 p-8 rounded-xl shadow-2xl space-y-6">
-                    
-                    {/* 0. 캐릭터 이름 입력 */}
-                    <div className="border-b border-gray-700 pb-6">
-                        <label htmlFor="name-input" className="block text-xl font-bold text-white mb-3">
-                            0. 캐릭터 이름
-                        </label>
-                        <input
-                            id="name-input"
-                            type="text"
-                            value={characterName}
-                            onChange={(e) => setCharacterName(e.target.value)}
-                            placeholder="캐릭터 이름을 입력하세요 (예: 불꽃 기사)"
-                            className="w-full p-4 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition"
-                            required
-                        />
-                    </div>
-                    
-                    {/* 1. 이미지 첨부 */}
-                    <div className="border-b border-gray-700 pb-6">
-                        <label className="block text-xl font-bold text-white mb-3">
-                            1. 기반 이미지 첨부 (AI가 스타일 자동 결정)
-                        </label>
-                        <div className="flex items-center justify-center w-full">
-                            <label
-                                htmlFor="file-upload"
-                                className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition border-gray-600"
+                    {/* 이미지 및 이름 입력 영역 */}
+                    <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-8">
+                        
+                        {/* 이미지 업로드 */}
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium mb-2">1. 기반 이미지 업로드</label>
+                            <div 
+                                className={`h-48 flex flex-col items-center justify-center border-4 border-dashed rounded-xl transition duration-300 cursor-pointer 
+                                    ${imageFile ? 'border-green-500 bg-gray-700' : 'border-gray-600 hover:border-blue-500 hover:bg-gray-700'}`}
+                                onClick={() => document.getElementById('image-upload').click()}
                             >
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-8 h-8 mb-3 text-yellow-400" />
-                                    <p className="mb-2 text-sm text-gray-400">
-                                        <span className="font-semibold">클릭하여 업로드</span>하거나 드래그하세요.
-                                    </p>
-                                    <p className="text-xs text-gray-500">JPG, PNG (최대 5MB)</p>
-                                    {imageFile && <p className="mt-2 text-yellow-400">첨부된 파일: {imageFile.name}</p>}
-                                </div>
-                                <input
-                                    id="file-upload"
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
+                                {/* generatedImage는 GCS URL 또는 파일 리더 URL (로컬 미리보기) */}
+                                {generatedImage && status !== 'error' ? (
+                                    <img 
+                                        src={generatedImage} 
+                                        alt="미리보기 이미지" 
+                                        className="max-h-full max-w-full object-contain p-2 rounded-xl"
+                                    />
+                                ) : (
+                                    <>
+                                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                                        <p className="text-gray-400 text-center">클릭하여 곰, 독수리, 펭귄, 거북이 이미지 업로드 (jpg, png)</p>
+                                    </>
+                                )}
+                                <input 
+                                    type="file" 
+                                    id="image-upload" 
+                                    accept="image/png, image/jpeg" 
+                                    onChange={handleFileChange} 
+                                    className="hidden" 
+                                    disabled={status === 'generating' || status === 'finalizing' || status === 'completed'}
                                 />
-                            </label>
+                            </div>
+                        </div>
+
+                        {/* 캐릭터 이름 입력 */}
+                        <div className="flex-1 flex flex-col justify-center">
+                            <label htmlFor="characterName" className="block text-sm font-medium mb-2">2. 캐릭터 이름 입력</label>
+                            <input
+                                id="characterName"
+                                type="text"
+                                placeholder="예: 용감한 펭귄"
+                                value={characterName}
+                                onChange={(e) => setCharacterName(e.target.value)}
+                                disabled={status === 'generating' || status === 'finalizing' || status === 'completed'}
+                                className="p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
+                            />
+
+                            {/* 추가 프롬프트 입력창 */}
+                            <label htmlFor="userPrompt" className="block text-sm font-medium mt-4 mb-2">3. 추가 프롬프트 (선택)</label>
+                            <input
+                                id="userPrompt"
+                                type="text"
+                                placeholder="예: 마법사 옷을 입혀주세요"
+                                value={userPrompt}
+                                onChange={(e) => setUserPrompt(e.target.value)}
+                                disabled={status === 'generating' || status === 'finalizing' || status === 'completed'}
+                                className="p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
+                            />
                         </div>
                     </div>
 
-                    {/* 2. 생성 버튼 */}
-                    <div>
-                        <button
-                            type="submit"
-                            disabled={status === 'generating'}
-                            className={`w-full py-3 text-xl font-bold rounded-lg shadow-md transition duration-200 flex items-center justify-center ${
-                                status === 'generating'
-                                    ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                                    : 'bg-yellow-500 text-gray-900 hover:bg-yellow-600'
-                            }`}
-                        >
-                            {status === 'generating' ? (
-                                <RefreshCw className="w-5 h-5 mr-3 animate-spin" />
-                            ) : (
-                                <Wand2 className="w-5 h-5 mr-3" />
+                    {/* 상태 및 버튼 영역 */}
+                    <div className="mt-8">
+                        {/* 에러 메시지 */}
+                        {errorMessage && (
+                            <div className="bg-red-900 border border-red-500 p-3 rounded-lg flex items-center mb-4">
+                                <AlertTriangle className="w-5 h-5 text-red-400 mr-2" />
+                                <p className="text-red-400 text-sm">{errorMessage}</p>
+                            </div>
+                        )}
+                        
+                        {/* 미리보기 / 재생성 / 최종 확정 버튼 */}
+                        <div className="flex flex-col space-y-4">
+                            
+                            {/* 미리보기 / 재생성 버튼 */}
+                            {(status === 'pending' || status === 'error' || status === 'preview') && status !== 'completed' && (
+                                <button
+                                    type="submit" // 폼 제출 (handleGenerate 호출)
+                                    disabled={!imageFile || characterName.trim() === '' || previewCount >= 3 && status === 'preview'}
+                                    className={`w-full py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 flex items-center justify-center 
+                                        ${previewCount >= 3 && status === 'preview'
+                                            ? 'bg-gray-500 cursor-not-allowed text-gray-300'
+                                            : 'bg-blue-600 text-white hover:bg-blue-700 transform hover:scale-[1.01]'
+                                        }`}
+                                >
+                                    {previewCount === 0 ? (
+                                        <>
+                                            <Wand2 className="w-6 h-6 mr-3" />
+                                            캐릭터 생성 미리보기
+                                        </>
+                                    ) : (
+                                        <>
+                                            <RefreshCw className="w-6 h-6 mr-3" />
+                                            재생성 시도 ({previewCount}/3)
+                                        </>
+                                    )}
+                                </button>
                             )}
-                            {status === 'generating' ? 'AI가 캐릭터를 생성 중입니다...' : '캐릭터 생성 요청'}
-                        </button>
+
+                            {/* 로딩 중 상태 표시 */}
+                            {(status === 'generating' || status === 'finalizing') && (
+                                <div className="w-full py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 flex items-center justify-center bg-gray-600 text-white">
+                                    <RefreshCw className="w-6 h-6 mr-3 animate-spin" />
+                                    {status === 'generating' ? 'AI 캐릭터 생성 중...' : '최종 확정 중...'}
+                                </div>
+                            )}
+
+                            {/* 최종 확정 버튼 (미리보기 상태일 때만 표시) */}
+                            {status === 'preview' && (
+                                <button
+                                    type="button"
+                                    onClick={handleFinalize} // 최종 확정 함수 호출
+                                    className="w-full py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 flex items-center justify-center bg-green-500 text-white hover:bg-green-600 transform hover:scale-[1.01] mt-4"
+                                >
+                                    <CheckCircle className="w-6 h-6 mr-3" />
+                                    이 캐릭터로 최종 확정
+                                </button>
+                            )}
+                        </div>
+
+                        {/* 미리보기 횟수 안내 */}
+                        {status === 'preview' && previewCount < 3 && (
+                            <p className="text-sm text-yellow-400 mt-3 text-center">
+                                재생성 기회가 **{3 - previewCount}번** 남았습니다. 마음에 드는 캐릭터로 확정해주세요.
+                            </p>
+                        )}
+                        {status === 'preview' && previewCount >= 3 && (
+                            <p className="text-sm text-red-400 mt-3 text-center font-bold">
+                                재생성 기회를 모두 사용했습니다. 이 캐릭터로 **최종 확정**해주세요.
+                            </p>
+                        )}
+                        
+                        {/* 캐릭터 생성 완료 메시지 */}
+                        {status === 'completed' && (
+                            <div className="flex flex-col items-center justify-center space-y-4">
+                                <Trophy className="w-12 h-12 text-green-400" />
+                                <h3 className="text-3xl font-bold text-green-400">캐릭터 생성 완료!</h3>
+                                <p className="text-lg text-gray-300">{characterName}와 함께 모험을 시작해 보세요.</p>
+                                <button
+                                    type="button"
+                                    onClick={handleGoToGame }
+                                    className="w-full sm:w-2/3 lg:w-1/2 mx-auto py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 flex items-center justify-center bg-green-500 text-white hover:bg-green-600 transform hover:scale-[1.02]"
+                                >
+                                    <Trophy className="w-6 h-6 mr-3" />
+                                    {characterName ? `${characterName}와 함께 게임하러 가기` : '게임하러 가기'}
+                                </button>
+                            </div>
+                        )}
                     </div>
-
-                    {/* 3. 에러 메시지 */}
-                    {status === 'error' && errorMessage && (
-                        <div className="p-4 bg-red-800 text-white rounded-lg flex items-center">
-                            <AlertTriangle className="w-6 h-6 mr-3 text-red-300" />
-                            <p className="font-semibold">오류 발생: {errorMessage}</p>
-                        </div>
-                    )}
-
-                    {/* 4. 결과 미리보기 */}
-                    {(generatedImage || status === 'success') && (
-                        <div className="pt-6 border-t border-gray-700 text-center">
-                            {status === 'success' ? (
-                                <>
-                                    <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                                    <h3 className="text-2xl font-bold text-green-400 mb-4">캐릭터 생성 완료!</h3>
-                                    <img
-                                        src={generatedImage}
-                                        alt="생성된 캐릭터"
-                                        className="mx-auto rounded-xl border-4 border-yellow-400 shadow-2xl mb-6"
-                                        style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleGoToGame}
-                                        className="w-full sm:w-2/3 lg:w-1/2 mx-auto py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 flex items-center justify-center bg-green-500 text-white hover:bg-green-600 transform hover:scale-[1.02]"
-
-                                    >
-                                        <Trophy className="w-6 h-6 mr-3" />
-                                        {characterName ? `${characterName}와 함께 게임하러 가기` : '게임하러 가기'}
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <h3 className="text-2xl font-bold text-white mb-4">기반 이미지 미리보기</h3>
-                                    <img
-                                        src={generatedImage}
-                                        alt="첨부된 기반 이미지"
-                                        className="mx-auto rounded-xl border-4 border-gray-600 shadow-xl"
-                                        style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }}
-                                    />
-                                </>
-                            )}
-                        </div>
-                    )}
                 </form>
             </main>
             <Footer />

@@ -1,89 +1,132 @@
-// src/pages/MyPage.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { getMyPageSummary, getCharacterStats } from "../api/myPageApi";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
+import { notificationsApi } from "../api/notificationApi";
 
-// ===== 알림: STOMP + SockJS 직접 연결(별도 helpers 없이) =====
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
-// 공통 axios (JWT 인터셉터 사용)
-import axiosInstance from "../api/axiosInstance";
+// 분리된 웹알림 컴포넌트 + 분리된 PVP 결과 모달
+import NotificationBell from "../components/notifications/NotificationBell";
+import PvpResultModal from "../components/notifications/PvpResultModal"; // ← 경로 확인
 
-// 공통 baseUrl
-const BASE_URL = import.meta.env?.VITE_API_BASE || "http://localhost:8080";
-
-const PROFILE_FALLBACK = `${BASE_URL}/images/profile/default.png`;
-const CHARACTER_FALLBACK = `${BASE_URL}/images/character/default.png`;
-
-// 이미지 경로 보정
-function toFullImageUrl(raw, { kind } = {}) {
-  if (!raw) return kind === "profile" ? PROFILE_FALLBACK : CHARACTER_FALLBACK;
-  if (/^https?:\/\//i.test(raw)) return raw;
-
-  let url = String(raw).trim();
-  url = url
-    .replace(/^\/?static(?:\.images|\/images)?\//i, "/images/")
-    .replace(/^\/?images\//i, "/images/")
-    .replace(/^\/?profile\//i, "/images/profile/")
-    .replace(/^\/?character\//i, "/images/character/");
-
-  if (!url.startsWith("/")) url = `/${url}`;
-  return `${BASE_URL}${url}`;
+const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
+/* ──────────────────────────────────────────────────────────────── */
+/* 페이지 스켈레톤                                                   */
+/* ──────────────────────────────────────────────────────────────── */
+export default function MyPage() {
+  return (
+    <div className="min-h-screen bg-gray-200/70 flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <MyMain />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
-/** 페이지 래퍼: 헤더 / 메인 / 푸터 */
-export default function MyPage() {
-  const handlePick = () => {
-    alert("뽑으러가기!");
-  };
+/* ──────────────────────────────────────────────────────────────── */
+/* 메인                                                             */
+/* ──────────────────────────────────────────────────────────────── */
+function MyMain() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { updateRepresentativeCharacter } = useAuth();
 
-  // 서버 데이터 상태
-  const [profile, setProfile] = useState(null);
+  const [nickname, setNickname] = useState("마스터 님");
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [characters, setCharacters] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [repId, setRepId] = useState(null);
+  const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
+          ? Number(user.incubatorCount)
+          : 0;
+  const isAdFree = !!user?.isAdFree;
+
+  // 알림
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // PVP 모달
+  const [pvpModalOpen, setPvpModalOpen] = useState(false);
+  const [pvpModalData, setPvpModalData] = useState(null);
+
+  const token = localStorage.getItem("gmaking_token");
+  let userId = null;
+  if (token) {
+    try {
+      const raw = token.startsWith("Bearer ") ? token.slice(7) : token;
+      const decoded = jwtDecode(raw);
+      userId = decoded?.userId ?? null;
+    } catch (e) {
+      console.error("토큰 디코딩 실패 : ", e);
+    }
+  }
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 로그인(토큰) 여부만 체크
+  // 서버에서 요약 데이터 가져오기
   useEffect(() => {
-    const token = localStorage.getItem("gmaking_token");
     if (!token) {
-      alert("로그인 정보가 없습니다. 로그인 페이지로 이동합니다.");
-      window.location.href = "/login";
+      navigate("/login");
+      return;
     }
-  }, []);
 
-  // 마이페이지 데이터 로드
-  useEffect(() => {
+    const headers = {
+      Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
     (async () => {
       try {
         setLoading(true);
-        const res = await getMyPageSummary(6);
-        const data = res.data;
+        const { data } = await axios.get("/api/my-page/summary", {
+          headers,
+          params: { limit: 50 },
+        });
 
-        setProfile(data?.profile ?? null);
+        const p = data?.profile ?? null;
+        setNickname(p?.nickname ?? "마스터 님");
+        setProfileImageUrl(p?.imageUrl ?? null);
 
-        const cards = (data?.characters ?? []).map((c) => ({
-          id: c.characterId,
-          name: c.name,
-          grade: c.grade,
-          image: toFullImageUrl(
-            c.imageUrl || c.imageAddress || c.imagePath || c.imageName,
-            { kind: "character" }
-          ),
-          hp: null,
-          def: null,
-          atk: null,
-          critRate: null,
-          speed: null,
-          speed: null,
-        }));
-
+        const cards = (data?.characters ?? []).map((c) => {
+          const stat = c.characterStatVO || c.characterStat || null;
+          return {
+            id: c.characterId ?? c.id,
+            name: c.name ?? c.characterName ?? "",
+            grade: c.grade ?? c.rarity ?? null,
+            imageUrl: c.imageUrl ?? c.image ?? null,
+            hp: stat?.hp ?? null,
+            attack: stat?.attack ?? null,
+            defense: stat?.defense ?? null,
+            speed: stat?.speed ?? null,
+            criticalRate: stat?.criticalRate ?? null,
+            characterStatVO: stat,
+          };
+        });
         setCharacters(cards);
         setError(null);
+
+        // 대표 캐릭터 조회
+        try {
+          const rep = await axios.get("/api/my-page/representative-character", {
+            headers,
+          });
+          setRepId(rep?.data?.characterId ?? null);
+        } catch (e) {
+          console.warn("대표 캐릭터 조회 실패", e);
+        }
+
+        // 초기 알림 개수 조회
+        try {
+          const n = await notificationsApi.count();
+          setUnreadCount(Number(n ?? 0));
+        } catch (e) {
+          console.warn("초기 알림 개수 조회 실패", e);
+        }
       } catch (e) {
         console.error(e);
         setError("마이페이지 데이터를 불러오지 못했습니다.");
@@ -91,11 +134,60 @@ export default function MyPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [token, navigate]);
+
+  const onOpenCharacter = (c) => setSelected(c);
+
+  const onChat = () => selected?.id && navigate(`/chat-entry/${selected.id}`);
+  const onGrow = () => {};
+  const onSend = () => {};
+  const onPickClick = () => navigate("/create-character");
+
+  const setRepresentative = async (characterId) => {
+    if (!characterId) return;
+
+    try {
+      const headers = {
+        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      await axios.patch(
+        "/api/my-page/representative-character",
+        { characterId },
+        { headers }
+      );
+
+      const selectedChar = characters.find(c => c.id === characterId);
+      const updatedCharacterImageUrl = selectedChar?.imageUrl || null;
+
+      // 먼저 repId 상태 갱신
+      setRepId(characterId);
+
+      // AuthContext와 localStorage 갱신
+      updateRepresentativeCharacter(updatedCharacterImageUrl, characterId);
+
+    } catch (e) {
+      alert(e?.response?.data?.message || "대표 캐릭터 설정에 실패했습니다.");
+    }
+  };
+
+  const clearRepresentative = async () => {
+    try {
+      const headers = {
+        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+      await axios.delete("/api/my-page/representative-character", { headers });
+      setRepId(null);
+    } catch (e) {
+      alert(e?.response?.data?.message || "대표 캐릭터 해제에 실패했습니다.");
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-200/70 flex items-center justify-center">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-gray-700">
         로딩 중...
       </div>
     );
@@ -103,79 +195,13 @@ export default function MyPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-200/70 flex items-center justify-center text-red-600">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-red-600">
         {error}
       </div>
     );
   }
 
- const profileImageUrl = toFullImageUrl(
-   profile?.imageUrl || profile?.profileImage || profile?.imageName || profile?.imagePath,
-   { kind: "profile" }
- );
-
-  return (
-    <div className="min-h-screen bg-gray-200/70 flex flex-col">
-      <Header />
-      <main className="flex-1">
-        <MyMain
-          nickname={profile?.nickname ?? "마스터 님"}
-          ticketCount={profile?.ticketCount ?? 0}
-          profileImageUrl={profileImageUrl}
-          onPickClick={handlePick}
-          characters={characters}
-        />
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-/** 마이페이지 메인 */
-function MyMain({
-  nickname = "마스터 님",
-  ticketCount = 5,
-  profileImageUrl,
-  onPickClick = () => {},
-  characters = [],
-}) {
-  const [selected, setSelected] = useState(null);
-  const statCache = useRef(new Map());
-  const navigate = useNavigate();
-
-  // 스탯 조회 (VO 키 → 프론트 키로 매핑)
-  const fetchStats = async (characterId) => {
-    if (statCache.current.has(characterId)) return statCache.current.get(characterId);
-    try {
-      const { data } = await getCharacterStats(characterId);
-      const stats = {
-        hp: data.characterHp,
-        atk: data.characterAttack,
-        def: data.characterDefense,
-        speed: data.characterSpeed,
-        critRate: data.criticalRate,
-      };
-      statCache.current.set(characterId, stats);
-      return stats;
-    } catch (e) {
-      console.error(e);
-      return { _statsError: "스탯을 불러오지 못했습니다." };
-    }
-  };
-
-  const onOpenCharacter = async (c) => {
-    setSelected({ ...c, _statsLoading: true });
-    const stats = await fetchStats(c.id);
-    setSelected({ ...c, ...stats, _statsLoading: false });
-  };
-
-  const onChat = () => {
-    if (selected?.id) navigate(`/chat-entry/${selected.id}`);
-    else alert("캐릭터를 먼저 선택하세요!");
-  };
-
-  const onGrow = () => alert(`${selected?.name} 성장시키기`);
-  const onSend = () => alert(`${selected?.name} 보내기`);
+  const safeProfileSrc = profileImageUrl || DEFAULT_PROFILE_IMG;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
@@ -184,18 +210,29 @@ function MyMain({
         <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
           <div className="flex items-start gap-6">
             <div className="shrink-0 flex flex-col items-center">
+              {/* 프로필 이미지 */}
               <img
-                src={profileImageUrl || PROFILE_FALLBACK}
+                src={safeProfileSrc}
                 alt="프로필 이미지"
                 className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
-                 onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = PROFILE_FALLBACK;
+                onError={(e) => {
+                  if (e.currentTarget.dataset.fallbackApplied) return;
+                  e.currentTarget.dataset.fallbackApplied = "1";
+                  e.currentTarget.src = DEFAULT_PROFILE_IMG;
                 }}
               />
 
               <div className="mt-6 flex items-center gap-5 text-gray-800">
-                <NotificationBell />
+                {/* 알림 벨 */}
+                <NotificationBell
+                  initialCount={unreadCount}
+                  token={token}
+                  onUpdateCount={(n) => setUnreadCount(n)}
+                  onOpenPvpModal={(data) => {
+                    setPvpModalData(data);
+                    setPvpModalOpen(true);
+                  }}
+                />
                 <IconMail />
                 <MoreMenuInline />
               </div>
@@ -206,7 +243,7 @@ function MyMain({
                 {nickname}
               </div>
               <div className="mt-2 text-lg md:text-xl text-gray-900 flex items-center gap-2">
-                보유 부화권 <span className="font-semibold">{ticketCount}</span>
+                보유 부화권 <span className="font-semibold">{incubatorCount}</span>
                 <span role="img" aria-label="ticket">🎟️</span>
               </div>
             </div>
@@ -223,34 +260,42 @@ function MyMain({
         )}
       </div>
 
-      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">
-        내 캐릭터
-      </h2>
+      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">내 캐릭터</h2>
 
       <CharacterSection
         characters={characters}
         selectedId={selected?.id}
         onPickClick={onPickClick}
         onOpenCharacter={onOpenCharacter}
+        repId={repId}
+        onSetRep={setRepresentative}
+        onClearRep={clearRepresentative}
+      />
+
+      {/* 분리된 PVP 결과 모달 사용 */}
+      <PvpResultModal
+        open={pvpModalOpen}
+        data={pvpModalData}
+        onClose={() => setPvpModalOpen(false)}
       />
     </div>
   );
 }
 
-/* ===== 캐릭터 상세 패널 ===== */
+/* ──────────────────────────────────────────────────────────────── */
+/* 캐릭터 상세 패널                                                   */
+/* ──────────────────────────────────────────────────────────────── */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
-  const {
-    name,
-    grade,
-    hp,
-    def,
-    atk,
-    critRate,
-    speed,
-    _statsLoading,
-    _statsError,
-  } = character ?? {};
-  const fmt = (v, suffix = "") => (v == null ? "-" : `${v}${suffix}`);
+  const name = character?.name ?? character?.characterName;
+  const grade = character?.grade;
+  const hp = character?.hp;
+  const def = character?.defense;
+  const atk = character?.attack;
+  const speed = character?.speed;
+  const critRate = character?.criticalRate;
+  const _statsLoading = false;
+  const _statsError = null;
+  const fmt = (v) => (v == null ? "-" : `${v}`);
 
   return (
     <section className="rounded-2xl border border-black/10 bg-gradient-to-b from-gray-100 to-gray-200 p-6 shadow-sm">
@@ -265,22 +310,10 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">체력</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(hp)}</div>
-        </div>
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">방어력</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(def)}</div>
-        </div>
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">공격력</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(atk)}</div>
-        </div>
-        <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">속도</div>
-          <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{fmt(speed)}</div>
-        </div>
+        <StatCard label="체력" value={fmt(hp)} />
+        <StatCard label="방어력" value={fmt(def)} />
+        <StatCard label="공격력" value={fmt(atk)} />
+        <StatCard label="속도" value={fmt(speed)} />
       </div>
 
       <div className="mt-3 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
@@ -327,7 +360,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
           <button
             onClick={onSend}
             disabled={_statsLoading}
-            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow_sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
           >
             보내기
           </button>
@@ -337,18 +370,39 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
   );
 }
 
-/* ===== 내 캐릭터 섹션 ===== */
-function CharacterSection({ characters = [], selectedId, onPickClick, onOpenCharacter }) {
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{value}</div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* 내 캐릭터 섹션                                                     */
+/* ──────────────────────────────────────────────────────────────── */
+function CharacterSection({
+  characters = [],
+  selectedId,
+  onPickClick,
+  onOpenCharacter,
+  repId,
+  onSetRep,
+  onClearRep,
+}) {
   const hasCharacters = characters.length > 0;
 
   if (!hasCharacters) {
     return (
-      <section className="rounded-md bg-gray-300 min-h-[340px] flex items-center justify-center">
+      <section className="rounded-md bg-gray-300 min-h-[340px] flex items-center justify_center">
         <div className="text-center px-6 py-12">
-          <div className="text-2xl md:text-3xl text-gray-800 mb-6">내 캐릭터를 뽑아주세요!</div>
+          <div className="text-2xl md:text-3xl text-gray-800 mb-6">
+            내 캐릭터를 뽑아주세요!
+          </div>
           <button
             onClick={onPickClick}
-            className="px-8 py-3 rounded bg-white border text-gray-900 text-lg hover:bg-gray-50 active:bg-gray-100 transition"
+            className="px-8 py-3 rounded bg_white border text-gray-900 text-lg hover:bg-gray-50 active:bg-gray-100 transition"
           >
             뽑으러가기
           </button>
@@ -365,13 +419,18 @@ function CharacterSection({ characters = [], selectedId, onPickClick, onOpenChar
             key={c.id}
             character={c}
             active={selectedId === c.id}
+            isRep={repId === c.id}
             onClick={() => onOpenCharacter?.(c)}
+            onSetRep={() => onSetRep?.(c.id)}
+            onClearRep={() => onClearRep?.()}
           />
         ))}
+
         <button
           onClick={onPickClick}
           className="aspect-square rounded-2xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition"
           aria-label="캐릭터 추가"
+          type="button"
         >
           <span className="text-7xl leading-none text-gray-900">+</span>
         </button>
@@ -380,370 +439,66 @@ function CharacterSection({ characters = [], selectedId, onPickClick, onOpenChar
   );
 }
 
-function CharacterCard({ character, active, onClick }) {
+function CharacterCard({ character, active, onClick, isRep, onSetRep, onClearRep }) {
   return (
     <div className="select-none">
       <button
+        type="button"
         onClick={onClick}
         className={`aspect-square w-full rounded-2xl overflow-hidden bg-white border ${
-          active ? "border-sky-400 ring-2 ring-sky-300" : "border-gray-200 hover:border-gray-300"
+          active
+            ? "border-sky-400 ring-2 ring-sky-300"
+            : "border-gray-200 hover:border-gray-300"
         } active:scale-[0.99] transition`}
-        aria-label={character.name}
+        aria-label={character?.name ?? ""}
       >
         <div className="w-full h-full p-3 flex items-center justify-center">
           <img
-            src={character.image}
-            alt={character.name}
+            src={character?.imageUrl}
+            alt={character?.name ?? ""}
             className="max-h-full max-w-full object-contain"
-            onError={(e) => {
-              e.currentTarget.style.opacity = 0;
-            }}
           />
         </div>
       </button>
-      <div className="mt-2 text-lg font-medium text-gray-900">{character.name}</div>
-    </div>
-  );
-}
 
-/* 알림 벨 */
-function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const [gearOpen, setGearOpen] = useState(false);
-  const [tab, setTab] = useState("new"); // 'new' | 'read'
-  const [badge, setBadge] = useState(0);
-  const [unread, setUnread] = useState([]); // [{id, title, linkUrl, type, status, meta, createdDate}]
-  const [read, setRead] = useState([]);
-  const [isBulkWorking, setIsBulkWorking] = useState(false);
-  const navigate = useNavigate();
-
-  const btnRef = useRef(null);
-  const popRef = useRef(null);
-  const gearRef = useRef(null);
-  /** @type {React.MutableRefObject<Client | null>} */
-  const stompRef = useRef(null);
-  const startedRef = useRef(false);
-  const subRef = useRef(null);
-
-  // ===== REST helpers (JWT 인터셉터 적용된 axiosInstance 사용) =====
-  const fetchUnreadCount = async () => {
-    const { data } = await axiosInstance.get("/api/notifications/unread/count");
-    return typeof data?.count === "number" ? data.count : 0;
-  };
-  const fetchUnread = async ({ limit = 20, offset = 0 } = {}) => {
-    const { data } = await axiosInstance.get(
-      `/api/notifications/unread?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
-    );
-    return data;
-  };
-  const fetchRead = async ({ limit = 20, offset = 0 } = {}) => {
-    const { data } = await axiosInstance.get(
-      `/api/notifications/read?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
-    );
-    return data;
-  };
-
-  // 읽음 처리 (단건 / 전체)
-  const markRead = async (id) => {
-    await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/read`);
-  };
-  const markAllReadApi = async () => {
-    await axiosInstance.patch(`/api/notifications/read-all`);
-  };
-
-  // 소프트 삭제 (STATUS='deleted')
-  const softDeleteOne = async (id) => {
-    await axiosInstance.patch(`/api/notifications/${encodeURIComponent(id)}/delete`);
-  };
-  const softDeleteAllRead = async () => {
-    await axiosInstance.patch(`/api/notifications/read/delete`);
-  };
-
-  const normalizeList = (arr) =>
-    (arr || []).map((n) => ({
-      id: n.id,
-      title: n.title || "알림",
-      linkUrl: n.linkUrl || null,
-      type: n.type,
-      status: n.status, // 'unread' | 'read' (deleted는 서버에서 제외)
-      meta: typeof n.metaJson === "string" ? safeJson(n.metaJson) : n.metaJson || {},
-      createdDate: n.createdDate,
-    }));
-
-  const refreshAll = async () => {
-    const [cnt, u, r] = await Promise.all([
-      fetchUnreadCount(),
-      fetchUnread({ limit: 20, offset: 0 }),
-      fetchRead({ limit: 20, offset: 0 }),
-    ]);
-    setBadge(cnt ?? 0);
-    setUnread(normalizeList(u));
-    setRead(normalizeList(r));
-  };
-
-  // 초기 로드 + STOMP 연결
-  useEffect(() => {
-    const token = localStorage.getItem("gmaking_token");
-    if (!token) return;
-
-    refreshAll().catch(console.error);
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    const sockUrl = `${BASE_URL}/notify-ws`;
-    const client = new Client({
-      webSocketFactory: () => new SockJS(sockUrl),
-      connectHeaders: {
-        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
-      },
-      debug: () => {},
-      reconnectDelay: 0,
-      heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000,
-      onConnect: () => {
-        subRef.current = client.subscribe("/user/queue/notifications", () => {
-          refreshAll().catch(console.error);
-        });
-      },
-      onStompError: (frame) => console.error("STOMP error", frame?.headers, frame?.body),
-    });
-
-    client.activate();
-    stompRef.current = client;
-
-    return () => {
-      try { subRef.current?.unsubscribe(); } catch {}
-      subRef.current = null;
-      try { stompRef.current?.deactivate(); } catch {}
-      stompRef.current = null;
-      startedRef.current = false;
-    };
-  }, []);
-
-  // 알림창 닫기
-  useEffect(() => {
-    if (!open) return;
-
-    const onDocPointer = (e) => {
-      const popEl = popRef.current;
-      const btnEl = btnRef.current;
-      if (!popEl) return;
-
-      const target = e.target;
-      // 팝오버 내부나 버튼을 누른 경우는 무시
-      const clickedInsidePop = popEl.contains(target);
-      const clickedOnButton = btnEl && btnEl.contains(target);
-      if (clickedInsidePop || clickedOnButton) return;
-
-      // 바깥 클릭 → 닫기
-      setOpen(false);
-      setGearOpen(false);
-    };
-
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        setGearOpen(false);
-      }
-    };
-
-    // mousedown/touchstart로 빠르게 감지
-    document.addEventListener("mousedown", onDocPointer);
-    document.addEventListener("touchstart", onDocPointer, { passive: true });
-    document.addEventListener("keydown", onKey);
-
-    return () => {
-      document.removeEventListener("mousedown", onDocPointer);
-      document.removeEventListener("touchstart", onDocPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  // “모두 읽음” (서버 일괄 처리)
-  const markAllRead = async () => {
-    if (unread.length === 0) return;
-    setIsBulkWorking(true);
-    try {
-      await markAllReadApi();
-      await refreshAll();
-    } catch (e) {
-      console.error(e);
-      alert("모두 읽음 처리에 실패했습니다.");
-    } finally {
-      setIsBulkWorking(false);
-    }
-  };
-
-  // 개별 알림 클릭(읽음 처리 & 이동/알림)
-  const onClickItem = async (n) => {
-    try {
-      if (n.status !== "read") {
-        await markRead(n.id);
-      }
-      if (n.linkUrl) {
-        navigate(n.linkUrl);
-      } else if (n.type === "PVP_RESULT") {
-        const m = n.meta || {};
-        alert(
-          `${m.opponentName ?? m.opponentUserId ?? "상대"}과/와의 전투에서 ${
-            m.result === "WIN" ? "승리" : "패배"
-          }했습니다 (전투ID: ${m.battleId ?? "-"})`
-        );
-      }
-    } finally {
-      await refreshAll().catch(console.error);
-    }
-  };
-
-  // 읽은 알림 개별 삭제(소프트)
-  const onDeleteRead = async (id) => {
-    try {
-      await softDeleteOne(id);
-      setRead((prev) => prev.filter((n) => n.id !== id)); // 즉시 UI 반영
-    } catch (e) {
-      console.error(e);
-      alert("알림 삭제에 실패했습니다.");
-    }
-  };
-
-  const visible = tab === "new" ? unread : read;
-
-  return (
-    <div className="relative">
-      <button
-        ref={btnRef}
-        onClick={() => { setOpen((v) => !v); setGearOpen(false); }}
-        className="relative rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
-        aria-label="알림 열기"
-      >
-        <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z"
-            stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-          />
-        </svg>
-        {badge > 0 && (
-          <span className="absolute -right-1 -top-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">
-            {badge}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="text-lg font-medium text-gray-900 truncate">
+          {character?.name}
+        </div>
+        {isRep && (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+            ★ 대표
           </span>
         )}
-      </button>
+      </div>
 
-      {open && (
-        <div ref={popRef} className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl">
-          <div className="flex items-center justify-between px-3 py-2 border-b">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setTab("new")}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  tab === "new" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
-                }`}
-              >
-                새 알림
-              </button>
-              <button
-                onClick={() => setTab("read")}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  tab === "read" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
-                }`}
-              >
-                읽은 알림
-              </button>
-            </div>
-
-            <div className="relative">
-              <button
-                ref={gearRef}
-                onClick={() => setGearOpen((v) => !v)}
-                className="p-1.5 rounded hover:bg-gray-100 active:bg-gray-200"
-                aria-label="알림 설정"
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
-                    stroke="currentColor" strokeWidth="1.2"
-                  />
-                </svg>
-              </button>
-
-              {gearOpen && (
-                <div className="absolute left-full top-0 ml-2 w-48 rounded-lg border bg-white shadow-lg overflow-hidden z-[60] origin-top-left">
-                  <button
-                    onClick={async () => {
-                      setIsBulkWorking(true);
-                      try { await markAllReadApi(); await refreshAll(); }
-                      catch (e) { console.error(e); alert("모두 읽음 처리에 실패했습니다."); }
-                      finally { setIsBulkWorking(false); setGearOpen(false); }
-                    }}
-                    disabled={isBulkWorking}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
-                  >
-                    모두 읽음
-                  </button>
-
-                  {/* 읽은 알림 전체 소프트 삭제 */}
-                  <button
-                    onClick={async () => {
-                      if (!window.confirm("읽은 알림을 모두 삭제하시겠습니까?")) return;
-                      setIsBulkWorking(true);
-                      try { await softDeleteAllRead(); await refreshAll(); }
-                      catch (e) { console.error(e); alert("읽은 알림 전체 삭제에 실패했습니다."); }
-                      finally { setIsBulkWorking(false); setGearOpen(false); }
-                    }}
-                    disabled={isBulkWorking}
-                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
-                  >
-                    읽은 알림 전체 삭제
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="max-h-80 overflow-auto p-3">
-            { (tab === "new" ? unread : read).length === 0 ? (
-              <div className="py-16 text-center text-gray-500">
-                {tab === "new" ? "새 알림이 없어요" : "읽은 알림이 없어요"}
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {(tab === "new" ? unread : read).map((n) => (
-                  <li
-                    key={n.id}
-                    tabIndex={0}
-                    role="button"
-                    onClick={() => onClickItem(n)}
-                    className="relative group cursor-pointer rounded-md px-3 py-3 border border-gray-200 bg-white transition-colors duration-150 hover:bg-sky-50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-                  >
-                    <p className="pr-8 text-sm text-gray-900">{n.title}</p>
-
-                    {/* 읽은 탭에서만 X(소프트 삭제) */}
-                    {tab === "read" && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteRead(n.id); }}
-                        aria-label="알림 삭제"
-                        title="알림 삭제"
-                        className="absolute right-2 top-2 rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 대표 버튼 */}
+      <div className="mt-2">
+        {isRep ? (
+          <button
+            type="button"
+            onClick={onClearRep}
+            className="w-full rounded-lg border px-3 py-2 text-sm font-semibold bg-white hover:bg-gray-50"
+          >
+            대표 해제
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onSetRep}
+            className="w-full rounded-lg border px-3 py-2 text-sm font-semibold bg-white hover:bg-gray-50"
+          >
+            대표로 지정
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
-
-/* 기타 메일 아이콘 */
+/* ──────────────────────────────────────────────────────────────── */
+/* 아이콘/유틸                                                       */
+/* ──────────────────────────────────────────────────────────────── */
 function IconMail(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -769,14 +524,13 @@ function MoreMenuInline() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logout?.();
     } finally {
       setOpen(false);
       navigate("/login");
     }
   };
 
-  // 버튼 기준 위치 계산 (뷰포트 기준 fixed)
   const updatePosition = () => {
     const btn = btnRef.current;
     const panel = panelRef.current;
@@ -784,11 +538,11 @@ function MoreMenuInline() {
 
     const r = btn.getBoundingClientRect();
     const margin = 8;
-    const OFFSET_Y = -5;  // 버튼 아래 여백
+    const OFFSET_Y = -5;
     const OFFSET_X = 150;
 
     let pw = panel.offsetWidth;
-    let left = r.left + r.width / 2 - pw / 2  + OFFSET_X;
+    let left = r.left + r.width / 2 - pw / 2 + OFFSET_X;
     left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
     const top = r.bottom + OFFSET_Y;
     setPos({ top, left, width: pw });
@@ -799,9 +553,7 @@ function MoreMenuInline() {
       let l2 = r.left + r.width / 2 - pw / 2 + OFFSET_X;
       l2 = Math.max(margin, Math.min(l2, window.innerWidth - pw - margin));
       setPos((p) => (p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }));
-
     });
-
   };
 
   useLayoutEffect(() => {
@@ -819,7 +571,7 @@ function MoreMenuInline() {
       const b = btnRef.current;
       if (!p) return;
       if (p.contains(e.target) || b?.contains?.(e.target)) return;
-      setOpen(false); // 바깥 클릭 닫기
+      setOpen(false);
     };
 
     window.addEventListener("resize", onResizeScroll);
@@ -839,7 +591,6 @@ function MoreMenuInline() {
 
   return (
     <div className="relative inline-flex">
-      {/* 버튼 */}
       <button
         ref={btnRef}
         type="button"
@@ -850,7 +601,6 @@ function MoreMenuInline() {
         <IconMore />
       </button>
 
-      {/* 팝오버: 백드롭/어둡게 처리 없음 */}
       {open &&
         createPortal(
           <div
@@ -860,7 +610,6 @@ function MoreMenuInline() {
             className="fixed z-[100] w-64 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
-            {/* 작은 화살표 (옵션) */}
             <div className="absolute -top-2 left-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow" />
 
             <div className="px-4 py-3 border-b text-sm text-gray-600">더보기</div>
@@ -885,8 +634,6 @@ function MoreMenuInline() {
   );
 }
 
-
-/* 더보기 아이콘 */
 function IconMore(props) {
   return (
     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
@@ -895,13 +642,4 @@ function IconMore(props) {
       <circle cx="18" cy="12" r="1.7" fill="currentColor" />
     </svg>
   );
-}
-
-/* ===== 유틸 ===== */
-function safeJson(s) {
-  try {
-    return JSON.parse(s || "{}");
-  } catch {
-    return {};
-  }
 }

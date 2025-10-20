@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.shop.dao.FreeIncubatorSchedulerDAO">
+
+    <!-- 분산락 -->
+    <select id="acquireDailyLock" resultType="int">
+        SELECT GET_LOCK('daily_free_incubator', 5)
+    </select>
+    <select id="releaseDailyLock" resultType="int">
+        SELECT RELEASE_LOCK('daily_free_incubator')
+    </select>
+
+    <!-- 무료 부화기 지급  -->
+    <insert id="grantDailyFreeToAllUsers">
+        INSERT INTO tb_user_inventory (USER_ID, PRODUCT_ID, QUANTITY, ACQUIRED_DATE, UPDATED_DATE)
+        SELECT u.USER_ID, 5, 1, NOW(), NOW()
+        FROM tb_user u
+        ON DUPLICATE KEY UPDATE
+        QUANTITY = CASE WHEN QUANTITY IS NULL OR QUANTITY = 0 THEN 1 ELSE QUANTITY END,
+        UPDATED_DATE = NOW()
+    </insert>
+
+    <!-- 인큐베이터 합계 갱신 -->
+    <update id="refreshIncubatorCacheForAllUsers">
+        UPDATE tb_user u
+        LEFT JOIN (
+            SELECT USER_ID, COALESCE(SUM(QUANTITY),0) AS CNT
+            FROM tb_user_inventory
+            WHERE PRODUCT_ID IN (4,5)
+            GROUP BY USER_ID
+        ) s ON s.USER_ID = u.USER_ID
+        SET u.INCUBATOR_COUNT = COALESCE(s.CNT, 0)
+    </update>
+
+</mapper>

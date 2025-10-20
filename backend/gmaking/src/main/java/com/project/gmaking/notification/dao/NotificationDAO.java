@@ -50,4 +50,11 @@ public interface NotificationDAO {
     int softDeleteAllRead(@Param("userId") String userId,
                           @Param("updatedBy") String updatedBy);
 
+    // pvp 결과 모달용
+    NotificationVO selectOneByIdAndUserForPvp(
+            @Param("notificationId") Integer notificationId,
+            @Param("userId") String userId
+    );
+
+
 }

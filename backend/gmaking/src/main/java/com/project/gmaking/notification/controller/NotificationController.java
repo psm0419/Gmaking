@@ -1,9 +1,13 @@
 package com.project.gmaking.notification.controller;
 
+
+import com.project.gmaking.notification.service.NotificationModalService;
 import com.project.gmaking.notification.service.NotificationService;
 import com.project.gmaking.notification.vo.NotificationVO;
+import com.project.gmaking.notification.vo.PvpResultModalVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -17,6 +21,7 @@ import java.util.Map;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final NotificationModalService notificationModalService;
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -120,4 +125,21 @@ public class NotificationController {
                 n.getReadAt() == null ? null : ISO.format(n.getReadAt()));
         return m;
     }
+
+    @GetMapping("/{notificationId}/pvp-modal")
+    public ResponseEntity<?> getPvpModal(
+            @PathVariable Integer notificationId,
+            Authentication auth
+    ) {
+        String userId = auth.getName();
+        try {
+            PvpResultModalVO vo = notificationModalService.getPvpModal(notificationId, userId);
+            return ResponseEntity.ok(vo);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("서버 오류");
+        }
+    }
+
 }

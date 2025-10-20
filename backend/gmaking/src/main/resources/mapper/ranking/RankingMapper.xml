@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.ranking.dao.RankingDAO">
+
+    <!-- PVP 승리 랭킹 -->
+    <!-- PVP 승리 랭킹 -->
+    <select id="selectPvpRanking" resultType="com.project.gmaking.ranking.vo.PvpRankingVO">
+        SELECT
+        c.CHARACTER_NAME AS characterName,
+        u.USER_NICKNAME AS userNickname,
+        COUNT(*) AS winCount
+        FROM TB_BATTLE_LOG b
+        JOIN TB_CHARACTER c ON b.CHARACTER_ID = c.CHARACTER_ID
+        JOIN TB_USER u ON c.USER_ID = u.USER_ID
+        WHERE b.BATTLE_TYPE = 'PVP'
+        AND b.IS_WIN = 'Y'
+        GROUP BY c.CHARACTER_NAME, u.USER_NICKNAME
+        ORDER BY winCount DESC
+        LIMIT 50
+    </select>
+
+    <!-- PVE 클리어 랭킹 -->
+    <select id="selectPveRanking" resultType="com.project.gmaking.ranking.vo.PveRankingVO">
+        SELECT
+        c.CHARACTER_NAME AS characterName,
+        u.USER_NICKNAME AS userNickname,
+        SUM(c.TOTAL_STAGE_CLEARS) AS clearCount
+        FROM TB_CHARACTER c
+        JOIN TB_USER u ON c.USER_ID = u.USER_ID
+        GROUP BY c.CHARACTER_NAME, u.USER_NICKNAME
+        ORDER BY clearCount DESC
+        LIMIT 50
+    </select>
+
+    <!-- 캐릭터 총 스탯 순위 -->
+    <select id="selectCharacterRanking" resultType="com.project.gmaking.ranking.vo.CharacterRankingVO">
+        SELECT
+        c.CHARACTER_NAME,
+        u.USER_NICKNAME,
+        c.GRADE_ID AS gradeId,
+        (s.CHARACTER_HP + s.CHARACTER_ATTACK + s.CHARACTER_DEFENSE + s.CHARACTER_SPEED + s.CRITICAL_RATE) AS totalStat
+        FROM TB_CHARACTER_STAT s
+        JOIN TB_CHARACTER c ON s.CHARACTER_ID = c.CHARACTER_ID
+        JOIN TB_USER u ON c.USER_ID = u.USER_ID
+        ORDER BY totalStat DESC
+        LIMIT 50
+    </select>
+
+</mapper>

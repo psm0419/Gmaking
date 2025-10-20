@@ -1,4 +1,3 @@
-// src/pages/PveBattlePage.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -8,7 +7,6 @@ function PveBattlePage() {
     const location = useLocation();
     const navigate = useNavigate();
     const { mapId, characterId } = location.state || {};
-    const [mapName, setMapName] = useState(null);
     const [mapImageUrl, setMapImageUrl] = useState(null);    
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [opponentMonster, setOpponentMonster] = useState(null);
@@ -40,6 +38,18 @@ function PveBattlePage() {
         }
     }
 
+    // 등급 ID → 문자열 변환 함수
+    const getGradeLabel = (gradeId) => {
+        switch (gradeId) {
+            case 1: return "N";
+            case 2: return "R";
+            case 3: return "SR";
+            case 4: return "SSR";
+            case 5: return "UR";
+            default: return "-";
+        }
+    };
+
     useEffect(() => {
         if (!mapId || !characterId) {
             alert("맵 또는 캐릭터가 선택되지 않았습니다.");
@@ -52,7 +62,6 @@ function PveBattlePage() {
             .get(`/api/pve/maps/${mapId}/image`, { withCredentials: true })
             .then(res => {
                 setMapImageUrl(res.data.mapImageUrl);
-                setMapName(res.data.mapName);
             })
             .catch(err => console.error("맵 이미지/이름 가져오기 실패:", err));
 
@@ -170,22 +179,19 @@ function PveBattlePage() {
 
     return (
         <div className="flex flex-col items-center p-8 min-h-screen" style={backgroundStyle}>
-            <h1 className="text-3xl font-bold mb-6">
-                PVE 전투 ({mapName ? mapName : `맵 ID: ${mapId}`})
-            </h1>
-
+            
             {/* 캐릭터 및 몬스터 정보 표시 영역 */}
             {(selectedCharacter) ? (
-                <div className="flex justify-around w-full max-w-4xl mb-6 p-6 bg-gray-900/80 rounded-xl shadow-2xl border border-yellow-500/50">
+                <div className="flex justify-around w-full max-w-4xl mb-4 p-4 bg-gray-900/80 rounded-xl shadow-2xl border border-yellow-500/50">
 
                     {/* 내 캐릭터 정보 */}
-                    <div className="text-center w-1/3 p-4 bg-gray-800/50 rounded-lg">
-                        <h2 className="text-2xl font-bold mb-3 text-yellow-400">{selectedCharacter.characterName}</h2>
+                    <div className="text-center w-1/3 p-2 bg-gray-800/50 rounded-lg">                        
                         <img
-                            src={`/images/character/${selectedCharacter.imageId}.png`}
+                            src={selectedCharacter.imageUrl}
                             alt={selectedCharacter.characterName}
                             className="w-32 h-32 mx-auto mb-2 border border-yellow-400 rounded-lg bg-white/10"
                         />
+                        <h2 className="text-2xl font-bold mb-2 text-yellow-400">{selectedCharacter.characterName}({getGradeLabel(selectedCharacter.gradeId)})</h2>
                         <div className="text-l mt-2 text-gray-200">
                             <p>HP: {selectedCharacter.characterStat?.characterHp} / ATK: {selectedCharacter.characterStat?.characterAttack}/ DEF: {selectedCharacter.characterStat?.characterDefense}</p>
                             <p>SPEED: {selectedCharacter.characterStat?.characterSpeed} / CRITICAL: {selectedCharacter.characterStat?.criticalRate}%</p>
@@ -200,7 +206,7 @@ function PveBattlePage() {
                     <div className="text-center w-1/3 p-4 bg-gray-800/50 rounded-lg">
                         {opponentMonster ? (
                             <>
-                                <h2 className="text-2xl font-bold mb-3 text-red-400">{opponentMonster.monsterName}</h2>
+                                <h2 className="text-2xl font-bold mb-2 text-red-400">{opponentMonster.monsterName}</h2>
                                 <img
                                     src={`/images/monster/${opponentMonster.imageOriginalName}`}
                                     alt={opponentMonster.monsterName}
@@ -217,11 +223,11 @@ function PveBattlePage() {
                     </div>
                 </div>
             ) : (
-                <p className="text-xl mb-6 text-gray-400">캐릭터 정보를 불러오는 중...</p>
+                <p className="text-xl mb-4 text-gray-400">캐릭터 정보를 불러오는 중...</p>
             )}
 
             {/* GPT 노트 스타일 선택 */}
-            <div className="mb-4 text-center">
+            <div className="mb-2 text-center">
                 <label className="mr-2 font-bold">해설 스타일 선택:</label>
                 <select
                     value={noteStyle}
@@ -235,7 +241,7 @@ function PveBattlePage() {
                     ))}
                 </select>
             </div>
-            <div className="flex gap-4 mt-4">
+            <div className="flex gap-4 mt-3">
                 <button
                     onClick={startBattle}
                     // 캐릭터 정보가 로드된 후에만 버튼 활성화 (몬스터 정보는 이제 눌렀을 때 가져옴)
@@ -252,15 +258,21 @@ function PveBattlePage() {
                 >
                     맵 선택
                 </button>
+                <button
+                    onClick={() => navigate("/")}
+                    disabled={isBattle}
+                    className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500 disabled:bg-gray-400"
+                >
+                    홈으로
+                </button>
             </div>
             <div
-                className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 min-h-[300px] overflow-y-auto border border-gray-700"
-                style={{ maxHeight: '50vh' }}
+                className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 min-h-[375px] max-h-[375px] overflow-y-auto border border-gray-700 whitespace-pre-wrap"                
             >
                 {logs.map((log, i) => (
                     <p
                         key={i}
-                        className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 whitespace-pre-wrap"
+                        className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 break-words"
                     >
                         {log}
                     </p>

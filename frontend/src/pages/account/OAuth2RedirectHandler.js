@@ -20,6 +20,8 @@ const OAuth2RedirectHandler = () => {
             const hasCharacter = queryParams.get('hasCharacter');
             const userEmail = queryParams.get('userEmail');
             const characterImageUrl = queryParams.get('characterImageUrl');
+            const incubatorCount = queryParams.get('incubatorCount');
+            const isAdFree = queryParams.get('isAdFree');
             try {
                 if (token && userId) {
                     const userInfo = { 
@@ -29,6 +31,8 @@ const OAuth2RedirectHandler = () => {
                         hasCharacter: hasCharacter === 'true' || hasCharacter === true, 
                         userEmail,
                         characterImageUrl,
+                        incubatorCount,
+                        isAdFree
                     };
 
                     if (!isCancelled) {

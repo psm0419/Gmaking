@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, XCircle } from 'lucide-react';
+import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, Swords, Footprints, Scroll } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
@@ -15,24 +15,14 @@ const Header = () => {
     // 카테고리 메뉴 항목
     const categories = [
         { name: '공지사항', icon: Bell, link: '#' },
-        { name: '상점', icon: ShoppingCart, link: '#' },
-        { name: '랭킹', icon: Award, link: '#' },
-        { name: '커뮤니티', icon: MessageSquare, link: '/community' },
+        { name: '상점', icon: ShoppingCart, link: '/shop' },
+        { name: '랭킹', icon: Award, link: 'ranking' },
+        { name: '커뮤니티', icon: MessageSquare, link: '/community' },        
+        { name: 'PVE', icon: Footprints, link: 'pve/maps' },
+        { name: 'PVP', icon: Swords, link: 'pvp/match' },
+        { name: '로그', icon: Scroll, link: 'logs' },
         { name: '고객지원', icon: LifeBuoy, link: '#' },
-        { name: 'PVE', icon: LifeBuoy, link: 'pve/maps' },
-        { name: 'PVP', icon: LifeBuoy, link: 'pvp/match' },
     ];
-
-    // 회원 탈퇴 핸들러
-    const handleWithdraw = () => {
-        if (!user) {
-            alert("로그인 상태가 아닙니다.");
-        }
-
-        if (window.confirm("정말 계정 탈퇴를 진행하시겠습니까?")) {
-            navigate('/withdraw');
-        }
-    };
 
     if (isLoading) {
         return (
@@ -107,14 +97,6 @@ const Header = () => {
                         >
                             <LogOut className="w-4 h-4 mr-1.5" />
                             로그아웃
-                        </button>
-                        {/* --- 회원 탈퇴 버튼 --- */}
-                        <button
-                            onClick={handleWithdraw}
-                            className="text-sm px-3 py-1.5 bg-gray-600 text-gray-300 font-semibold rounded-lg hover:bg-gray-700 transition duration-200 flex items-center"
-                        >
-                            <XCircle className="w-4 h-4 mr-1.5" />
-                            탈퇴
                         </button>
                     </div>
                 ) : (

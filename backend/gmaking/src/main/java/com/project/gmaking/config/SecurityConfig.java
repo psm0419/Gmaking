@@ -88,6 +88,7 @@ public class SecurityConfig {
                         // 마이 페이지 수정
                         .requestMatchers("/mypage/profile/**").authenticated()
                         .requestMatchers("/mypage/account").authenticated()
+                        .requestMatchers("/api/shop/**").authenticated()
 
                         // /api/** 전체 허용 (이 한 줄로 다 처리됨)
                         .requestMatchers("/api/**").permitAll()

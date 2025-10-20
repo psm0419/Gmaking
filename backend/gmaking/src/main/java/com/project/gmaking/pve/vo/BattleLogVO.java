@@ -1,28 +1,53 @@
 package com.project.gmaking.pve.vo;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.util.List;
 import java.time.LocalDateTime;
 
-@Data // Getter, Setter, ToString, EqualsAndHashCode 등을 자동 생성
-@NoArgsConstructor // 기본 생성자 자동 생성
-@AllArgsConstructor // 모든 필드를 인자로 받는 생성자 자동 생성
+@Data
+@NoArgsConstructor
 public class BattleLogVO {
 
-    private Integer battleId; // 배틀 ID (Integer)
-    private Integer characterId; // 캐릭터 ID (VARCHAR(50))
-    private String battleType; // 전투 유형: PVE (VARCHAR(10))
-    private Integer opponentId; // 상대방 ID Integer)
-    private String isWin; // 승리 여부: Y: 승리, N: 패배 (CHAR(1))
-    private Long turnCount; // 최종 턴 수 (BIGINT -> Long)
+    private Integer battleId;
+    private Integer characterId;
+    private String battleType;
+    private Integer opponentId;
+    private String isWin;
+    private Long turnCount;
 
-    private LocalDateTime createdDate; // 생성 일자 (DATETIME)
-    private String createdBy; // 생성자 (VARCHAR(50))
-    private LocalDateTime updatedDate; // 수정 일자 (DATETIME)
-    private String updatedBy; // 수정자 (VARCHAR(50))
+    private LocalDateTime createdDate;
+    private String createdBy;
+    private LocalDateTime updatedDate;
+    private String updatedBy;
 
-    // 프론트 표시용 턴 로그 (DB 비저장)
+    // 프론트 표시용 (DB 비저장)
     private transient List<String> turnLogs;
+    private String characterName;
+    private String opponentName;
 
+    // 기존 코드 호환용 생성자 (다른 서비스 로직에서 사용하는 형태)
+    public BattleLogVO(Integer battleId,
+                       Integer characterId,
+                       String battleType,
+                       Integer opponentId,
+                       String isWin,
+                       Long turnCount,
+                       LocalDateTime createdDate,
+                       String createdBy,
+                       LocalDateTime updatedDate,
+                       String updatedBy,
+                       List<String> turnLogs) {
+        this.battleId = battleId;
+        this.characterId = characterId;
+        this.battleType = battleType;
+        this.opponentId = opponentId;
+        this.isWin = isWin;
+        this.turnCount = turnCount;
+        this.createdDate = createdDate;
+        this.createdBy = createdBy;
+        this.updatedDate = updatedDate;
+        this.updatedBy = updatedBy;
+        this.turnLogs = turnLogs;
+    }
 }
