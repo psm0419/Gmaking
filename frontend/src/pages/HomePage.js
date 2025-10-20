@@ -1,11 +1,13 @@
 import React from 'react';
 import { User, ChevronRight, Wand2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { useNavigate } from 'react-router-dom';
+import UserCharacterSummary from '../components/home/UserCharacterSummary'; 
+import CharacterCreationPrompt from '../components/home/CharacterCreationPrompt';
 
-// 가이드 링크를 위한 서브 컴포넌트
+
 const GuideLink = ({ title }) => (
     <div className="flex justify-between items-center p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition cursor-pointer">
         <span className="text-gray-200 font-medium">{title}</span>
@@ -20,7 +22,6 @@ const HomePage = () => {
     const characterImageUrl = user?.characterImageUrl || null;
     const displayName = user?.userNickname || user?.userName || user?.userId;
 
-
     // 슬라이드 배너 및 이벤트 더미 데이터
     const slideBanner = {
         title: "겜만중 오픈 준비중",
@@ -33,73 +34,6 @@ const HomePage = () => {
         { title: "[공지] 점검 완료 및 보상 지급", date: "2025.09.30" },
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
-
-    // 사용자 정보 요약 또는 캐릭터 생성 유도
-    const renderCentralSection = () => {
-        if (!hasCharacter) {
-            // 캐릭터가 없을 경우: 생성 버튼 표시
-            return (
-                <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-red-500 transform transition duration-500 hover:scale-105">
-                    <div className="text-center">
-                        <Wand2 className="mx-auto w-16 h-16 text-red-400 mb-4 animate-bounce" />
-                        <h3 className="text-3xl font-extrabold text-white mb-2">
-                            캐릭터가 없습니다!
-                        </h3>
-                        <p className="text-md text-gray-400 mb-6">
-                            AI 기반 캐릭터 생성을 시작하고 게임에 접속하세요.
-                        </p>
-
-                        <button
-                            onClick={() => navigate('/create-character')} // 캐릭터 생성 페이지로 이동
-                            className="mt-4 w-full py-3 bg-red-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-red-700 transition"
-                        >
-                            캐릭터 생성
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // 캐릭터가 있을 경우: 기존 사용자 정보 표시
-        return (
-            <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-yellow-400">
-                <div className="text-center">
-                    <div className="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-3 border-4 border-yellow-500 overflow-hidden">
-                        {characterImageUrl ? (
-                            <img
-                                src={characterImageUrl}
-                                alt="사용자 캐릭터"
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <User className="w-12 h-12 text-yellow-400" />
-                        )}
-                    </div>
-                    <h3 className="text-3xl font-extrabold text-white mb-1">
-                        {displayName}
-                    </h3>
-
-                    <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm">
-                        <p>접속 시간: 124시간</p>
-                        <p>보유 코인: 99,999</p>
-                        <p>최고 랭크: 다이아몬드 III</p>
-                    </div>
-                    <button
-                        className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition"
-                        onClick={() => navigate('/my-page')}
-                    >
-                        내 정보 보기
-                    </button>
-                    <button
-                        className="mt-4 w-full py-2 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition"
-                        onClick={() => navigate('/create-character')}
-                    >
-                        캐릭터 추가 생성
-                    </button>
-                </div>
-            </div>
-        );
-    };
 
     // ------------------------------------------------------------------
 
@@ -145,8 +79,16 @@ const HomePage = () => {
                         </div>
                     </div>
 
-                    {/* 중앙: 사용자 정보 요약 */}
-                    {renderCentralSection()}
+                    {/* 중앙: 사용자 정보 요약 -> 조건부 렌더링으로 대체 */}
+                    {hasCharacter ? (
+                        <UserCharacterSummary
+                            user={user}
+                            displayName={displayName}
+                            characterImageUrl={characterImageUrl}
+                        />
+                    ) : (
+                        <CharacterCreationPrompt />
+                    )}
 
                     {/* 오른쪽: 가이드 보기 */}
                     <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
