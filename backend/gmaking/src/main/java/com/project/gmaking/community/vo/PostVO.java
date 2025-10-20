@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
-import java.util.List;
+// import java.util.List; // List를 사용하지 않으므로 제거
 
 @Data
 @NoArgsConstructor
@@ -14,8 +14,7 @@ public class PostVO {
     private String title;
     private String content;
     private String userId;
-
-    private List<Long> imageIds;
+    private String userNickname;
     private String categoryCode;
     private Long viewCount;
     private Long likeCount;
@@ -26,4 +25,3 @@ public class PostVO {
     private LocalDateTime updatedDate;
     private String updatedBy;
 }
-

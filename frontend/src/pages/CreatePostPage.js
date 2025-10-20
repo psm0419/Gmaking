@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Send, FileText, ChevronDown, Tag, Image, X, Upload } from 'lucide-react';
-import Header from '../components/Header'; // 기존 구조로 복원
-import Footer from '../components/Footer'; // 기존 구조로 복원
-import { useAuth } from '../context/AuthContext'; // 기존 구조로 복원
+import { Send, FileText, Tag, ArrowLeft } from 'lucide-react'; // Image, X, Upload, ChevronDown 아이콘 제거
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 // API 기본 URL 설정 (게시글 생성 API 엔드포인트)
@@ -18,36 +18,15 @@ const CreatePostPage = () => {
     const [category, setCategory] = useState('자유 게시판');
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    // 첨부된 이미지 파일 객체 목록 상태
-    const [imageFiles, setImageFiles] = useState([]);
-
     // 제출 결과 메시지 상태(성공/오류 알림용)
     const [submissionMessage, setSubmissionMessage] = useState(null);
     
     // 카테고리 목록
     const categories = ['자유 게시판', '질문/답변', '팁/정보', '거래'];
-
-    // 이미지 파일 변경 처리
-    const handleImageChange = (e) =>{
-        const selectedFiles = Array.from(e.target.files);
-        const newFiles = [...imageFiles, ...selectedFiles];
-
-        // 최대 5개 파일 제한
-        if(newFiles.length > 5){
-            setSubmissionMessage({ type: 'error', text: '이미지는 최대 5개까지 첨부할 수 있습니다.'});
-            setImageFiles(newFiles.slice(0,5));
-        } else{
-            setSubmissionMessage(null);
-            setImageFiles(newFiles);
-        }
-
-        e.target.value = null;
-    };
-
-    // 이미지 파일 제거 처리
-    const handleRemoveImage = (indexToRemove) => {
-        URL.revokeObjectURL(imageFiles[indexToRemove]);
-        setImageFiles(imageFiles.filter((_, index) => index !== indexToRemove));
+    
+    // 💡 뒤로가기/취소 처리 함수 추가
+    const handleGoBack = () => {
+        navigate('/community');
     };
     
     const handleSubmit = async (e) => {
@@ -55,7 +34,6 @@ const CreatePostPage = () => {
         setSubmissionMessage(null);
         
         // 1. 사용자 및 제목/내용 검증
-        // isLoading 상태를 추가로 확인합니다.
         if (isLoading) {
             setSubmissionMessage({ type: 'error', text: '사용자 정보를 로딩 중입니다. 잠시 후 다시 시도해 주세요.' });
             return;
@@ -84,7 +62,7 @@ const CreatePostPage = () => {
         
         // ⭐️ [Client Log 1] 요청 전송 전 사용자 ID 및 토큰 존재 여부 확인
         console.log("-----------------------------------------");
-        console.log("⭐️ [Client Log] 게시글 등록 요청 시작");
+        console.log("⭐️ [Client Log] 게시글 등록 요청 시작 (순수 텍스트)");
         console.log(`User ID: ${user.userId}`);
         console.log(`Token Found: ${token ? 'Yes' : 'No'}`);
         console.log("-----------------------------------------");
@@ -95,19 +73,11 @@ const CreatePostPage = () => {
         formData.append('title', title);
         formData.append('content', content);
         formData.append('category', category);
-        // 서버에서 JWT를 통해 인증된 사용자 ID를 사용하므로, 
-        // 클라이언트에서 authorId를 명시적으로 보내는 것은 보안상 권장되지 않으므로 제거합니다.
-        // formData.append('authorId', user.userId); 
-        
-        imageFiles.forEach((file) => {
-            formData.append('files', file);
-        });
 
         // ⭐️ [Client Log 2] FormData에 담긴 데이터 확인
         console.log("⭐️ [Client Log] FormData Content:");
         console.log(`- title: ${title}`);
         console.log(`- content: ${content.substring(0, Math.min(content.length, 30))}...`);
-        console.log(`- files count: ${imageFiles.length}`);
         
         for (let [key, value] of formData.entries()) {
             console.log(`- FormData item: ${key}: ${value instanceof File ? value.name : value}`);
@@ -120,6 +90,9 @@ const CreatePostPage = () => {
                 // ⭐️ Authorization 헤더 추가 (가장 중요)
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    // FormData를 사용하면 Content-Type: multipart/form-data가 자동으로 추가되지만,
+                    // 파일이 없기 때문에 서버에서 @RequestParam으로 처리될 가능성이 높습니다.
+                    // 서버 컨트롤러가 @RequestParam으로 인자를 받으므로 FormData를 유지합니다.
                 },
                 body: formData,
             });
@@ -128,8 +101,10 @@ const CreatePostPage = () => {
             console.log(`⭐️ [Client Log] 서버 응답 상태 코드: ${response.status}`);
             
             if(response.ok){
-                const responseData = await response.json();
-                console.log("⭐️ [Client Log] 게시글 등록 성공 응답 데이터:", responseData);
+                // 서버가 String "게시글 등록 성공"을 반환하면 .json() 호출 시 오류 발생 가능성 있음
+                // 텍스트 응답을 처리하도록 수정
+                const responseText = await response.text();
+                console.log("⭐️ [Client Log] 게시글 등록 성공 응답 데이터:", responseText);
 
                 setSubmissionMessage({
                     type: 'success',
@@ -140,7 +115,7 @@ const CreatePostPage = () => {
                 setTitle('');
                 setContent('');
                 setCategory('자유 게시판');
-                setImageFiles([]);
+                // setImageFiles([]); // 🗑️ 제거
 
                 // 1초 후 게시글 목록 페이지로 이동
                 setTimeout(() => {
@@ -157,15 +132,11 @@ const CreatePostPage = () => {
                 if (response.status === 401 || response.status === 403) {
                     errorText = '세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요. (인증 오류)';
                 } else {
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        errorText = errorJson.message || errorText;
-                    } catch (e) {
-                        // JSON이 아닐 경우 텍스트 그대로 사용
-                    }
+                    // 서버에서 문자열 응답을 보냈을 경우 대비
+                    errorText = errorText || `게시글 등록에 실패했습니다. (상태 코드: ${response.status})`;
                 }
                 
-                throw new Error(errorText || `게시글 등록에 실패했습니다. (상태 코드: ${response.status})`);
+                throw new Error(errorText);
             }
         } catch(error) {
             console.error('게시글 등록 중 오류 발생:', error);
@@ -177,9 +148,6 @@ const CreatePostPage = () => {
             setIsSubmitting(false);
         }
     };
-
-    // 이미지 파일을 미리보기 URL로 변환하는 함수
-    const getPreviewUrl = (file) => URL.createObjectURL(file);
 
     // 로딩 중이거나 사용자가 없을 때 버튼을 비활성화/표시
     const isButtonDisabled = isSubmitting || !user || isLoading;
@@ -196,7 +164,7 @@ const CreatePostPage = () => {
                 <div className="mb-8 border-b border-gray-700 pb-4">
                     <h1 className="text-4xl font-extrabold text-yellow-400 flex items-center">
                         <FileText className="w-8 h-8 mr-3" />
-                        새 게시글 작성
+                        새 게시글 작성 (텍스트 전용)
                     </h1>
                     <p className="text-gray-400 mt-2">커뮤니티 가이드라인을 준수하여 깨끗한 게시판 문화를 만들어주세요.</p>
                 </div>
@@ -216,6 +184,7 @@ const CreatePostPage = () => {
                 <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-6">
                     
                     {/* 카테고리 선택 드롭다운 */}
+                    {/* UI는 유지하지만, 서버에서 categoryCode를 사용하지 않는다면 제거 고려 */}
                     <div>
                         <label htmlFor="category" className="block text-lg font-medium text-gray-300 mb-2 flex items-center">
                             <Tag className="w-5 h-5 mr-2 text-red-400" /> 카테고리
@@ -232,7 +201,7 @@ const CreatePostPage = () => {
                                     <option key={cat} value={cat}>{cat}</option>
                                 ))}
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                            {/* ChevronDown 아이콘은 제거하지 않았습니다. */}
                         </div>
                     </div>
 
@@ -269,86 +238,55 @@ const CreatePostPage = () => {
                         ></textarea>
                     </div>
 
-                    {/* 이미지 첨부 섹션 */}
-                    <div className="pt-4 border-t border-gray-700">
-                        <label className="block text-lg font-medium text-gray-300 mb-2 flex items-center">
-                            <Image className="w-5 h-5 mr-2 text-blue-400" /> 이미지 첨부 ({imageFiles.length}/5)
-                        </label>
-                        
-                        {/* 파일 선택 버튼 */}
-                        <label htmlFor="image-upload" className={`w-full flex items-center justify-center p-3 text-base font-medium rounded-lg border-2 border-dashed transition duration-300 cursor-pointer ${
-                            imageFiles.length >= 5 
-                                ? 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
-                                : 'bg-gray-700 border-blue-500 text-blue-400 hover:bg-gray-600'
-                        }`}>
-                            <Upload className="w-5 h-5 mr-2" />
-                            {imageFiles.length < 5 ? "파일 선택 (최대 5개)" : "첨부 제한 개수 초과"}
-                            <input
-                                id="image-upload"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                onChange={handleImageChange}
-                                disabled={imageFiles.length >= 5}
-                                className="hidden"
-                            />
-                        </label>
-
-                        {/* 첨부된 이미지 미리보기 목록 */}
-                        {imageFiles.length > 0 && (
-                            <div className="mt-4 flex flex-wrap gap-4 p-3 bg-gray-700 rounded-lg border border-gray-600">
-                                {imageFiles.map((file, index) => (
-                                    <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-500 shadow-md">
-                                        <img
-                                            src={getPreviewUrl(file)}
-                                            alt={`첨부 이미지 ${index + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveImage(index)}
-                                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 p-1 rounded-full text-white transition duration-200"
-                                            aria-label={`이미지 ${index + 1} 삭제`}
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
                     {/* 작성자 정보 */}
                     <div className="text-right text-sm text-gray-500 pt-2 border-t border-gray-700">
                         작성자: {authorName}
                     </div>
 
-                    {/* 제출 버튼 */}
-                    <button
-                        type="submit"
-                        disabled={isButtonDisabled}
-                        className={`w-full flex items-center justify-center py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 ${
-                            isButtonDisabled
-                                ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
-                                : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
-                        }`}
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <span className="mr-2">등록 중...</span>
-                                {/* 로딩 스피너 */}
-                                <svg className="animate-spin h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </>
-                        ) : (
-                            <>
-                                <Send className="w-6 h-6 mr-2" />
-                                게시글 등록
-                            </>
-                        )}
-                    </button>
+                    {/* ⭐️ 버튼 그룹: 등록 버튼과 뒤로가기 버튼 */}
+                    <div className="flex gap-4">
+                        {/* 뒤로가기 버튼 추가 */}
+                        <button
+                            type="button"
+                            onClick={handleGoBack}
+                            disabled={isSubmitting}
+                            className={`w-1/3 flex items-center justify-center py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 ${
+                                isSubmitting
+                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : 'bg-red-600 text-white hover:bg-gray-700'
+                            }`}
+                        >
+                            <ArrowLeft className="w-6 h-6 mr-2" />
+                            취소/뒤로가기
+                        </button>
+
+                        {/* 제출 버튼 (W-2/3으로 폭 변경) */}
+                        <button
+                            type="submit"
+                            disabled={isButtonDisabled}
+                            className={`w-2/3 flex items-center justify-center py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 ${
+                                isButtonDisabled
+                                    ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
+                                    : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
+                            }`}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <span className="mr-2">등록 중...</span>
+                                    {/* 로딩 스피너 */}
+                                    <svg className="animate-spin h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-6 h-6 mr-2" />
+                                    게시글 등록
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </form>
 
             </main>

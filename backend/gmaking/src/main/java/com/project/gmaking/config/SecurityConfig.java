@@ -109,6 +109,22 @@ public class SecurityConfig {
                         // 커뮤니티
                         .requestMatchers(HttpMethod.GET, "/community/**").permitAll()
 
+                        // 게시글 등록
+                        .requestMatchers(HttpMethod.POST, "/community").authenticated()
+
+                        // 게시글 수정
+                        .requestMatchers(HttpMethod.PUT, "/community/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/community/**").authenticated()
+
+                        // 게시글 삭제
+                        .requestMatchers(HttpMethod.DELETE, "/community/**").authenticated()
+
+                        // 게시글 좋아요
+                        .requestMatchers("/community/like/toggle").authenticated()
+
+                        // 조회수 증가
+                        .requestMatchers(HttpMethod.POST, "/community/view/**").permitAll()
+
                         // 나머지 모든 요청은 인증된 사용자에게만 허용
                         .anyRequest().authenticated()
                 )

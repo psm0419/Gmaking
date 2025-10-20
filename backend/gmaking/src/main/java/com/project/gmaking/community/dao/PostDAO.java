@@ -27,4 +27,9 @@ public interface PostDAO {
     // 페이징을 위한 전체 게시글 수를 조회
     int selectPostCount(PostPagingVO pagingVO);
 
+    // LIKE_COUNT를 좋아요 기록의 실제 갯수로 갱신
+    int updatePostLikeCount(Long postId);
+
+    // 게시글 조회수 1 증가
+    int incrementViewCount(Long postId);
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.community.dao.PostLikeDAO">
+
+    <sql id="tableName">tb_community_like</sql>
+
+    <insert id="insertPostLike" parameterType="com.project.gmaking.community.vo.PostLikeVO">
+        INSERT INTO <include refid="tableName"/> (
+        USER_ID,
+        POST_ID,
+        CREATED_DATE
+        ) VALUES (
+        #{userId},
+        #{postId},
+        NOW()  )
+    </insert>
+
+    <delete id="deletePostLike">
+        DELETE FROM <include refid="tableName"/>
+        WHERE USER_ID = #{userId, jdbcType=VARCHAR}
+        AND POST_ID = #{postId}
+    </delete>
+
+    <select id="checkPostLikeStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM <include refid="tableName"/>
+        WHERE USER_ID = #{userId}
+        AND POST_ID = #{postId}
+    </select>
+
+    <select id="getPostLikeCount" resultType="int">
+        SELECT COUNT(USER_ID)
+        FROM <include refid="tableName"/>
+        WHERE POST_ID = #{postId}
+    </select>
+
+</mapper>

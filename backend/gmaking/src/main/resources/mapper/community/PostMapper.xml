@@ -11,10 +11,6 @@
         <result property="likeCount" column="LIKE_COUNT" />
         <result property="isDeleted" column="IS_DELETED" />
 
-        <result property="imageIds" column="IMAGE_IDS" javaType="java.util.List"
-                jdbcType="VARCHAR"
-                typeHandler="com.project.gmaking.config.JsonLongListTypeHandler" />
-
         <result property="createdDate" column="CREATED_DATE" />
         <result property="createdBy" column="CREATED_BY" />
         <result property="updatedDate" column="UPDATED_DATE" />
@@ -40,18 +36,13 @@
         </if>
     </sql>
 
-    <insert id="insertPost" useGeneratedKeys="true" keyProperty="postId">
-        INSERT INTO TB_COMMUNITY_POST(TITLE, CONTENT, USER_ID,
-        <if test="imageIds != null and !imageIds.isEmpty()">IMAGE_IDS,</if>
-        CREATED_DATE)
+    <insert id="insertPost" useGeneratedKeys="true" keyProperty="postId" keyColumn="POST_ID">
+        INSERT INTO TB_COMMUNITY_POST(TITLE, CONTENT, USER_ID, CATEGORY_CODE, CREATED_DATE)
         VALUES (
         #{title},
         #{content},
         #{userId},
-        <if test="imageIds != null and !imageIds.isEmpty()">
-            #{imageIds, jdbcType=VARCHAR, typeHandler=com.project.gmaking.config.JsonLongListTypeHandler},
-        </if>
-        NOW()
+        #{categoryCode},  NOW()
         )
     </insert>
 
@@ -59,17 +50,30 @@
         UPDATE TB_COMMUNITY_POST SET
         TITLE = #{title},
         CONTENT = #{content},
-        IMAGE_IDS = #{imageIds, jdbcType=VARCHAR, typeHandler=com.project.gmaking.config.JsonLongListTypeHandler},
         UPDATED_DATE = NOW()
         WHERE POST_ID = #{postId}
     </update>
 
     <select id="selectPostById" resultMap="postResultMap">
         SELECT
-        POST_ID, TITLE, CONTENT, USER_ID, CREATED_DATE, UPDATED_DATE, IMAGE_IDS,
-        CATEGORY_CODE, VIEW_COUNT, LIKE_COUNT, IS_DELETED, CREATED_BY, UPDATED_BY
-        FROM TB_COMMUNITY_POST
-        WHERE POST_ID = #{postId}
+            p.POST_ID,
+            p.TITLE,
+            p.CONTENT,
+            p.USER_ID,
+            p.CREATED_DATE,
+            p.UPDATED_DATE,
+            p.CATEGORY_CODE,
+            p.VIEW_COUNT,
+            (
+                SELECT COUNT(l.POST_ID)
+                FROM TB_COMMUNITY_LIKE l
+                WHERE l.POST_ID = p.POST_ID
+            ) AS LIKE_COUNT,
+            p.IS_DELETED,
+            p.CREATED_BY,
+            p.UPDATED_BY
+        FROM TB_COMMUNITY_POST p
+        WHERE p.POST_ID = #{postId}
     </select>
 
     <delete id="deletePost">
@@ -79,13 +83,27 @@
 
     <select id="selectPostList" resultMap="postResultMap">
         SELECT
-        POST_ID, TITLE, USER_ID, CREATED_DATE, IMAGE_IDS, CONTENT, UPDATED_DATE,
-        CATEGORY_CODE, VIEW_COUNT, LIKE_COUNT, IS_DELETED, CREATED_BY, UPDATED_BY
-        FROM TB_COMMUNITY_POST
+            p.POST_ID,
+            p.TITLE,
+            p.USER_ID,
+            p.CREATED_DATE,
+            p.CONTENT,
+            p.UPDATED_DATE,
+            p.CATEGORY_CODE,
+            p.VIEW_COUNT,
+            (
+                SELECT COUNT(l.POST_ID)
+                FROM TB_COMMUNITY_LIKE l
+                WHERE l.POST_ID = p.POST_ID
+            ) AS LIKE_COUNT,
+            p.IS_DELETED,
+            p.CREATED_BY,
+            p.UPDATED_BY
+        FROM TB_COMMUNITY_POST p
         <where>
             <include refid="criteria"/>
         </where>
-        ORDER BY POST_ID DESC
+        ORDER BY p.POST_ID DESC
         LIMIT #{amount} OFFSET #{skip}
     </select>
 
@@ -96,4 +114,23 @@
             <include refid="criteria"/>
         </where>
     </select>
+
+    <update id="updatePostLikeCount">
+        UPDATE TB_COMMUNITY_POST
+        SET
+            LIKE_COUNT = (
+                SELECT COUNT(POST_ID)
+                FROM TB_COMMUNITY_LIKE
+                WHERE POST_ID = #{postId}
+            ),
+            UPDATED_DATE = NOW()
+        WHERE POST_ID = #{postId}
+    </update>
+
+    <update id="incrementViewCount">
+        UPDATE tb_community_post
+        SET view_count = view_count + 1
+        WHERE post_id = #{postId}
+    </update>
+
 </mapper>

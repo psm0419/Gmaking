@@ -21,6 +21,7 @@ import PostDetailPage from './pages/PostDetailPage';
 import ProfileEditPage from'./pages/ProfileEditPage';
 import PvpMatchPage from './pages/PvpMatchPage';
 import PvpBattlePage from './pages/PvpBattlePage';
+import PostEditPage from './pages/PostEditPage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -83,6 +84,7 @@ function App() {
                 <Route path="/community" element={<ProtectedRoute><CommunityPage/></ProtectedRoute>} />
                 <Route path="/create-post" element={<ProtectedRoute><CreatePostPage/></ProtectedRoute>} />
                 <Route path="/community/:postId" element={<ProtectedRoute><PostDetailPage/></ProtectedRoute>} /> 
+                <Route path="/community/edit/:postId" element={<ProtectedRoute><PostEditPage/></ProtectedRoute>} /> 
                                   
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />  

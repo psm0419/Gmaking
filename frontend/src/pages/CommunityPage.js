@@ -9,14 +9,14 @@ import { useAuth } from '../context/AuthContext';
 const API_BASE_URL = 'http://localhost:8080/community';
 
 // 게시글 목록을 위한 서브 컴포넌트
-const PostItem = ({ type, title, authorId, date, postId, navigate }) => {
+const PostItem = ({ type, title, authorNickname, date, postId, navigate, viewCount, likeCount, replyCount, onLikeClick }) => {
     const isNotice = type === 'notice';
     const tagColor = isNotice ? 'bg-red-600' : 'bg-yellow-600';
 
     return (
         <div 
             className="flex items-center justify-between p-4 border-b border-gray-700 hover:bg-gray-700 transition duration-150 cursor-pointer group"
-            onClick={() => navigate(`/community/%{id}`)}   
+            onClick={() => navigate(`/community/${postId}`)}   
         >    
             {/* 제목 및 태그 */}
             <div className="flex-1 min-w-0 pr-4">
@@ -30,21 +30,27 @@ const PostItem = ({ type, title, authorId, date, postId, navigate }) => {
 
             {/* 정보 (모바일에서는 숨김) */}
             <div className="hidden sm:flex items-center text-sm text-gray-400 space-x-6 flex-shrink-0">
-                <span className="w-20 truncate text-center">{authorId}</span>
+                <span className="w-20 truncate text-center">{authorNickname}</span>
                 
                 <div className="flex items-center space-x-1.5 w-12 justify-center">
                     <Eye className="w-4 h-4 text-gray-500" />
-                    <span>0</span>
+                    <span>{viewCount || 0}</span>
                 </div>
                 
-                <div className="flex items-center space-x-1.5 w-12 justify-center">
+                <div 
+                    className="flex items-center space-x-1.5 w-12 justify-center"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onLikeClick(postId);
+                    }}
+                >
                     <ThumbsUp className="w-4 h-4 text-gray-500" />
-                    <span>0</span>
+                    <span>{likeCount || 0}</span>
                 </div>
                 
                 <div className="flex items-center space-x-1.5 w-12 justify-center">
                     <MessageSquare className="w-4 h-4 text-gray-500" />
-                    <span>0</span>
+                    <span>{replyCount || 0}</span>
                 </div>
                 
                 <span className="w-20 text-center">{new Date(date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '.').slice(0, -1)}</span>
@@ -183,6 +189,33 @@ const CommunityPage = () => {
         );
     };
 
+    const handleLikeClick = async (postId) => {
+        if (!user) {
+            alert('좋아요를 위해 로그인이 필요합니다.');
+            navigate('/login');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/like/${postId}`, {
+                method: 'POST', // 좋아요는 보통 POST나 PUT
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('좋아요 업데이트 실패');
+            }
+
+            fetchPosts(currentPage, currentKeyword); 
+
+        } catch (error) {
+            console.error("좋아요 처리 실패:", error);
+            alert('좋아요 처리 중 오류가 발생했습니다.');
+        }
+    }
+
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
             <Header />
@@ -249,10 +282,14 @@ const CommunityPage = () => {
                                         key={post.postId} 
                                         type={'free'} 
                                         title={post.title}
-                                        authorId={post.authorId}
+                                        authorNickname={post.userNickname || post.userId}
                                         date={post.createdDate}
                                         postId={post.postId}
                                         navigate={navigate}
+                                        viewCount={post.viewCount}
+                                        likeCount={post.likeCount}
+                                        replyCount={post.replyCount || 0}
+                                        onLikeClick={handleLikeClick}
                                     />
                                 ))
                             ) : (
