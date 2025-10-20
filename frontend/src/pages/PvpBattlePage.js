@@ -10,6 +10,17 @@ const getCharacterImage = (char) =>
         ? char.imageUrl
         : `/images/character/${char.imageId}.png`;
 
+const getGradeLabel = (gradeId) => {
+    switch (gradeId) {
+        case 1: return "N";
+        case 2: return "R";
+        case 3: return "SR";
+        case 4: return "SSR";
+        case 5: return "UR";
+        default: return "-";
+    }
+};
+
 function PvpBattlePage() {
     const { state } = useLocation();
     const { myCharacter, enemyCharacter } = state || {};
@@ -102,7 +113,7 @@ function PvpBattlePage() {
                     <div className="flex justify-center">
                         <img src={getCharacterImage(myCharacter)} className="w-40 h-40" />
                     </div>
-                    <p className="text-xl mt-2">{myCharacter.characterName}</p>
+                    <p className="text-xl mt-2 text-yellow-400">{myCharacter.characterName}({getGradeLabel(myCharacter.gradeId)})</p>
                     <p className="text-sm text-gray-400 text-xl">
                         공격력: {myCharacter.characterStat.characterAttack}  방어력: {myCharacter.characterStat.characterDefense}
                     </p>
@@ -141,7 +152,7 @@ function PvpBattlePage() {
                     <div className="flex justify-center">
                         <img src={getCharacterImage(enemyCharacter)} className="w-40 h-40" />
                     </div>
-                    <p className="text-xl mt-2">{enemyCharacter.characterName}</p>
+                    <p className="text-xl mt-2 text-yellow-400">{enemyCharacter.characterName}({getGradeLabel(enemyCharacter.gradeId)})</p>
                     <p className="text-sm text-gray-400 text-xl">
                         공격력: {enemyCharacter.characterStat.characterAttack}  방어력: {enemyCharacter.characterStat.characterDefense}
                     </p>

@@ -38,6 +38,18 @@ function PveBattlePage() {
         }
     }
 
+    // 등급 ID → 문자열 변환 함수
+    const getGradeLabel = (gradeId) => {
+        switch (gradeId) {
+            case 1: return "N";
+            case 2: return "R";
+            case 3: return "SR";
+            case 4: return "SSR";
+            case 5: return "UR";
+            default: return "-";
+        }
+    };
+
     useEffect(() => {
         if (!mapId || !characterId) {
             alert("맵 또는 캐릭터가 선택되지 않았습니다.");
@@ -173,13 +185,13 @@ function PveBattlePage() {
                 <div className="flex justify-around w-full max-w-4xl mb-4 p-4 bg-gray-900/80 rounded-xl shadow-2xl border border-yellow-500/50">
 
                     {/* 내 캐릭터 정보 */}
-                    <div className="text-center w-1/3 p-2 bg-gray-800/50 rounded-lg">
-                        <h2 className="text-2xl font-bold mb-2 text-yellow-400">{selectedCharacter.characterName}</h2>
+                    <div className="text-center w-1/3 p-2 bg-gray-800/50 rounded-lg">                        
                         <img
                             src={selectedCharacter.imageUrl}
                             alt={selectedCharacter.characterName}
                             className="w-32 h-32 mx-auto mb-2 border border-yellow-400 rounded-lg bg-white/10"
                         />
+                        <h2 className="text-2xl font-bold mb-2 text-yellow-400">{selectedCharacter.characterName}({getGradeLabel(selectedCharacter.gradeId)})</h2>
                         <div className="text-l mt-2 text-gray-200">
                             <p>HP: {selectedCharacter.characterStat?.characterHp} / ATK: {selectedCharacter.characterStat?.characterAttack}/ DEF: {selectedCharacter.characterStat?.characterDefense}</p>
                             <p>SPEED: {selectedCharacter.characterStat?.characterSpeed} / CRITICAL: {selectedCharacter.characterStat?.criticalRate}%</p>

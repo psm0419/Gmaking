@@ -23,6 +23,17 @@ function PvpMatchPage() {
         }
     }
 
+    const getGradeLabel = (gradeId) => {
+        switch (gradeId) {
+            case 1: return "N";
+            case 2: return "R";
+            case 3: return "SR";
+            case 4: return "SSR";
+            case 5: return "UR";
+            default: return "-";
+        }
+    };
+
     useEffect(() => {
         if (!token || !userId) {
             alert("로그인이 필요합니다.");
@@ -113,7 +124,7 @@ function PvpMatchPage() {
                                     alt={char.characterName}
                                     className="w-24 h-24 object-contain mx-auto mb-2"
                                 />
-                                <div className="text-center text-sm font-medium">{char.characterName}</div>
+                                <div className="text-center text-l font-medium text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
                             </div>
                         ))}
                     </div>
@@ -155,7 +166,7 @@ function PvpMatchPage() {
                                         alt={char.characterName}
                                         className="w-24 h-24 object-contain mx-auto mb-2"
                                     />
-                                    <div className="text-center text-sm font-medium">{char.characterName}</div>
+                                    <div className="text-center text-l font-medium text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
                                 </div>
                             ))
                         )}

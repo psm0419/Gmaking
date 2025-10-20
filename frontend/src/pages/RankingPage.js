@@ -12,6 +12,7 @@ function RankingPage() {
             case 2: return "R";
             case 3: return "SR";
             case 4: return "SSR";
+            case 5: return "UR";
             default: return "-";
         }
     };

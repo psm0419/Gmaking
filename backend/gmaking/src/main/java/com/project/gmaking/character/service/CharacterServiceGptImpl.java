@@ -156,8 +156,10 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
                 gradeId = 2;
             } else if (totalStat <= 400) {
                 gradeId = 3;
-            } else {
+            } else if (totalStat <= 500) {
                 gradeId = 4;
+            } else {
+                gradeId = 5;
             }
 
             // 생성정보 설정
