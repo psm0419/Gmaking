@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.community.dao.PostDAO">
+    <resultMap id="postResultMap" type="com.project.gmaking.community.vo.PostVO">
+        <id property="postId" column="POST_ID" />
+        <result property="title" column="TITLE" />
+        <result property="content" column="CONTENT" />
+        <result property="userId" column="USER_ID" />
+        <result property="categoryCode" column="CATEGORY_CODE" />
+        <result property="viewCount" column="VIEW_COUNT" />
+        <result property="likeCount" column="LIKE_COUNT" />
+        <result property="isDeleted" column="IS_DELETED" />
+
+        <result property="createdDate" column="CREATED_DATE" />
+        <result property="createdBy" column="CREATED_BY" />
+        <result property="updatedDate" column="UPDATED_DATE" />
+        <result property="updatedBy" column="UPDATED_BY" />
+    </resultMap>
+
+    <sql id="criteria">
+        <if test="userId != null and userId != ''">
+            AND USER_ID = #{userId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'T'.toString()">
+                    AND TITLE LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'C'.toString()">
+                    AND CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'W'.toString()">
+                    AND USER_ID LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+    </sql>
+
+    <insert id="insertPost" useGeneratedKeys="true" keyProperty="postId" keyColumn="POST_ID">
+        INSERT INTO TB_COMMUNITY_POST(TITLE, CONTENT, USER_ID, CATEGORY_CODE, CREATED_DATE)
+        VALUES (
+        #{title},
+        #{content},
+        #{userId},
+        #{categoryCode},  NOW()
+        )
+    </insert>
+
+    <update id="updatePost">
+        UPDATE TB_COMMUNITY_POST SET
+        TITLE = #{title},
+        CONTENT = #{content},
+        UPDATED_DATE = NOW()
+        WHERE POST_ID = #{postId}
+    </update>
+
+    <select id="selectPostById" resultMap="postResultMap">
+        SELECT
+            p.POST_ID,
+            p.TITLE,
+            p.CONTENT,
+            p.USER_ID,
+            p.CREATED_DATE,
+            p.UPDATED_DATE,
+            p.CATEGORY_CODE,
+            p.VIEW_COUNT,
+            (
+                SELECT COUNT(l.POST_ID)
+                FROM TB_COMMUNITY_LIKE l
+                WHERE l.POST_ID = p.POST_ID
+            ) AS LIKE_COUNT,
+            p.IS_DELETED,
+            p.CREATED_BY,
+            p.UPDATED_BY
+        FROM TB_COMMUNITY_POST p
+        WHERE p.POST_ID = #{postId}
+    </select>
+
+    <delete id="deletePost">
+        DELETE FROM TB_COMMUNITY_POST
+        WHERE POST_ID = #{postId}
+    </delete>
+
+    <select id="selectPostList" resultMap="postResultMap">
+        SELECT
+            p.POST_ID,
+            p.TITLE,
+            p.USER_ID,
+            p.CREATED_DATE,
+            p.CONTENT,
+            p.UPDATED_DATE,
+            p.CATEGORY_CODE,
+            p.VIEW_COUNT,
+            (
+                SELECT COUNT(l.POST_ID)
+                FROM TB_COMMUNITY_LIKE l
+                WHERE l.POST_ID = p.POST_ID
+            ) AS LIKE_COUNT,
+            p.IS_DELETED,
+            p.CREATED_BY,
+            p.UPDATED_BY
+        FROM TB_COMMUNITY_POST p
+        <where>
+            <include refid="criteria"/>
+        </where>
+        ORDER BY p.POST_ID DESC
+        LIMIT #{amount} OFFSET #{skip}
+    </select>
+
+    <select id="selectPostCount" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_COMMUNITY_POST
+        <where>
+            <include refid="criteria"/>
+        </where>
+    </select>
+
+    <update id="updatePostLikeCount">
+        UPDATE TB_COMMUNITY_POST
+        SET
+            LIKE_COUNT = (
+                SELECT COUNT(POST_ID)
+                FROM TB_COMMUNITY_LIKE
+                WHERE POST_ID = #{postId}
+            ),
+            UPDATED_DATE = NOW()
+        WHERE POST_ID = #{postId}
+    </update>
+
+    <update id="incrementViewCount">
+        UPDATE tb_community_post
+        SET view_count = view_count + 1
+        WHERE post_id = #{postId}
+    </update>
+
+</mapper>

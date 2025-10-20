@@ -15,9 +15,6 @@ import MapSelection from './pages/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
 import ShopPage from "./pages/ShopPage";
 import ChatEntryPage from './pages/ChatEntryPage';
-import ProfileEditPage from'./pages/ProfileEditPage';
-import PvpMatchPage from './pages/PvpMatchPage';
-import PvpBattlePage from './pages/PvpBattlePage';
 import CommunityPage from './pages/CommunityPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
@@ -25,6 +22,11 @@ import BattleLogList from './pages/BattleLogList';
 import TurnLogList from './pages/TurnLogList';
 import RankingPage from './pages/RankingPage';
 import AiDebatePage from './pages/AiDebatePage';
+import ProfileEditPage from'./pages/ProfileEditPage';
+import PvpMatchPage from './pages/PvpMatchPage';
+import PvpBattlePage from './pages/PvpBattlePage';
+import PostEditPage from './pages/PostEditPage';
+
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
@@ -93,14 +95,13 @@ function App() {
 
                 {/* 커뮤니티 페이지 */}
                 <Route path="/community" element={<ProtectedRoute><CommunityPage/></ProtectedRoute>} />
-
-                {/* 새 게시글 작성 페이지 */}
                 <Route path="/create-post" element={<ProtectedRoute><CreatePostPage/></ProtectedRoute>} />
-
-                {/* 게시글 상세 페이지 */}
-                <Route path="/community/:postId" element={<ProtectedRoute><PostDetailPage/></ProtectedRoute>} />
-
-            </Routes>
+                <Route path="/community/:postId" element={<ProtectedRoute><PostDetailPage/></ProtectedRoute>} /> 
+                <Route path="/community/edit/:postId" element={<ProtectedRoute><PostEditPage/></ProtectedRoute>} /> 
+                
+                {/* 그 외 모든 경로를 메인으로 이동 */}
+                <Route path="*" element={<Navigate to="/" replace />} />  
+            </Routes>     
         </Router>
     );
 }
