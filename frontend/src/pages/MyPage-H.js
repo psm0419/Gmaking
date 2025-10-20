@@ -13,13 +13,12 @@ import NotificationBell from "../components/notifications/NotificationBell";
 import PvpResultModal from "../components/notifications/PvpResultModal"; // ← 경로 확인
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
-
 /* ──────────────────────────────────────────────────────────────── */
 /* 페이지 스켈레톤                                                   */
 /* ──────────────────────────────────────────────────────────────── */
 export default function MyPage() {
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gray-200/70 flex flex-col">
       <Header />
       <main className="flex-1">
         <MyMain />
@@ -42,10 +41,9 @@ function MyMain() {
   const [characters, setCharacters] = useState([]);
   const [selected, setSelected] = useState(null);
   const [repId, setRepId] = useState(null);
-
   const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
-    ? Number(user.incubatorCount)
-    : 0;
+          ? Number(user.incubatorCount)
+          : 0;
   const isAdFree = !!user?.isAdFree;
 
   // 알림
@@ -160,7 +158,7 @@ function MyMain() {
         { headers }
       );
 
-      const selectedChar = characters.find((c) => c.id === characterId);
+      const selectedChar = characters.find(c => c.id === characterId);
       const updatedCharacterImageUrl = selectedChar?.imageUrl || null;
 
       // 먼저 repId 상태 갱신
@@ -168,6 +166,7 @@ function MyMain() {
 
       // AuthContext와 localStorage 갱신
       updateRepresentativeCharacter(updatedCharacterImageUrl, characterId);
+
     } catch (e) {
       alert(e?.response?.data?.message || "대표 캐릭터 설정에 실패했습니다.");
     }
@@ -188,7 +187,7 @@ function MyMain() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-white">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-gray-700">
         로딩 중...
       </div>
     );
@@ -196,7 +195,7 @@ function MyMain() {
 
   if (error) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-red-400">
+      <div className="w-full max-w-6xl mx-auto px-6 py-20 text-center text-red-600">
         {error}
       </div>
     );
@@ -206,70 +205,46 @@ function MyMain() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
-      {/* A안 적용: items-stretch (모든 브레이크포인트), 왼쪽 카드 h-full + min-h */}
-      <div className="grid gap-6 md:grid-cols-[minmax(320px,540px),1fr] items-stretch">
+      <div className="grid gap-6 md:grid-cols-[minmax(320px,540px),1fr] md:items-stretch">
         {/* 프로필 카드 */}
-        <section
-          className="bg-gray-800 border-2 border-[#FFC700] rounded-[16px] p-6 w-full shadow-lg
-                     h-full min-h-[300px] sm:min-h-[360px] md:min-h-[360px]"
-        >
-          {/* ⛳ 행 전체를 카드 높이에 맞추고 세로 중앙 정렬 */}
-          <div className="h-full flex">
-            <div className="flex w-full gap-6 items-center">
-              {/* ← items-center: 행 자체를 수직 가운데로 */}
+        <section className="bg-white border-2 border-black rounded-[28px] p-6 w-full h-full">
+          <div className="flex items-start gap-6">
+            <div className="shrink-0 flex flex-col items-center">
+              {/* 프로필 이미지 */}
+              <img
+                src={safeProfileSrc}
+                alt="프로필 이미지"
+                className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-gray-300 bg-white"
+                onError={(e) => {
+                  if (e.currentTarget.dataset.fallbackApplied) return;
+                  e.currentTarget.dataset.fallbackApplied = "1";
+                  e.currentTarget.src = DEFAULT_PROFILE_IMG;
+                }}
+              />
 
-              {/* 왼쪽: 프로필 + 아이콘 (세로 가운데 정렬) */}
-              <div className="shrink-0 h-full flex flex-col items-center justify-center">
-                <img
-                  src={safeProfileSrc}
-                  alt="프로필 이미지"
-                  className="w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border border-[#FFC700] bg-black/50"
-                  onError={(e) => {
-                    if (e.currentTarget.dataset.fallbackApplied) return;
-                    e.currentTarget.dataset.fallbackApplied = "1";
-                    e.currentTarget.src = DEFAULT_PROFILE_IMG;
+              <div className="mt-6 flex items-center gap-5 text-gray-800">
+                {/* 알림 벨 */}
+                <NotificationBell
+                  initialCount={unreadCount}
+                  token={token}
+                  onUpdateCount={(n) => setUnreadCount(n)}
+                  onOpenPvpModal={(data) => {
+                    setPvpModalData(data);
+                    setPvpModalOpen(true);
                   }}
                 />
-
-                <div className="mt-6 flex items-center gap-5 text-white/90">
-                  <NotificationBell
-                    initialCount={unreadCount}
-                    token={token}
-                    onUpdateCount={(n) => setUnreadCount(n)}
-                    onOpenPvpModal={(data) => {
-                      setPvpModalData(data);
-                      setPvpModalOpen(true);
-                    }}
-                  />
-                  <IconMail className="w-10 h-10" />
-                  <MoreMenuInline />
-                </div>
+                <IconMail />
+                <MoreMenuInline />
               </div>
+            </div>
 
-              {/* 오른쪽: 텍스트/배지 영역 (세로 가운데 정렬) */}
-              <div className="flex-1 h-full flex flex-col justify-center text-white">
-                <div className="text-2xl md:text-[28px] font-bold text-white">
-                  {nickname}
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between rounded-lg bg-gray-700/70 p-4 shadow-inner border border-gray-700">
-                    <span className="text-base font-semibold text-white/90">보유 부화권</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-extrabold text-[#FFC700] drop-shadow-md">{incubatorCount}</span>
-                      <span role="img" aria-label="ticket" className="text-xl">🎟️</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg bg-gray-700/70 p-4 shadow-inner border border-gray-700">
-                    <span className="text-base font-semibold text-white/90">광고 시청 면제</span>
-                    {isAdFree ? (
-                      <span className="rounded-full bg-emerald-600 px-3 py-1 text-sm font-bold text-white shadow-sm">AD-FREE</span>
-                    ) : (
-                      <span className="rounded-full bg-red-600 px-3 py-1 text-sm font-bold text-white shadow-sm">광고 시청</span>
-                    )}
-                  </div>
-                </div>
+            <div className="flex-1 pt-2">
+              <div className="text-2xl md:text-[28px] font-semibold text-gray-900">
+                {nickname}
+              </div>
+              <div className="mt-2 text-lg md:text-xl text-gray-900 flex items-center gap-2">
+                보유 부화권 <span className="font-semibold">{incubatorCount}</span>
+                <span role="img" aria-label="ticket">🎟️</span>
               </div>
             </div>
           </div>
@@ -285,9 +260,7 @@ function MyMain() {
         )}
       </div>
 
-      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-bold text-white">
-        내 캐릭터
-      </h2>
+      <h2 className="mt-8 mb-4 text-xl md:text-2xl font-semibold text-gray-900">내 캐릭터</h2>
 
       <CharacterSection
         characters={characters}
@@ -310,7 +283,7 @@ function MyMain() {
 }
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 캐릭터 상세 패널                                                  */
+/* 캐릭터 상세 패널                                                   */
 /* ──────────────────────────────────────────────────────────────── */
 function CharacterDetail({ character, onGrow, onChat, onSend }) {
   const name = character?.name ?? character?.characterName;
@@ -325,13 +298,13 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
   const fmt = (v) => (v == null ? "-" : `${v}`);
 
   return (
-    <section className="rounded-2xl border border-[#FFC700]/50 bg-gray-800 p-6 shadow-xl">
+    <section className="rounded-2xl border border-black/10 bg-gradient-to-b from-gray-100 to-gray-200 p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between gap-3">
-        <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+        <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
           {fmt(name)}
         </h3>
-        <span className="inline-flex items-center gap-1 rounded-full border border-gray-600 bg-gray-900 px-3 py-1 text-sm font-semibold text-gray-200">
-          <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+        <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm font-semibold text-gray-800">
+          <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
           등급 {fmt(grade)}
         </span>
       </div>
@@ -343,17 +316,15 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
         <StatCard label="속도" value={fmt(speed)} />
       </div>
 
-      <div className="mt-3 rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
+      <div className="mt-3 rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            치명타 확률
-          </span>
-          <span className="text-xl md:text-2xl font-extrabold text-white">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">치명타 확률</span>
+          <span className="text-xl md:text-2xl font-extrabold text-gray-900">
             {typeof critRate === "number" ? `${critRate}%` : "-"}
           </span>
         </div>
         {typeof critRate === "number" && (
-          <div className="mt-2 h-2 w-full rounded-full bg-gray-700">
+          <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
             <div
               className="h-2 rounded-full bg-emerald-500 transition-all"
               style={{ width: `${Math.max(0, Math.min(100, critRate))}%` }}
@@ -364,14 +335,10 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
       </div>
 
       {_statsLoading && (
-        <div className="mt-3 rounded-md bg-white/10 px-3 py-2 text-sm text-gray-300">
-          스탯 불러오는 중...
-        </div>
+        <div className="mt-3 rounded-md bg-black/5 px-3 py-2 text-sm text-gray-700">스탯 불러오는 중...</div>
       )}
       {_statsError && (
-        <div className="mt-3 rounded-md bg-red-900/50 px-3 py-2 text-sm font-medium text-red-300">
-          {_statsError}
-        </div>
+        <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{_statsError}</div>
       )}
 
       <div className="mt-6">
@@ -379,21 +346,21 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
           <button
             onClick={onGrow}
             disabled={_statsLoading}
-            className="rounded-xl border border-transparent bg-[#FF8C00] px-6 py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E07B00] active:bg-[#C06A00] disabled:opacity-60"
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
           >
             성장시키기
           </button>
           <button
             onClick={onChat}
             disabled={_statsLoading}
-            className="rounded-xl border border-gray-600 bg-gray-700 px-6 py-3 text-lg font-semibold text-white shadow-sm transition hover:bg-gray-600 active:bg-gray-500 disabled:opacity-60"
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
           >
             대화 하기
           </button>
           <button
             onClick={onSend}
             disabled={_statsLoading}
-            className="rounded-xl border border-gray-600 bg-gray-700 px-6 py-3 text-lg font-semibold text-white shadow-sm transition hover:bg-gray-600 active:bg-gray-500 disabled:opacity-60"
+            className="rounded-xl border bg-white px-6 py-3 text-lg font-semibold text-gray-900 shadow_sm transition hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
           >
             보내기
           </button>
@@ -405,19 +372,15 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
 
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-        {label}
-      </div>
-      <div className="mt-1 text-xl md:text-2xl font-extrabold text-white">
-        {value}
-      </div>
+    <div className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-gray-200">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">{value}</div>
     </div>
   );
 }
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 내 캐릭터 섹션                                                    */
+/* 내 캐릭터 섹션                                                     */
 /* ──────────────────────────────────────────────────────────────── */
 function CharacterSection({
   characters = [],
@@ -432,14 +395,14 @@ function CharacterSection({
 
   if (!hasCharacters) {
     return (
-      <section className="rounded-md bg-gray-800 min-h-[340px] flex items-center justify-center">
+      <section className="rounded-md bg-gray-300 min-h-[340px] flex items-center justify_center">
         <div className="text-center px-6 py-12">
-          <div className="text-2xl md:text-3xl text-white mb-6">
+          <div className="text-2xl md:text-3xl text-gray-800 mb-6">
             내 캐릭터를 뽑아주세요!
           </div>
           <button
             onClick={onPickClick}
-            className="px-8 py-3 rounded-lg bg-[#FFC700] border-2 border-[#FFC700] text-gray-900 text-lg font-bold hover:bg-[#E0B200] active:bg-[#C09B00] transition"
+            className="px-8 py-3 rounded bg_white border text-gray-900 text-lg hover:bg-gray-50 active:bg-gray-100 transition"
           >
             뽑으러가기
           </button>
@@ -449,7 +412,7 @@ function CharacterSection({
   }
 
   return (
-    <section className="rounded-md bg-gray-800 py-6 px-5 shadow-inner">
+    <section className="rounded-md bg-gray-300 py-6 px-5">
       <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
         {characters.map((c) => (
           <CharacterCard
@@ -465,34 +428,27 @@ function CharacterSection({
 
         <button
           onClick={onPickClick}
-          className="aspect-square rounded-2xl bg-gray-700 border-2 border-gray-600 flex items-center justify-center hover:bg-gray-600 active:bg-gray-500 transition"
+          className="aspect-square rounded-2xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition"
           aria-label="캐릭터 추가"
           type="button"
         >
-          <span className="text-7xl leading-none text-white/70">+</span>
+          <span className="text-7xl leading-none text-gray-900">+</span>
         </button>
       </div>
     </section>
   );
 }
 
-function CharacterCard({
-  character,
-  active,
-  onClick,
-  isRep,
-  onSetRep,
-  onClearRep,
-}) {
+function CharacterCard({ character, active, onClick, isRep, onSetRep, onClearRep }) {
   return (
     <div className="select-none">
       <button
         type="button"
         onClick={onClick}
-        className={`aspect-square w-full rounded-2xl overflow-hidden bg-gray-900 border-2 ${
+        className={`aspect-square w-full rounded-2xl overflow-hidden bg-white border ${
           active
-            ? "border-[#FFC700] ring-4 ring-[#FFC700]/50"
-            : "border-gray-700 hover:border-gray-500"
+            ? "border-sky-400 ring-2 ring-sky-300"
+            : "border-gray-200 hover:border-gray-300"
         } active:scale-[0.99] transition`}
         aria-label={character?.name ?? ""}
       >
@@ -506,22 +462,23 @@ function CharacterCard({
       </button>
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="text-lg font-medium text-white truncate">
+        <div className="text-lg font-medium text-gray-900 truncate">
           {character?.name}
         </div>
         {isRep && (
-          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC700] text-gray-900">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
             ★ 대표
           </span>
         )}
       </div>
 
+      {/* 대표 버튼 */}
       <div className="mt-2">
         {isRep ? (
           <button
             type="button"
             onClick={onClearRep}
-            className="w-full rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold bg-gray-700 text-white hover:bg-gray-600"
+            className="w-full rounded-lg border px-3 py-2 text-sm font-semibold bg-white hover:bg-gray-50"
           >
             대표 해제
           </button>
@@ -529,7 +486,7 @@ function CharacterCard({
           <button
             type="button"
             onClick={onSetRep}
-            className="w-full rounded-lg border border-[#FFC700]/50 px-3 py-2 text-sm font-semibold bg-gray-800 text-[#FFC700] hover:bg-gray-700"
+            className="w-full rounded-lg border px-3 py-2 text-sm font-semibold bg-white hover:bg-gray-50"
           >
             대표로 지정
           </button>
@@ -544,30 +501,9 @@ function CharacterCard({
 /* ──────────────────────────────────────────────────────────────── */
 function IconMail(props) {
   return (
-    <svg
-      width="45"
-      height="45"
-      viewBox="0 0 24 24"
-      fill="none"
-      {...props}
-      className={props.className || "w-8 h-8"}
-    >
-      <rect
-        x="3"
-        y="5"
-        width="18"
-        height="14"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-      <path
-        d="M3.5 7l8.5 6 8.5-6"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg width="45" height="45" viewBox="0 0 24 24" fill="none" {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -616,9 +552,7 @@ function MoreMenuInline() {
       pw = panelRef.current.offsetWidth;
       let l2 = r.left + r.width / 2 - pw / 2 + OFFSET_X;
       l2 = Math.max(margin, Math.min(l2, window.innerWidth - pw - margin));
-      setPos((p) =>
-        p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }
-      );
+      setPos((p) => (p.left === l2 && p.top === top ? p : { top, left: l2, width: pw }));
     });
   };
 
@@ -662,9 +596,9 @@ function MoreMenuInline() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="더보기"
-        className="rounded-full p-1.5 text-white/90 hover:bg-gray-800 active:bg-gray-700"
+        className="rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
       >
-        <IconMore className="w-8 h-8" />
+        <IconMore />
       </button>
 
       {open &&
@@ -673,23 +607,21 @@ function MoreMenuInline() {
             ref={panelRef}
             role="dialog"
             aria-modal="false"
-            className="fixed z-[100] w-64 rounded-2xl bg-gray-900 shadow-xl ring-1 ring-white/10 overflow-hidden"
+            className="fixed z-[100] w-64 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
-            <div className="absolute -top-2 left-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-900 drop-shadow" />
+            <div className="absolute -top-2 left-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow" />
 
-            <div className="px-4 py-3 border-b border-gray-700 text-sm text-gray-400">
-              더보기
-            </div>
+            <div className="px-4 py-3 border-b text-sm text-gray-600">더보기</div>
             <div className="p-2">
               <button
-                className="w-full text-left rounded-xl px-4 py-3 text-[15px] text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFC700]"
+                className="w-full text-left rounded-xl px-4 py-3 text-[15px] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 onClick={handleEditProfile}
               >
                 회원 정보 수정
               </button>
               <button
-                className="mt-1 w-full text-left rounded-xl px-4 py-3 text-[15px] text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFC700]"
+                className="mt-1 w-full text-left rounded-xl px-4 py-3 text-[15px] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 onClick={handleLogout}
               >
                 로그아웃
