@@ -33,14 +33,18 @@ export default function MyPage() {
 /* ──────────────────────────────────────────────────────────────── */
 function MyMain() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { updateRepresentativeCharacter } = useAuth();
 
   const [nickname, setNickname] = useState("마스터 님");
-  const [ticketCount, setTicketCount] = useState(0);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [characters, setCharacters] = useState([]);
   const [selected, setSelected] = useState(null);
   const [repId, setRepId] = useState(null);
+  const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
+          ? Number(user.incubatorCount)
+          : 0;
+  const isAdFree = !!user?.isAdFree;
 
   // 알림
   const [unreadCount, setUnreadCount] = useState(0);
@@ -86,7 +90,6 @@ function MyMain() {
 
         const p = data?.profile ?? null;
         setNickname(p?.nickname ?? "마스터 님");
-        setTicketCount(p?.ticketCount ?? 0);
         setProfileImageUrl(p?.imageUrl ?? null);
 
         const cards = (data?.characters ?? []).map((c) => {
@@ -240,7 +243,7 @@ function MyMain() {
                 {nickname}
               </div>
               <div className="mt-2 text-lg md:text-xl text-gray-900 flex items-center gap-2">
-                보유 부화권 <span className="font-semibold">{ticketCount}</span>
+                보유 부화권 <span className="font-semibold">{incubatorCount}</span>
                 <span role="img" aria-label="ticket">🎟️</span>
               </div>
             </div>
