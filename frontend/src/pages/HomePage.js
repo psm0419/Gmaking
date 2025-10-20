@@ -1,13 +1,15 @@
 import React from 'react';
 import { User, ChevronRight, Wand2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import UserCharacterSummary from '../components/home/UserCharacterSummary';
+import CharacterCreationPrompt from '../components/home/CharacterCreationPrompt';
 
-// 가이드 링크를 위한 서브 컴포넌트
+
 const GuideLink = ({ title }) => (
     <div className="flex justify-between items-center p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition cursor-pointer">
         <span className="text-gray-200 font-medium">{title}</span>
@@ -16,30 +18,29 @@ const GuideLink = ({ title }) => (
 );
 
 const HomePage = () => {
-    const navigate = useNavigate();
     const { user } = useAuth();
     const hasCharacter = !!user?.hasCharacter;
     const characterImageUrl = user?.characterImageUrl || null;
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
-      ? Number(user.incubatorCount)
-      : 0;
+        ? Number(user.incubatorCount)
+        : 0;
     const isAdFree = !!user?.isAdFree;
 
     useEffect(() => {
-      // 개발용 로그 — 배포 전엔 지우세요!
-      const t = localStorage.getItem('gmaking_token');
-      if (!t) {
-        console.log('[JWT] no token in localStorage');
-        return;
-      }
-      try {
-        const payload = jwtDecode(t);
-        console.log('[JWT payload]', payload);
-        console.log('[JWT] incubatorCount:', payload.incubatorCount, 'isAdFree:', payload.isAdFree);
-      } catch (e) {
-        console.error('[JWT] decode failed:', e);
-      }
+        // 개발용 로그 — 배포 전엔 지우세요!
+        const t = localStorage.getItem('gmaking_token');
+        if (!t) {
+            console.log('[JWT] no token in localStorage');
+            return;
+        }
+        try {
+            const payload = jwtDecode(t);
+            console.log('[JWT payload]', payload);
+            console.log('[JWT] incubatorCount:', payload.incubatorCount, 'isAdFree:', payload.isAdFree);
+        } catch (e) {
+            console.error('[JWT] decode failed:', e);
+        }
     }, []);
 
     // 슬라이드 배너 및 이벤트 더미 데이터
@@ -55,77 +56,6 @@ const HomePage = () => {
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
 
-    // 사용자 정보 요약 또는 캐릭터 생성 유도
-    const renderCentralSection = () => {
-        if (!hasCharacter) {
-            // 캐릭터가 없을 경우: 생성 버튼 표시
-            return (
-                <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-red-500 transform transition duration-500 hover:scale-105">
-                    <div className="text-center">
-                        <Wand2 className="mx-auto w-16 h-16 text-red-400 mb-4 animate-bounce" />
-                        <h3 className="text-3xl font-extrabold text-white mb-2">
-                            캐릭터가 없습니다!
-                        </h3>
-                        <p className="text-md text-gray-400 mb-6">
-                            AI 기반 캐릭터 생성을 시작하고 게임에 접속하세요.
-                        </p>
-
-                        <button
-                            onClick={() => navigate('/create-character')} // 캐릭터 생성 페이지로 이동
-                            className="mt-4 w-full py-3 bg-red-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-red-700 transition"
-                        >
-                            캐릭터 생성
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-        // 캐릭터가 있을 경우: 기존 사용자 정보 표시
-        return (
-            <div className="bg-gray-800 p-6 rounded-xl shadow-2xl border-2 border-yellow-400">
-                <div className="text-center">
-                    <div className="mx-auto w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-3 border-4 border-yellow-500 overflow-hidden">
-                        {characterImageUrl ? (
-                            <img
-                                src={characterImageUrl}
-                                alt="사용자 캐릭터"
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <User className="w-12 h-12 text-yellow-400" />
-                        )}
-                    </div>
-                    <h3 className="text-3xl font-extrabold text-white mb-1">
-                        {displayName}
-                    </h3>
-
-                    <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm">
-                        <p>접속 시간: 124시간</p>
-                        <p>
-                            보유 부화권: {incubatorCount.toLocaleString()}개
-                        </p>
-                        <p>최고 랭크: 다이아몬드 III</p>
-                    </div>
-                    <button
-                        className="mt-4 w-full py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition"
-                        onClick={() => navigate('/my-page')}
-                    >
-                        내 정보 보기
-                    </button>
-                    <button
-                        className="mt-4 w-full py-2 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition"
-                        onClick={() => navigate('/create-character')}
-                    >
-                        캐릭터 추가 생성
-                    </button>
-                </div>
-            </div>
-        );
-    };
-
-    // ------------------------------------------------------------------
-
     return (
         <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
             <Header />
@@ -135,7 +65,7 @@ const HomePage = () => {
                 {/* 2-1. 슬라이드 배너 (Slide Banner) */}
                 <div
                     className={`h-[400px] rounded-xl shadow-2xl p-10 flex flex-col justify-center bg-center bg-cover`}
-                    style={{backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/1200x400/?space,galaxy,game')`}}
+                    style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/1200x400/?space,galaxy,game')` }}
                 >
                     <div className="max-w-xl">
                         <h2 className="text-5xl font-extrabold mb-3 leading-tight text-white">
@@ -168,8 +98,18 @@ const HomePage = () => {
                         </div>
                     </div>
 
-                    {/* 중앙: 사용자 정보 요약 */}
-                    {renderCentralSection()}
+                    {/* 중앙: 사용자 정보 요약 -> 분리된 컴포넌트로 대체 */}
+                    {hasCharacter ? (
+                        <UserCharacterSummary
+                            user={user}
+                            displayName={displayName}
+                            characterImageUrl={characterImageUrl}
+                            incubatorCount={incubatorCount}
+                            isAdFree={isAdFree}
+                        />
+                    ) : (
+                        <CharacterCreationPrompt />
+                    )}
 
                     {/* 오른쪽: 가이드 보기 */}
                     <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
