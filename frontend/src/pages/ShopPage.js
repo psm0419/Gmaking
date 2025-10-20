@@ -54,7 +54,6 @@ function ProfileBar({ name = "마스터 님", incubatorCount = 0, imageUrl }) {
 }
 
 export default function ShopPage() {
-  // ✅ Context에서 token/업데이트 함수 사용
   const {
     token: authToken,
     updateIncubatorCount,
@@ -62,15 +61,14 @@ export default function ShopPage() {
     applyNewToken,
   } = useAuth();
 
-  // (디버그) 토큰이 바뀌면 payload를 다시 확인
+  // 디버그: 토큰 변경 시 payload 확인
   useEffect(() => {
-    const t = authToken;
-    if (!t) {
+    if (!authToken) {
       console.log("[JWT] no token in context");
       return;
     }
     try {
-      const payload = jwtDecode(t);
+      const payload = jwtDecode(authToken);
       console.log("[JWT payload]", payload);
       console.log("[JWT] incubatorCount:", payload.incubatorCount, "isAdFree:", payload.isAdFree);
     } catch (e) {
@@ -85,38 +83,38 @@ export default function ShopPage() {
   });
   const [loadingSku, setLoadingSku] = useState(null);
 
-  // 프로필 로드
-  useEffect(() => {
+  // 공통: 서버 프로필 재조회 → 로컬/전역 set 동기화
+  const refreshProfileAndSync = async () => {
     if (!authToken) return;
     const auth = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-
-    fetch(`/api/shop/profile/me`, {
+    const r = await fetch(`/api/shop/profile/me`, {
       headers: { Authorization: auth, Accept: "application/json" },
       credentials: "include",
-    })
-      .then(async (r) => {
-        if (r.status === 401) {
-          localStorage.removeItem("gmaking_token");
-          window.location.href = "/login";
-          return null;
-        }
-        if (!r.ok) {
-          const t = await r.text().catch(() => "");
-          throw new Error(`GET /profile/me ${r.status} ${t}`);
-        }
-        return r.json();
-      })
-      .then((data) => {
-        if (!data) return;
-        setProfile({
-          name: data.nickName ?? "마스터 님",
-          incubatorCount: Number(data.incubatorCount ?? 0),
-          profileImageUrl: data.profileImageUrl ?? null,
-        });
-      })
-      .catch((e) => {
-        console.error("프로필 로드 실패:", e);
-      });
+    });
+    if (!r.ok) return;
+    const p = await r.json();
+    if (!p) return;
+
+    // 상단 카드
+    setProfile({
+      name: p.nickName ?? "마스터 님",
+      incubatorCount: Number(p.incubatorCount ?? 0),
+      profileImageUrl: p.profileImageUrl ?? null,
+    });
+
+    // 전역값 확정
+    if (p.incubatorCount != null) {
+      updateIncubatorCount?.({ set: Number(p.incubatorCount) });
+    }
+    if (typeof p.isAdFree !== "undefined") {
+      updateAdFree?.({ enabled: p.isAdFree, expiresAt: p.adFreeExpiry });
+    }
+  };
+
+  // 초기 프로필 로드
+  useEffect(() => {
+    refreshProfileAndSync().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
 
   // 구매 API: 응답 헤더/바디에서 새 토큰 추출
@@ -144,7 +142,6 @@ export default function ShopPage() {
       return null;
     }
 
-    // ⬇️ 헤더에서 새 토큰 추출(서버가 노출해줄 때) — CORS에 exposed headers 필요
     const headerToken =
       res.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ||
       res.headers.get("X-New-Token") ||
@@ -159,46 +156,46 @@ export default function ShopPage() {
 
   const addBySku = { 1: 0, 2: 5, 3: 15 };
 
-  // 구매 버튼 핸들러
+  // 구매 버튼 핸들러 (낙관적 add → 서버값 set 확정)
   const handleBuy = async (productId, label) => {
     try {
       setLoadingSku(productId);
+
+      // 0) 낙관적 UI: 부화권 상품이면 바로 add
+      if (productId === 2 || productId === 3) {
+        updateIncubatorCount?.({ add: addBySku[productId] });
+        setProfile((prev) => ({ ...prev, incubatorCount: Number(prev.incubatorCount ?? 0) + addBySku[productId] }));
+      }
+
+      // 1) 결제 요청
       const data = await purchase(productId, 1);
       if (!data) return;
 
-      // 1) 새 JWT 즉시 반영(헤더 or 바디)
+      // 2) 새 JWT가 오면 즉시 적용
       if (data.token) applyNewToken(data.token);
 
-      // 2) 상단 프로필 즉시 반영(서버 값 우선)
-      setProfile((prev) => {
-        const nextCount =
-          data && data.incubatorCount != null
-            ? Number(data.incubatorCount)
-            : Number(prev.incubatorCount ?? 0) + (addBySku[productId] ?? 0);
-
-        return {
-          ...prev,
-          name: data.nickName ?? prev.name,
-          incubatorCount: nextCount,
-          profileImageUrl: data.profileImageUrl ?? prev.profileImageUrl,
-        };
-      });
-
-      // 3) 전역(AuthContext) 동기화
+      // 3) 응답값 존재 시 전역/로컬 set 확정
       if (productId === 1) {
         updateAdFree?.({ enabled: data?.isAdFree ?? true, expiresAt: data?.adFreeExpiry });
       } else if (productId === 2 || productId === 3) {
-        updateIncubatorCount?.(
-          data && data.incubatorCount != null
-            ? { set: Number(data.incubatorCount) }
-            : { add: addBySku[productId] }
-        );
+        if (data && data.incubatorCount != null) {
+          updateIncubatorCount?.({ set: Number(data.incubatorCount) });
+          setProfile((prev) => ({ ...prev, incubatorCount: Number(data.incubatorCount) }));
+        }
+      }
+
+      // 4) 응답에 count가 없으면 서버 프로필 재조회로 확정
+      if (data?.incubatorCount == null || typeof data?.isAdFree === "undefined") {
+        await refreshProfileAndSync();
       }
 
       alert(`${label} 구매 완료!`);
     } catch (e) {
       console.error("구매 실패:", e);
       alert("구매 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+
+      // 실패 시 낙관적 add 롤백(선택)
+      // 필요하면 이전 값을 기억해뒀다가 되돌리세요.
     } finally {
       setLoadingSku(null);
     }
