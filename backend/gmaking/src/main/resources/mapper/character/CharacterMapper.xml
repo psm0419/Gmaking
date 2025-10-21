@@ -170,9 +170,9 @@
         #{characterName},
         #{imageId},
         1,
+        #{characterPersonalityId},
+        1,
         0,
-        1,
-        1,
         #{createdBy}
         )
     </insert>
