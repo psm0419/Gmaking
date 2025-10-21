@@ -30,13 +30,25 @@ export async function generateCharacterPreview(imageFile, characterName, token, 
         body: formData,
     });
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: '알 수 없는 서버 오류' }));
-        const errorMessage = errorData.message || response.statusText;
-        throw new Error(`캐릭터 미리보기 생성 실패: ${errorMessage}`);
+    const responseText = await response.text();
+
+    let responseData;
+    try {
+        responseData = JSON.parse(responseText);
+    } catch {
+        responseData = { message: responseText };
     }
 
-    return await response.json();
+    if (!response.ok) {
+        const errorMessage =
+            responseData.message?.trim() ||
+            responseData.error?.trim() ||
+            `HTTP ${response.status}: ${response.statusText}`;
+
+        throw new Error(errorMessage);
+    }
+
+    return responseData;
 }
 
 /**

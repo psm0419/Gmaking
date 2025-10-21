@@ -17,11 +17,9 @@ const Header = () => {
         { name: '공지사항', icon: Bell, link: '#' },
         { name: '상점', icon: ShoppingCart, link: '/shop' },
         { name: '랭킹', icon: Award, link: 'ranking' },
-        { name: '커뮤니티', icon: MessageSquare, link: '/community' },        
-        { name: 'PVE', icon: Footprints, link: 'pve/maps' },
-        { name: 'PVP', icon: Swords, link: 'pvp/match' },
-        { name: '로그', icon: Scroll, link: 'logs' },
-        { name: '고객지원', icon: LifeBuoy, link: '#' },
+        { name: '커뮤니티', icon: MessageSquare, link: '/community' },
+        { name: '전투', icon: Swords, link: 'battlemode' },
+        { name: '로그', icon: Scroll, link: 'logs' },        
     ];
 
     if (isLoading) {

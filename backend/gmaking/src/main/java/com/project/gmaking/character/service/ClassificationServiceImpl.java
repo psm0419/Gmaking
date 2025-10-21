@@ -1,5 +1,6 @@
 package com.project.gmaking.character.service;
 
+import com.project.gmaking.character.exception.ClassificationFailedException;
 import com.project.gmaking.character.service.ClassificationService;
 import com.project.gmaking.character.vo.ClassificationResponseVO;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,12 +17,18 @@ import reactor.netty.http.client.HttpClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Service
 public class ClassificationServiceImpl implements ClassificationService {
 
     private final WebClient webClient;
     private String modelServerUrl;
+
+    // 임계값 설정
+    @Value("${classification.threshold:0.80}")
+    private double confidenceThreshold;
+    private static final Set<String> ALLOWED_ANIMALS = Set.of("bear", "eagle", "penguin", "turtle");
 
     public ClassificationServiceImpl(
             WebClient.Builder webClientBuilder,
@@ -57,8 +64,35 @@ public class ClassificationServiceImpl implements ClassificationService {
                 .body(BodyInserters.fromMultipartData(builder.build()))
                 .retrieve()
                 .bodyToMono(ClassificationResponseVO.class)
-                .map(ClassificationResponseVO::getPredictedAnimal)
+                .flatMap(response -> { // map 대신 flatMap을 사용하여 비즈니스 로직 처리
+                    String predictedAnimal = response.getPredictedAnimal().toLowerCase();
+                    double confidence = response.getConfidence();
+
+                    // 정확도 검증
+                    if (confidence < confidenceThreshold) {
+                        System.err.printf("[CLASSIFY FAILED] 낮은 정확도. 예측: %s, 확신도: %.4f%n", predictedAnimal, confidence);
+                        return Mono.error(new ClassificationFailedException(
+                                String.format("이미지 분류 정확도(%.1f%%)가 낮아 캐릭터를 생성할 수 없습니다. 다른 이미지를 시도해 주세요.", confidence * 100)
+                        ));
+                    }
+
+//                    // 허용된 동물 목록 검증
+//                    if (!ALLOWED_ANIMALS.contains(predictedAnimal)) {
+//                        System.err.printf("[CLASSIFY FAILED] 허용되지 않은 동물. 예측: %s, 확신도: %.4f%n", predictedAnimal, confidence);
+//                        return Mono.error(new ClassificationFailedException(
+//                                String.format("'%s'이(가) 아닌 곰, 독수리, 펭귄, 거북이 중 하나의 이미지만 업로드할 수 있습니다.", predictedAnimal)
+//                        ));
+//                    }
+
+                    // 모든 검증 통과 시, 예측된 동물 이름 반환
+                    System.out.printf("[CLASSIFY SUCCESS] 예측: %s, 확신도: %.4f%n", predictedAnimal, confidence);
+                    return Mono.just(predictedAnimal);
+                })
                 .onErrorResume(e -> {
+                    if (e instanceof ClassificationFailedException) {
+                        return Mono.error(e); // 비즈니스 예외는 그대로 Controller로 전달
+                    }
+
                     String errorMessage = String.format("모델 서버 통신 오류: %s. 엔드포인트: /classify/image", e.getMessage());
                     System.err.println(errorMessage);
                     return Mono.error(new RuntimeException("이미지 분류 서버에 연결할 수 없거나 응답이 잘못되었습니다. (설정값 확인 요망)"));

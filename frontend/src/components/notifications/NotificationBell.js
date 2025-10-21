@@ -1,10 +1,12 @@
+// src/components/notifications/NotificationBell.js
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import useNotificationsSocket from "../../hooks/useNotificationsSocket";
 import { notificationsApi as api } from "../../api/notificationApi";
 
 export default function NotificationBell({
-  onOpenPvpModal,          // 있어도 되고 없어도 됨 (내부에서 모달 열어줌)
+  onOpenPvpModal,
   initialCount = 0,
   token,
   onUpdateCount,
@@ -18,7 +20,7 @@ export default function NotificationBell({
   const [err, setErr] = useState(null);
   const [badgeCount, setBadgeCount] = useState(initialCount);
 
-  // ✅ PVP 모달 로컬 상태
+  // (내부) PVP 모달
   const [pvpOpen, setPvpOpen] = useState(false);
   const [pvpData, setPvpData] = useState(null);
 
@@ -26,11 +28,13 @@ export default function NotificationBell({
   const popRef = useRef(null);
   const navigate = useNavigate();
 
-  // --- utils ---
+  // 포털 팝업 위치
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 360 });
+
   const fmtDate = (v) => {
     try {
       const d = typeof v === "string" ? new Date(v) : v;
-      if (!(d instanceof Date) || isNaN(d)) return "";
+      if (!(d instanceof Date) || isNaN(+d)) return "";
       const pad = (n) => String(n).padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     } catch {
@@ -38,7 +42,6 @@ export default function NotificationBell({
     }
   };
 
-  // metaJson robust flattener (서버 평탄화 필드 우선)
   function normalizePvpModal(raw) {
     const parseMeta = () => {
       try {
@@ -53,8 +56,11 @@ export default function NotificationBell({
     const meta = parseMeta();
 
     const getPath = (obj, path) => {
-      try { return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj); }
-      catch { return undefined; }
+      try {
+        return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
+      } catch {
+        return undefined;
+      }
     };
 
     const candidates = [
@@ -71,22 +77,17 @@ export default function NotificationBell({
     let found = {};
     for (const p of candidates) {
       const v = getPath(meta, p);
-      if (v && typeof v === "object") { found = v; break; }
+      if (v && typeof v === "object") {
+        found = v;
+        break;
+      }
     }
 
-    const normalizeNum = (x) => {
-      if (x == null) return null;
-      const n = Number(x);
-      return Number.isFinite(n) ? n : null;
+    const N = (x) => (x == null ? null : Number.isFinite(+x) ? +x : null);
+    const pick = (o, ks) => {
+      for (const k of ks) if (o?.[k] != null) return o[k];
+      return null;
     };
-    const pick = (o, keys) => { for (const k of keys) if (o?.[k] != null) return o[k]; return null; };
-
-    const level = normalizeNum(raw?.level ?? pick(found, ["level","lv","LEVEL","LV"]));
-    const hp    = normalizeNum(raw?.hp    ?? pick(found, ["hp","HP","health","Health"]));
-    const atk   = normalizeNum(raw?.atk   ?? pick(found, ["atk","ATK","attack","Attack"]));
-    const def   = normalizeNum(raw?.def   ?? pick(found, ["def","DEF","defense","Defense"]));
-    const spd   = normalizeNum(raw?.spd   ?? pick(found, ["spd","SPD","speed","Speed"]));
-    const crit  = normalizeNum(raw?.crit  ?? pick(found, ["crit","CRIT","critical","Critical","critRate","crit_rate"]));
 
     return {
       battleId: raw?.battleId ?? null,
@@ -95,8 +96,13 @@ export default function NotificationBell({
       opponentNickname: raw?.opponentNickname ?? null,
       opponentCharacterId: raw?.opponentCharacterId ?? null,
       opponentCharacterName: raw?.opponentCharacterName ?? null,
-      opponentImageUrl: raw?.opponentImageUrl ?? meta?.opponentImageUrl ?? null, // 메타 백업
-      level, hp, atk, def, spd, crit,
+      opponentImageUrl: raw?.opponentImageUrl ?? meta?.opponentImageUrl ?? null,
+      level: N(raw?.level ?? pick(found, ["level", "lv", "LEVEL", "LV"])),
+      hp: N(raw?.hp ?? pick(found, ["hp", "HP", "health", "Health"])),
+      atk: N(raw?.atk ?? pick(found, ["atk", "ATK", "attack", "Attack"])),
+      def: N(raw?.def ?? pick(found, ["def", "DEF", "defense", "Defense"])),
+      spd: N(raw?.spd ?? pick(found, ["spd", "SPD", "speed", "Speed"])),
+      crit: N(raw?.crit ?? pick(found, ["crit", "CRIT", "critical", "Critical", "critRate", "crit_rate"])),
     };
   }
 
@@ -105,7 +111,7 @@ export default function NotificationBell({
     setBadgeCount(initialCount ?? 0);
   }, [initialCount]);
 
-  // 실시간 수신: 중복 가드 + 뱃지 증가
+  // 실시간 소켓
   useNotificationsSocket(
     (payload) => {
       setUnread((prev) => {
@@ -122,7 +128,7 @@ export default function NotificationBell({
     token
   );
 
-  // 목록 동기화
+  // 리스트
   const refreshLists = async () => {
     try {
       setLoading(true);
@@ -141,44 +147,61 @@ export default function NotificationBell({
     }
   };
 
-  // 팝업 열기 시 동기화 + 바깥 클릭 닫기
+  // 포털 좌표
+  const updatePosition = () => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const gap = 8;
+    const width = 360;
+    let left = r.left;
+    const maxLeft = window.innerWidth - width - 8;
+    left = Math.max(8, Math.min(left, maxLeft));
+    const top = r.bottom + gap;
+    setPos({ top, left, width });
+  };
+
   useEffect(() => {
     if (!open) return;
     refreshLists();
+    updatePosition();
 
     const onDocPointer = (e) => {
       const pop = popRef.current;
       const btn = btnRef.current;
-      if (!pop) return;
       const t = e.target;
-      if (pop.contains(t) || btn?.contains?.(t)) return;
+      if (pop?.contains(t) || btn?.contains?.(t)) return;
       setOpen(false);
       setGearOpen(false);
     };
     const onKey = (e) => e.key === "Escape" && (setOpen(false), setGearOpen(false));
+    const onResizeScroll = () => updatePosition();
 
-    const touchOptions = { passive: true };
     document.addEventListener("mousedown", onDocPointer);
-    document.addEventListener("touchstart", onDocPointer, touchOptions);
+    document.addEventListener("touchstart", onDocPointer, { passive: true });
     document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResizeScroll);
+    window.addEventListener("scroll", onResizeScroll, true);
+
     return () => {
       document.removeEventListener("mousedown", onDocPointer);
-      document.removeEventListener("touchstart", onDocPointer, touchOptions);
+      document.removeEventListener("touchstart", onDocPointer);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResizeScroll);
+      window.removeEventListener("scroll", onResizeScroll, true);
     };
   }, [open]);
 
-  // 뱃지
+  // 배지 처리
   const badge = badgeCount > 99 ? "99+" : badgeCount;
-
-  const decBadge = (n = 1) => {
+  const decBadge = (n = 1) =>
     setBadgeCount((c) => {
       const next = Math.max(0, (c ?? 0) - n);
       onUpdateCount?.(next);
       return next;
     });
-  };
 
+  // 액션들
   const handleMarkRead = async (id) => {
     const target = unread.find((n) => n.id === id);
     const nextUnread = unread.filter((n) => n.id !== id);
@@ -190,10 +213,7 @@ export default function NotificationBell({
       await api.markRead(id);
     } catch (e) {
       console.error(e);
-      // 서버 에러일 때만 강복구
-      if (!e?.response || e.response.status >= 500) {
-        refreshLists();
-      }
+      if (!e?.response || e.response.status >= 500) refreshLists();
     }
   };
 
@@ -203,14 +223,8 @@ export default function NotificationBell({
     if (n.type === "PVP_RESULT") {
       try {
         const raw = await api.pvpModal(n.id);
-        console.log("[PVP raw]", raw);
-        console.log("[PVP metaJson]", raw?.metaJson); // 없을 수도 있음 (정상)
         const data = normalizePvpModal(raw);
-
-        // A) 부모 콜백도 있으면 호출 (선택)
         onOpenPvpModal?.(data);
-
-        // B) 내부 모달도 항상 열어줌 (확실히 뜨도록)
         setPvpData(data);
         setPvpOpen(true);
       } catch (e) {
@@ -268,10 +282,10 @@ export default function NotificationBell({
           setOpen((v) => !v);
           setGearOpen(false);
         }}
-        className="relative rounded-full p-1.5 hover:bg-gray-100 active:bg-gray-200"
+        className="relative rounded-full p-1.5 text-white/90 hover:bg-gray-800 active:bg-gray-700"
         aria-label="알림 열기"
       >
-        <svg width="45" height="45" viewBox="0 0 24 24" fill="none">
+        <svg width="45" height="45" viewBox="0 0 24 24" fill="none" className="w-10 h-10">
           <path
             d="M15 17H9m9-1V11a6 6 0 10-12 0v5l-1 2h14l-1-2z"
             stroke="currentColor"
@@ -287,129 +301,148 @@ export default function NotificationBell({
         )}
       </button>
 
-      {open && (
-        <div
-          ref={popRef}
-          className="absolute z-50 left-0 top-10 w-[360px] rounded-xl border bg-white shadow-xl"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="notif-title"
-        >
-          <div className="flex items-center justify-between px-3 py-2 border-b">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setTab("new")}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${tab === "new" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"}`}
-              >
-                새 알림
-              </button>
-              <button
-                onClick={() => setTab("read")}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${tab === "read" ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"}`}
-              >
-                읽은 알림
-              </button>
+      {/* 포털: 다크 톤 팝업 */}
+      {open &&
+        createPortal(
+          <div
+            ref={popRef}
+            className="fixed z-[200] rounded-xl bg-gray-900 shadow-xl ring-1 ring-white/10"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notif-title"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
+          >
+            {/* 말풍선 화살표 */}
+            <div className="absolute -top-2 left-6 w-0 h-0 border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-gray-900 drop-shadow" />
+
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTab("new")}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    tab === "new" ? "bg-gray-700 text-white" : "text-gray-400 hover:bg-gray-800"
+                  }`}
+                >
+                  새 알림
+                </button>
+                <button
+                  onClick={() => setTab("read")}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    tab === "read" ? "bg-gray-700 text-white" : "text-gray-400 hover:bg-gray-800"
+                  }`}
+                >
+                  읽은 알림
+                </button>
+              </div>
+
+              {/* 설정 드롭다운: 버튼의 오른쪽으로 열기 */}
+              <div className="relative">
+                <button
+                  onClick={() => setGearOpen((v) => !v)}
+                  className="p-1.5 rounded text-white/70 hover:bg-gray-800 active:bg-gray-700"
+                  aria-label="알림 설정"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" strokeWidth="1.6" />
+                    <path
+                      d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
+                      strokeWidth="1.2"
+                    />
+                  </svg>
+                </button>
+
+                {gearOpen && (
+                  <div className="absolute left-full top-0 ml-2 w-56 rounded-2xl bg-gray-900 shadow-xl ring-1 ring-white/10 z-[210] origin-top-left">
+                    {/* 왼쪽에서 오른쪽을 향하는 화살표 */}
+                    <div
+                      className="absolute top-3 -left-2 w-0 h-0
+                                 border-t-8 border-b-8 border-r-8
+                                 border-t-transparent border-b-transparent border-r-gray-900 drop-shadow"
+                    />
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-gray-800 transition-colors"
+                    >
+                      전체 읽음 처리
+                    </button>
+                    <button
+                      onClick={handleDeleteAllRead}
+                      className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-800 transition-colors"
+                    >
+                      읽은 알림 전체 삭제
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="relative">
-              <button
-                onClick={() => setGearOpen((v) => !v)}
-                className="p-1.5 rounded hover:bg-gray-100 active:bg-gray-200"
-                aria-label="알림 설정"
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M19 12a7 7 0 01-.1 1.2l2 1.5-2 3.4-2.3-.9a6.9 6.9 0 01-2 .9l-.4 2.4H9.8l-.4-2.4a6.9 6.9 0 01-2 .9l-2.3.9-2-3.4 2-1.5A7 7 0 017 12c0-.4 0-.8.1-1.2l-2-1.5 2-3.4 2.3.9c.6-.4 1.3-.7 2-.9l.4-2.4h3.1l.4 2.4c.7.2 1.4.5 2 .9l2.3-.9 2 3.4-2 1.5c.1.4.1.8.1 1.2z"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                  />
-                </svg>
-              </button>
-
-              {gearOpen && (
-                <div className="absolute right-55 top-8 w-56 rounded-xl border border-zinc-200 bg-white shadow-[0_12px_28px_rgba(0,0,0,0.14)] overflow-hidden z-[60] origin-top-right">
-                  <div className="absolute -top-2 right-4 w-0 h-0 border-l-6 border-r-6 border-b-6 border-l-transparent border-r-transparent border-b-white drop-shadow" />
-                  <button onClick={handleMarkAllRead} className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50">
-                    전체 읽음 처리
-                  </button>
-                  <button
-                    onClick={handleDeleteAllRead}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    읽은 알림 전체 삭제
-                  </button>
+            <div className="max-h-80 overflow-auto p-3 w-[360px]">
+              <h2 id="notif-title" className="sr-only">
+                알림
+              </h2>
+              {loading && <div className="py-8 text-center text-gray-400">불러오는 중…</div>}
+              {err && !loading && <div className="py-8 text-center text-red-400">{err}</div>}
+              {!loading && !err && (tab === "new" ? unread : read).length === 0 && (
+                <div className="py-16 text-center text-gray-500">
+                  {tab === "new" ? "새 알림이 없어요" : "읽은 알림이 없어요"}
                 </div>
               )}
-            </div>
-          </div>
+              {!loading && !err && (tab === "new" ? unread : read).length > 0 && (
+                <ul className="space-y-2">
+                  {(tab === "new" ? unread : read).map((n) => (
+                    <li
+                      key={n.id}
+                      tabIndex={0}
+                      role="button"
+                      onClick={() => handleOpen(n)}
+                      className="relative group cursor-pointer rounded-md px-3 py-3 border border-gray-700 bg-gray-800 transition-colors duration-150 hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFC700]"
+                    >
+                      <div className="pr-10">
+                        <p className="text-sm text-white">{n.title}</p>
+                        {n.message && <p className="mt-1 text-xs text-gray-300">{n.message}</p>}
+                        {n.createdDate && (
+                          <p className="mt-1 text-[11px] text-gray-500">{fmtDate(n.createdDate)}</p>
+                        )}
+                      </div>
 
-          <div className="max-h-80 overflow-auto p-3">
-            <h2 id="notif-title" className="sr-only">알림</h2>
-            {loading && <div className="py-8 text-center text-gray-500">불러오는 중…</div>}
-            {err && !loading && <div className="py-8 text-center text-red-600">{err}</div>}
-            {!loading && !err && (tab === "new" ? unread : read).length === 0 && (
-              <div className="py-16 text-center text-gray-500">
-                {tab === "new" ? "새 알림이 없어요" : "읽은 알림이 없어요"}
-              </div>
-            )}
-            {!loading && !err && (tab === "new" ? unread : read).length > 0 && (
-              <ul className="space-y-2">
-                {(tab === "new" ? unread : read).map((n) => (
-                  <li
-                    key={n.id}
-                    tabIndex={0}
-                    role="button"
-                    onClick={() => handleOpen(n)}
-                    className="relative group cursor-pointer rounded-md px-3 py-3 border border-gray-200 bg-white transition-colors duration-150 hover:bg-sky-50 hover:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-                  >
-                    <div className="pr-10">
-                      <p className="text-sm text-gray-900">{n.title}</p>
-                      {n.message && <p className="mt-1 text-xs text-gray-600">{n.message}</p>}
-                      {n.createdDate && (
-                        <p className="mt-1 text-[11px] text-gray-400">{fmtDate(n.createdDate)}</p>
-                      )}
-                    </div>
-
-                    <div className="absolute right-2 top-2 flex items-center gap-1">
-                      {tab === "new" && (
+                      <div className="absolute right-2 top-2 flex items-center gap-1">
+                        {tab === "new" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkRead(n.id);
+                            }}
+                            aria-label="읽음 처리"
+                            title="읽음 처리"
+                            className="rounded p-1 text-gray-500 hover:text-emerald-400 hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleMarkRead(n.id);
+                            handleDeleteOne(n.id);
                           }}
-                          aria-label="읽음 처리"
-                          title="읽음 처리"
-                          className="rounded p-1 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          aria-label="알림 삭제"
+                          title="알림 삭제"
+                          className="rounded p-1 text-gray-500 hover:text-red-400 hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                         </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteOne(n.id);
-                        }}
-                        aria-label="알림 삭제"
-                        title="알림 삭제"
-                        className="rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
-
-
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

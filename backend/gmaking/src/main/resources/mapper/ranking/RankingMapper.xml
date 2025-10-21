@@ -6,7 +6,6 @@
 <mapper namespace="com.project.gmaking.ranking.dao.RankingDAO">
 
     <!-- PVP 승리 랭킹 -->
-    <!-- PVP 승리 랭킹 -->
     <select id="selectPvpRanking" resultType="com.project.gmaking.ranking.vo.PvpRankingVO">
         SELECT
         c.CHARACTER_NAME AS characterName,
@@ -38,8 +37,8 @@
     <!-- 캐릭터 총 스탯 순위 -->
     <select id="selectCharacterRanking" resultType="com.project.gmaking.ranking.vo.CharacterRankingVO">
         SELECT
-        c.CHARACTER_NAME,
-        u.USER_NICKNAME,
+        c.CHARACTER_NAME AS characterName,
+        u.USER_NICKNAME AS userNickname,
         c.GRADE_ID AS gradeId,
         (s.CHARACTER_HP + s.CHARACTER_ATTACK + s.CHARACTER_DEFENSE + s.CHARACTER_SPEED + s.CRITICAL_RATE) AS totalStat
         FROM TB_CHARACTER_STAT s
@@ -48,5 +47,6 @@
         ORDER BY totalStat DESC
         LIMIT 50
     </select>
+
 
 </mapper>

@@ -18,10 +18,18 @@ import ChatEntryPage from './pages/ChatEntryPage';
 import CommunityPage from './pages/CommunityPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
+import BattleLogList from './pages/BattleLogList';
+import TurnLogList from './pages/TurnLogList';
+import RankingPage from './pages/RankingPage';
+import AiDebatePage from './pages/AiDebatePage';
 import ProfileEditPage from'./pages/ProfileEditPage';
 import PvpMatchPage from './pages/PvpMatchPage';
 import PvpBattlePage from './pages/PvpBattlePage';
 import PostEditPage from './pages/PostEditPage';
+import ReactionGame from './pages/ReactionGame';
+import MiniGameList from './pages/MiniGameList';
+import BattleModeSelectPage from './pages/BattleModeSelectPage';
+import MemoryGame from './pages/MemoryGame';
 
 
 // ProtectedRoute: 로그인 확인
@@ -81,11 +89,24 @@ function App() {
                 <Route path="/pvp/match" element={<PvpMatchPage />} />
                 <Route path="/pvp/battle" element={<PvpBattlePage />} />
                 <Route path="/my-page/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
+                <Route path="/logs" element={<BattleLogList />} />
+                <Route path="/logs/turns/:battleId" element={<TurnLogList />} />
+                <Route path="/ranking" element={<RankingPage />} />
+                <Route path="/debate" element={<AiDebatePage />} />
+                <Route path="/minigame/reaction" element={<ReactionGame />} />
+                <Route path="/minigame" element={<MiniGameList />} />
+                <Route path="/battlemode" element={<BattleModeSelectPage />} />
+                <Route path="/minigame/memory" element={<MemoryGame />} />
+
+                {/* 그 외 모든 경로를 메인으로 이동 */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+
+                {/* 커뮤니티 페이지 */}
                 <Route path="/community" element={<ProtectedRoute><CommunityPage/></ProtectedRoute>} />
                 <Route path="/create-post" element={<ProtectedRoute><CreatePostPage/></ProtectedRoute>} />
                 <Route path="/community/:postId" element={<ProtectedRoute><PostDetailPage/></ProtectedRoute>} /> 
                 <Route path="/community/edit/:postId" element={<ProtectedRoute><PostEditPage/></ProtectedRoute>} /> 
-                                  
+                
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />  
             </Routes>     

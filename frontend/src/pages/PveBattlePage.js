@@ -14,6 +14,9 @@ function PveBattlePage() {
     const [isBattle, setIsBattle] = useState(false);
     const logContainerRef = useRef(null);
     const socketRef = useRef(null);
+    // TTS 관련 상태 및 함수
+    const [isTtsEnabled, setIsTtsEnabled] = useState(false); // 기본 ON
+    const ttsRef = useRef(window.speechSynthesis);
 
     const token = localStorage.getItem("gmaking_token");
     // const userId = localStorage.getItem("userId"); //jwt토큰에서 추출하는 방식으로 변경
@@ -93,6 +96,35 @@ function PveBattlePage() {
             logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
         }
     }, [logs]);
+
+    useEffect(() => {
+        if (!isTtsEnabled || logs.length === 0) return;
+
+        const lastLog = logs[logs.length - 1];
+        if (!lastLog || lastLog.trim() === "") return;
+
+        // 현재 재생 중인 음성 중단
+        if (ttsRef.current.speaking) {
+            ttsRef.current.cancel();
+        }
+
+        // 음성 합성 객체 생성
+        const utter = new SpeechSynthesisUtterance(lastLog);
+        utter.lang = "ko-KR";     // 한국어
+        utter.rate = 3;         // 말 속도
+        utter.pitch = 1.2;        // 음 높낮이
+        utter.volume = 1.0;       // 볼륨
+
+        ttsRef.current.speak(utter);
+    }, [logs, isTtsEnabled]);
+
+    // TTS ON/OFF 토글 함수
+    const toggleTts = () => {
+        setIsTtsEnabled(prev => !prev);
+        if (ttsRef.current.speaking) {
+            ttsRef.current.cancel();
+        }
+    };
 
     const startBattle = () => {
         if (!selectedCharacter) {
@@ -242,6 +274,15 @@ function PveBattlePage() {
                 </select>
             </div>
             <div className="flex gap-4 mt-3">
+                <button
+                    onClick={toggleTts}
+                    disabled={isBattle}
+                    className={`${isTtsEnabled ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 hover:bg-gray-500"
+                        } px-6 py-3 rounded-xl transition`}
+                >
+                    {isTtsEnabled ? "음성 해설 끄기" : "음성 해설 켜기"}
+                </button>
+                
                 <button
                     onClick={startBattle}
                     // 캐릭터 정보가 로드된 후에만 버튼 활성화 (몬스터 정보는 이제 눌렀을 때 가져옴)

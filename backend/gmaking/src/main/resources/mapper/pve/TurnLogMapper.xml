@@ -15,7 +15,12 @@
 
     <!-- 특정 전투의 턴 로그 조회 -->
     <select id="selectTurnLogsByBattleId" parameterType="int" resultType="com.project.gmaking.pve.vo.TurnLogVO">
-        SELECT TURN_LOG_ID, BATTLE_ID, TURN_NUMBER, ACTION_DETAIL, CREATED_DATE
+        SELECT
+        TURN_LOG_ID AS turnLogId,
+        BATTLE_ID AS battleId,
+        TURN_NUMBER AS turnNumber,
+        ACTION_DETAIL AS actionDetail,
+        CREATED_DATE AS createdDate
         FROM TB_TURN_LOG
         WHERE BATTLE_ID = #{battleId}
         ORDER BY TURN_NUMBER ASC;
