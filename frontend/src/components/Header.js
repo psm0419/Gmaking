@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, Swords, Footprints, Scroll } from 'lucide-react';
+import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {

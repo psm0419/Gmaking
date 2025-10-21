@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Sword, Footprints, MessageSquare, Gamepad2 } from "lucide-react";
+import Header from '../components/Header';
 
 // 재사용 카드 컴포넌트
 function ModeCard({ icon: Icon, title, desc, to }) {
@@ -24,41 +25,43 @@ function ModeCard({ icon: Icon, title, desc, to }) {
 
 export default function BattleModeSelectPage() {
     return (
-        <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100">
-            <div className="mx-auto max-w-6xl px-4 py-10 md:py-14">
-                <header className="mb-8 md:mb-12">
-                    <h1 className="text-2xl font-extrabold tracking-tight md:text-4xl">모드 선택</h1>
-                    <p className="mt-2 text-slate-300">원하는 전투 방식을 선택하세요.</p>
-                </header>
+        <div><Header />
+            <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100">                
+                <div className="mx-auto max-w-6xl px-4 py-10 md:py-14">
+                    <header className="mb-8 md:mb-12">
+                        <h1 className="text-2xl font-extrabold tracking-tight md:text-4xl">모드 선택</h1>
+                        <p className="mt-2 text-slate-300">원하는 전투 방식을 선택하세요.</p>
+                    </header>
 
-                <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    <ModeCard
-                        icon={Sword}
-                        title="PvP"
-                        desc="플레이어와 대결"
-                        to="/pvp/match"
-                    />
-                    <ModeCard
-                        icon={Footprints}
-                        title="PvE"
-                        desc="몬스터와의 전투"
-                        to="/pve/maps"
-                    />
-                    <ModeCard
-                        icon={MessageSquare}
-                        title="토론배틀"
-                        desc="주제별 설전 및 AI 심판 판정"
-                        to="/debate"
-                    />
-                    <ModeCard
-                        icon={Gamepad2}
-                        title="미니게임"
-                        desc="반응속도 · 기억력 등"
-                        to="/minigame"
-                    />
-                </section>
-                
-            </div>
-        </main>
+                    <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                        <ModeCard
+                            icon={Sword}
+                            title="PvP"
+                            desc="플레이어와 대결"
+                            to="/pvp/match"
+                        />
+                        <ModeCard
+                            icon={Footprints}
+                            title="PvE"
+                            desc="몬스터와의 전투"
+                            to="/pve/maps"
+                        />
+                        <ModeCard
+                            icon={MessageSquare}
+                            title="토론배틀"
+                            desc="주제별 설전 및 AI 심판 판정"
+                            to="/debate"
+                        />
+                        <ModeCard
+                            icon={Gamepad2}
+                            title="미니게임"
+                            desc="반응속도 · 기억력 등"
+                            to="/minigame"
+                        />
+                    </section>
+
+                </div>
+            </main>
+        </div>
     );
 }
