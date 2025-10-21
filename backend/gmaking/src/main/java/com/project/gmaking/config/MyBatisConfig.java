@@ -31,6 +31,11 @@ public class MyBatisConfig {
         sessionFactory.setTypeHandlers(new JsonLongListTypeHandler[]{
                 jsonLongListTypeHandler
         });
+
+        org.apache.ibatis.session.Configuration mybatisConfig = new org.apache.ibatis.session.Configuration();
+        mybatisConfig.setMapUnderscoreToCamelCase(true);
+        sessionFactory.setConfiguration(mybatisConfig);
+
         return sessionFactory.getObject();
     }
 }

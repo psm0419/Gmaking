@@ -9,6 +9,7 @@ import com.project.gmaking.pve.vo.TurnLogVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +31,14 @@ public class FindLogServiceImpl implements FindLogService{
         }
 
         // 최신순 정렬
-        result.sort((a, b) -> b.getCreatedDate().compareTo(a.getCreatedDate()));
+        result.sort((a, b) -> {
+            LocalDateTime ad = a.getCreatedDate();
+            LocalDateTime bd = b.getCreatedDate();
+            if (ad == null && bd == null) return 0;
+            if (ad == null) return 1;
+            if (bd == null) return -1;
+            return bd.compareTo(ad); // 최신순
+        });
         return result;
     }
 
