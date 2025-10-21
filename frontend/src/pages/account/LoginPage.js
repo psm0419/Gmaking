@@ -63,11 +63,11 @@ const LoginPage = ({ onRegisterClick }) => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
             <div 
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: "url('/GmakingLogin.png')" }}
+                style={{ backgroundImage: "url('/GmakingLogin2.png')" }}
             />
 
-            <div className="absolute inset-0 bg-black/60"></div>
-            
+            <div className="absolute inset-0 bg-black/20"></div>
+
             <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-gray-800/90 rounded-xl shadow-2xl backdrop-blur-sm">
                 <h1 className="text-3xl font-extrabold text-white text-center flex items-center justify-center">
                     <LogIn className="w-8 h-8 mr-3 text-yellow-400" />
