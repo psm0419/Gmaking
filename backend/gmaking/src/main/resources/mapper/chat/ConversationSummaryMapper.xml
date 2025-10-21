@@ -5,9 +5,6 @@
 
 <mapper namespace="com.project.gmaking.chat.dao.ConversationSummaryDAO">
 
-    <!-- =========================
-         ResultMap (새 스키마 기준)
-         ========================= -->
     <resultMap id="ConversationSummaryMap" type="com.project.gmaking.chat.vo.ConversationSummaryVO">
         <id     column="CONVERSATION_ID" property="conversationId"/>
         <result column="ROLLING_SUMMARY" property="rollingSummary"/>
@@ -18,56 +15,47 @@
         <result column="UPDATED_DATE"    property="updatedDate"/>
     </resultMap>
 
-    <!-- =========================
-         UPSERT: 없으면 INSERT / 있으면 UPDATE
-         SUMMARY_VERSION은 +1
-         ========================= -->
+
     <insert id="upsertRollingSummary" parameterType="com.project.gmaking.chat.vo.ConversationSummaryVO">
-        INSERT INTO TB_CONVERSATION_SUMMARY
-        ( CONVERSATION_ID, ROLLING_SUMMARY, SUMMARY_VERSION, LAST_TURN_ID, LENGTH_CHARS, UPDATED_BY, UPDATED_DATE )
+        INSERT INTO tb_conversation_summary
+        (CONVERSATION_ID, ROLLING_SUMMARY, SUMMARY_VERSION, LAST_TURN_ID, LENGTH_CHARS, UPDATED_BY, UPDATED_DATE)
         VALUES
-        ( #{conversationId},
+        (#{conversationId},
         #{rollingSummary},
-        COALESCE(#{summaryVersion}, 0) + 1,
-        #{lastTurnId},
+        0,
+        #{lastTurnId,jdbcType=INTEGER},
         CHAR_LENGTH(#{rollingSummary}),
         #{updatedBy},
-        NOW()
-        )
+        NOW())
         ON DUPLICATE KEY UPDATE
-        ROLLING_SUMMARY = #{rollingSummary},
-        SUMMARY_VERSION = COALESCE(#{summaryVersion}, SUMMARY_VERSION) + 1,
-        LAST_TURN_ID    = #{lastTurnId},
-        LENGTH_CHARS    = CHAR_LENGTH(#{rollingSummary}),
-        UPDATED_BY      = #{updatedBy},
-        UPDATED_DATE    = NOW();
+        ROLLING_SUMMARY = VALUES(ROLLING_SUMMARY),
+        SUMMARY_VERSION = COALESCE(SUMMARY_VERSION, 0) + 1,
+        LAST_TURN_ID    = VALUES(LAST_TURN_ID),
+        LENGTH_CHARS    = CHAR_LENGTH(VALUES(ROLLING_SUMMARY)),
+        UPDATED_BY      = VALUES(UPDATED_BY),
+        UPDATED_DATE    = NOW()
     </insert>
 
-    <!-- 단건 조회 (PK) -->
     <select id="selectByConversationId" parameterType="int" resultMap="ConversationSummaryMap">
-        SELECT
-        CONVERSATION_ID, ROLLING_SUMMARY, SUMMARY_VERSION, LAST_TURN_ID,
+        SELECT CONVERSATION_ID, ROLLING_SUMMARY, SUMMARY_VERSION, LAST_TURN_ID,
         LENGTH_CHARS, UPDATED_BY, UPDATED_DATE
-        FROM TB_CONVERSATION_SUMMARY
+        FROM tb_conversation_summary
         WHERE CONVERSATION_ID = #{conversationId}
     </select>
 
-    <!-- 요약만 갱신 (원하면 사용) -->
     <update id="updateSummaryByConversationId" parameterType="com.project.gmaking.chat.vo.ConversationSummaryVO">
-        UPDATE TB_CONVERSATION_SUMMARY
-        SET
-        ROLLING_SUMMARY = #{rollingSummary},
-        SUMMARY_VERSION = SUMMARY_VERSION + 1,
-        LAST_TURN_ID    = #{lastTurnId},
+        UPDATE tb_conversation_summary
+        SET ROLLING_SUMMARY = #{rollingSummary},
+        SUMMARY_VERSION = COALESCE(SUMMARY_VERSION, 0) + 1,
+        LAST_TURN_ID    = #{lastTurnId,jdbcType=INTEGER},
         LENGTH_CHARS    = CHAR_LENGTH(#{rollingSummary}),
         UPDATED_BY      = #{updatedBy},
         UPDATED_DATE    = NOW()
         WHERE CONVERSATION_ID = #{conversationId}
     </update>
 
-    <!-- 삭제 (PK) -->
     <delete id="deleteByConversationId" parameterType="int">
-        DELETE FROM TB_CONVERSATION_SUMMARY
+        DELETE FROM tb_conversation_summary
         WHERE CONVERSATION_ID = #{conversationId}
     </delete>
 

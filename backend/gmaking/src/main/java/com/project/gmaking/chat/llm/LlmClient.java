@@ -6,4 +6,10 @@ public interface LlmClient {
     String chatWithHistory(String systemPrompt,
                            java.util.List<com.project.gmaking.chat.vo.DialogueVO> historyChrono,
                            String latestUserMessage) throws Exception;
+
+
+    // 이전 요약 + 최근 패치
+    SummarizeResult summarizeAndExtract(String existingSummary,
+                                        String patch,
+                                        String locale) throws Exception;
 }

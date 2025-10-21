@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.chat.dao.LongMemoryDAO">
+
+    <resultMap id="LongMemMap" type="com.project.gmaking.chat.vo.LongMemoryVO">
+        <id     column="MEMORY_ID"      property="memoryId"/>
+        <result column="USER_ID"        property="userId"/>
+        <result column="CHARACTER_ID"   property="characterId"/>
+        <result column="TYPE"           property="type"/>
+        <result column="CATEGORY"       property="category"/>
+        <result column="SUBJECT"        property="subject"/>
+        <result column="SUBJECT_NORM"   property="subjectNorm"/>
+        <result column="VALUE"          property="value"/>
+        <result column="STRENGTH"       property="strength"/>
+        <result column="CONFIDENCE"     property="confidence"/>
+        <result column="SOURCE"         property="source"/>
+        <result column="DUE_AT"         property="dueAt"/>
+        <result column="META_JSON"      property="metaJson"/>
+        <result column="LAST_USED_AT"   property="lastUsedAt"/>
+        <result column="FIRST_SEEN_AT"  property="firstSeenAt"/>
+        <result column="SOURCE_CONV_ID" property="sourceConvId"/>
+        <result column="UPDATED_BY"     property="updatedBy"/>
+        <result column="UPDATED_DATE"   property="updatedDate"/>
+    </resultMap>
+
+    <select id="selectBySlot" resultMap="LongMemMap">
+        SELECT * FROM tb_long_memory
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        AND CATEGORY = #{category}
+        AND SUBJECT_NORM = #{subjectNorm}
+        LIMIT 1
+    </select>
+
+    <select id="selectListByUserAndCharacter" resultMap="LongMemMap">
+        SELECT *
+        FROM tb_long_memory
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        ORDER BY LAST_USED_AT DESC, UPDATED_DATE DESC
+        LIMIT #{limit}
+    </select>
+
+    <update id="touchLastUsed">
+        UPDATE tb_long_memory
+        SET LAST_USED_AT = NOW(),
+        UPDATED_DATE = NOW()
+        WHERE MEMORY_ID = #{memoryId}
+    </update>
+
+    <insert id="upsertSlot" parameterType="com.project.gmaking.chat.vo.LongMemoryVO">
+        INSERT INTO tb_long_memory
+        (USER_ID, CHARACTER_ID, TYPE, CATEGORY, SUBJECT, SUBJECT_NORM, VALUE, STRENGTH,
+        CONFIDENCE, SOURCE, DUE_AT, META_JSON,
+        LAST_USED_AT, FIRST_SEEN_AT, SOURCE_CONV_ID, UPDATED_BY, UPDATED_DATE)
+        VALUES
+        (#{userId}, #{characterId}, #{type}, #{category}, #{subject}, #{subjectNorm}, #{value}, #{strength},
+        #{confidence,jdbcType=DECIMAL}, #{source}, #{dueAt,jdbcType=TIMESTAMP}, #{metaJson,jdbcType=OTHER},
+        NOW(), COALESCE(#{firstSeenAt}, NOW()), #{sourceConvId}, #{updatedBy}, NOW())
+        ON DUPLICATE KEY UPDATE
+        VALUE        = VALUES(VALUE),
+        STRENGTH     = VALUES(STRENGTH),
+        CONFIDENCE   = VALUES(CONFIDENCE),
+        SOURCE       = VALUES(SOURCE),
+        DUE_AT       = VALUES(DUE_AT),
+        META_JSON    = VALUES(META_JSON),
+        LAST_USED_AT = NOW(),
+        UPDATED_BY   = VALUES(UPDATED_BY),
+        UPDATED_DATE = NOW()
+    </insert>
+
+    <!-- 용량 제어 -->
+    <select id="countByUserAndCharacter" resultType="int">
+        SELECT COUNT(*) FROM tb_long_memory
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+    </select>
+
+    <delete id="deleteWeakestOldest">
+        DELETE FROM tb_long_memory
+        WHERE MEMORY_ID IN (
+        SELECT mid FROM (
+        SELECT MEMORY_ID AS mid
+        FROM tb_long_memory
+        WHERE USER_ID = #{userId}
+        AND CHARACTER_ID = #{characterId}
+        ORDER BY STRENGTH ASC, LAST_USED_AT ASC, UPDATED_DATE ASC
+        LIMIT #{limit}
+        ) t
+        )
+    </delete>
+</mapper>

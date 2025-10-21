@@ -9,6 +9,7 @@ import com.project.gmaking.chat.vo.ConversationSummaryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -22,24 +23,20 @@ public class ConversationSummaryService {
     private final LlmClient llmClient;
     private final ConversationSummaryDAO conversationSummaryDAO;
 
-
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public boolean summarizeAndSave(Integer convId, String actor) {
-        // 메타 확인
-        var conv = conversationDAO.selectById(convId); // 없으면 null
+        var conv = conversationDAO.selectById(convId);
         if (conv == null) {
             log.warn("ConversationSummary: conversation not found. convId={}", convId);
             return false;
         }
 
-        // 최근 N개만 (예: 100개) — 너무 길면 모델 품질/비용 저하
         List<DialogueVO> logs = chatDAO.selectRecentDialogues(convId, 100);
         if (logs == null || logs.isEmpty()) {
             log.info("ConversationSummary: no logs to summarize. convId={}", convId);
             return false;
         }
 
-        // LLM 프롬프트
         String systemPrompt = """
             다음 대화 로그를 핵심 사실/설정/관계/약속/선호로 요약해.
             - 리스트로 핵심 포인트 정리
@@ -51,7 +48,6 @@ public class ConversationSummaryService {
 
         String summary;
         try {
-            // LlmClient.chat(systemPrompt, userMessage) 시그니처에 맞춤
             summary = llmClient.chat(systemPrompt, textBlock);
         } catch (Exception e) {
             log.error("ConversationSummary: LLM summarize failed. convId={}", convId, e);
@@ -63,43 +59,32 @@ public class ConversationSummaryService {
             return false;
         }
 
-        Integer lastTurnId = null;
-        DialogueVO last = logs.get(logs.size() - 1);
+        Integer lastTurnId = logs.get(logs.size() - 1).getMessageId();
 
-        if (last != null) {
-            try {
-                lastTurnId = last.getMessageId();
-            } catch (NoSuchMethodError | Exception ignore) {
-                lastTurnId = last.getMessageId();
-            }
-        }
-
-        // TB_Conversation_Summary는 summary만 저장 (memory_date/created_date는 DB default)
         ConversationSummaryVO vo = ConversationSummaryVO.builder()
                 .conversationId(convId)
                 .rollingSummary(summary)
-                .lastTurnId(lastTurnId)
+                .lastTurnId(lastTurnId == null ? 0 : lastTurnId)
                 .updatedBy(actor)
                 .build();
 
-        int inserted = conversationSummaryDAO.upsertRollingSummary(vo);
-        if (inserted <= 0) { // 0만 실패로 보고, 1(INSERT)·2(UPDATE) 모두 성공
-            log.error("ConversationSummary: insert failed. convId={}, rows={}", convId, inserted);
+        int affected = conversationSummaryDAO.upsertRollingSummary(vo);
+        if (affected <= 0) {
+            log.error("ConversationSummary: upsert failed. convId={}, rows={}", convId, affected);
             return false;
         }
         return true;
     }
 
-
     private String buildPlainText(List<DialogueVO> logs) {
         StringBuilder sb = new StringBuilder(logs.size() * 32);
         for (DialogueVO d : logs) {
-            // 필요하면 내용 길이 컷팅 (예: 2000자)
             String content = d.getContent();
             if (content != null && content.length() > 2000) {
                 content = content.substring(0, 2000) + "...";
             }
-            sb.append(d.getSender().name()).append(": ")
+            sb.append(d.getSender() == null ? "unknown" : d.getSender().name())
+                    .append(": ")
                     .append(content == null ? "" : content)
                     .append("\n");
         }
