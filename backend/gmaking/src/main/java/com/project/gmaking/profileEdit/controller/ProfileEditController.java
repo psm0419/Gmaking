@@ -54,4 +54,6 @@ public class ProfileEditController {
         String userId = auth.getName();
         return service.uploadProfile(userId, file); // { "url": "https://storage.googleapis.com/<bucket>/profile/..." }
     }
+
+    
 }

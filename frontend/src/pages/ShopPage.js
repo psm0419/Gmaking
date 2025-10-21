@@ -5,7 +5,7 @@ import { Ticket, Egg } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 
-// 공통 카드
+/** 공통 카드 */
 function ShopCard({ title, children, onClick, className = "" }) {
   return (
     <button
@@ -21,7 +21,7 @@ function ShopCard({ title, children, onClick, className = "" }) {
   );
 }
 
-// 프로필 바
+/** 프로필 바 */
 function ProfileBar({ name = "마스터 님", incubatorCount = 0, imageUrl }) {
   return (
     <div className="flex items-center gap-6 px-4 sm:px-6 lg:px-0">
@@ -70,7 +70,12 @@ export default function ShopPage() {
     try {
       const payload = jwtDecode(authToken);
       console.log("[JWT payload]", payload);
-      console.log("[JWT] incubatorCount:", payload.incubatorCount, "isAdFree:", payload.isAdFree);
+      console.log(
+        "[JWT] incubatorCount:",
+        payload.incubatorCount,
+        "isAdFree:",
+        payload.isAdFree
+      );
     } catch (e) {
       console.error("[JWT] decode failed:", e);
     }
@@ -83,10 +88,12 @@ export default function ShopPage() {
   });
   const [loadingSku, setLoadingSku] = useState(null);
 
-  // 공통: 서버 프로필 재조회 → 로컬/전역 set 동기화
+  /** 공통: 서버 프로필 재조회 → 로컬/전역 set 동기화 */
   const refreshProfileAndSync = async () => {
     if (!authToken) return;
-    const auth = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
+    const auth = authToken.startsWith("Bearer ")
+      ? authToken
+      : `Bearer ${authToken}`;
     const r = await fetch(`/api/shop/profile/me`, {
       headers: { Authorization: auth, Accept: "application/json" },
       credentials: "include",
@@ -117,85 +124,123 @@ export default function ShopPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
 
-  // 구매 API: 응답 헤더/바디에서 새 토큰 추출
-  const purchase = async (productId, quantity = 1) => {
+  /** 아임포트 준비→결제→서버검증 (axios 없이 fetch) */
+  async function requestPaymentFlow({ authToken, productId, quantity = 1 }) {
     if (!authToken) {
       window.location.href = "/login";
       return null;
     }
-    const auth = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
+    if (!window.IMP) throw new Error("결제 모듈 로드 실패(IMP).");
+    const auth = authToken.startsWith("Bearer ")
+      ? authToken
+      : `Bearer ${authToken}`;
 
-    const res = await fetch("/api/shop/purchase", {
+    // 1) 준비
+    const prepRes = await fetch(`/api/payments/prepare`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: auth,
         Accept: "application/json",
       },
-      body: JSON.stringify({ productId, quantity }),
+      body: new URLSearchParams({
+        productId: String(productId),
+        quantity: String(quantity),
+      }),
       credentials: "include",
     });
-
-    if (res.status === 401) {
+    if (prepRes.status === 401) {
       localStorage.removeItem("gmaking_token");
       window.location.href = "/login";
       return null;
     }
-
-    const headerToken =
-      res.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ||
-      res.headers.get("X-New-Token") ||
-      null;
-
-    if (!res.ok) {
-      throw new Error(`POST /purchase ${res.status} ${await res.text().catch(() => "")}`);
+    if (!prepRes.ok) {
+      throw new Error(`prepare 실패: ${prepRes.status}`);
     }
-    const body = await res.json();
-    return { ...body, token: body?.token ?? headerToken };
-  };
+    const prep = await prepRes.json(); // { merchantUid, amount, productName }
 
-  const addBySku = { 1: 0, 2: 5, 3: 15 };
 
-  // 구매 버튼 핸들러 (낙관적 add → 서버값 set 확정)
+
+    // 2) 아임포트 결제
+    const { IMP } = window;
+
+    // imp 코드 환경 변수 가드
+    const impCode =
+      process.env.REACT_APP_IMP_CODE ||
+      process.env.NEXT_PUBLIC_IMP_CODE || "";
+
+    console.log("[IMP code]", impCode);
+    if (!impCode) {
+      alert("가맹점 식별코드(imp_**)가 없습니다. .env 설정 후 개발서버를 재시작하세요.");
+      return null;
+    }
+    IMP.init(impCode);
+
+    IMP.init(process.env.REACT_APP_IMP_CODE); // imp_xxxxx (테스트 모드 imp 코드)
+
+    const rsp = await new Promise((resolve) => {
+      IMP.request_pay(
+        {
+          pg: "html5_inicis", // 테스트 PG (콘솔 설정과 일치해야 함)
+          pay_method: "card",
+          merchant_uid: prep.merchantUid,
+          name: prep.productName,
+          amount: prep.amount, // 서버 금액 그대로
+        },
+        (response) => resolve(response)
+      );
+    });
+
+    if (!rsp?.success) {
+      const msg = rsp?.error_msg || "결제 실패";
+      throw new Error(msg);
+    }
+
+    // 3) 서버 검증/지급
+    const confRes = await fetch(`/api/payments/confirm`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        Accept: "application/json",
+      },
+      body: new URLSearchParams({
+        impUid: rsp.imp_uid,
+        merchantUid: rsp.merchant_uid,
+      }),
+      credentials: "include",
+    });
+    if (!confRes.ok) {
+      throw new Error(`confirm 실패: ${confRes.status}`);
+    }
+    const conf = await confRes.json(); // { result: "OK" | "ALREADY_APPLIED" }
+
+    // (선택) 백엔드에서 토큰 재발급을 헤더로 줄 경우 반영
+    const headerToken =
+      confRes.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ||
+      confRes.headers.get("X-New-Token") ||
+      null;
+    if (headerToken) applyNewToken?.(headerToken);
+
+    return conf;
+  }
+
+  /** 구매 버튼 핸들러: 결제 성공 후 프로필 동기화 */
   const handleBuy = async (productId, label) => {
     try {
       setLoadingSku(productId);
+      const conf = await requestPaymentFlow({ authToken, productId, quantity: 1 });
+      if (!conf) return;
 
-      // 0) 낙관적 UI: 부화권 상품이면 바로 add
-      if (productId === 2 || productId === 3) {
-        updateIncubatorCount?.({ add: addBySku[productId] });
-        setProfile((prev) => ({ ...prev, incubatorCount: Number(prev.incubatorCount ?? 0) + addBySku[productId] }));
+      if (conf?.result === "OK" || conf?.result === "ALREADY_APPLIED") {
+        await refreshProfileAndSync(); // 인벤/광고패스 갱신
+        alert(`${label} 결제가 완료되었습니다.`);
+      } else {
+        alert(
+          `검증 결과가 올바르지 않습니다. (result=${conf?.result ?? "?"})`
+        );
       }
-
-      // 1) 결제 요청
-      const data = await purchase(productId, 1);
-      if (!data) return;
-
-      // 2) 새 JWT가 오면 즉시 적용
-      if (data.token) applyNewToken(data.token);
-
-      // 3) 응답값 존재 시 전역/로컬 set 확정
-      if (productId === 1) {
-        updateAdFree?.({ enabled: data?.isAdFree ?? true, expiresAt: data?.adFreeExpiry });
-      } else if (productId === 2 || productId === 3) {
-        if (data && data.incubatorCount != null) {
-          updateIncubatorCount?.({ set: Number(data.incubatorCount) });
-          setProfile((prev) => ({ ...prev, incubatorCount: Number(data.incubatorCount) }));
-        }
-      }
-
-      // 4) 응답에 count가 없으면 서버 프로필 재조회로 확정
-      if (data?.incubatorCount == null || typeof data?.isAdFree === "undefined") {
-        await refreshProfileAndSync();
-      }
-
-      alert(`${label} 구매 완료!`);
     } catch (e) {
-      console.error("구매 실패:", e);
-      alert("구매 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-
-      // 실패 시 낙관적 add 롤백(선택)
-      // 필요하면 이전 값을 기억해뒀다가 되돌리세요.
+      console.error(e);
+      alert(e.message || "결제 중 오류가 발생했습니다.");
     } finally {
       setLoadingSku(null);
     }
@@ -219,7 +264,9 @@ export default function ShopPage() {
           <ShopCard
             title="광고 제거 패스 (30일)"
             onClick={() => handleBuy(1, "광고 패스권(30일)")}
-            className={`border-t-4 border-violet-500 ${loadingSku === 1 ? "opacity-60 cursor-wait" : ""}`}
+            className={`border-t-4 border-violet-500 ${
+              loadingSku === 1 ? "opacity-60 cursor-wait" : ""
+            }`}
           >
             <div className="flex flex-col items-center">
               <div className="mb-8 rounded-3xl bg-violet-500 p-6 text-white shadow-lg transition group-hover:scale-105">
@@ -227,7 +274,9 @@ export default function ShopPage() {
               </div>
               <div className="mt-auto text-center w-full">
                 <p className="text-xl text-zinc-600 mb-2">30일간 광고 없이 이용</p>
-                <div className="text-4xl font-extrabold tabular-nums text-violet-600">4,900 원</div>
+                <div className="text-4xl font-extrabold tabular-nums text-violet-600">
+                  4,900 원
+                </div>
                 <div className="text-sm mt-1 text-zinc-400">월 자동 결제 가능</div>
               </div>
             </div>
@@ -247,7 +296,9 @@ export default function ShopPage() {
               </div>
               <div className="mt-auto text-center w-full">
                 <p className="text-xl text-zinc-600 mb-2">기본 부화기 5개</p>
-                <div className="text-4xl font-extrabold tabular-nums text-zinc-900">6,000 원</div>
+                <div className="text-4xl font-extrabold tabular-nums text-zinc-900">
+                  6,000 원
+                </div>
                 <div className="text-sm mt-1 text-zinc-400">개당 1,200원</div>
               </div>
             </div>
@@ -257,7 +308,9 @@ export default function ShopPage() {
           <ShopCard
             title="💰 부화기 대용량 (15개)"
             onClick={() => handleBuy(3, "부화기 대용량 (15개)")}
-            className={`relative overflow-hidden border-t-4 border-sky-500 ${loadingSku === 3 ? "opacity-60 cursor-wait" : ""}`}
+            className={`relative overflow-hidden border-t-4 border-sky-500 ${
+              loadingSku === 3 ? "opacity-60 cursor-wait" : ""
+            }`}
           >
             <div className="absolute top-0 right-0 bg-sky-500 text-white text-xs font-bold px-4 py-1 transform rotate-45 translate-x-7 -translate-y-4 shadow-md">
               BEST
@@ -271,7 +324,9 @@ export default function ShopPage() {
               </div>
               <div className="mt-auto text-center w-full">
                 <p className="text-xl text-zinc-600 mb-2">추가 5% 할인 효과</p>
-                <div className="text-4xl font-extrabold tabular-nums text-sky-600">16,000 원</div>
+                <div className="text-4xl font-extrabold tabular-nums text-sky-600">
+                  16,000 원
+                </div>
                 <div className="text-sm mt-1 text-zinc-400 line-through">원가 18,000원</div>
               </div>
             </div>
@@ -284,19 +339,41 @@ export default function ShopPage() {
           <h2 className="text-3xl font-bold text-zinc-800 mb-8">구매 전 꼭 확인하세요</h2>
           <div className="grid md:grid-cols-2 gap-8 p-6 bg-white rounded-xl shadow-sm">
             <div>
-              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">💳 결제 및 환불 안내</h3>
+              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">
+                💳 결제 및 환불 안내
+              </h3>
               <ul className="space-y-3 text-zinc-600 text-base">
-                <li className="flex items-start"><span className="mr-2 text-violet-500 font-bold">•</span>모든 상품은 **부가세(VAT)**가 포함된 금액입니다.</li>
-                <li className="flex items-start"><span className="mr-2 text-violet-500 font-bold">•</span>상품 구매 후 **7일 이내 사용하지 않은 상품**에 한해 환불이 가능합니다. (단, 기간제 상품은 제외)</li>
-                <li className="flex items-start"><span className="mr-2 text-violet-500 font-bold">•</span>자세한 환불 정책은 하단의 **[이용약관]**을 확인해 주세요.</li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-violet-500 font-bold">•</span>모든 상품은{" "}
+                  <strong>부가세(VAT)</strong>가 포함된 금액입니다.
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-violet-500 font-bold">•</span>상품 구매 후{" "}
+                  <strong>7일 이내 사용하지 않은 상품</strong>에 한해 환불이 가능합니다. (단, 기간제 상품은 제외)
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-violet-500 font-bold">•</span>자세한 환불 정책은 하단의{" "}
+                  <strong>[이용약관]</strong>을 확인해 주세요.
+                </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">✨ 상품 사용 유의사항</h3>
+              <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">
+                ✨ 상품 사용 유의사항
+              </h3>
               <ul className="space-y-3 text-zinc-600 text-base">
-                <li className="flex items-start"><span className="mr-2 text-sky-500 font-bold">•</span>**부화기**는 구매 즉시 계정에 지급되며, 미사용 시 유효기간이 없습니다.</li>
-                <li className="flex items-start"><span className="mr-2 text-sky-500 font-bold">•</span>**광고 제거 패스**는 구매일로부터 **30일**간 적용되며, 만료일 이후 광고가 다시 노출됩니다.</li>
-                <li className="flex items-start"><span className="mr-2 text-sky-500 font-bold">•</span>지급이 지연될 경우, **고객 지원**을 통해 문의해 주세요.</li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-sky-500 font-bold">•</span>
+                  <strong>부화기</strong>는 구매 즉시 계정에 지급되며, 미사용 시 유효기간이 없습니다.
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-sky-500 font-bold">•</span>
+                  <strong>광고 제거 패스</strong>는 구매일로부터 <strong>30일</strong>간 적용되며, 만료일 이후 광고가 다시 노출됩니다.
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 text-sky-500 font-bold">•</span>지급이 지연될 경우,{" "}
+                  <strong>고객 지원</strong>을 통해 문의해 주세요.
+                </li>
               </ul>
             </div>
           </div>
