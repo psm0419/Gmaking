@@ -15,7 +15,7 @@ function PveBattlePage() {
     const logContainerRef = useRef(null);
     const socketRef = useRef(null);
     // TTS 관련 상태 및 함수
-    const [isTtsEnabled, setIsTtsEnabled] = useState(true); // 기본 ON
+    const [isTtsEnabled, setIsTtsEnabled] = useState(false); // 기본 ON
     const ttsRef = useRef(window.speechSynthesis);
 
     const token = localStorage.getItem("gmaking_token");
@@ -111,8 +111,8 @@ function PveBattlePage() {
         // 음성 합성 객체 생성
         const utter = new SpeechSynthesisUtterance(lastLog);
         utter.lang = "ko-KR";     // 한국어
-        utter.rate = 1.0;         // 말 속도
-        utter.pitch = 1.0;        // 음 높낮이
+        utter.rate = 3;         // 말 속도
+        utter.pitch = 1.2;        // 음 높낮이
         utter.volume = 1.0;       // 볼륨
 
         ttsRef.current.speak(utter);

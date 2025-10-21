@@ -28,6 +28,8 @@ import PvpBattlePage from './pages/PvpBattlePage';
 import PostEditPage from './pages/PostEditPage';
 import ReactionGame from './pages/ReactionGame';
 import MiniGameList from './pages/MiniGameList';
+import BattleModeSelectPage from './pages/BattleModeSelectPage';
+import MemoryGame from './pages/MemoryGame';
 
 
 // ProtectedRoute: 로그인 확인
@@ -91,8 +93,10 @@ function App() {
                 <Route path="/logs/turns/:battleId" element={<TurnLogList />} />
                 <Route path="/ranking" element={<RankingPage />} />
                 <Route path="/debate" element={<AiDebatePage />} />
-                <Route path="/reaction" element={<ReactionGame />} />
+                <Route path="/minigame/reaction" element={<ReactionGame />} />
                 <Route path="/minigame" element={<MiniGameList />} />
+                <Route path="/battlemode" element={<BattleModeSelectPage />} />
+                <Route path="/minigame/memory" element={<MemoryGame />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />

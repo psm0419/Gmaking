@@ -51,7 +51,7 @@ function MiniGameList() {
                 {games.map((game) => (
                     <div
                         key={game.id}
-                        onClick={() => navigate("/reaction")}
+                        onClick={() => navigate(`/minigame/${game.id}`)}
                         className={`bg-gradient-to-br ${game.color} rounded-2xl shadow-lg p-6 cursor-pointer transform hover:scale-105 transition-all duration-300`}
                     >
                         <div className="flex items-center justify-between mb-4">
