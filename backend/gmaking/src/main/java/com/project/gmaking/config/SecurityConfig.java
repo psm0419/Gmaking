@@ -123,6 +123,16 @@ public class SecurityConfig {
                         // 게시글 좋아요
                         .requestMatchers("/community/like/toggle").authenticated()
 
+                        // 댓글 등록
+                        .requestMatchers(HttpMethod.POST, "/community/*/comments").authenticated()
+
+                        // 댓글 삭제
+                        .requestMatchers(HttpMethod.DELETE, "/community/*/comments/**").authenticated()
+
+                        // 댓글 수정
+                        .requestMatchers(HttpMethod.PUT, "/community/*/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/community/*/comments/**").authenticated()
+
                         // 조회수 증가
                         .requestMatchers(HttpMethod.POST, "/community/view/**").permitAll()
 

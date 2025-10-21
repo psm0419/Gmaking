@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.community.dao.PostCommentDAO">
+
+    <insert id="insertComment">
+        INSERT INTO tb_community_comment
+        (POST_ID, USER_ID, PARENT_ID, COMMENT_DEPTH, CONTENT, CREATED_DATE, CREATED_BY)
+        VALUES
+        (#{postId}, #{userId}, #{parentId}, #{commentDepth}, #{content}, NOW(), #{createdBy})
+    </insert>
+
+    <select id="selectCommentList" resultType="com.project.gmaking.community.vo.PostCommentResponseVO">
+        SELECT
+        tcc.COMMENT_ID AS commentId,
+        tcc.POST_ID AS postId,
+        tcc.USER_ID AS userId,
+        tcc.PARENT_ID AS parentId,
+        tcc.COMMENT_DEPTH AS commentDepth,
+        tu.USER_NICKNAME AS userNickname,
+        tcc.CONTENT,
+        tcc.CREATED_DATE AS createdDate,
+        tcc.UPDATED_DATE AS updatedDate,
+        tcc.IS_DELETED AS deleted
+        FROM
+        tb_community_comment tcc
+        JOIN
+        tb_user tu ON tcc.USER_ID = tu.USER_ID
+        WHERE
+        tcc.POST_ID = #{postId}
+        AND
+        tcc.IS_DELETED = FALSE
+        ORDER BY
+        COALESCE(tcc.PARENT_ID, tcc.COMMENT_ID),
+        tcc.CREATED_DATE ASC
+    </select>
+
+    <update id="deleteComment">
+        UPDATE
+        tb_community_comment
+        SET
+        IS_DELETED = TRUE,
+        UPDATED_DATE = NOW(),
+        UPDATED_BY = #{userId}
+        WHERE
+        COMMENT_ID = #{commentId}
+        AND USER_ID = #{userId}
+        AND IS_DELETED = FALSE
+    </update>
+
+    <select id="selectCommentUserId" resultType="String">
+        SELECT
+        USER_ID
+        FROM
+        tb_community_comment
+        WHERE
+        COMMENT_ID = #{commentId}
+        AND IS_DELETED = FALSE
+    </select>
+
+    <select id="countComments" resultType="long">
+        SELECT
+        COUNT(COMMENT_ID)
+        FROM
+        tb_community_comment
+        WHERE
+        POST_ID = #{postId}
+        AND tcc.IS_DELETED = FALSE
+    </select>
+
+</mapper>

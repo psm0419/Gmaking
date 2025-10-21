@@ -42,8 +42,8 @@
         #{title},
         #{content},
         #{userId},
-        #{categoryCode},  NOW()
-        )
+        #{categoryCode},
+        NOW() )
     </insert>
 
     <update id="updatePost">
