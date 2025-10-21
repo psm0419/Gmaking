@@ -72,12 +72,7 @@ public class CharacterController {
                     .map(response -> ResponseEntity.ok(response))
                     .onErrorResume(e -> {
                         System.err.println("캐릭터 생성 미리보기 중 런타임 오류 발생: " + e.getMessage());
-
-                        if (e.getMessage() != null && e.getMessage().contains("403 Forbidden")) {
-                            return Mono.just(ResponseEntity.status(403).build());
-                        }
-
-                        return Mono.just(ResponseEntity.badRequest().build());
+                        return Mono.error(e);
                     });
         } catch (IOException e) { // generateCharacterPreview가 던지는 IOException 처리
             System.err.println("캐릭터 생성 요청 중 IO 오류 발생: " + e.getMessage());
