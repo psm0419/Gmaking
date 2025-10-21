@@ -21,7 +21,8 @@ const Header = () => {
         { name: 'PVE', icon: Footprints, link: 'pve/maps' },
         { name: 'PVP', icon: Swords, link: 'pvp/match' },
         { name: '로그', icon: Scroll, link: 'logs' },
-        { name: '고객지원', icon: LifeBuoy, link: '#' },
+        { name: '말싸움 배틀', icon: LifeBuoy, link: 'debate' },
+        { name: '미니게임', icon: LifeBuoy, link: 'minigame' },
     ];
 
     if (isLoading) {
