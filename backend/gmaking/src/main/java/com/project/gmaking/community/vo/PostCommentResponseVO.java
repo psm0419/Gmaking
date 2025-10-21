@@ -3,24 +3,25 @@ package com.project.gmaking.community.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostVO {
+public class PostCommentResponseVO {
+    private Long commentId;
     private Long postId;
-    private String title;
-    private String content;
+
+    private Long parentId;
+    private int commentDepth;
+
     private String userId;
     private String userNickname;
-    private String categoryCode;
-    private Long viewCount;
-    private Long likeCount;
-    private String isDeleted;
 
+    private String content;
     private LocalDateTime createdDate;
-    private String createdBy;
     private LocalDateTime updatedDate;
-    private String updatedBy;
+
+    private boolean isDeleted;
 }
