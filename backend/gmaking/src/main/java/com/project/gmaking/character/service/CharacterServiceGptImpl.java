@@ -116,9 +116,11 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             Long imageId = imageVO.getImageId();
 
             // CharacterVO 생성 및 DB 저장
+            Random random = new Random();
             CharacterVO characterVO = new CharacterVO();
             characterVO.setUserId(userId);
             characterVO.setImageId(imageId);
+            characterVO.setCharacterPersonalityId(1+ random.nextInt(3));
             characterVO.setCharacterName(finalData.getCharacterName());
             characterVO.setBackgroundInfo(finalData.getPredictedAnimal() + " 타입의 캐릭터");
             characterVO.setGradeId(1);
@@ -130,7 +132,6 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             Integer characterId = characterVO.getCharacterId();
 
             // characterStatVO 생성 및 DB 저장
-            Random random = new Random();
             CharacterStatVO statVO = new CharacterStatVO();
             statVO.setCharacterId(characterId);
             int hp = 100 + random.nextInt(201);      // 100~300
