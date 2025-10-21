@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.shop.dao.PaymentDAO">
+
+    <resultMap id="PurchaseMap" type="com.project.gmaking.shop.vo.PurchaseVO">
+        <id     column="PURCHASE_ID"      property="purchaseId"/>
+        <result column="USER_ID"          property="userId"/>
+        <result column="PRODUCT_ID"       property="productId"/>
+        <result column="QUANTITY"         property="quantity"/>
+        <result column="AMOUNT_PAID"      property="amountPaid"/>
+        <result column="CURRENCY"         property="currency"/>
+        <result column="PG_PROVIDER"      property="pgProvider"/>
+        <result column="METHOD"           property="method"/>
+        <result column="MERCHANT_UID"     property="merchantUid"/>
+        <result column="IMP_UID"          property="impUid"/>
+        <result column="STATUS"           property="status"/>
+        <result column="FAILED_REASON"    property="failedReason"/>
+        <result column="PRODUCT_NAME_SNAP" property="productNameSnap"/>
+        <result column="UNIT_PRICE_SNAP"  property="unitPriceSnap"/>
+        <result column="TOTAL_PRICE_SNAP" property="totalPriceSnap"/>
+        <result column="APPROVED_AT"      property="approvedAt"/>
+        <result column="APPLIED_AT"       property="appliedAt"/>
+        <result column="CREATED_DATE"     property="createdDate"/>
+        <result column="UPDATED_DATE"     property="updatedDate"/>
+    </resultMap>
+
+    <insert id="insertReadyPurchase" useGeneratedKeys="true" keyProperty="p.purchaseId">
+        INSERT INTO tb_purchase
+        (USER_ID, PRODUCT_ID, QUANTITY, MERCHANT_UID, STATUS,
+        PRODUCT_NAME_SNAP, UNIT_PRICE_SNAP, TOTAL_PRICE_SNAP)
+        VALUES
+        (#{p.userId}, #{p.productId}, #{p.quantity}, #{p.merchantUid}, 'READY',
+        #{p.productNameSnap}, #{p.unitPriceSnap}, #{p.totalPriceSnap})
+    </insert>
+
+    <select id="selectByMerchantUid" parameterType="string" resultMap="PurchaseMap">
+        SELECT * FROM tb_purchase WHERE MERCHANT_UID = #{merchantUid}
+    </select>
+
+    <update id="markPaid">
+        UPDATE tb_purchase
+        SET STATUS = 'PAID',
+        IMP_UID = #{impUid},
+        AMOUNT_PAID = #{amountPaid},
+        PG_PROVIDER = #{pg},
+        METHOD = #{method},
+        APPROVED_AT = NOW()
+        WHERE MERCHANT_UID = #{merchantUid}
+        AND STATUS IN ('READY','FAILED')
+        AND (IMP_UID IS NULL OR IMP_UID = #{impUid})
+    </update>
+
+    <update id="markFailed">
+        UPDATE tb_purchase
+        SET STATUS = 'FAILED',
+        FAILED_REASON = #{reason},
+        UPDATED_DATE = NOW()
+        WHERE MERCHANT_UID = #{merchantUid}
+        AND STATUS = 'READY'
+    </update>
+
+    <update id="markApplied">
+        UPDATE tb_purchase
+        SET APPLIED_AT = NOW()
+        WHERE PURCHASE_ID = #{purchaseId}
+        AND APPLIED_AT IS NULL
+    </update>
+
+    <insert id="insertGrant" useGeneratedKeys="true" keyProperty="g.grantId">
+        INSERT INTO tb_grant
+        (PURCHASE_ID, USER_ID, PRODUCT_ID, QUANTITY, EXPIRES_AT, STATUS)
+        VALUES
+        (#{g.purchaseId}, #{g.userId}, #{g.productId}, #{g.quantity}, #{g.expiresAt}, 'PENDING')
+    </insert>
+
+    <update id="markGrantApplied">
+        UPDATE tb_grant
+        SET STATUS = 'APPLIED',
+        APPLIED_INVENTORY_ID = #{inventoryId},
+        UPDATED_DATE = NOW()
+        WHERE GRANT_ID = #{grantId} AND STATUS = 'PENDING'
+    </update>
+
+</mapper>
