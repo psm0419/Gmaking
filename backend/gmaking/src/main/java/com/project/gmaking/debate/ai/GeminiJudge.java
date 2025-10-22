@@ -105,7 +105,7 @@ public class GeminiJudge implements Judge {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return new JudgeResultVO("UNKNOWN", "Gemini 호출 실패: " + e.getMessage());
+            return new JudgeResultVO("UNKNOWN", "Gemini 호출 실패");
         }
     }
 

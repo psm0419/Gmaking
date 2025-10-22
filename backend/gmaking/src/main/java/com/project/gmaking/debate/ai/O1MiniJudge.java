@@ -22,13 +22,13 @@ public class O1MiniJudge implements Judge {
     @Value("${openai.api.key}")
     private String apiKey;
 
-    // 필요시 yml에서 덮어쓸 수 있게 기본값 o1-mini
+    // 기본값 o1-mini
     @Value("${openai.reasoner.model:o1-mini}")
     private String model;
 
     @Override
     public String name() {
-        return "o1-mini";
+        return "gpt-o1-mini";
     }
 
     @SuppressWarnings("unchecked")
@@ -95,7 +95,7 @@ public class O1MiniJudge implements Judge {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return new JudgeResultVO("UNKNOWN", "o1-mini 호출 실패: " + e.getMessage());
+            return new JudgeResultVO("UNKNOWN", "o1-mini 호출 실패");
         }
     }
 
