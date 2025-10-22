@@ -72,8 +72,8 @@ export default function BattleModeSelectPage() {
     return (
         <div>
             <Header />
-            <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col items-center">
-                <div className="mx-auto max-w-6xl px-4 py-14 w-full">
+            <main className="min-h-[calc(100vh-60px)] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 text-slate-100 flex flex-col">
+                <div className="mx-auto max-w-6xl px-4 py-8 w-full">
                     {/* 제목 영역 */}
                     <header className="mb-12 text-center">
                         <h1 className="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-indigo-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-md">

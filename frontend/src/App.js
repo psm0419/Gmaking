@@ -30,6 +30,10 @@ import ReactionGame from './pages/ReactionGame';
 import MiniGameList from './pages/MiniGameList';
 import BattleModeSelectPage from './pages/BattleModeSelectPage';
 import MemoryGame from './pages/MemoryGame';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import LicensePage from './pages/LicensePage';
+import GuidePage from './pages/GuidePage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -76,6 +80,10 @@ function App() {
                 <Route path="/oauth/callback/failure" element={<OAuth2RedirectHandler />} />
                 <Route path="/find-id" element={<FindIdPage />} />
                 <Route path="/find-password" element={<FindPasswordPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/license" element={<LicensePage />} />
+                <Route path="/guide" element={<GuidePage />} />
                 
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
