@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Header from '../components/Header';
 
 function PvpMatchPage() {
     const navigate = useNavigate();
@@ -70,91 +71,44 @@ function PvpMatchPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center text-white p-10">
-            <h1 className="text-4xl font-extrabold mb-8 tracking-wider text-yellow-300 drop-shadow-lg">
-                PVP 매칭
-            </h1>
+        <div><Header />
+            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center text-white p-8">
+                <div className="flex justify-center gap-4 mb-8">
+                    <button
+                        onClick={findOpponent}
+                        className="bg-green-600 hover:bg-green-500 px-8 py-2 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
+                    >
+                        상대방 찾기
+                    </button>
 
-            
+                    <button
+                        onClick={startBattle}
+                        className="bg-green-600 hover:bg-green-500 px-8 py-2 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
+                    >
+                        전투 시작
+                    </button>
 
-            <div className="flex justify-center gap-4 mb-5">
-                <button
-                    onClick={findOpponent}
-                    className="bg-green-600 hover:bg-green-500 px-8 py-2 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
-                >
-                    상대방 찾기
-                </button>
-
-                <button
-                    onClick={startBattle}
-                    className="bg-green-600 hover:bg-green-500 px-8 py-2 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
-                >
-                    전투 시작
-                </button>
-
-                <button
-                    onClick={() => navigate("/")}
-                    className="bg-blue-600 hover:bg-blue-500 px-8 py-2 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
-                >
-                    홈으로
-                </button>
-            </div>
-            <div className="flex flex-col lg:flex-row gap-10 w-full max-w-6xl justify-center">
-                {/* 내 캐릭터 */}
-                <div className="bg-gray-800/70 p-6 rounded-2xl shadow-lg border border-gray-700 w-full lg:w-1/2">
-                    <h2 className="text-2xl font-semibold mb-4 text-yellow-400 text-center">
-                        내 캐릭터
-                    </h2>
-                    <div className="flex gap-4 flex-wrap justify-center">
-                        {myCharacters.map(char => (
-                            <div
-                                key={char.characterId}
-                                onClick={() => setSelectedMyChar(char)}
-                                className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedMyChar?.characterId === char.characterId
-                                    ? "border-yellow-400 bg-yellow-500/10"
-                                    : "border-gray-700 hover:border-yellow-300/50"
-                                    }`}
-                            >
-                                <img
-                                    src={
-                                        char.imageUrl?.startsWith("http")
-                                            ? char.imageUrl
-                                            : `/images/character/${char.imageId}.png`
-                                    }
-                                    alt={char.characterName}
-                                    className="w-24 h-24 object-contain mx-auto mb-2"
-                                />
-                                <div className="text-center text-l font-medium text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
-                            </div>
-                        ))}
-                    </div>
+                    <button
+                        onClick={() => navigate("/")}
+                        className="bg-blue-600 hover:bg-blue-500 px-8 py-2 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105"
+                    >
+                        홈으로
+                    </button>
                 </div>
-
-                {/* 상대 캐릭터 */}
-                <div className="bg-gray-800/70 p-6 rounded-2xl shadow-lg border border-gray-700 w-full lg:w-1/2">
-                    <h2 className="text-2xl font-semibold mb-4 text-red-400 text-center">
-                        상대 캐릭터
-                    </h2>
-                    <div className="flex gap-4 flex-wrap justify-center">
-                        {opponentCharacters.length === 0 ? (
-                            <div className="text-center w-full py-10">
-                                <p className="text-gray-400 text-lg">
-                                    상대방 찾기 버튼을 눌러주세요.
-                                </p>
-                                {opponentCharacters === null ? null : (
-                                    <p className="text-red-300 mt-2 font-semibold">
-                                        매칭 가능한 상대 캐릭터가 없습니다.
-                                    </p>
-                                )}
-                            </div>
-                        ) : (
-                            opponentCharacters.map(char => (
+                <div className="flex flex-col lg:flex-row gap-10 w-full max-w-6xl justify-center">
+                    {/* 내 캐릭터 */}
+                    <div className="bg-gray-800/70 p-6 rounded-2xl shadow-lg border border-gray-700 w-full lg:w-1/2">
+                        <h2 className="text-2xl font-semibold mb-4 text-yellow-400 text-center">
+                            내 캐릭터
+                        </h2>
+                        <div className="flex gap-4 flex-wrap justify-center">
+                            {myCharacters.map(char => (
                                 <div
                                     key={char.characterId}
-                                    onClick={() => setSelectedEnemyChar(char)}
-                                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedEnemyChar?.characterId === char.characterId
-                                        ? "border-red-400 bg-red-500/10"
-                                        : "border-gray-700 hover:border-red-300/50"
+                                    onClick={() => setSelectedMyChar(char)}
+                                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedMyChar?.characterId === char.characterId
+                                        ? "border-yellow-400 bg-yellow-500/10"
+                                        : "border-gray-700 hover:border-yellow-300/50"
                                         }`}
                                 >
                                     <img
@@ -168,8 +122,51 @@ function PvpMatchPage() {
                                     />
                                     <div className="text-center text-l font-medium text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
                                 </div>
-                            ))
-                        )}
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 상대 캐릭터 */}
+                    <div className="bg-gray-800/70 p-6 rounded-2xl shadow-lg border border-gray-700 w-full lg:w-1/2">
+                        <h2 className="text-2xl font-semibold mb-4 text-red-400 text-center">
+                            상대 캐릭터
+                        </h2>
+                        <div className="flex gap-4 flex-wrap justify-center">
+                            {opponentCharacters.length === 0 ? (
+                                <div className="text-center w-full py-10">
+                                    <p className="text-gray-400 text-lg">
+                                        상대방 찾기 버튼을 눌러주세요.
+                                    </p>
+                                    {opponentCharacters === null ? null : (
+                                        <p className="text-red-300 mt-2 font-semibold">
+                                            매칭 가능한 상대 캐릭터가 없습니다.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                opponentCharacters.map(char => (
+                                    <div
+                                        key={char.characterId}
+                                        onClick={() => setSelectedEnemyChar(char)}
+                                        className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:scale-105 shadow-md ${selectedEnemyChar?.characterId === char.characterId
+                                            ? "border-red-400 bg-red-500/10"
+                                            : "border-gray-700 hover:border-red-300/50"
+                                            }`}
+                                    >
+                                        <img
+                                            src={
+                                                char.imageUrl?.startsWith("http")
+                                                    ? char.imageUrl
+                                                    : `/images/character/${char.imageId}.png`
+                                            }
+                                            alt={char.characterName}
+                                            className="w-24 h-24 object-contain mx-auto mb-2"
+                                        />
+                                        <div className="text-center text-l font-medium text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

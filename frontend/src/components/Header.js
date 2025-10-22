@@ -70,7 +70,7 @@ const Header = ({ onInfoClick }) => {
                 {/* 로고/사이트 이름 */}
                 <Link
                     to="/"
-                    className="flex items-center space-x-2" 
+                    className="flex items-center space-x-2"
                 >
                     <Gamepad2
                         className="w-8 h-8 text-yellow-400 transform -rotate-6"
@@ -78,7 +78,7 @@ const Header = ({ onInfoClick }) => {
                     <h1
                         className="text-3xl font-extrabold tracking-wider 
                    text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-sky-500 
-                   animate-float" 
+                   animate-float"
                         style={{
                             textDecoration: 'none',
                             textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
@@ -104,16 +104,16 @@ const Header = ({ onInfoClick }) => {
 
                 {/* 우측: i 버튼 + 사용자 영역 */}
                 <div className="flex items-center space-x-3">
-                    {/* i 버튼 */}
-                    <button
-                        type="button"
-                        onClick={() => onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-zinc-500 text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
-                        aria-label="도우미 열기"
-                        title="도우미"
-                    >
-                        <Info className="w-5 h-5" />
-                    </button>
+                    {/* AI 사용안내 버튼 */}
+                    <img
+                        src={process.env.PUBLIC_URL + "/images/InfoIcon.png"}
+                        alt="도우미 열기"
+                        onClick={() =>
+                            onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))
+                        }
+                        className="w-9 h-9 object-cover
+                        cursor-pointer hover:ring-yellow-400 hover:scale-105 transition duration-200"
+                    />
 
                     {/* 사용자 정보 및 로그아웃 */}
                     {isLoggedIn ? (

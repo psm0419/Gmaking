@@ -284,7 +284,7 @@ export default function ShopPage() {
 
           {/* 2. 부화기 5개 */}
           <ShopCard
-            title="🐣 부화기 패키지 (5개)"
+            title="부화기 패키지 (5개)"
             onClick={() => handleBuy(2, "부화기 패키지 (5개)")}
             className={loadingSku === 2 ? "opacity-60 cursor-wait" : ""}
           >
@@ -306,7 +306,7 @@ export default function ShopPage() {
 
           {/* 3. 부화기 15개 */}
           <ShopCard
-            title="💰 부화기 대용량 (15개)"
+            title="부화기 대용량 (15개)"
             onClick={() => handleBuy(3, "부화기 대용량 (15개)")}
             className={`relative overflow-hidden border-t-4 border-sky-500 ${
               loadingSku === 3 ? "opacity-60 cursor-wait" : ""
@@ -359,7 +359,7 @@ export default function ShopPage() {
             </div>
             <div>
               <h3 className="text-xl font-semibold text-zinc-700 mb-4 flex items-center">
-                ✨ 상품 사용 유의사항
+                상품 사용 유의사항
               </h3>
               <ul className="space-y-3 text-zinc-600 text-base">
                 <li className="flex items-start">
