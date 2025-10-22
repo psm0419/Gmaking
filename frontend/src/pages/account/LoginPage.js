@@ -66,7 +66,7 @@ const LoginPage = ({ onRegisterClick }) => {
                 style={{ backgroundImage: "url('/GmakingLogin2.png')" }}
             />
 
-            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="absolute inset-0 bg-black/2"></div>
 
             <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-gray-800/90 rounded-xl shadow-2xl backdrop-blur-sm">
                 <h1 className="text-3xl font-extrabold text-white text-center flex items-center justify-center">

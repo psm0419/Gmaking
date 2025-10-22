@@ -317,7 +317,7 @@ function PveBattlePage() {
                 <button
                     onClick={() => navigate("/")}
                     disabled={isBattle}
-                    className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500 disabled:bg-gray-400"
+                    className="bg-green-600 px-6 py-3 rounded-xl hover:bg-green-500 disabled:bg-gray-400"
                 >
                     홈으로
                 </button>
