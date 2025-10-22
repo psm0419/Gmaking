@@ -16,7 +16,7 @@ export async function generateCharacterPreview(imageFile, characterName, token, 
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('characterName', characterName);
-    
+
     // 유저 프롬프트가 있을 때
     if (userPrompt && userPrompt.trim() !== '') {
         formData.append('userPrompt', userPrompt);
@@ -64,7 +64,7 @@ export async function finalizeCharacter(characterData, token) { // 💡 인자 �
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(characterData), 
+        body: JSON.stringify(characterData),
     });
 
     if (!response.ok) {
@@ -72,5 +72,5 @@ export async function finalizeCharacter(characterData, token) { // 💡 인자 �
         throw new Error(`캐릭터 최종 확정 실패 (${response.status}): ${errorText.substring(0, 100)}...`);
     }
 
-    return await response.json(); 
+    return await response.json();
 }

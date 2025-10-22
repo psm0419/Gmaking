@@ -24,8 +24,8 @@ const LoginPage = ({ onRegisterClick }) => {
 
         const ok = await login(userId, userPassword);
 
-        if (ok) { 
-            navigate('/'); 
+        if (ok) {
+            navigate('/');
             return;
         }
 
@@ -38,7 +38,7 @@ const LoginPage = ({ onRegisterClick }) => {
     const renderSocialLoginButtons = () => (
         <div className="space-y-3 pt-6 border-t border-gray-700">
             <p className="text-center text-gray-400 text-sm">또는 소셜 계정으로 로그인</p>
-            
+
             {/* Google 로그인 버튼 */}
             <a href={GOOGLE_AUTH_URL} className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-gray-900 bg-white hover:bg-gray-100 transition duration-200 shadow-md">
                 <FaGoogle className="w-5 h-5 mr-3 text-red-600" />
@@ -61,7 +61,7 @@ const LoginPage = ({ onRegisterClick }) => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
-            <div 
+            <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: "url('/GmakingLogin2.png')" }}
             />
@@ -117,7 +117,7 @@ const LoginPage = ({ onRegisterClick }) => {
                 </form>
 
                 <div className="text-center pt-4">
-                    <Link 
+                    <Link
                         to="/register"
                         className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center justify-center w-full"
                     >

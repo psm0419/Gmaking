@@ -4,26 +4,26 @@ import { Upload, Wand2, RefreshCw, CheckCircle, AlertTriangle, Trophy } from 'lu
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { generateCharacterPreview, finalizeCharacter } from '../api/characterCreationApi'; 
+import { generateCharacterPreview, finalizeCharacter } from '../api/characterCreationApi';
 
 const CharacterCreationPage = () => {
     const navigate = useNavigate();
-    const { setCharacterCreated, setToken, token } = useAuth(); 
+    const { setCharacterCreated, setToken, token } = useAuth();
     const [imageFile, setImageFile] = useState(null);
     const [characterName, setCharacterName] = useState('');
 
     // 'pending', 'generating', 'preview', 'finalizing', 'completed', 'error'
-    const [status, setStatus] = useState('pending'); 
+    const [status, setStatus] = useState('pending');
     const [generatedImage, setGeneratedImage] = useState(null);
     const [predictedAnimal, setPredictedAnimal] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
 
     // 미리보기/재생성 횟수 (최대 3회)
-    const [previewCount, setPreviewCount] = useState(0); 
+    const [previewCount, setPreviewCount] = useState(0);
     // 사용자 추가 프롬프트
-    const [userPrompt, setUserPrompt] = useState(''); 
-    const [previewData, setPreviewData] = useState(null); 
-    
+    const [userPrompt, setUserPrompt] = useState('');
+    const [previewData, setPreviewData] = useState(null);
+
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -47,7 +47,7 @@ const CharacterCreationPage = () => {
             alert('이미지와 캐릭터 이름이 필요합니다.');
             return;
         }
-        
+
         // 미리보기 횟수 제한 체크 (3회 초과 시 재생성 불가)
         if (previewCount >= 3 && status === 'preview') {
             setErrorMessage('이미지 미리보기는 최대 3회만 가능합니다. 최종 확정해주세요.');
@@ -56,24 +56,24 @@ const CharacterCreationPage = () => {
 
         setStatus('generating');
         setErrorMessage('');
-        
+
         try {
             // generateCharacterPreview API 호출
             const response = await generateCharacterPreview(imageFile, characterName, token, userPrompt);
-            
+
             // 응답 데이터 임시 저장
             setPreviewData({
                 characterName: response.characterName,
                 imageUrl: response.imageUrl,
                 predictedAnimal: response.predictedAnimal
             });
-            
+
             // 응답으로 받은 이미지 URL로 미리보기 업데이트
-            setGeneratedImage(response.imageUrl); 
+            setGeneratedImage(response.imageUrl);
             setPredictedAnimal(response.predictedAnimal);
             setStatus('preview');
             setPreviewCount(prev => prev + 1); // 미리보기 횟수 증가
-            
+
         } catch (error) {
             console.error("캐릭터 생성 미리보기 중 오류:", error);
             setErrorMessage(error.message || '캐릭터 생성 미리보기 중 알 수 없는 오류가 발생했습니다.');
@@ -92,24 +92,24 @@ const CharacterCreationPage = () => {
         }
 
         // 로딩 상태
-        setStatus('finalizing'); 
+        setStatus('finalizing');
 
         try {
-            const finalCharacterData = { 
+            const finalCharacterData = {
                 characterName: characterName,
                 imageUrl: generatedImage,
-                predictedAnimal: predictedAnimal, 
+                predictedAnimal: predictedAnimal,
             };
 
             // 최종 확정 API 호출
-            const response = await finalizeCharacter(finalCharacterData, token); 
-            
+            const response = await finalizeCharacter(finalCharacterData, token);
+
             // Auth Context와 LocalStorage 업데이트
             // setCharacterCreated(response.imageUrl); 
-            
+
             // setToken useAuth에서 가져옴.
             if (response.newToken) {
-                setToken(response.newToken); // ❗ 이 부분이 setToken is not a function 오류의 원인이었습니다.
+                setToken(response.newToken); 
                 localStorage.setItem('gmaking_token', response.newToken);
             }
 
@@ -119,9 +119,9 @@ const CharacterCreationPage = () => {
 
         } catch (error) {
             console.error('캐릭터 최종 확정 중 오류:', error);
-            
+
             let displayMessage = '캐릭터 최종 확정 실패: 다시 시도해 주세요.';
-            
+
             if (error.message) {
                 if (error.message.includes('Duplicate entry')) {
                     displayMessage = `캐릭터 이름 '${characterName}'(이)가 이미 존재합니다. 다른 이름을 사용해주세요.`;
@@ -129,7 +129,7 @@ const CharacterCreationPage = () => {
                     displayMessage = error.message;
                 }
             }
-            
+
             setErrorMessage(displayMessage);
             setStatus('preview');
         }
@@ -149,20 +149,20 @@ const CharacterCreationPage = () => {
 
                     {/* 이미지 및 이름 입력 영역 */}
                     <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-8">
-                        
+
                         {/* 이미지 업로드 */}
                         <div className="flex-1">
                             <label className="block text-sm font-medium mb-2">1. 기반 이미지 업로드</label>
-                            <div 
+                            <div
                                 className={`h-48 flex flex-col items-center justify-center border-4 border-dashed rounded-xl transition duration-300 cursor-pointer 
                                     ${imageFile ? 'border-green-500 bg-gray-700' : 'border-gray-600 hover:border-blue-500 hover:bg-gray-700'}`}
                                 onClick={() => document.getElementById('image-upload').click()}
                             >
                                 {/* generatedImage는 GCS URL 또는 파일 리더 URL (로컬 미리보기) */}
                                 {generatedImage && status !== 'error' ? (
-                                    <img 
-                                        src={generatedImage} 
-                                        alt="미리보기 이미지" 
+                                    <img
+                                        src={generatedImage}
+                                        alt="미리보기 이미지"
                                         className="max-h-full max-w-full object-contain p-2 rounded-xl"
                                     />
                                 ) : (
@@ -171,12 +171,12 @@ const CharacterCreationPage = () => {
                                         <p className="text-gray-400 text-center">클릭하여 곰, 독수리, 펭귄, 거북이 이미지 업로드 (jpg, png)</p>
                                     </>
                                 )}
-                                <input 
-                                    type="file" 
-                                    id="image-upload" 
-                                    accept="image/png, image/jpeg" 
-                                    onChange={handleFileChange} 
-                                    className="hidden" 
+                                <input
+                                    type="file"
+                                    id="image-upload"
+                                    accept="image/png, image/jpeg"
+                                    onChange={handleFileChange}
+                                    className="hidden"
                                     disabled={status === 'generating' || status === 'finalizing' || status === 'completed'}
                                 />
                             </div>
@@ -218,10 +218,10 @@ const CharacterCreationPage = () => {
                                 <p className="text-red-400 text-sm">{errorMessage}</p>
                             </div>
                         )}
-                        
+
                         {/* 미리보기 / 재생성 / 최종 확정 버튼 */}
                         <div className="flex flex-col space-y-4">
-                            
+
                             {/* 미리보기 / 재생성 버튼 */}
                             {(status === 'pending' || status === 'error' || status === 'preview') && status !== 'completed' && (
                                 <button
@@ -279,7 +279,7 @@ const CharacterCreationPage = () => {
                                 재생성 기회를 모두 사용했습니다. 이 캐릭터로 **최종 확정**해주세요.
                             </p>
                         )}
-                        
+
                         {/* 캐릭터 생성 완료 메시지 */}
                         {status === 'completed' && (
                             <div className="flex flex-col items-center justify-center space-y-4">
@@ -288,7 +288,7 @@ const CharacterCreationPage = () => {
                                 <p className="text-lg text-gray-300">{characterName}와 함께 모험을 시작해 보세요.</p>
                                 <button
                                     type="button"
-                                    onClick={handleGoToGame }
+                                    onClick={handleGoToGame}
                                     className="w-full sm:w-2/3 lg:w-1/2 mx-auto py-3 text-xl font-bold rounded-lg shadow-lg transition duration-300 flex items-center justify-center bg-green-500 text-white hover:bg-green-600 transform hover:scale-[1.02]"
                                 >
                                     <Trophy className="w-6 h-6 mr-3" />

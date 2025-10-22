@@ -36,10 +36,10 @@ export const AuthProvider = ({ children }) => {
         const storedImage = localStorage.getItem('characterImageUrl');
         const storedIncubatorCountRaw = localStorage.getItem('incubatorCount');
         const storedIncubatorCount =
-          Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0;
+            Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0;
         const storedIsAdFree = localStorage.getItem('isAdFree');
         const isAdFreeFromStorage =
-          storedIsAdFree === '1' || storedIsAdFree === 'true';
+            storedIsAdFree === '1' || storedIsAdFree === 'true';
 
         if (!storedToken) {
             setIsLoading(false);
@@ -69,9 +69,9 @@ export const AuthProvider = ({ children }) => {
                     userPayload.hasCharacter === 'true' ||
                     storedHasCharacter,
                 characterImageUrl:
-                  (storedImage && storedImage.trim() !== '')
-                      ? storedImage
-                      : (userPayload.characterImageUrl || null),
+                    (storedImage && storedImage.trim() !== '')
+                        ? storedImage
+                        : (userPayload.characterImageUrl || null),
                 incubatorCount: (Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0),
                 isAdFree:
                     userPayload.isAdFree === true ||
@@ -123,9 +123,11 @@ export const AuthProvider = ({ children }) => {
                 setIsAdFree(userWithCharStatus.isAdFree);
 
                 localStorage.setItem('gmaking_token', receivedToken);
+
                 if (userWithCharStatus.characterImageUrl && userWithCharStatus.characterImageUrl.trim() !== '') {
-                  localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl.trim());
+                    localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl.trim());
                 }
+                
                 localStorage.setItem('has_character', userWithCharStatus.hasCharacter ? 'true' : 'false');
                 localStorage.setItem('incubatorCount', String(userWithCharStatus.incubatorCount ?? 0));
                 localStorage.setItem('isAdFree', userWithCharStatus.isAdFree ? '1' : '0');
@@ -183,14 +185,12 @@ export const AuthProvider = ({ children }) => {
         const imageUrl = userInfo.characterImageUrl || null;
 
         const incubatorCount =
-          userInfo?.incubatorCount != null && !Number.isNaN(Number(userInfo.incubatorCount))
-            ? Number(userInfo.incubatorCount)
-            : (Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0);
+            userInfo?.incubatorCount != null && !Number.isNaN(Number(userInfo.incubatorCount))
+                ? Number(userInfo.incubatorCount)
+                : (Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0);
 
         const isUserAdFree =
-          userInfo?.isAdFree === true || userInfo?.isAdFree === 'true';
-
-
+            userInfo?.isAdFree === true || userInfo?.isAdFree === 'true';
 
         const userWithCharStatus = {
             ...userInfo,
@@ -209,9 +209,11 @@ export const AuthProvider = ({ children }) => {
         setIsAdFree(userWithCharStatus.isAdFree);
 
         localStorage.setItem('gmaking_token', receivedToken);
+
         if (imageUrl && String(imageUrl).trim() !== '') {
             localStorage.setItem('characterImageUrl', String(imageUrl).trim());
         }
+
         localStorage.setItem('has_character', isUserWithCharacter ? 'true' : 'false');
         localStorage.setItem('incubatorCount', String(incubatorCount ?? 0));
         localStorage.setItem('isAdFree', isUserAdFree ? '1' : '0');
@@ -247,7 +249,7 @@ export const AuthProvider = ({ children }) => {
     // 대표 캐릭터 변경 후 이미지 URL 갱신
     const updateRepresentativeCharacter = useCallback((imageUrl, characterId) => {
         if (imageUrl && String(imageUrl).trim() !== '') {
-          localStorage.setItem('characterImageUrl', String(imageUrl).trim());
+            localStorage.setItem('characterImageUrl', String(imageUrl).trim());
         }
 
         setCharacterImageUrl(imageUrl);
@@ -266,69 +268,69 @@ export const AuthProvider = ({ children }) => {
 
     // 부화권 구매 후 부화 패키지 개수 갱신
     const updateIncubatorCount = useCallback((opts) => {
-      setIncubatorCount(prev => {
-        let next = 0;
-        if (opts?.set != null) {
-          next = Number(opts.set);
-        } else if (opts?.add != null) {
-          next = Number(prev ?? 0) + Number(opts.add);
-        } else {
-          next = Number(prev ?? 0);
-        }
-        if (!Number.isFinite(next) || next < 0) next = 0;
+        setIncubatorCount(prev => {
+            let next = 0;
+            if (opts?.set != null) {
+                next = Number(opts.set);
+            } else if (opts?.add != null) {
+                next = Number(prev ?? 0) + Number(opts.add);
+            } else {
+                next = Number(prev ?? 0);
+            }
+            if (!Number.isFinite(next) || next < 0) next = 0;
 
-        // user 상태 동기화
-        setUser(prevUser => prevUser ? { ...prevUser, incubatorCount: next } : prevUser);
+            // user 상태 동기화
+            setUser(prevUser => prevUser ? { ...prevUser, incubatorCount: next } : prevUser);
 
-        // 로컬스토리지 반영
-        localStorage.setItem('incubatorCount', String(next));
-        return next;
-      });
+            // 로컬스토리지 반영
+            localStorage.setItem('incubatorCount', String(next));
+            return next;
+        });
     }, []);
 
     // 광고패스 갱신: on/off
     const updateAdFree = useCallback(({ enabled } = {}) => {
-      const bool =
-        enabled === true || enabled === 'true' || enabled === 1 || enabled === '1';
+        const bool =
+            enabled === true || enabled === 'true' || enabled === 1 || enabled === '1';
 
-      setIsAdFree(bool);
-      setUser(prevUser => prevUser ? { ...prevUser, isAdFree: bool } : prevUser);
-      localStorage.setItem('isAdFree', bool ? '1' : '0');
+        setIsAdFree(bool);
+        setUser(prevUser => prevUser ? { ...prevUser, isAdFree: bool } : prevUser);
+        localStorage.setItem('isAdFree', bool ? '1' : '0');
     }, []);
 
     const applyNewToken = useCallback(
         (newToken) => {
-          if (!newToken) return;
-          localStorage.setItem('gmaking_token', newToken);
-          setToken(newToken);
+            if (!newToken) return;
+            localStorage.setItem('gmaking_token', newToken);
+            setToken(newToken);
 
-          try {
-            const p = jwtDecode(newToken);
+            try {
+                const p = jwtDecode(newToken);
 
-            if (p?.incubatorCount != null) {
-              updateIncubatorCount({ set: Number(p.incubatorCount) });
+                if (p?.incubatorCount != null) {
+                    updateIncubatorCount({ set: Number(p.incubatorCount) });
+                }
+                if (typeof p?.isAdFree !== 'undefined') {
+                    updateAdFree({ enabled: p.isAdFree });
+                }
+
+                setUser((prev) =>
+                    prev
+                        ? {
+                            ...prev,
+                            incubatorCount:
+                                p?.incubatorCount != null ? Number(p.incubatorCount) : prev.incubatorCount,
+                            isAdFree:
+                                typeof p?.isAdFree !== 'undefined' ? !!p.isAdFree : prev.isAdFree,
+                        }
+                        : prev
+                );
+            } catch (e) {
+                console.warn('[applyNewToken] decode failed', e);
             }
-            if (typeof p?.isAdFree !== 'undefined') {
-              updateAdFree({ enabled: p.isAdFree });
-            }
-
-            setUser((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    incubatorCount:
-                      p?.incubatorCount != null ? Number(p.incubatorCount) : prev.incubatorCount,
-                    isAdFree:
-                      typeof p?.isAdFree !== 'undefined' ? !!p.isAdFree : prev.isAdFree,
-                  }
-                : prev
-            );
-          } catch (e) {
-            console.warn('[applyNewToken] decode failed', e);
-          }
         },
         [updateIncubatorCount, updateAdFree]
-      );
+    );
 
     return (
         <AuthContext.Provider value={{

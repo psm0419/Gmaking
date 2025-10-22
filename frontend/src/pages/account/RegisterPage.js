@@ -17,7 +17,7 @@ const RegisterPage = () => {
     });
 
     // 플로우 상태 (1: 회원가입 폼, 2: 이메일 인증 폼)
-    const [step, setStep] = useState(1); 
+    const [step, setStep] = useState(1);
     const [emailCode, setEmailCode] = useState('');
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +43,7 @@ const RegisterPage = () => {
         try {
             // API 호출
             const response = await registerApi(formData);
-            
+
             // 회원가입 성공 및 이메일 발송 완료
             if (response.data.success) {
                 setMessage(response.data.message + " 이메일로 발송된 6자리 인증 코드를 확인해주세요.");
@@ -60,7 +60,7 @@ const RegisterPage = () => {
             setIsSubmitting(false);
         }
     };
-    
+
     // 이메일 인증 코드 확인 요청 처리
     const handleVerifyCode = async (e) => {
         e.preventDefault();
@@ -95,46 +95,46 @@ const RegisterPage = () => {
             {/* 아이디 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userId">아이디</label>
-                <input id="userId" type="text" onChange={handleChange} value={formData.userId} required 
+                <input id="userId" type="text" onChange={handleChange} value={formData.userId} required
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
                 <p className="mt-1 text-xs text-yellow-400">아이디는 4자에서 20자 사이여야 합니다.</p>
             </div>
-            
+
             {/* 이메일 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userEmail">이메일</label>
-                <input id="userEmail" type="email" onChange={handleChange} value={formData.userEmail} required 
+                <input id="userEmail" type="email" onChange={handleChange} value={formData.userEmail} required
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
             </div>
-            
+
             {/* 이름, 닉네임, 비밀번호... */}
-            
+
             {/* 비밀번호 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userPassword">비밀번호</label>
-                <input id="userPassword" type="password" onChange={handleChange} value={formData.userPassword} required 
+                <input id="userPassword" type="password" onChange={handleChange} value={formData.userPassword} required
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
                 <p className="mt-1 text-xs text-yellow-400">비밀번호는 최소 8자 이상이어야 합니다.</p>
             </div>
-            
+
             {/* 비밀번호 확인 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="confirmPassword">비밀번호 확인</label>
-                <input id="confirmPassword" type="password" onChange={handleChange} value={formData.confirmPassword} required 
+                <input id="confirmPassword" type="password" onChange={handleChange} value={formData.confirmPassword} required
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
             </div>
-            
+
             {/* 이름 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userName">이름</label>
-                <input id="userName" type="text" onChange={handleChange} value={formData.userName} required 
+                <input id="userName" type="text" onChange={handleChange} value={formData.userName} required
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
             </div>
-            
+
             {/* 닉네임 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="userNickname">닉네임</label>
-                <input id="userNickname" type="text" onChange={handleChange} value={formData.userNickname} required 
+                <input id="userNickname" type="text" onChange={handleChange} value={formData.userNickname} required
                     className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" />
                 <p className="mt-1 text-xs text-yellow-400">닉네임은 2자에서 10자 사이여야 합니다.</p>
             </div>
@@ -156,7 +156,7 @@ const RegisterPage = () => {
             <div className="text-center text-sm text-gray-400">
                 <p>{formData.userEmail}로 발송된 6자리 인증 코드를 입력해주세요.</p>
             </div>
-            
+
             {/* 인증 코드 입력 */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="emailCode">인증 코드</label>
@@ -191,12 +191,12 @@ const RegisterPage = () => {
                         {message}
                     </div>
                 )}
-                
+
                 {step === 1 ? renderRegisterForm() : renderVerifyForm()}
 
                 {/* 하단 로그인 버튼 */}
                 <div className="text-center pt-4">
-                    <button 
+                    <button
                         onClick={() => navigate('/login')}
                         className="text-sm text-gray-400 hover:text-gray-300 flex items-center justify-center w-full"
                     >
