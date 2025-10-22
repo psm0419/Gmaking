@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Gamepad2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle, FaComment, FaLeaf } from 'react-icons/fa';
@@ -69,8 +69,20 @@ const LoginPage = ({ onRegisterClick }) => {
             <div className="absolute inset-0 bg-black/2"></div>
 
             <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-gray-800/90 rounded-xl shadow-2xl backdrop-blur-sm">
+
+                <div className="text-center pb-4">
+                    <h2 className="text-5xl font-extrabold text-white tracking-wider leading-tight flex items-center justify-center space-x-2">
+                        <Gamepad2 className="w-10 h-10 text-yellow-400 transform -rotate-12" />
+                        <span 
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-yellow-700 animate-float"
+                            style={{ textShadow: '0 4px 6px rgba(0, 0, 0, 0.4)' }}
+                        >
+                            겜만중
+                        </span>
+                    </h2>
+                </div>
+
                 <h1 className="text-3xl font-extrabold text-white text-center flex items-center justify-center">
-                    <LogIn className="w-8 h-8 mr-3 text-yellow-400" />
                     로그인
                 </h1>
 
