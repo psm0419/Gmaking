@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll } from 'lucide-react';
+import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
@@ -18,7 +18,8 @@ const Header = () => {
         { name: '상점', icon: ShoppingCart, link: '/shop' },
         { name: '랭킹', icon: Award, link: '/ranking' },
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
-        { name: '전투', icon: Swords, link: '/battlemode' },
+        { name: '캐릭터 뽑기', icon: Egg, link: '/create-character' },
+        { name: '게임', icon: Swords, link: '/battlemode' },
         { name: '로그', icon: Scroll, link: '/logs' },        
     ];
 
