@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.community.dao.PostCharacterImageDAO">
+    <select id="selectUserCharacterImage" resultType="com.project.gmaking.community.vo.PostCharacterImageVO">
+        SELECT
+        tu.USER_NICKNAME AS userNickname,
+        ti.IMAGE_URL AS characterImageUrl
+        FROM
+        TB_USER tu
+        LEFT JOIN
+        TB_CHARACTER tc ON tu.CHARACTER_ID = tc.CHARACTER_ID
+        LEFT JOIN
+        TB_IMAGE ti ON tc.IMAGE_ID = ti.IMAGE_ID
+        WHERE
+        tu.USER_ID = #{userId}
+    </select>
+</mapper>

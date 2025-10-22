@@ -2,11 +2,9 @@ package com.project.gmaking.community.service;
 
 import com.project.gmaking.community.dao.PostDAO;
 import com.project.gmaking.community.dao.PostLikeDAO;
+import com.project.gmaking.community.dao.PostCharacterImageDAO;
 import com.project.gmaking.community.vo.*;
-import com.project.gmaking.myPage.dao.MyPageDAO;
-import com.project.gmaking.myPage.vo.MyPageProfileVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PostService {
     private final PostDAO postDAO;
-    private final MyPageDAO myPageDAO;
+    private final PostCharacterImageDAO postCharacterImageDAO;
     private final PostLikeDAO postLikeDAO;
 
     // 게시글 등록 (수정 없음)
@@ -40,25 +38,6 @@ public class PostService {
         // 2. PostDetailDTO 객체 생성
         PostDetailDTO detailDTO = new PostDetailDTO(postVO);
 
-        // 3. 작성자 닉네임 조회 및 설정
-        String userId = postVO.getUserId();
-
-        // 닉네임 조회 로직
-        String userNickname = userId; // 닉네임이 없을 경우 userId를 기본값으로 설정
-
-        try{
-            MyPageProfileVO profileVO = myPageDAO.selectProfile(userId);
-
-            if (profileVO != null && profileVO.getNickname() != null){
-                userNickname = profileVO.getNickname();
-            }
-        } catch (Exception e){
-            System.err.println("사용자 닉네임 조회 실패: "+userId);
-        }
-
-        // DTO에 닉네임 설정
-        detailDTO.setUserNickname(userNickname);
-
         // 좋아요 상태 확인 및 DTO에 설정
         if(currentUserId != null){
             boolean isLiked = postLikeDAO.checkPostLikeStatus(currentUserId, postId) > 0;
@@ -68,6 +47,13 @@ public class PostService {
         }
 
         return detailDTO;
+    }
+
+    // 닉네임 클릭 모달을 위한 사용자 프로필 요약 정보 조회
+    @Transactional(readOnly = true)
+    public PostCharacterImageVO getUserProfileSummary(String userId){
+        // PostCharacterImageDAO를 사용하여 DB에서 닉네임과 대표 캐릭터 이미지 URL을 조회
+        return postCharacterImageDAO.selectUserCharacterImage(userId);
     }
 
     // 조회수 증가 매서드
@@ -93,25 +79,6 @@ public class PostService {
 
         // 페이징된 목록 데이터 조회
         List<PostVO> list = postDAO.selectPostList(postPagingVO);
-
-        // 목록의 각 게시글에 대해 닉네임 조회 및 설정
-        for (PostVO post : list) {
-            String userId = post.getUserId();
-            String userNickname = userId; // 닉네임이 없을 경우를 대비한 기본값
-
-            try{
-                // MyPageDAO의 selectProfile(userId)를 호출하여 닉네임 조회
-                MyPageProfileVO profileVO = myPageDAO.selectProfile(userId);
-
-                if(profileVO != null && profileVO.getNickname() != null){
-                    userNickname = profileVO.getNickname();
-                }
-            } catch (Exception e){
-                System.err.println("게시글 목록 - 사용자 닉네임 조회 실패: " + userId + " 오류: " + e.getMessage());
-            }
-            // PostVO에 닉네임 설정
-            post.setUserNickname(userNickname);
-        }
 
         // 최종 DTO 구성 및 반환
         return new PostListDTO(list, postPagingVO);

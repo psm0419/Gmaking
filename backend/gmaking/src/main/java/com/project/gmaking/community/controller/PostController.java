@@ -1,11 +1,11 @@
 package com.project.gmaking.community.controller;
 
 import com.project.gmaking.community.service.PostService;
-// import com.project.gmaking.community.service.PostFileUploadsService; // 👈 제거
 import com.project.gmaking.community.vo.PostVO;
 import com.project.gmaking.community.vo.PostPagingVO;
 import com.project.gmaking.community.vo.PostDetailDTO;
 import com.project.gmaking.community.vo.PostListDTO;
+import com.project.gmaking.community.vo.PostCharacterImageVO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -68,6 +68,30 @@ public class PostController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(detail, HttpStatus.OK);
+    }
+
+    // 닉네임 클릭 시 모달에 필요한 대표 캐릭터 정보 조회 API
+    @GetMapping("/users/{userId}/profile-summary")
+    public ResponseEntity<PostCharacterImageVO> getUserProfileSummary(
+            @PathVariable String userId
+    ) {
+        if (userId == null || userId.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            // PostService의 메서드 호출
+            PostCharacterImageVO summary = postService.getUserProfileSummary(userId);
+
+            if (summary == null || summary.getUserNickname() == null) {
+                // 사용자 또는 프로필 정보를 찾을 수 없을 때
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(summary, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("사용자 프로필 요약 조회 중 오류 발생: " + userId + " 오류: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/view/{postId}")

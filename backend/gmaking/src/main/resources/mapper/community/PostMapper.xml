@@ -6,7 +6,7 @@
         <result property="title" column="TITLE" />
         <result property="content" column="CONTENT" />
         <result property="userId" column="USER_ID" />
-        <result property="categoryCode" column="CATEGORY_CODE" />
+        <result property="userNickname" column="USER_NICKNAME" /> <result property="categoryCode" column="CATEGORY_CODE" />
         <result property="viewCount" column="VIEW_COUNT" />
         <result property="likeCount" column="LIKE_COUNT" />
         <result property="isDeleted" column="IS_DELETED" />
@@ -56,24 +56,25 @@
 
     <select id="selectPostById" resultMap="postResultMap">
         SELECT
-            p.POST_ID,
-            p.TITLE,
-            p.CONTENT,
-            p.USER_ID,
-            p.CREATED_DATE,
-            p.UPDATED_DATE,
-            p.CATEGORY_CODE,
-            p.VIEW_COUNT,
-            (
-                SELECT COUNT(l.POST_ID)
-                FROM TB_COMMUNITY_LIKE l
-                WHERE l.POST_ID = p.POST_ID
-            ) AS LIKE_COUNT,
-            p.IS_DELETED,
-            p.CREATED_BY,
-            p.UPDATED_BY
+        p.POST_ID,
+        p.TITLE,
+        p.CONTENT,
+        p.USER_ID,
+        p.CREATED_DATE,
+        p.UPDATED_DATE,
+        p.CATEGORY_CODE,
+        p.VIEW_COUNT,
+
+        u.USER_NICKNAME,  (
+        SELECT COUNT(l.POST_ID)
+        FROM TB_COMMUNITY_LIKE l
+        WHERE l.POST_ID = p.POST_ID
+        ) AS LIKE_COUNT,
+        p.IS_DELETED,
+        p.CREATED_BY,
+        p.UPDATED_BY
         FROM TB_COMMUNITY_POST p
-        WHERE p.POST_ID = #{postId}
+        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID  WHERE p.POST_ID = #{postId}
     </select>
 
     <delete id="deletePost">
@@ -83,26 +84,27 @@
 
     <select id="selectPostList" resultMap="postResultMap">
         SELECT
-            p.POST_ID,
-            p.TITLE,
-            p.USER_ID,
-            p.CREATED_DATE,
-            p.CONTENT,
-            p.UPDATED_DATE,
-            p.CATEGORY_CODE,
-            p.VIEW_COUNT,
-            (
-                SELECT COUNT(l.POST_ID)
-                FROM TB_COMMUNITY_LIKE l
-                WHERE l.POST_ID = p.POST_ID
-            ) AS LIKE_COUNT,
-            p.IS_DELETED,
-            p.CREATED_BY,
-            p.UPDATED_BY
+        p.POST_ID,
+        p.TITLE,
+        p.USER_ID,
+        p.CREATED_DATE,
+        p.CONTENT,
+        p.UPDATED_DATE,
+        p.CATEGORY_CODE,
+        p.VIEW_COUNT,
+
+        u.USER_NICKNAME,  (
+        SELECT COUNT(l.POST_ID)
+        FROM TB_COMMUNITY_LIKE l
+        WHERE l.POST_ID = p.POST_ID
+        ) AS LIKE_COUNT,
+        p.IS_DELETED,
+        p.CREATED_BY,
+        p.UPDATED_BY
         FROM TB_COMMUNITY_POST p
-        <where>
-            <include refid="criteria"/>
-        </where>
+        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID  <where>
+        <include refid="criteria"/>
+    </where>
         ORDER BY p.POST_ID DESC
         LIMIT #{amount} OFFSET #{skip}
     </select>
