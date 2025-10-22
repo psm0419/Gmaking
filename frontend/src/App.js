@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useAuth } from './context/AuthContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/account/LoginPage';
@@ -30,11 +30,13 @@ import ReactionGame from './pages/ReactionGame';
 import MiniGameList from './pages/MiniGameList';
 import BattleModeSelectPage from './pages/BattleModeSelectPage';
 import MemoryGame from './pages/MemoryGame';
-
+import CharacterAssistant from './components/CharacterAssistant';
+import React, { useState, useEffect } from 'react';
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
-    const { isLoggedIn, isLoading } = useAuth(); 
+    const { isLoggedIn, isLoading } = useAuth();
+
     
     // AuthContext가 토큰 검증 중이라면 로딩 화면을 표시
     if (isLoading) {
@@ -56,6 +58,23 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
     const { isLoading } = useAuth();
+
+    const [assistantOpen, setAssistantOpen] = useState(false);
+
+    useEffect(() => {
+        const onToggle = () => setAssistantOpen(v => !v);
+        const onOpen   = () => setAssistantOpen(true);
+        const onClose  = () => setAssistantOpen(false);
+
+        window.addEventListener('assistant:toggle', onToggle);
+        window.addEventListener('assistant:open', onOpen);
+        window.addEventListener('assistant:close', onClose);
+        return () => {
+          window.removeEventListener('assistant:toggle', onToggle);
+          window.removeEventListener('assistant:open', onOpen);
+          window.removeEventListener('assistant:close', onClose);
+        };
+      }, []);
 
     if (isLoading) {
         return (
@@ -109,7 +128,32 @@ function App() {
                 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />  
-            </Routes>     
+            </Routes>
+
+            {assistantOpen && (
+              <CharacterAssistant
+
+                introOnMount={true}
+                playIntroOnEveryOpen={false}
+                introImages={[
+                  "/images/assistant/intro1.png",
+                  "/images/assistant/intro2.png",
+                  "/images/assistant/intro3.png",
+                ]}
+                introFrameMs={120}
+                images={[
+                    "/images/assistant/idle1.png",
+                    "/images/assistant/idle2.png",
+                    "/images/assistant/idle3.png",
+                    "/images/assistant/idle4.png",
+                  ]}
+                frameMs={350}
+                name="겜만중 도우미"
+                options={["오늘의 퀘스트","PVP 입장","상점 열기"]}
+              />
+            )}
+
+
         </Router>
     );
 }

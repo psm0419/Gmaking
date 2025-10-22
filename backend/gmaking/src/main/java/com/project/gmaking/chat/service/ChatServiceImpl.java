@@ -61,7 +61,7 @@ public class ChatServiceImpl implements ChatService {
 
         try {
             try {
-                pipeline.maybeSummarizeAndExtract(convId, null, userId, characterId, "runtime", true);
+                pipeline.maybeSummarizeAndExtract(convId, null, userId, characterId, "threshold", false);
             } catch (Exception e) {
                 log.warn("[SummaryPipeline] runtime force failed convId={} user={} charId={}", convId, userId, characterId, e);
             }

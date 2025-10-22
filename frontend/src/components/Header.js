@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll } from 'lucide-react';
+import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Header = () => {
+const Header = ({onInfoClick}) => {
     // isLoggedIn 상태를 추가로 가져옵니다.
     const { user, logout, isLoggedIn, isLoading} = useAuth();
     const navigate = useNavigate();
@@ -76,6 +76,19 @@ const Header = () => {
                     ))}
                 </nav>
 
+                 {/* 우측: i 버튼 + 사용자 영역 */}
+                 <div className="flex items-center space-x-3">
+                   {/* i 버튼 */}
+                   <button
+                     type="button"
+                     onClick={() => onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))}
+                     className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-zinc-500 text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
+                     aria-label="도우미 열기"
+                     title="도우미"
+                   >
+                     <Info className="w-5 h-5" />
+                   </button>
+
                 {/* 사용자 정보 및 로그아웃 */}
                 {isLoggedIn ? (
                     <div className="flex items-center space-x-4">
@@ -103,6 +116,7 @@ const Header = () => {
                         로그인
                     </Link>
                 )}
+              </div>
             </div>
         </header>
     );
