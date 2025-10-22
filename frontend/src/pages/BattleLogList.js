@@ -57,7 +57,9 @@ function BattleLogList() {
 
     // 필터링: 타입 + 검색어
     const filteredLogs = battleLogs
-        .filter(log => typeFilter === "ALL" || log.battleType === typeFilter)
+        .filter(log =>
+            typeFilter === "ALL" || log.battleType.toUpperCase() === typeFilter.toUpperCase()
+        )
         .filter(log => {
             const lower = searchTerm.toLowerCase();
             // 내 캐릭터 이름, 상대 이름 모두 검색 대상에 포함
@@ -66,13 +68,16 @@ function BattleLogList() {
                 (log.opponentName && log.opponentName.toLowerCase().includes(lower))
             );
         });
+    useEffect(() => {
+        console.log("현재 필터:", typeFilter);
+    }, [typeFilter]);
 
-    return (        
+    return (
         <div className="h-screen flex flex-col bg-gray-900 font-sans">
             <Header />
 
             {/* 상단 고정 영역 */}
-            <div className="w-full max-w-4xl mx-auto p-6 flex flex-col gap-4">                
+            <div className="w-full max-w-4xl mx-auto p-6 flex flex-col gap-4">
                 <h2 className="text-3xl font-bold text-center border-b pb-3 text-white">
                     전투 기록
                 </h2>
@@ -82,7 +87,7 @@ function BattleLogList() {
                     {["ALL", "PVP", "PVE"].map(type => (
                         <button
                             key={type}
-                            onClick={() => setTypeFilter(type)}                            
+                            onClick={() => setTypeFilter(type)}
                             className={`px-5 py-2 rounded-xl font-medium transition duration-200 shadow-md
                                 ${typeFilter === type
                                     ? "bg-blue-600 text-white shadow-blue-500/50"
@@ -94,7 +99,7 @@ function BattleLogList() {
                     ))}
                 </div>
 
-                {/* 검색창 */}                
+                {/* 검색창 */}
                 <input
                     type="text"
                     placeholder="캐릭터 이름 검색..."
@@ -114,9 +119,10 @@ function BattleLogList() {
                     </p>
                 ) : (
                     <ul className="space-y-4">
-                        {filteredLogs.map((log) => {
+                        {filteredLogs.map((log, index) => {
                             const isWin = log.isWin === "Y";
-                            const isAttack = myCharacterIds.includes(log.characterId);
+                            const isPVE = log.battleType?.toUpperCase() === "PVE";
+                            const isAttack = isPVE ? true : myCharacterIds.includes(log.characterId);
                             const roleLabel = isAttack ? "공격" : "방어";
 
                             const myCharName = isAttack ? log.characterName : log.opponentName;
@@ -124,8 +130,8 @@ function BattleLogList() {
 
                             return (
                                 <li
-                                    key={log.battleId}
-                                    onClick={() => handleClickLog(log.battleId)}                                    
+                                    key={`${log.battleId}-${index}`}
+                                    onClick={() => handleClickLog(log.battleId)}
                                     className={`cursor-pointer p-4 rounded-xl border transition-all duration-200 
                             hover:shadow-xl hover:scale-[1.01] shadow-lg
                             ${isWin
@@ -140,7 +146,7 @@ function BattleLogList() {
                                         <span className={`font-bold ${isWin ? "text-green-400" : "text-red-400"}`}>
                                             {isWin ? "승리" : "패배"}
                                         </span>
-                                    </div>                                    
+                                    </div>
                                     <p className="text-gray-400 text-sm mt-1">
                                         {log.createdDate}
                                     </p>

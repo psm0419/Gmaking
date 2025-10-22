@@ -73,7 +73,7 @@ const MapSelection = () => {
 
     return (
         <div><Header />
-            <div className="bg-gray-900 min-h-screen text-white p-5">
+            <div className="bg-gray-900 min-h-[calc(100vh-60px)] text-white p-5">
                 {/* 캐릭터 선택 영역 */}
                 <div className="mb-5 text-center">
                     <h2 className="text-2xl font-bold mb-4">내 캐릭터 선택</h2>

@@ -27,6 +27,7 @@ public class ChatServiceImpl implements ChatService {
     private final ConversationDAO conversationDAO;
     private final CallingNameExtractor callingNameExtractor;
     private final ConversationSummaryService conversationSummaryService;
+    private final ConversationSummarizePipelineService pipeline;
 
 
     @Override
@@ -57,6 +58,16 @@ public class ChatServiceImpl implements ChatService {
                 .createdBy(userId)
                 .updatedBy(userId)
                 .build());
+
+        try {
+            try {
+                pipeline.maybeSummarizeAndExtract(convId, null, userId, characterId, "threshold", false);
+            } catch (Exception e) {
+                log.warn("[SummaryPipeline] runtime force failed convId={} user={} charId={}", convId, userId, characterId, e);
+            }
+        } catch (Exception e) {
+            log.warn("[SummaryPipeline] runtime force failed convId={} user={} charId={}", convId, userId, characterId, e);
+        }
 
         // 첫만남 플래그 해제
         ConversationVO conv = conversationDAO.selectConversationByUserAndCharacter(userId, characterId);
