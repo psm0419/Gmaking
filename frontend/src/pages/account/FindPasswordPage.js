@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Mail, CheckCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { findPasswordSendCodeApi, verifyEmailApi, changePasswordApi } from '../../api/authApi';
+import { findPasswordSendCodeApi, verifyEmailApi, changePasswordApi } from '../../api/auth/authApi';
 
 const FindPasswordPage = () => {
     const navigate = useNavigate();

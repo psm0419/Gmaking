@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { loginApi, withdrawUserApi, withdrawSocialUserApi } from '../api/authApi';
+import { loginApi, withdrawUserApi, withdrawSocialUserApi } from '../api/auth/authApi';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }) => {
                 if (userWithCharStatus.characterImageUrl && userWithCharStatus.characterImageUrl.trim() !== '') {
                     localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl.trim());
                 }
-                
+
                 localStorage.setItem('has_character', userWithCharStatus.hasCharacter ? 'true' : 'false');
                 localStorage.setItem('incubatorCount', String(userWithCharStatus.incubatorCount ?? 0));
                 localStorage.setItem('isAdFree', userWithCharStatus.isAdFree ? '1' : '0');

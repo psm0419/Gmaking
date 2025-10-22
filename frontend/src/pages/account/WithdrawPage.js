@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { findPasswordSendCodeApi, verifyEmailApi } from '../../api/authApi';
+import { findPasswordSendCodeApi, verifyEmailApi } from '../../api/auth/authApi';
 import { Mail, Key, ShieldOff } from 'lucide-react';
 
 const WithdrawPage = () => {
