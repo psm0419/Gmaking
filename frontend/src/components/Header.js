@@ -16,10 +16,10 @@ const Header = () => {
     const categories = [
         { name: '공지사항', icon: Bell, link: '#' },
         { name: '상점', icon: ShoppingCart, link: '/shop' },
-        { name: '랭킹', icon: Award, link: 'ranking' },
+        { name: '랭킹', icon: Award, link: '/ranking' },
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
-        { name: '전투', icon: Swords, link: 'battlemode' },
-        { name: '로그', icon: Scroll, link: 'logs' },        
+        { name: '전투', icon: Swords, link: '/battlemode' },
+        { name: '로그', icon: Scroll, link: '/logs' },       
     ];
 
     if (isLoading) {
@@ -65,14 +65,14 @@ const Header = () => {
                 {/* 카테고리 메뉴 */}
                 <nav className="hidden md:flex space-x-6">
                     {categories.map((item) => (
-                        <a 
+                        <Link 
                             key={item.name} 
-                            href={item.link}
+                            to={item.link}
                             className="text-gray-300 hover:text-yellow-400 font-semibold transition duration-200 flex items-center"
                         >
                             <item.icon className="w-5 h-5 mr-1" />
                             {item.name}
-                        </a>
+                        </Link>
                     ))}
                 </nav>
 
@@ -99,9 +99,9 @@ const Header = () => {
                     </div>
                 ) : (
                     // 로그아웃 상태일 때 로그인 페이지로 가는 버튼
-                    <a href="/login" className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
+                    <Link to="/login" className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
                         로그인
-                    </a>
+                    </Link>
                 )}
             </div>
         </header>
