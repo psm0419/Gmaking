@@ -36,6 +36,8 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import LicensePage from './pages/LicensePage';
 import GuidePage from './pages/GuidePage';
+import AboutPage from './pages/About';
+import TeamPage from './pages/TeamPage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -104,6 +106,8 @@ function App() {
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/license" element={<LicensePage />} />
                 <Route path="/guide" element={<GuidePage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/team" element={<TeamPage />} />
                 
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />

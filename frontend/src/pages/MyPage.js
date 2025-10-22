@@ -12,6 +12,8 @@ import { notificationsApi } from "../api/notificationApi";
 import NotificationBell from "../components/notifications/NotificationBell";
 import PvpResultModal from "../components/notifications/PvpResultModal"; // ← 경로 확인
 
+import GrowthModal from "./GrowthModal";
+
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 
 const toInt = (v) => {
@@ -58,6 +60,9 @@ function MyMain() {
   const [selected, setSelected] = useState(null);
   const [repId, setRepId] = useState(null);
 
+  const [isGrowthModalOpen, setIsGrowthModalOpen] = useState(false);
+  const [isGrowing, setIsGrowing] = useState(false);
+  
   const incubatorCount = Number.isFinite(Number(user?.incubatorCount))
     ? Number(user.incubatorCount)
     : 0;
@@ -158,7 +163,7 @@ function MyMain() {
   const onOpenCharacter = (c) => setSelected(c);
 
   const onChat = () => selected?.id && navigate(`/chat-entry/${selected.id}`);
-  const onGrow = () => {};
+  const onGrow = () => { if(selected?.id){ setIsGrowthModalOpen(true)}};
   const onSend = () => {};
   const onPickClick = () => navigate("/create-character");
 
@@ -220,6 +225,33 @@ function MyMain() {
   }
 
   const safeProfileSrc = profileImageUrl || DEFAULT_PROFILE_IMG;
+
+  const handleConfirmGrowth = async () => {
+    if (!selected?.id || isGrowing || incubatorCount <= 0) return;
+
+    setIsGrowing(true); // 로딩 시작
+    try {
+        const headers = {
+            Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+            "Content-Type": "application/json",
+        };
+
+        // TODO: 실제 백엔드 API 호출로 대체해야 합니다!
+        console.log(`[API Call Mock] Submitting growth job for character ${selected.id}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기 Mock
+
+        alert(`${selected.name}의 성장 작업이 시작되었습니다! (백엔드 연결 필요)`);
+        
+        // 성공 후 상태 정리
+        setIsGrowthModalOpen(false);
+        // TODO: 마이페이지 데이터 및 부화권 개수 새로고침 로직 필요 (예: fetchSummaryData())
+
+    } catch (e) {
+        alert(e?.response?.data?.message || "캐릭터 성장에 실패했습니다.");
+    } finally {
+        setIsGrowing(false); // 로딩 종료
+    }
+};
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
@@ -298,6 +330,7 @@ function MyMain() {
             onGrow={onGrow}
             onChat={onChat}
             onSend={onSend}
+            isGrowing={isGrowing}
           />
         )}
       </div>
@@ -322,6 +355,20 @@ function MyMain() {
         data={pvpModalData}
         onClose={() => setPvpModalOpen(false)}
       />
+
+      {/* 성장 모달 추가 */}
+      <GrowthModal 
+        open={isGrowthModalOpen}
+        characterName={selected?.name}
+        incubatorCount={incubatorCount}
+        isGrowing={isGrowing}
+        onConfirm={handleConfirmGrowth}
+        onClose={() => {
+            if (!isGrowing) {
+                setIsGrowthModalOpen(false);
+            }
+        }}
+      />
     </div>
   );
 }
@@ -329,7 +376,7 @@ function MyMain() {
 /* ──────────────────────────────────────────────────────────────── */
 /* 캐릭터 상세 패널                                                  */
 /* ──────────────────────────────────────────────────────────────── */
-function CharacterDetail({ character, onGrow, onChat, onSend }) {
+function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
   const name = character?.name ?? character?.characterName;
   const grade = character?.grade;
   const hp = character?.hp;
@@ -395,21 +442,21 @@ function CharacterDetail({ character, onGrow, onChat, onSend }) {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onGrow}
-            disabled={_statsLoading}
+            disabled={_statsLoading || isGrowing}
             className="rounded-xl border border-transparent bg-[#FF8C00] px-6 py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E07B00] active:bg-[#C06A00] disabled:opacity-60"
           >
             성장시키기
           </button>
           <button
             onClick={onChat}
-            disabled={_statsLoading}
+            disabled={_statsLoading || isGrowing}
             className="rounded-xl border border-gray-600 bg-gray-700 px-6 py-3 text-lg font-semibold text-white shadow-sm transition hover:bg-gray-600 active:bg-gray-500 disabled:opacity-60"
           >
             대화 하기
           </button>
           <button
             onClick={onSend}
-            disabled={_statsLoading}
+            disabled={_statsLoading || isGrowing}
             className="rounded-xl border border-gray-600 bg-gray-700 px-6 py-3 text-lg font-semibold text-white shadow-sm transition hover:bg-gray-600 active:bg-gray-500 disabled:opacity-60"
           >
             보내기
