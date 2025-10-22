@@ -1,13 +1,13 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Header = ({onInfoClick}) => {
+const Header = ({ onInfoClick }) => {
     // isLoggedIn 상태를 추가로 가져옵니다.
-    const { user, logout, isLoggedIn, isLoading} = useAuth();
+    const { user, logout, isLoggedIn, isLoading } = useAuth();
     const navigate = useNavigate();
-    
+
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const roleColor = user?.role === 'ADMIN' ? 'text-red-400' : 'text-yellow-400';
@@ -20,7 +20,7 @@ const Header = ({onInfoClick}) => {
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
         { name: '캐릭터 뽑기', icon: Egg, link: '/create-character' },
         { name: '게임', icon: Swords, link: '/battlemode' },
-        { name: '로그', icon: Scroll, link: '/logs' },        
+        { name: '로그', icon: Scroll, link: '/logs' },
     ];
 
     if (isLoading) {
@@ -28,11 +28,23 @@ const Header = ({onInfoClick}) => {
             <header className="bg-gray-800 shadow-xl sticky top-0 z-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                     {/* 로고/사이트 이름 */}
-                    <Link to="/" className="flex items-center space-x-2 group">
-                        <Gamepad2 className="w-8 h-8 text-yellow-400" />
-                        <h1 className="text-3xl font-extrabold text-white tracking-wider">겜만중</h1>
+                    <Link
+                        to="/"
+                        className="flex items-center space-x-2"
+                    >
+                        <Gamepad2 className="w-8 h-8 text-yellow-400 transform -rotate-6" />
+                        <Link
+                            to="/"
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-yellow-700 animate-float"
+                            style={{
+                                textShadow: '0 4px 6px rgba(0, 0, 0, 0.4)',
+                                textDecoration: 'none'
+                            }}
+                        >
+                            겜만중
+                        </Link>
                     </Link>
-                    
+
                     {/* 카테고리 메뉴 - 로딩 중에도 유지 */}
                     <nav className="hidden md:flex space-x-6">
                         {categories.map((item) => (
@@ -54,20 +66,33 @@ const Header = ({onInfoClick}) => {
     return (
         <header className="bg-gray-800 shadow-xl sticky top-0 z-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-                
+
                 {/* 로고/사이트 이름 */}
-                <Link to="/" className="flex items-center space-x-2 group">
-                    <Gamepad2 className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
-                        <h1 className="text-3xl font-extrabold text-white tracking-wider group-hover:text-yellow-400 transition duration-200">
-                            겜만중
-                        </h1>
+                <Link
+                    to="/"
+                    className="flex items-center space-x-2" 
+                >
+                    <Gamepad2
+                        className="w-8 h-8 text-yellow-400 transform -rotate-6"
+                    />
+                    <h1
+                        className="text-3xl font-extrabold tracking-wider 
+                   text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-sky-500 
+                   animate-float" 
+                        style={{
+                            textDecoration: 'none',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                        }}
+                    >
+                        겜만중
+                    </h1>
                 </Link>
-                
+
                 {/* 카테고리 메뉴 */}
                 <nav className="hidden md:flex space-x-6">
                     {categories.map((item) => (
-                        <Link 
-                            key={item.name} 
+                        <Link
+                            key={item.name}
                             to={item.link}
                             className="text-gray-300 hover:text-yellow-400 font-semibold transition duration-200 flex items-center"
                         >
@@ -77,47 +102,47 @@ const Header = ({onInfoClick}) => {
                     ))}
                 </nav>
 
-                 {/* 우측: i 버튼 + 사용자 영역 */}
-                 <div className="flex items-center space-x-3">
-                   {/* i 버튼 */}
-                   <button
-                     type="button"
-                     onClick={() => onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))}
-                     className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-zinc-500 text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
-                     aria-label="도우미 열기"
-                     title="도우미"
-                   >
-                     <Info className="w-5 h-5" />
-                   </button>
+                {/* 우측: i 버튼 + 사용자 영역 */}
+                <div className="flex items-center space-x-3">
+                    {/* i 버튼 */}
+                    <button
+                        type="button"
+                        onClick={() => onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-zinc-500 text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
+                        aria-label="도우미 열기"
+                        title="도우미"
+                    >
+                        <Info className="w-5 h-5" />
+                    </button>
 
-                {/* 사용자 정보 및 로그아웃 */}
-                {isLoggedIn ? (
-                    <div className="flex items-center space-x-4">
-                        {user && (
-                            <span onClick={() => navigate('/my-page')} className={`text-lg font-semibold ${roleColor} flex items-center`}>
-                                <User className="w-5 h-5 mr-2" />
-                                {displayName}
-                            </span>
-                        )}
-                        <button
-                            // 로그아웃 후 navigate를 통해 로그인 페이지로 이동합니다.
-                            onClick={() => {
-                                logout();
-                                navigate('/');
-                            }}
-                            className="px-3 py-1.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-200 flex items-center"
-                        >
-                            <LogOut className="w-4 h-4 mr-1.5" />
-                            로그아웃
-                        </button>
-                    </div>
-                ) : (
-                    // 로그아웃 상태일 때 로그인 페이지로 가는 버튼
-                    <Link to="/login" className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
-                        로그인
-                    </Link>
-                )}
-              </div>
+                    {/* 사용자 정보 및 로그아웃 */}
+                    {isLoggedIn ? (
+                        <div className="flex items-center space-x-4">
+                            {user && (
+                                <span onClick={() => navigate('/my-page')} className={`text-lg font-semibold ${roleColor} flex items-center`}>
+                                    <User className="w-5 h-5 mr-2" />
+                                    {displayName}
+                                </span>
+                            )}
+                            <button
+                                // 로그아웃 후 navigate를 통해 로그인 페이지로 이동합니다.
+                                onClick={() => {
+                                    logout();
+                                    navigate('/');
+                                }}
+                                className="px-3 py-1.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-200 flex items-center"
+                            >
+                                <LogOut className="w-4 h-4 mr-1.5" />
+                                로그아웃
+                            </button>
+                        </div>
+                    ) : (
+                        // 로그아웃 상태일 때 로그인 페이지로 가는 버튼
+                        <Link to="/login" className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
+                            로그인
+                        </Link>
+                    )}
+                </div>
             </div>
         </header>
     );

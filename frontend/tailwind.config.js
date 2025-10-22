@@ -2,6 +2,7 @@
 module.exports = {
   content: [
     "./src/pages/account/LoginPage.js",
+    "./src/components/Header.js",
   ],
   theme: {
     extend: {

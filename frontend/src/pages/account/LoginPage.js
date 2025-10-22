@@ -73,12 +73,16 @@ const LoginPage = ({ onRegisterClick }) => {
                 <div className="text-center pb-4">
                     <h2 className="text-5xl font-extrabold text-white tracking-wider leading-tight flex items-center justify-center space-x-2">
                         <Gamepad2 className="w-10 h-10 text-yellow-400 transform -rotate-12" />
-                        <span 
+                        <Link
+                            to="/"
                             className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-yellow-700 animate-float"
-                            style={{ textShadow: '0 4px 6px rgba(0, 0, 0, 0.4)' }}
+                            style={{
+                                textShadow: '0 4px 6px rgba(0, 0, 0, 0.4)',
+                                textDecoration: 'none'
+                            }}
                         >
                             겜만중
-                        </span>
+                        </Link>
                     </h2>
                 </div>
 
