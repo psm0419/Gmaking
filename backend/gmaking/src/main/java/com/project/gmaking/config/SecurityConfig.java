@@ -94,6 +94,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").permitAll()
 
                         .requestMatchers("/battle/**").permitAll()
+                        .requestMatchers("/debate").permitAll()
 
                         // 정적 자원 허용
                         .requestMatchers("/images/**", "/static/**").permitAll()

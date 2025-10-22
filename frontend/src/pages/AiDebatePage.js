@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import Header from '../components/Header';
 
 function AiDebatePage() {
     const token = localStorage.getItem("gmaking_token");
@@ -10,9 +11,10 @@ function AiDebatePage() {
     const [chars, setChars] = useState([]);
     const [aId, setAId] = useState(null);
     const [bId, setBId] = useState(null);
-    const [topic, setTopic] = useState("누가 더 설득력 있는 영웅인가?");
-    const [result, setResult] = useState(null);
+    const [topic, setTopic] = useState("주제를 입력해 주세요");
+    const [dialogues, setDialogues] = useState([]);
     const [loading, setLoading] = useState(false);
+    const logRef = useRef(null);
 
     useEffect(() => {
         if (!userId) return;
@@ -21,69 +23,181 @@ function AiDebatePage() {
         }).then(res => setChars(res.data || []));
     }, [userId, token]);
 
-    const start = async () => {
-        if (!aId || !bId || aId === bId) { alert("서로 다른 두 캐릭터를 선택하세요."); return; }
-        setLoading(true); setResult(null);
-        try {
-            const res = await axios.post("/api/debate/start", {
-                characterAId: aId,
-                characterBId: bId,
-                topic,
-                turnsPerSide: 3
-            });
-            setResult(res.data);
-        } catch (e) {
-            console.error(e);
-            alert("디베이트 요청 실패");
-        } finally {
+    useEffect(() => {
+        if (logRef.current)
+            logRef.current.scrollTop = logRef.current.scrollHeight;
+    }, [dialogues]);
+
+    const startDebate = async () => {
+        if (!aId || !bId || aId === bId)
+            return alert("서로 다른 캐릭터를 선택하세요.");
+
+        setDialogues([]);
+        setLoading(true);
+
+        const ws = new WebSocket("ws://localhost:8080/debate");
+
+        ws.onopen = () => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    characterAId: aId,
+                    characterBId: bId,
+                    topic,
+                    turnsPerSide: 3
+                }));
+            }
+        };
+
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+
+            if (data.type === "end") {
+                ws.close();
+                setLoading(false);
+                return;
+            }
+
+            if (data.type === "verdict") {
+                const resultMsg = {
+                    speaker: "심사 결과",
+                    type: "verdict",
+                    line:
+                        `승자: ${data.winner}\n\n` +
+                        Object.entries(data.votes || {})
+                            .map(([k, v]) => `${k.toUpperCase()} → ${v} (${data.comments?.[k] || "-"})`)
+                            .join("\n")
+                };
+                setDialogues(prev => [...prev, resultMsg]);
+                return;
+            }
+
+            setDialogues(prev => [...prev, data]);
+        };
+
+        ws.onclose = () => setLoading(false);
+        ws.onerror = () => {
+            alert("서버 연결 오류");
             setLoading(false);
-        }
+        };
     };
 
+    const getImage = (id) => chars.find(c => c.characterId === id)?.imageUrl;
+    const getName = (id) => chars.find(c => c.characterId === id)?.characterName;
+
     return (
-        <div className="p-8 max-w-4xl mx-auto text-white">
-            <h1 className="text-2xl font-bold mb-4">AI 말싸움 배틀</h1>
+        <div><Header />
+            <div className="min-h-screen bg-gray-900 p-3 text-gray-100">
+                <div className="max-w-5xl mx-auto font-sans">
+                    {/* 제목 */}
+                    <h1 className="text-3xl font-extrabold mb-5 text-center text-yellow-400 drop-shadow-lg">
+                        AI 토론 배틀
+                    </h1>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-                <select className="bg-gray-700 p-2 rounded" value={aId || ""} onChange={e => setAId(Number(e.target.value) || null)}>
-                    <option value="">캐릭터 A 선택</option>
-                    {chars.map(c => <option key={c.characterId} value={c.characterId}>{c.characterName}</option>)}
-                </select>
-                <select className="bg-gray-700 p-2 rounded" value={bId || ""} onChange={e => setBId(Number(e.target.value) || null)}>
-                    <option value="">캐릭터 B 선택</option>
-                    {chars.map(c => <option key={c.characterId} value={c.characterId}>{c.characterName}</option>)}
-                </select>
-            </div>
+                    {/* 선택 영역 */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <select
+                            className="bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-yellow-400 focus:outline-none p-3 rounded-lg transition"
+                            value={aId || ""}
+                            onChange={(e) => setAId(Number(e.target.value) || null)}
+                        >
+                            <option value="">캐릭터 A 선택</option>
+                            {chars.map(c => (
+                                <option key={c.characterId} value={c.characterId}>
+                                    {c.characterName}
+                                </option>
+                            ))}
+                        </select>
 
-            <input
-                className="w-full bg-gray-700 p-2 rounded mb-3"
-                value={topic}
-                onChange={e => setTopic(e.target.value)}
-                placeholder="주제를 입력하세요"
-            />
-
-            <button onClick={start} disabled={loading} className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded">
-                {loading ? "생성 중..." : "시작"}
-            </button>
-
-            {result && (
-                <div className="mt-6 bg-gray-900 p-4 rounded">
-                    <div className="mb-2 font-semibold">주제: {result.topic}</div>
-                    {result.dialogue.map((d, i) => (
-                        <div key={i}><span className="text-yellow-400">{d.speaker}</span>: {d.line}</div>
-                    ))}
-                    <div className="mt-4">
-                        <div className="font-bold mb-1">심사 결과:</div>
-                        {Object.entries(result.judgeVotes || {}).map(([k, v]) => (
-                            <div key={k} className="ml-2">
-                                {k.toUpperCase()} ➜ {v}
-                                <div className="text-gray-400 text-sm">판정평: {result.judgeComments?.[k]}</div>
-                            </div>
-                        ))}
+                        <select
+                            className="bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-yellow-400 focus:outline-none p-3 rounded-lg transition"
+                            value={bId || ""}
+                            onChange={(e) => setBId(Number(e.target.value) || null)}
+                        >
+                            <option value="">캐릭터 B 선택</option>
+                            {chars.map(c => (
+                                <option key={c.characterId} value={c.characterId}>
+                                    {c.characterName}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    <div className="text-lg font-bold mt-2">최종 승자: {result.winner}</div>
+
+                    {/* 주제 입력 */}
+                    <input
+                        className="w-full bg-gray-800 border border-gray-600 focus:ring-2 focus:ring-blue-400 focus:outline-none p-3 rounded-lg mb-4 placeholder-gray-400"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                    />
+
+                    {/* 시작 버튼 */}
+                    <div className="text-center">
+                        <button
+                            onClick={startDebate}
+                            disabled={loading}
+                            className={`px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg
+                        ${loading
+                                    ? "bg-gray-500 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-blue-600 to-green-600 hover:scale-105 hover:shadow-yellow-500/40"
+                                }`}
+                        >
+                            {loading ? "진행 중..." : "토론 시작"}
+                        </button>
+                    </div>
+
+                    {/* 로그 영역 */}
+                    <div
+                        ref={logRef}
+                        className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner"
+                    >
+                        {dialogues
+                            .filter(d => d.line && d.line.trim() !== "")
+                            .map((d, i) => {
+                                if (d.type === "verdict" || d.speaker === "심사 결과") {
+                                    return (
+                                        <div key={i} className="flex justify-center my-8">
+                                            <div className="bg-gradient-to-r from-blue-700 to-green-700 text-white p-5 rounded-2xl text-center max-w-[80%] animate-pulse">
+                                                <div className="font-bold text-lg mb-2">심사 결과</div>
+                                                <pre className="whitespace-pre-line text-sm">{d.line}</pre>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                const isA = d.speaker === getName(aId);
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`flex items-start mb-5 transition-all duration-300 ${isA ? "justify-start" : "justify-end"}`}
+                                    >
+                                        {isA && (
+                                            <img
+                                                src={getImage(aId)}
+                                                alt="A"
+                                                className="w-14 h-14 rounded-full mr-3 border-2 border-blue-400 shadow-md"
+                                            />
+                                        )}
+                                        <div
+                                            className={`max-w-[70%] p-4 rounded-2xl shadow-md text-white leading-relaxed ${isA
+                                                ? "bg-blue-700/80 border border-blue-400"
+                                                : "bg-green-700/80 border border-green-400"
+                                                }`}
+                                        >
+                                            <div className="font-bold mb-1 text-yellow-300">{d.speaker}</div>
+                                            <div className="whitespace-pre-line text-sm">{d.line}</div>
+                                        </div>
+                                        {!isA && (
+                                            <img
+                                                src={getImage(bId)}
+                                                alt="B"
+                                                className="w-14 h-14 rounded-full ml-3 border-2 border-green-400 shadow-md"
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                    </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

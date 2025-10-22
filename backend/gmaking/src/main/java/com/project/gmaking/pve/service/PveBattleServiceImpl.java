@@ -256,7 +256,7 @@ public class PveBattleServiceImpl implements PveBattleService {
 
             // 2. 초기 로그 (일반 로그 형태로 몬스터 조우 메시지를 한 번 더 전송)
             List<String> logs = new ArrayList<>();
-            String initialLog = String.format("**전투 시작!** %s(HP:%s, 공격:%s, 방어:%s, 속도:%s)을(를) 마주쳤다!",
+            String initialLog = String.format("%s(HP:%s, 공격:%s, 방어:%s, 속도:%s)을(를) 마주쳤다!",
                     monster.getMonsterName(), monsterHp, monsterAtk, monsterDef, monsterSpeed);
             logs.add(initialLog);
 

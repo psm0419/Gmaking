@@ -15,7 +15,7 @@ public class GptJudge implements Judge {
 
     @Override
     public String name() {
-        return "gpt";
+        return "gpt-4o-mini";
     }
 
     @Override

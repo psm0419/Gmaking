@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, LifeBuoy, Swords, Footprints, Scroll } from 'lucide-react';
+import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Header = () => {
+const Header = ({onInfoClick}) => {
     // isLoggedIn 상태를 추가로 가져옵니다.
     const { user, logout, isLoggedIn, isLoading} = useAuth();
     const navigate = useNavigate();
@@ -16,10 +16,11 @@ const Header = () => {
     const categories = [
         { name: '공지사항', icon: Bell, link: '#' },
         { name: '상점', icon: ShoppingCart, link: '/shop' },
-        { name: '랭킹', icon: Award, link: 'ranking' },
+        { name: '랭킹', icon: Award, link: '/ranking' },
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
-        { name: '전투', icon: Swords, link: 'battlemode' },
-        { name: '로그', icon: Scroll, link: 'logs' },        
+        { name: '캐릭터 뽑기', icon: Egg, link: '/create-character' },
+        { name: '게임', icon: Swords, link: '/battlemode' },
+        { name: '로그', icon: Scroll, link: '/logs' },        
     ];
 
     if (isLoading) {
@@ -28,7 +29,7 @@ const Header = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                     {/* 로고/사이트 이름 */}
                     <Link to="/" className="flex items-center space-x-2 group">
-                        <Zap className="w-8 h-8 text-yellow-400" />
+                        <Gamepad2 className="w-8 h-8 text-yellow-400" />
                         <h1 className="text-3xl font-extrabold text-white tracking-wider">겜만중</h1>
                     </Link>
                     
@@ -56,7 +57,7 @@ const Header = () => {
                 
                 {/* 로고/사이트 이름 */}
                 <Link to="/" className="flex items-center space-x-2 group">
-                        <Zap className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
+                    <Gamepad2 className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
                         <h1 className="text-3xl font-extrabold text-white tracking-wider group-hover:text-yellow-400 transition duration-200">
                             겜만중
                         </h1>
@@ -65,16 +66,29 @@ const Header = () => {
                 {/* 카테고리 메뉴 */}
                 <nav className="hidden md:flex space-x-6">
                     {categories.map((item) => (
-                        <a 
+                        <Link 
                             key={item.name} 
-                            href={item.link}
+                            to={item.link}
                             className="text-gray-300 hover:text-yellow-400 font-semibold transition duration-200 flex items-center"
                         >
                             <item.icon className="w-5 h-5 mr-1" />
                             {item.name}
-                        </a>
+                        </Link>
                     ))}
                 </nav>
+
+                 {/* 우측: i 버튼 + 사용자 영역 */}
+                 <div className="flex items-center space-x-3">
+                   {/* i 버튼 */}
+                   <button
+                     type="button"
+                     onClick={() => onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))}
+                     className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-zinc-500 text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
+                     aria-label="도우미 열기"
+                     title="도우미"
+                   >
+                     <Info className="w-5 h-5" />
+                   </button>
 
                 {/* 사용자 정보 및 로그아웃 */}
                 {isLoggedIn ? (
@@ -99,10 +113,11 @@ const Header = () => {
                     </div>
                 ) : (
                     // 로그아웃 상태일 때 로그인 페이지로 가는 버튼
-                    <a href="/login" className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
+                    <Link to="/login" className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition">
                         로그인
-                    </a>
+                    </Link>
                 )}
+              </div>
             </div>
         </header>
     );

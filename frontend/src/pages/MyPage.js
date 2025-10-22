@@ -16,6 +16,21 @@ import GrowthModal from "./GrowthModal";
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 
+const toInt = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+};
+
+function getGradeLabel(gradeId) {
+  switch (toInt(gradeId)) {
+    case 1: return "N";
+    case 2: return "R";
+    case 3: return "SR";
+    case 4: return "SSR";
+    case 5: return "UR";
+    default: return "-";
+  }
+}
 /* ──────────────────────────────────────────────────────────────── */
 /* 페이지 스켈레톤                                                   */
 /* ──────────────────────────────────────────────────────────────── */
@@ -101,10 +116,12 @@ function MyMain() {
 
         const cards = (data?.characters ?? []).map((c) => {
           const stat = c.characterStatVO || c.characterStat || null;
+          const grade = c.grade ?? c.rarity ?? null;
           return {
             id: c.characterId ?? c.id,
             name: c.name ?? c.characterName ?? "",
-            grade: c.grade ?? c.rarity ?? null,
+            grade,
+            gradeLabel: getGradeLabel(grade),
             imageUrl: c.imageUrl ?? c.image ?? null,
             hp: stat?.hp ?? null,
             attack: stat?.attack ?? null,
@@ -379,7 +396,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
         </h3>
         <span className="inline-flex items-center gap-1 rounded-full border border-gray-600 bg-gray-900 px-3 py-1 text-sm font-semibold text-gray-200">
           <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
-          등급 {fmt(grade)}
+          등급 {getGradeLabel(grade)}
         </span>
       </div>
 
@@ -555,6 +572,9 @@ function CharacterCard({
       <div className="mt-2 flex items-center justify-between gap-2">
         <div className="text-lg font-medium text-white truncate">
           {character?.name}
+          <span className = "ml-1 text-xs text-gray-400 align-baseline">
+              (등급 {character?.gradeLabel ?? getGradeLabel(character?.grade)})
+          </span>
         </div>
         {isRep && (
           <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC700] text-gray-900">

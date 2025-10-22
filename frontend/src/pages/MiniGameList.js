@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Zap, Brain, Type, Dice5, MessageSquare } from "lucide-react";
+import Header from '../components/Header';
 
 function MiniGameList() {
     const navigate = useNavigate();
@@ -44,34 +45,37 @@ function MiniGameList() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-12 px-6">
-            <h1 className="text-4xl font-bold mb-10">🎮 미니게임 목록</h1>
+        <div>
+            <Header />
+            <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-12 px-6">
+                <h1 className="text-4xl font-bold mb-10">🎮 미니게임 목록</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
-                {games.map((game) => (
-                    <div
-                        key={game.id}
-                        onClick={() => navigate(`/minigame/${game.id}`)}
-                        className={`bg-gradient-to-br ${game.color} rounded-2xl shadow-lg p-6 cursor-pointer transform hover:scale-105 transition-all duration-300`}
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <div>{game.icon}</div>
-                            <span className="text-sm bg-black bg-opacity-30 px-3 py-1 rounded-full">
-                                클릭하여 시작
-                            </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
+                    {games.map((game) => (
+                        <div
+                            key={game.id}
+                            onClick={() => navigate(`/minigame/${game.id}`)}
+                            className={`bg-gradient-to-br ${game.color} rounded-2xl shadow-lg p-6 cursor-pointer transform hover:scale-105 transition-all duration-300`}
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <div>{game.icon}</div>
+                                <span className="text-sm bg-black bg-opacity-30 px-3 py-1 rounded-full">
+                                    클릭하여 시작
+                                </span>
+                            </div>
+                            <h2 className="text-2xl font-bold mb-2">{game.title}</h2>
+                            <p className="text-gray-100">{game.desc}</p>
                         </div>
-                        <h2 className="text-2xl font-bold mb-2">{game.title}</h2>
-                        <p className="text-gray-100">{game.desc}</p>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
 
-            <button
-                onClick={() => navigate("/")}
-                className="mt-12 px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-lg font-semibold shadow-md transition-all duration-300"
-            >
-                메인으로 돌아가기
-            </button>
+                <button
+                    onClick={() => navigate("/")}
+                    className="mt-12 px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-lg font-semibold shadow-md transition-all duration-300"
+                >
+                    메인으로 돌아가기
+                </button>
+            </div>
         </div>
     );
 }

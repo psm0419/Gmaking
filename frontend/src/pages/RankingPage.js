@@ -29,7 +29,7 @@ function RankingPage() {
     }, [rankingType]);
 
     const renderTable = () => (
-        <div className="bg-white shadow-md rounded-xl overflow-hidden">
+        <div className="bg-gray-100 shadow-md rounded-xl overflow-hidden">
             <table className="min-w-full text-center border-collapse">
                 <thead className="bg-gray-300 border-b">
                     <tr className="text-gray-700">
@@ -55,7 +55,7 @@ function RankingPage() {
                         rankings.map((r, i) => (
                             <tr
                                 key={i}
-                                className={`border-b transition hover:bg-gray-50 ${i % 2 === 0 ? "bg-gray-50/30" : "bg-white"
+                                className={`border-b transition hover:bg-gray-300 ${i % 2 === 0 ? "bg-gray-200" : "bg-gray-200"
                                     }`}
                             >
                                 <td className="py-3 px-4 font-semibold text-gray-800">#{i + 1}</td>
@@ -83,11 +83,11 @@ function RankingPage() {
     );
 
     return (
-        <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+        <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
             <Header />
             <div className="w-full max-w-5xl mx-auto p-6 flex flex-col gap-6 flex-shrink-0">
                 {/* 제목 */}
-                <h2 className="text-3xl font-bold text-center border-b pb-3">
+                <h2 className="text-3xl font-bold text-center border-b pb-3 text-white">
                     랭킹
                 </h2>
 
@@ -96,7 +96,7 @@ function RankingPage() {
                     <button
                         className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${rankingType === "character"
                                 ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
                             }`}
                         onClick={() => setRankingType("character")}
                     >
@@ -105,7 +105,7 @@ function RankingPage() {
                     <button
                         className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${rankingType === "pvp"
                                 ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
                             }`}
                         onClick={() => setRankingType("pvp")}
                     >
@@ -114,7 +114,7 @@ function RankingPage() {
                     <button
                         className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${rankingType === "pve"
                                 ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
                             }`}
                         onClick={() => setRankingType("pve")}
                     >
