@@ -105,7 +105,7 @@ const CharacterCreationPage = () => {
             const response = await finalizeCharacter(finalCharacterData, token); 
             
             // Auth Context와 LocalStorage 업데이트
-            setCharacterCreated(response.imageUrl); 
+            // setCharacterCreated(response.imageUrl); 
             
             // setToken useAuth에서 가져옴.
             if (response.newToken) {
