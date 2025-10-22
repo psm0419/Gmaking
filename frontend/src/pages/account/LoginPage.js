@@ -61,7 +61,14 @@ const LoginPage = ({ onRegisterClick }) => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
-            <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-xl shadow-2xl">
+            <div 
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('/GmakingLogin2.png')" }}
+            />
+
+            <div className="absolute inset-0 bg-black/20"></div>
+
+            <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-gray-800/90 rounded-xl shadow-2xl backdrop-blur-sm">
                 <h1 className="text-3xl font-extrabold text-white text-center flex items-center justify-center">
                     <LogIn className="w-8 h-8 mr-3 text-yellow-400" />
                     로그인
@@ -98,7 +105,6 @@ const LoginPage = ({ onRegisterClick }) => {
                         />
                     </div>
 
-
                     <button
                         type="submit"
                         className="w-full py-2.5 mt-4 text-lg font-semibold text-gray-900 bg-yellow-400 rounded-lg shadow-md hover:bg-yellow-500 transition duration-200 focus:outline-none focus:ring-4 focus:ring-yellow-600 focus:ring-opacity-50 flex items-center justify-center"
@@ -107,9 +113,7 @@ const LoginPage = ({ onRegisterClick }) => {
                         로그인 하기
                     </button>
 
-                    {/* 소셜 로그인 */}
                     {renderSocialLoginButtons()}
-
                 </form>
 
                 <div className="text-center pt-4">
@@ -131,7 +135,6 @@ const LoginPage = ({ onRegisterClick }) => {
                         비밀번호 찾기
                     </Link>
                 </div>
-
             </div>
         </div>
     );
