@@ -77,7 +77,7 @@ const Header = ({ onInfoClick }) => {
                     />
                     <h1
                         className="text-3xl font-extrabold tracking-wider 
-                   text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-sky-500 
+                   text-transparent bg-clip-text bg-gradient-to-r from-yellow-100 to-sky-300 
                    animate-float" 
                         style={{
                             textDecoration: 'none',
