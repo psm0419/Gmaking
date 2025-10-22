@@ -67,13 +67,13 @@ function BattleLogList() {
             );
         });
 
-    return (
-        <div className="h-screen flex flex-col bg-gray-50">
+    return (        
+        <div className="h-screen flex flex-col bg-gray-900 font-sans">
             <Header />
 
             {/* 상단 고정 영역 */}
-            <div className="w-full max-w-4xl mx-auto p-6 flex flex-col gap-4">
-                <h2 className="text-2xl font-bold text-center border-b pb-3">
+            <div className="w-full max-w-4xl mx-auto p-6 flex flex-col gap-4">                
+                <h2 className="text-3xl font-bold text-center border-b pb-3 text-white">
                     전투 기록
                 </h2>
 
@@ -82,11 +82,11 @@ function BattleLogList() {
                     {["ALL", "PVP", "PVE"].map(type => (
                         <button
                             key={type}
-                            onClick={() => setTypeFilter(type)}
-                            className={`px-4 py-2 rounded-lg font-medium transition 
+                            onClick={() => setTypeFilter(type)}                            
+                            className={`px-5 py-2 rounded-xl font-medium transition duration-200 shadow-md
                                 ${typeFilter === type
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    ? "bg-blue-600 text-white shadow-blue-500/50"
+                                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                                 }`}
                         >
                             {type === "ALL" ? "전체" : type}
@@ -94,18 +94,18 @@ function BattleLogList() {
                     ))}
                 </div>
 
-                {/* 검색창 */}
+                {/* 검색창 */}                
                 <input
                     type="text"
                     placeholder="캐릭터 이름 검색..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full border border-gray-700 bg-gray-800 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                 />
             </div>
 
             {/* 로그 목록만 스크롤 */}
-            <div className="flex-1 overflow-auto w-full max-w-4xl mx-auto p-6">
+            <div className="flex-1 overflow-auto w-full max-w-4xl mx-auto px-6 pb-6">
                 {filteredLogs.length === 0 ? (
                     <p className="text-center text-gray-500 py-8">
                         {searchTerm
@@ -113,42 +113,46 @@ function BattleLogList() {
                             : "전투 기록이 없습니다."}
                     </p>
                 ) : (
-                        <ul className="space-y-3">
-                            {filteredLogs.map((log) => {
-                                const isWin = log.isWin === "Y";
-                                const isAttack = myCharacterIds.includes(log.characterId);
-                                const roleLabel = isAttack ? "공격" : "방어";
+                    <ul className="space-y-4">
+                        {filteredLogs.map((log) => {
+                            const isWin = log.isWin === "Y";
+                            const isAttack = myCharacterIds.includes(log.characterId);
+                            const roleLabel = isAttack ? "공격" : "방어";
 
-                                const myCharName = isAttack ? log.characterName : log.opponentName;
-                                const opponentName = isAttack ? log.opponentName : log.characterName;
+                            const myCharName = isAttack ? log.characterName : log.opponentName;
+                            const opponentName = isAttack ? log.opponentName : log.characterName;
 
-                                return (
-                                    <li
-                                        key={log.battleId}
-                                        onClick={() => handleClickLog(log.battleId)}
-                                        className={`cursor-pointer p-4 rounded-xl border transition-shadow duration-200 
-                            hover:shadow-lg 
-                            ${isWin ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"}`}
-                                    >
-                                        <div className="flex justify-between items-center">
-                                            <span className="font-semibold text-lg">
-                                                [{log.battleType}] {myCharName} ({roleLabel}) vs {opponentName}
-                                            </span>
-                                            <span className={`font-bold ${isWin ? "text-green-600" : "text-red-600"}`}>
-                                                {isWin ? "승리" : "패배"}
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-600 text-sm mt-1">
-                                            {log.createdDate}
-                                        </p>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                            return (
+                                <li
+                                    key={log.battleId}
+                                    onClick={() => handleClickLog(log.battleId)}                                    
+                                    className={`cursor-pointer p-4 rounded-xl border transition-all duration-200 
+                            hover:shadow-xl hover:scale-[1.01] shadow-lg
+                            ${isWin
+                                            ? "bg-green-900/30 border-green-700 hover:border-green-500" // 승리
+                                            : "bg-red-900/30 border-red-700 hover:border-red-500" // 패배
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-center text-white">
+                                        <span className="font-semibold text-lg">
+                                            [{log.battleType}] {myCharName} ({roleLabel}) vs {opponentName}
+                                        </span>
+                                        <span className={`font-bold ${isWin ? "text-green-400" : "text-red-400"}`}>
+                                            {isWin ? "승리" : "패배"}
+                                        </span>
+                                    </div>                                    
+                                    <p className="text-gray-400 text-sm mt-1">
+                                        {log.createdDate}
+                                    </p>
+                                </li>
+                            );
+                        })}
+                    </ul>
                 )}
             </div>
         </div>
     );
 }
+
 
 export default BattleLogList;

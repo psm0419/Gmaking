@@ -17,6 +17,7 @@ function PveBattlePage() {
     // TTS 관련 상태 및 함수
     const [isTtsEnabled, setIsTtsEnabled] = useState(false); // 기본 ON
     const ttsRef = useRef(window.speechSynthesis);
+    const ttsQueueRef = useRef([]);
 
     const token = localStorage.getItem("gmaking_token");
     // const userId = localStorage.getItem("userId"); //jwt토큰에서 추출하는 방식으로 변경
@@ -103,20 +104,35 @@ function PveBattlePage() {
         const lastLog = logs[logs.length - 1];
         if (!lastLog || lastLog.trim() === "") return;
 
-        // 현재 재생 중인 음성 중단
-        if (ttsRef.current.speaking) {
-            ttsRef.current.cancel();
-        }
+        // 새 로그를 큐에 추가
+        ttsQueueRef.current.push(lastLog);
 
-        // 음성 합성 객체 생성
-        const utter = new SpeechSynthesisUtterance(lastLog);
-        utter.lang = "ko-KR";     // 한국어
-        utter.rate = 3;         // 말 속도
-        utter.pitch = 1.2;        // 음 높낮이
-        utter.volume = 1.0;       // 볼륨
+        // 만약 현재 말하고 있지 않다면, 큐 처리 시작
+        if (!ttsRef.current.speaking) {
+            speakNextFromQueue();
+        }
+    }, [logs, isTtsEnabled]);
+
+    // 큐에 쌓인 로그를 순서대로 읽는 함수
+    const speakNextFromQueue = () => {
+        if (ttsQueueRef.current.length === 0 || !isTtsEnabled) return;
+
+        const nextText = ttsQueueRef.current.shift();
+        const utter = new SpeechSynthesisUtterance(nextText);
+        utter.lang = "ko-KR";
+        utter.rate = 3;
+        utter.pitch = 1.2;
+        utter.volume = 1.0;
+
+        // 한 문장이 끝나면 다음 문장 읽기
+        utter.onend = () => {
+            if (ttsQueueRef.current.length > 0) {
+                speakNextFromQueue();
+            }
+        };
 
         ttsRef.current.speak(utter);
-    }, [logs, isTtsEnabled]);
+    };
 
     // TTS ON/OFF 토글 함수
     const toggleTts = () => {
@@ -275,8 +291,7 @@ function PveBattlePage() {
             </div>
             <div className="flex gap-4 mt-3">
                 <button
-                    onClick={toggleTts}
-                    disabled={isBattle}
+                    onClick={toggleTts}                    
                     className={`${isTtsEnabled ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 hover:bg-gray-500"
                         } px-6 py-3 rounded-xl transition`}
                 >
@@ -302,7 +317,7 @@ function PveBattlePage() {
                 <button
                     onClick={() => navigate("/")}
                     disabled={isBattle}
-                    className="bg-gray-600 px-6 py-3 rounded-xl hover:bg-gray-500 disabled:bg-gray-400"
+                    className="bg-green-600 px-6 py-3 rounded-xl hover:bg-green-500 disabled:bg-gray-400"
                 >
                     홈으로
                 </button>

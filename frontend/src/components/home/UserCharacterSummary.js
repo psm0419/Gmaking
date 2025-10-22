@@ -6,7 +6,7 @@ const UserCharacterSummary = ({ user, displayName, characterImageUrl, incubatorC
     const navigate = useNavigate(); 
 
     const adFreeBadge = isAdFree 
-        ? <span className="text-xs font-bold text-green-400 ml-2">(광고 없음)</span>
+        ? <span className="text-xs font-bold text-green-400 ml-2">(AD-FREE)</span>
         : null;
 
     return (

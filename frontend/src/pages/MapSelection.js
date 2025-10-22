@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Header from '../components/Header';
 
 const MapSelection = () => {
     const [maps, setMaps] = useState([]);
@@ -71,96 +72,85 @@ const MapSelection = () => {
     };
 
     return (
-        // 전체 배경을 어둡게, 최소 높이를 화면 크기로 설정
-        <div className="bg-gray-900 min-h-screen text-white p-8">
-            <h1 className="text-4xl font-extrabold mb-10 text-center text-yellow-400 border-b-2 border-yellow-400 pb-2">
-                PVE 캐릭터, 전투 맵 선택
-            </h1>
-
-            {/* 캐릭터 선택 영역 */}
-            <div className="mb-10 text-center">
-                <h2 className="text-2xl font-bold mb-4">내 캐릭터 선택</h2>
-                <div className="flex justify-center gap-4 flex-wrap">
-                    {characters.map(char => (
-                        <div
-                            key={char.characterId}
-                            onClick={() => setSelectedCharacterId(char.characterId)}
-                            className={`p-4 border border-gray-800 rounded-lg cursor-pointer transition-colors duration-200 bg-gray-800/50 shadow-md
+        <div><Header />
+            <div className="bg-gray-900 min-h-screen text-white p-5">
+                {/* 캐릭터 선택 영역 */}
+                <div className="mb-5 text-center">
+                    <h2 className="text-2xl font-bold mb-4">내 캐릭터 선택</h2>
+                    <div className="flex justify-center gap-4 flex-wrap">
+                        {characters.map(char => (
+                            <div
+                                key={char.characterId}
+                                onClick={() => setSelectedCharacterId(char.characterId)}
+                                className={`p-4 border border-gray-800 rounded-lg cursor-pointer transition-colors duration-200 bg-gray-800/50 shadow-md
                                 ${selectedCharacterId === char.characterId
-                                    ? "border-yellow-400 ring-4 ring-yellow-400/50"
-                                    : "border-gray-300 hover:bg-gray-700"
-                                }`}
-                        >
-                            <img
-                                src={char.imageUrl}
-                                alt={char.characterName}
-                                className="w-24 h-24 mx-auto"
-                            />
-                            <div className="font-bold text-lg mt-2 text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
-                        
-                            {/* 스탯 포함 */}
-                            {char.characterStat && (
-                                <div className="text-l mt-1 text-gray-300">
-                                    HP: {char.characterStat.characterHp} / ATK: {char.characterStat.characterAttack} / DEF: {char.characterStat.characterDefense}<br></br>
-                                    Speed: {char.characterStat.characterSpeed} / CRITICAL: {char.characterStat?.criticalRate}%
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                        ? "border-yellow-400 ring-4 ring-yellow-400/50"
+                                        : "border-gray-300 hover:bg-gray-700"
+                                    }`}
+                            >
+                                <img
+                                    src={char.imageUrl}
+                                    alt={char.characterName}
+                                    className="w-24 h-24 mx-auto"
+                                />
+                                <div className="font-bold text-lg mt-2 text-yellow-400">{char.characterName}({getGradeLabel(char.gradeId)})</div>
+
+                                {/* 스탯 포함 */}
+                                {char.characterStat && (
+                                    <div className="text-l mt-1 text-gray-300">
+                                        HP: {char.characterStat.characterHp} / ATK: {char.characterStat.characterAttack} / DEF: {char.characterStat.characterDefense}<br></br>
+                                        Speed: {char.characterStat.characterSpeed} / CRITICAL: {char.characterStat?.criticalRate}%
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
-            <h2 className="mb-10 text-center text-2xl font-bold mb-4">맵 선택</h2>
-            {/* 맵 카드 컨테이너 */}
-            <div className="flex justify-center gap-6 flex-wrap">
-                {maps.map((map) => (
-                    <div
-                        key={map.mapId}
-                        onClick={() => handleSelectMap(map.mapId)}
-                        className={`
+                <h2 className="mb-10 text-center text-2xl font-bold mb-4">맵 선택</h2>
+                {/* 맵 카드 컨테이너 */}
+                <div className="flex justify-center gap-6 flex-wrap">
+                    {maps.map((map) => (
+                        <div
+                            key={map.mapId}
+                            onClick={() => handleSelectMap(map.mapId)}
+                            className={`
                             relative w-64 h-40 overflow-hidden rounded-xl shadow-2xl transition-transform duration-300 transform hover:scale-105 hover:shadow-yellow-500/50 cursor-pointer
                             border border-gray-700
                         `}
-                        // 맵 이미지를 배경으로 설정
-                        style={{
-                            backgroundImage: map.mapImageUrl ? `url(${map.mapImageUrl})` : 'none',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            // 이미지가 로드되지 않을 경우 대비
-                            backgroundColor: map.mapImageUrl ? 'rgba(0,0,0,0.5)' : '#374151', // bg-gray-700
-                            // backgroundBlendMode: 'darken' // 이미지를 살짝 어둡게 만들어 텍스트 가독성 높임
-                        }}
-                    >
-                        {/* 맵 이름 오버레이 */}
-                        <div className="absolute inset-0 flex flex-col justify-end items-center p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
-                            <h3 className="text-2xl font-bold mb-1 text-shadow-lg">
-                                {map.mapName}
-                            </h3>                    
+                            // 맵 이미지를 배경으로 설정
+                            style={{
+                                backgroundImage: map.mapImageUrl ? `url(${map.mapImageUrl})` : 'none',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                // 이미지가 로드되지 않을 경우 대비
+                                backgroundColor: map.mapImageUrl ? 'rgba(0,0,0,0.5)' : '#374151', // bg-gray-700
+                                // backgroundBlendMode: 'darken' // 이미지를 살짝 어둡게 만들어 텍스트 가독성 높임
+                            }}
+                        >
+                            {/* 맵 이름 오버레이 */}
+                            <div className="absolute inset-0 flex flex-col justify-end items-center p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
+                                <h3 className="text-2xl font-bold mb-1 text-shadow-lg">
+                                    {map.mapName}
+                                </h3>
+                            </div>
+
+                            {/* 맵 설명 (선택 사항)*/}
+                            <p className="absolute top-2 right-2 text-xs bg-gray-800/80 px-2 py-1 rounded">
+                                일반 지역
+                            </p>
                         </div>
+                    ))}
+                </div>
 
-                        {/* 맵 설명 (선택 사항)*/}
-                        <p className="absolute top-2 right-2 text-xs bg-gray-800/80 px-2 py-1 rounded">
-                            일반 지역
-                        </p>                        
-                    </div>
-                ))}
+                {/* 맵 데이터 로딩 상태 피드백 */}
+                {maps.length === 0 && (
+                    <p className="text-center mt-10 text-gray-400">
+                        맵 정보를 불러오는 중이거나 맵이 없습니다...
+                    </p>
+                )}
             </div>
-
-            {/* 맵 데이터 로딩 상태 피드백 */}
-            {maps.length === 0 && (
-                <p className="text-center mt-10 text-gray-400">
-                    맵 정보를 불러오는 중이거나 맵이 없습니다...
-                </p>
-            )}
-            <div className="flex gap-4 mt-4 flex-col items-center">                
-                <button
-                    onClick={() => navigate("/")}
-                    className="mt-10 bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500">                
-                    홈으로
-                </button>
-            </div>
-
         </div>
-        
+
     );
 };
 

@@ -67,11 +67,6 @@ const HomePage = () => {
                             alt="슬라이드 배너"
                             className="block mx-auto w-full"
                         />
-                        <div className="absolute bottom-6 left-6">
-                            <button className="px-6 py-2 bg-yellow-400 text-gray-900 text-lg font-bold rounded-lg shadow-lg hover:bg-yellow-500 transition duration-300">
-                                자세히 보기
-                            </button>
-                        </div>
                     </div>
 
 
