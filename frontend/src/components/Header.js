@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
-import { LogOut, User, Zap, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll } from 'lucide-react';
+import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = () => {
@@ -19,7 +19,7 @@ const Header = () => {
         { name: '랭킹', icon: Award, link: '/ranking' },
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
         { name: '전투', icon: Swords, link: '/battlemode' },
-        { name: '로그', icon: Scroll, link: '/logs' },       
+        { name: '로그', icon: Scroll, link: '/logs' },        
     ];
 
     if (isLoading) {
@@ -28,7 +28,7 @@ const Header = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                     {/* 로고/사이트 이름 */}
                     <Link to="/" className="flex items-center space-x-2 group">
-                        <Zap className="w-8 h-8 text-yellow-400" />
+                        <Gamepad2 className="w-8 h-8 text-yellow-400" />
                         <h1 className="text-3xl font-extrabold text-white tracking-wider">겜만중</h1>
                     </Link>
                     
@@ -56,7 +56,7 @@ const Header = () => {
                 
                 {/* 로고/사이트 이름 */}
                 <Link to="/" className="flex items-center space-x-2 group">
-                        <Zap className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
+                    <Gamepad2 className="w-8 h-8 text-yellow-400 group-hover:text-yellow-500 transition" />
                         <h1 className="text-3xl font-extrabold text-white tracking-wider group-hover:text-yellow-400 transition duration-200">
                             겜만중
                         </h1>
