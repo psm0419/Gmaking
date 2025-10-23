@@ -114,21 +114,38 @@ export const GUIDE_CONTENT = {
   },
 
   debate: {
-    title: "AI 토론",
+    title: "AI 토론: 다중 AI 심판 시스템 체험",
     pages: [
       {
         type: "text",
         body: [
-          "주제를 고르고 라운드별로 발언합니다.",
-          "페르소나/롱메모리/요약 파이프라인으로 캐릭터성이 유지돼요.",
+          "토론을 할 캐릭터와 주제를 선택하고 나면 두 캐릭터는 주제에대해 번갈아 발언합니다",
+          "모든 발언은 OpenAI의 GPT 모델이 생성하며, 사용자는 이를 실시간으로 감상할 수 있습니다",
+          "세종류의 AI 모델이 전체적인 대화를 분석하여 각각의 기준을 가지고 판단을 내립니다.",
+          "Gemini : 직관적 감성과 흐름 중심의 판단을 내립니다.",
+          "GPT-4o : 논리와 설득력 중심의 분석을 합니다.",
+          "GPT-o1 : 간결하고 객관적인 요약형 판정을 내립니다",
+          "AI가 토론을 하고 AI가 판단하는 AI로 이루어진 끝장 토론을 확인해보세요",
         ],
-        note: "모델: gemini-2.0-flash(대화/요약), 롱메모리 파이프라인",
+        note: "모델: GPT-4o-mini, GPT-o1-mini, Gemini-2.0-flash",
       },
       {
         type: "media",
-        imageUrl: "/images/guides/debate.png",
-        caption: "주제 선택 → 라운드 → 요약",
+        imageUrl: "/images/guides/debate1.png",
+        caption: "AI 토론 배틀 메인 화면입니다.",
       },
+
+      {
+        type: "media",
+        imageUrl: "/images/guides/debate2.png",
+        caption: "토론에 참여할 캐릭터를 선택하고 주제를 입력해주세요. AI의 성격과 주제를 담은 프롬프트가 AI에게 전달됩니다.",
+      },
+
+      {
+        type: "media",
+        imageUrl: "/images/guides/debate3.png",
+        caption: "프롬프트로 전달받은 성격을 바탕으로 양 캐릭터의 토론이 진행되요. 토론이 끝나면 AI가 자신의 기준대로 평가를 진행해요!",
+        },
     ],
   },
 
