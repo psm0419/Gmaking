@@ -30,7 +30,7 @@ import ReactionGame from './pages/ReactionGame';
 import MiniGameList from './pages/MiniGameList';
 import BattleModeSelectPage from './pages/BattleModeSelectPage';
 import MemoryGame from './pages/MemoryGame';
-import CharacterAssistant from './components/CharacterAssistant';
+import CharacterAssistant from './components/assistant/CharacterAssistant';
 import React, { useState, useEffect } from 'react';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -162,7 +162,7 @@ function App() {
                   ]}
                 frameMs={350}
                 name="겜만중 도우미"
-                options={["오늘의 퀘스트","PVP 입장","상점 열기"]}
+                options={["인사하기","겜만중이 뭐야?","AI가 뭐야?", "오늘의 퀘스트" ,"이 페이지에 대해 알려줄래?"]}
               />
             )}
 

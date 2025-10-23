@@ -1,4 +1,4 @@
-// src/components/notifications/NotificationBell.js
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";

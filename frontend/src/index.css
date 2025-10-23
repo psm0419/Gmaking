@@ -21,6 +21,7 @@ code {
   scrollbar-width: none;        /* Firefox */
 }
 .no-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome/Safari */
   width: 0;
-  height: 0;                    /* Chrome/Safari */
+  height: 0;
 }

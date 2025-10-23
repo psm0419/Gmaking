@@ -35,6 +35,16 @@ function getGradeLabel(gradeId) {
 /* 페이지 스켈레톤                                                   */
 /* ──────────────────────────────────────────────────────────────── */
 export default function MyPage() {
+
+React.useEffect(() => {
+  document.body.classList.add('no-scrollbar');
+  document.documentElement.classList.add('no-scrollbar');
+  return () => {
+    document.body.classList.remove('no-scrollbar');
+    document.documentElement.classList.remove('no-scrollbar');
+  };
+}, []);
+
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
       <Header />
@@ -255,19 +265,17 @@ function MyMain() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
-      {/* A안 적용: items-stretch (모든 브레이크포인트), 왼쪽 카드 h-full + min-h */}
+
       <div className="grid gap-6 md:grid-cols-[minmax(320px,540px),1fr] items-stretch">
-        {/* 프로필 카드 */}
+
         <section
           className="bg-gray-800 border-2 border-[#FFC700] rounded-[16px] p-6 w-full shadow-lg
                      h-full min-h-[300px] sm:min-h-[360px] md:min-h-[360px]"
         >
-          {/* ⛳ 행 전체를 카드 높이에 맞추고 세로 중앙 정렬 */}
+
           <div className="h-full flex">
             <div className="flex w-full gap-6 items-center">
-              {/* ← items-center: 행 자체를 수직 가운데로 */}
 
-              {/* 왼쪽: 프로필 + 아이콘 (세로 가운데 정렬) */}
               <div className="shrink-0 h-full flex flex-col items-center justify-center">
                 <img
                   src={safeProfileSrc}

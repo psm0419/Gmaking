@@ -76,6 +76,15 @@ function normalizeCharacters(payload) {
 }
 
 export default function ChatEntryPage() {
+  useEffect(() => {
+    document.body.classList.add('no-scrollbar');
+    document.documentElement.classList.add('no-scrollbar');
+    return () => {
+      document.body.classList.remove('no-scrollbar');
+      document.documentElement.classList.remove('no-scrollbar');
+    };
+  }, []);
+
   const navigate = useNavigate();
   const { characterId } = useParams();
   const auth = useAuth?.() || {};

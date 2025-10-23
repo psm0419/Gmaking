@@ -66,6 +66,16 @@ function normalizeHistory(raw) {
 }
 
 export default function ChatPage() {
+
+  useEffect(() => {
+    document.body.classList.add('no-scrollbar');
+    document.documentElement.classList.add('no-scrollbar');
+    return () => {
+      document.body.classList.remove('no-scrollbar');
+      document.documentElement.classList.remove('no-scrollbar');
+    };
+  }, []);
+
   const { characterId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -94,7 +104,9 @@ export default function ChatPage() {
 
   // 스크롤 맨 아래로
   useEffect(() => {
-      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollWrapRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   /** 1) 초기: 캐릭터 목록 */
@@ -298,7 +310,8 @@ export default function ChatPage() {
 
               <div
                 key={selectedCharacter?.id || "none"}     // 캐릭터 바뀌면 강제 리마운트
-                className="flex-1 overflow-y-auto px-14 py-10 space-y-5"
+                ref={scrollWrapRef}
+                className="flex-1 overflow-y-auto no-scrollbar px-14 py-10 space-y-5"
               >
                 {messages.map((m) => (
                   <Bubble key={m.id} role={m.role} content={m.content} />
