@@ -113,6 +113,7 @@ function App() {
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
                 <Route path="/create-character" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
+                <Route path="/chat-entry" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>}/>
                 <Route path="/chat-entry/:characterId" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>} />
                 <Route path="/chat/:characterId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                 <Route path="/my-page" element={<ProtectedRoute><MyPage/></ProtectedRoute>} />

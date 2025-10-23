@@ -31,5 +31,7 @@ public interface CharacterDAO {
     // grade_id 업데이트 메서드
     void updateGradeId(@Param("gradeId") Integer gradeId,
                        @Param("characterId") Integer characterId);
+
+    Integer selectGradeIdByCharacterId(@Param("characterId") Integer characterId);
 }
 

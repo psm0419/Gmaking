@@ -28,11 +28,11 @@ export default function PvpResultModal({
   const battleId = data?.battleId ?? null;
   const opponentUserId = data?.opponentUserId ?? null;
   const opponentCharacterId = data?.opponentCharacterId ?? null;
-  const gradeId = data?.gradeId ?? null;
+  const levelForDisplay = data?.gradeId ?? null;
 
-  // ✅ 재대결 버튼 클릭 시
+  // 재대결 버튼 클릭 시
   const handleRematch = () => {
-    const ctx = { opponentUserId, opponentCharacterId, battleId, result: data?.result, gradeId };
+    const ctx = { opponentUserId, opponentCharacterId, battleId, result: data?.result, gradeId: data?.gradeId, };
 
     if (onRematch) {
       onRematch(ctx);
@@ -123,7 +123,7 @@ export default function PvpResultModal({
 
           {/* 스탯 */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
-            <Stat label="LV" value={data?.level} />
+            <Stat label="LV" value={data?.gradeId} />
             <Stat label="HP" value={data?.hp} />
             <Stat label="ATK" value={data?.atk} />
             <Stat label="DEF" value={data?.def} />
@@ -138,7 +138,7 @@ export default function PvpResultModal({
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={handleRematch}
-              disabled={!opponentUserId}
+              disabled={!opponentUserId || !opponentCharacterId}
               className="rounded-xl border px-4 py-2 text-sm font-semibold bg-white hover:bg-gray-50 disabled:opacity-50"
               title={
                 !opponentUserId

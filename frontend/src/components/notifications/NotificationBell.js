@@ -89,20 +89,34 @@ export default function NotificationBell({
       return null;
     };
 
+    const gradeId =
+        N(raw?.gradeId) ??
+        N(meta?.gradeId) ??
+        N(pick(found, ["gradeId", "GRADE_ID", "grade", "Grade"]));
+
+    const result =
+        raw?.result ?? meta?.result ??
+        raw?.isWin  ?? meta?.isWin  ??
+        (raw?.isWinYn === "Y" || meta?.isWinYn === "Y" ? "WIN"
+         : raw?.isWinYn === "N" || meta?.isWinYn === "N" ? "LOSE" : null);
+
+
     return {
       battleId: raw?.battleId ?? null,
-      result: raw?.result ?? (raw?.isWinYn === "Y" ? "WIN" : raw?.isWinYn === "N" ? "LOSE" : null),
+      result,
       opponentUserId: raw?.opponentUserId ?? null,
       opponentNickname: raw?.opponentNickname ?? null,
       opponentCharacterId: raw?.opponentCharacterId ?? null,
       opponentCharacterName: raw?.opponentCharacterName ?? null,
       opponentImageUrl: raw?.opponentImageUrl ?? meta?.opponentImageUrl ?? null,
-      level: N(raw?.level ?? pick(found, ["level", "lv", "LEVEL", "LV"])),
+      level: N(raw?.level ?? meta?.level ?? pick(found, ["level", "lv", "LEVEL", "LV"])) ?? gradeId,
+      gradeId,
       hp: N(raw?.hp ?? pick(found, ["hp", "HP", "health", "Health"])),
       atk: N(raw?.atk ?? pick(found, ["atk", "ATK", "attack", "Attack"])),
       def: N(raw?.def ?? pick(found, ["def", "DEF", "defense", "Defense"])),
       spd: N(raw?.spd ?? pick(found, ["spd", "SPD", "speed", "Speed"])),
       crit: N(raw?.crit ?? pick(found, ["crit", "CRIT", "critical", "Critical", "critRate", "crit_rate"])),
+
     };
   }
 
@@ -233,6 +247,10 @@ export default function NotificationBell({
     } else if (n.linkUrl) {
       navigate(n.linkUrl);
     }
+
+    const raw = await api.pvpModal(n.id);
+    const data = normalizePvpModal(raw);
+    console.log('PVP modal data:', data);
   };
 
   const handleDeleteOne = async (id) => {

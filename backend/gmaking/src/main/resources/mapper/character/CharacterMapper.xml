@@ -185,4 +185,13 @@
         WHERE character_id = #{characterId}
     </update>
 
+    <select id="selectGradeIdByCharacterId"
+            parameterType="int"
+            resultType="int">
+        SELECT GRADE_ID
+        FROM TB_CHARACTER
+        WHERE CHARACTER_ID = #{characterId}
+        LIMIT 1
+    </select>
+
 </mapper>

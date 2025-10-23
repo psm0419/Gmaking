@@ -44,6 +44,7 @@ export default forwardRef(function CharacterAssistant(
     onGoToPVE,
     onGoToPVP,
     onGoToDebate,
+    onGoToChat,
   },
   ref
 ) {
@@ -235,7 +236,7 @@ export default forwardRef(function CharacterAssistant(
       case "겜만중이 뭐야?":
         return "겜만중은 '게임 만드는 중'의 줄임말이야. AI 기술을 직접 체험하고 학습할 수 있는 AI 체험형 게임 플랫폼이지!";
       case "AI가 뭐야?":
-        return "AI는 인공지능이야. 겜만중에서는 캐릭터의 성격(페르소나), 대화, 게임 해설 등에 AI가 쓰여. 더 자세히 알고 싶다면 아래 버튼을 눌러봐!";
+        return "AI는 인공지능이야. 겜만중에서는 캐릭터 생성, 캐릭터 성장, 캐릭터와의 대화, 게임 해설 등에 AI가 쓰여. 더 자세히 알고 싶다면 아래 버튼을 눌러봐!";
       case "오늘의 퀘스트":
         return "오늘의 퀘스트는 PVE 게임 3회 클리어하기야. 하러 가볼래?";
       case "이 페이지에 대해 알려줄래?":
@@ -271,6 +272,14 @@ export default forwardRef(function CharacterAssistant(
 
     const text = topicMap[topic] ?? "준비 중이야!";
     setHistory((h) => [...h, messageText]);
+
+    if (topic === "캐릭터와 채팅") {
+          setMessageText(topicMap["캐릭터와 채팅"]);
+          setView("message");
+          setCtaForAi(false);
+          openGuide("chat");             // ← 추가
+          return;
+    }
 
     if (topic === "AI 활용 게임") {
       setMessageText(topicMap["AI 활용 게임"]);
@@ -506,9 +515,19 @@ export default forwardRef(function CharacterAssistant(
           guide={guideData}
           onClose={closeGuide}
           onGo={(key) => {
-            const map = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate };
+            const map = {
+                pve: onGoToPVE,
+                pvp: onGoToPVP,
+                debate: onGoToDebate,
+                chat: onGoToChat,
+            };
             if (typeof map[key] === "function") return map[key]();
-            const fallback = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate" }[key] || "/";
+            const fallback = {
+                pve: "/pve/maps",
+                pvp: "/pvp/match",
+                debate: "/debate",
+                chat: "/chat-entry",
+            }[key] || "/";
             window.location.href = fallback;
           }}
         />
