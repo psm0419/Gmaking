@@ -27,6 +27,7 @@ const AboutPage = () => {
                         <li><span className="text-yellow-400">AI 토론 배틀</span> : 캐릭터 성격 기반의 AI 대화 배틀</li>
                         <li><span className="text-yellow-400">AI 대화</span> : 생성된 캐릭터와 직접 채팅 가능</li>
                         <li><span className="text-yellow-400">미니게임</span> : 간단한 퍼즐·기억력 게임 등 성장형 컨텐츠</li>
+                        <li><span className="text-yellow-400">커뮤니티</span> : 유저 간 소통 시스템</li>
                     </ul>
                 </section>
 
@@ -35,12 +36,12 @@ const AboutPage = () => {
                     <h2 className="text-2xl font-semibold mb-3 text-gray-100">기술 스택</h2>
                     <ul className="list-disc list-inside space-y-2">
                         <li><span className="text-yellow-400">Frontend</span> : React, Tailwind CSS, JavaScript, HTML</li>
-                        <li><span className="text-yellow-400">Backend</span> : Spring Boot</li>
+                        <li><span className="text-yellow-400">Backend</span> : Spring Boot, FastAPI</li>
                         <li><span className="text-yellow-400">Lanuage</span> : Python, Java</li>
                         <li><span className="text-yellow-400">DB</span> : MySQL</li>
                         <li><span className="text-yellow-400">AI API 연동</span> : OpenAI GPT, Google Gemini, O1-mini API</li>
-                        <li><span className="text-yellow-400">AI 학습 모델</span> : StableDiffusion, YOLOv8</li>
-                        <li><span className="text-yellow-400">AI 학습 모델</span> : GitHub, Notion, Discord, Figma</li>
+                        <li><span className="text-yellow-400">AI 학습 모델</span> : Deliberate, YOLOv8</li>
+                        <li><span className="text-yellow-400">협업 도구</span> : GitHub, Notion, Discord</li>
                     </ul>
                 </section>
 
