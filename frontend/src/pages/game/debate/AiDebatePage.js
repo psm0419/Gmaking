@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import Header from '../components/Header';
+import Header from '../../../components/Header';
 
 function AiDebatePage() {
     const token = localStorage.getItem("gmaking_token");

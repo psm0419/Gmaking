@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Send, FileText, Tag, ArrowLeft } from 'lucide-react'; // Image, X, Upload, ChevronDown 아이콘 제거
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { useAuth } from '../context/AuthContext';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 // API 기본 URL 설정 (게시글 생성 API 엔드포인트)

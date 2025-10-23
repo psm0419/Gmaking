@@ -49,7 +49,7 @@ const GuidePage = () => {
                         <li><span className="text-yellow-400">PVE</span> : AI 몬스터와 싸우는 모드. 전투 결과는 로그로 저장됩니다.</li>
                         <li><span className="text-yellow-400">PVP</span> : 유저 간 대전. 전투 후 상대방에게 알림 기능.</li>
                         <li><span className="text-yellow-400">토론 배틀</span> : 두 캐릭터를 선택 후 주제 입력 → AI가 토론하고 AI 심판이 승패 결정.</li>
-                        <li><span className="text-yellow-400">미니게임</span> : 간단한 카드 뒤집기, 기억력 테스트 등으로 AI와 대결.</li>
+                        <li><span className="text-yellow-400">미니게임</span> : 간단한 카드 뒤집기, 기억력 테스트 등으로 캐릭터 스탯 성장 가능</li>
                     </ul>
                 </GuideSection>
 

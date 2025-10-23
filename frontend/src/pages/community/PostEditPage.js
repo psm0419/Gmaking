@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback, useContext } from 'react';
 //                                                  ^^^^^^^^^ useContext 추가
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../components/Header'; 
-import Footer from '../components/Footer';
-import { useAuth } from '../context/AuthContext'; 
+import Header from '../../components/Header'; 
+import Footer from '../../components/Footer';
+import { useAuth } from '../../context/AuthContext'; 
 
 const API_BASE_URL = 'http://localhost:8080/community';
 

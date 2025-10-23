@@ -1,18 +1,18 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { notificationsApi } from "../api/notificationApi";
+import { notificationsApi } from "../../api/notificationApi";
 
 // 분리된 웹알림 컴포넌트 + 분리된 PVP 결과 모달
-import NotificationBell from "../components/notifications/NotificationBell";
-import PvpResultModal from "../components/notifications/PvpResultModal"; // ← 경로 확인
+import NotificationBell from "../../components/notifications/NotificationBell";
+import PvpResultModal from "../../components/notifications/PvpResultModal"; // ← 경로 확인
 
-import GrowthModal from "./GrowthModal";
+import GrowthModal from "../GrowthModal";
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 

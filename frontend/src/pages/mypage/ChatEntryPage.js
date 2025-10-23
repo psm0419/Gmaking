@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 
 // Vite/CRA 모두 대응

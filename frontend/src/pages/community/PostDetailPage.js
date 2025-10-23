@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../components/Header'; 
-import Footer from '../components/Footer';
+import Header from '../../components/Header'; 
+import Footer from '../../components/Footer';
 import { ThumbsUp, Eye, Tag, MessageSquare, Edit3, Trash2, XCircle, Loader2, Send, Clock } from 'lucide-react';
-import { useAuth } from '../context/AuthContext'; // 가정: useAuth는 { user, token }을 제공합니다.
+import { useAuth } from '../../context/AuthContext'; // 가정: useAuth는 { user, token }을 제공합니다.
 
 const API_BASE_URL = 'http://localhost:8080/community';
 
