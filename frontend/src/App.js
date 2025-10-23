@@ -39,6 +39,7 @@ import LicensePage from './pages/footer/LicensePage';
 import GuidePage from './pages/footer/GuidePage';
 import AboutPage from './pages/footer/About';
 import TeamPage from './pages/footer/TeamPage';
+import TypingGame from './pages/game/minigame/TypingGame';
 
 
 // ProtectedRoute: 로그인 확인
@@ -131,6 +132,7 @@ function App() {
                 <Route path="/minigame" element={<MiniGameList />} />
                 <Route path="/battlemode" element={<BattleModeSelectPage />} />
                 <Route path="/minigame/memory" element={<MemoryGame />} />
+                <Route path="/minigame/typing" element={<TypingGame />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
