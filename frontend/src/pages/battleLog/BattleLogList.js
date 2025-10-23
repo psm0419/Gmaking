@@ -110,7 +110,7 @@ function BattleLogList() {
             </div>
 
             {/* 로그 목록만 스크롤 */}
-            <div className="flex-1 overflow-auto w-full max-w-4xl mx-auto px-6 pb-6 mb-5">
+            <div className="flex-1 overflow-auto w-full max-w-4xl mx-auto px-6 pb-6 mb-5 no-scrollbar">
                 {filteredLogs.length === 0 ? (
                     <p className="text-center text-gray-500 py-8">
                         {searchTerm

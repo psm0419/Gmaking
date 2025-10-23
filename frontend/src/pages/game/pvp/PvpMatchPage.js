@@ -92,6 +92,15 @@ function PvpMatchPage() {
         });
     };
 
+    React.useEffect(() => {
+      document.body.classList.add('no-scrollbar');
+      document.documentElement.classList.add('no-scrollbar');
+      return () => {
+        document.body.classList.remove('no-scrollbar');
+        document.documentElement.classList.remove('no-scrollbar');
+      };
+    }, []);
+
     return (
         <div><Header />
             <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center text-white p-8">

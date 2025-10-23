@@ -147,7 +147,7 @@ function AiDebatePage() {
                     {/* 로그 영역 */}
                     <div
                         ref={logRef}
-                        className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner"
+                        className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner no-scrollbar"
                     >
                         {dialogues
                             .filter(d => d.line && d.line.trim() !== "")

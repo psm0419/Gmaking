@@ -120,7 +120,7 @@ function RankingPage() {
             </div>
 
             {/* 내부 스크롤 영역 */}
-            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-6 mb-5">
+            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-6 mb-5 no-scrollbar">
                 {renderTable()}
             </div>
         </div>
