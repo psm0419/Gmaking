@@ -28,7 +28,23 @@ export default function PvpResultModal({
   const battleId = data?.battleId ?? null;
   const opponentUserId = data?.opponentUserId ?? null;
   const opponentCharacterId = data?.opponentCharacterId ?? null;
-  const levelForDisplay = data?.gradeId ?? null;
+
+
+  const toInt = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+  };
+
+  function getGradeLabel(gradeId) {
+    switch (toInt(gradeId)) {
+      case 1: return "N";
+      case 2: return "R";
+      case 3: return "SR";
+      case 4: return "SSR";
+      case 5: return "UR";
+      default: return "-";
+    }
+  }
 
   // 재대결 버튼 클릭 시
   const handleRematch = () => {
@@ -123,7 +139,7 @@ export default function PvpResultModal({
 
           {/* 스탯 */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
-            <Stat label="LV" value={data?.gradeId} />
+            <Stat label="LV" value={getGradeLabel(data?.gradeId)} />
             <Stat label="HP" value={data?.hp} />
             <Stat label="ATK" value={data?.atk} />
             <Stat label="DEF" value={data?.def} />
