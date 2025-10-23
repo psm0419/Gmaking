@@ -134,7 +134,7 @@ public class NotificationService {
             String opponentImageUrl,       // NEW
             String requesterUserId,        // NEW
             Integer requesterCharacterId,  // NEW
-            Integer level, Integer hp, Integer atk, Integer def, Integer spd, Integer crit,
+            Integer gradeId, Integer hp, Integer atk, Integer def, Integer spd, Integer crit,
             String actor
     ) {
         var meta = objectMapper.createObjectNode();
@@ -158,7 +158,7 @@ public class NotificationService {
         if (requesterCharacterId != null) meta.put("requesterCharacterId", requesterCharacterId);
 
         // (옵션) 스탯
-        if (level != null) meta.put("level", level);
+        if (gradeId != null) meta.put("gradeId", gradeId);
         if (hp    != null) meta.put("hp", hp);
         if (atk   != null) meta.put("atk", atk);
         if (def   != null) meta.put("def", def);
@@ -166,7 +166,7 @@ public class NotificationService {
         if (crit  != null) meta.put("crit", crit);
 
         var s = meta.putObject("stats");
-        if (level != null) s.put("level", level);
+        if (gradeId != null) s.put("gradeId", gradeId);
         if (hp    != null) s.put("hp", hp);
         if (atk   != null) s.put("atk", atk);
         if (def   != null) s.put("def", def);

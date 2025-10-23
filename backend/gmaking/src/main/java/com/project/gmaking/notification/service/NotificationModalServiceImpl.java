@@ -45,7 +45,9 @@ public class NotificationModalServiceImpl implements NotificationModalService {
         vo.setOpponentCharacterName(text(meta, "opponentCharacterName"));
         vo.setOpponentImageUrl(text(meta, "opponentImageUrl"));
 
-        vo.setLevel(intOrNull(meta, "level"));
+        Integer gradeId = intOrNull(meta, "gradeId");
+        vo.setGradeId(gradeId);
+
         vo.setHp(intOrNull(meta, "hp"));
         vo.setAtk(intOrNull(meta, "atk"));
         vo.setDef(intOrNull(meta, "def"));

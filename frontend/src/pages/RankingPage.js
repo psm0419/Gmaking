@@ -29,10 +29,10 @@ function RankingPage() {
     }, [rankingType]);
 
     const renderTable = () => (
-        <div className="bg-gray-100 shadow-md rounded-xl overflow-hidden">
+        <div className="bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-700">
             <table className="min-w-full text-center border-collapse">
-                <thead className="bg-gray-300 border-b">
-                    <tr className="text-gray-700">
+                <thead className="bg-gray-700 border-b border-gray-600">
+                    <tr className="text-gray-200">
                         <th className="py-3 px-4">순위</th>
                         <th className="py-3 px-4">캐릭터명</th>
                         <th className="py-3 px-4">유저명</th>
@@ -49,30 +49,34 @@ function RankingPage() {
                 <tbody>
                     {rankings.length === 0 ? (
                         <tr>
-                            <td colSpan="5" className="py-6 text-gray-500">랭킹 데이터가 없습니다.</td>
+                            <td colSpan="5" className="py-6 text-gray-400">랭킹 데이터가 없습니다.</td>
                         </tr>
                     ) : (
                         rankings.map((r, i) => (
                             <tr
                                 key={i}
-                                className={`border-b transition hover:bg-gray-300 ${i % 2 === 0 ? "bg-gray-200" : "bg-gray-200"
+                                className={`border-b border-gray-700 transition ${i % 2 === 0
+                                    ? "bg-gray-900 hover:bg-gray-700"
+                                    : "bg-gray-850 hover:bg-gray-700"
                                     }`}
                             >
-                                <td className="py-3 px-4 font-semibold text-gray-800">#{i + 1}</td>
-                                <td className="py-3 px-4 font-medium text-gray-700">{r.characterName}</td>
-                                <td className="py-3 px-4 text-gray-600">{r.userNickname}</td>
+                                <td className="py-3 px-4 font-semibold text-gray-200">#{i + 1}</td>
+                                <td className="py-3 px-4 font-medium text-gray-100">{r.characterName}</td>
+                                <td className="py-3 px-4 text-gray-400">{r.userNickname}</td>
 
                                 {rankingType === "character" && (
                                     <>
-                                        <td className="py-3 px-4 font-semibold text-blue-600">{getGradeLabel(r.gradeId)}</td>
-                                        <td className="py-3 px-4 font-semibold text-gray-800">{r.totalStat}</td>
+                                        <td className="py-3 px-4 font-semibold text-blue-400">
+                                            {getGradeLabel(r.gradeId)}
+                                        </td>
+                                        <td className="py-3 px-4 font-semibold text-gray-200">{r.totalStat}</td>
                                     </>
                                 )}
                                 {rankingType === "pvp" && (
-                                    <td className="py-3 px-4 font-semibold text-green-600">{r.winCount}</td>
+                                    <td className="py-3 px-4 font-semibold text-green-400">{r.winCount}</td>
                                 )}
                                 {rankingType === "pve" && (
-                                    <td className="py-3 px-4 font-semibold text-indigo-600">{r.clearCount}</td>
+                                    <td className="py-3 px-4 font-semibold text-indigo-400">{r.clearCount}</td>
                                 )}
                             </tr>
                         ))
@@ -81,6 +85,8 @@ function RankingPage() {
             </table>
         </div>
     );
+
+
 
     return (
         <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
@@ -93,38 +99,28 @@ function RankingPage() {
 
                 {/* 버튼 영역 */}
                 <div className="flex justify-center gap-4 flex-wrap">
-                    <button
-                        className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${rankingType === "character"
-                                ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                            }`}
-                        onClick={() => setRankingType("character")}
-                    >
-                        캐릭터 스탯
-                    </button>
-                    <button
-                        className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${rankingType === "pvp"
-                                ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                            }`}
-                        onClick={() => setRankingType("pvp")}
-                    >
-                        PVP
-                    </button>
-                    <button
-                        className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${rankingType === "pve"
-                                ? "bg-blue-600 text-white shadow-md"
-                                : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                            }`}
-                        onClick={() => setRankingType("pve")}
-                    >
-                        PVE
-                    </button>
+                    {[
+                        { type: "character", label: "캐릭터 스탯" },
+                        { type: "pvp", label: "PVP" },
+                        { type: "pve", label: "PVE" },
+                    ].map(({ type, label }) => (
+                        <button
+                            key={type}
+                            onClick={() => setRankingType(type)}
+                            className={`px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 shadow-md border 
+                ${rankingType === type
+                                    ? "bg-blue-500 text-white border-blue-400 shadow-blue-600/40 scale-105"
+                                    : "bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white"
+                                }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {/* 내부 스크롤 영역 */}
-            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-6">
+            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-6 mb-5 no-scrollbar">
                 {renderTable()}
             </div>
         </div>

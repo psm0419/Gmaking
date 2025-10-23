@@ -59,6 +59,15 @@ const HomePage = () => {
         { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
     ];
 
+    React.useEffect(() => {
+      document.body.classList.add('no-scrollbar');
+      document.documentElement.classList.add('no-scrollbar');
+      return () => {
+        document.body.classList.remove('no-scrollbar');
+        document.documentElement.classList.remove('no-scrollbar');
+      };
+    }, []);
+    
     return (
         <div><Header />
             <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">

@@ -1,6 +1,7 @@
 package com.project.gmaking.notification.facade;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.gmaking.character.dao.CharacterDAO;
 import com.project.gmaking.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import static com.project.gmaking.notification.facade.NotificationTypes.*;
 @RequiredArgsConstructor
 public class NotificationFacade {
     private final NotificationService notificationService;
+    private final CharacterDAO characterDAO;
     private final ObjectMapper om = new ObjectMapper();
 
     // ===========================
@@ -74,9 +76,12 @@ public class NotificationFacade {
             String opponentImageUrl,       // 상대 캐릭터 이미지
             String requesterUserId,        // (수신자=나) 내 userId (재대결 seed)
             Integer requesterCharacterId,  // (수신자=나) 내 charId
-            Integer level, Integer hp, Integer atk, Integer def, Integer spd, Integer crit, // (옵션) 스탯
+            Integer hp, Integer atk, Integer def, Integer spd, Integer crit, // (옵션) 스탯
             String actor                   // 생성자 표시 (system 등)
     ) {
+
+        Integer gradeId = fetchGradeIdSafe(opponentCharacterId);
+
         if (targetUserId == null || targetUserId.isBlank()) {
             throw new IllegalArgumentException("targetUserId is required");
         }
@@ -96,13 +101,13 @@ public class NotificationFacade {
         metaMap.put("displayOpponentName", name);
         metaMap.put("opponentCharacterId", opponentCharacterId); // 추가
         metaMap.put("opponentImageUrl", opponentImageUrl);
+        metaMap.put("gradeId", gradeId);
 
         // 수신자 본인(재대결 시드)
         metaMap.put("requesterUserId", requesterUserId);         //  추가
         metaMap.put("requesterCharacterId", requesterCharacterId);// 추가
 
         // 상위 스탯(옵션)
-        metaMap.put("level", level);
         metaMap.put("hp", hp);
         metaMap.put("atk", atk);
         metaMap.put("def", def);
@@ -111,7 +116,7 @@ public class NotificationFacade {
 
         // 하위 객체(stats)
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("level", level);
+        stats.put("gradeId", gradeId);
         stats.put("hp", hp);
         stats.put("atk", atk);
         stats.put("def", def);
@@ -131,6 +136,15 @@ public class NotificationFacade {
     // ====================================================
     // 🔧 공통 유틸
     // ====================================================
+
+    private Integer fetchGradeIdSafe(Integer characterId) {
+        if (characterId == null) return null;
+        try {
+            return characterDAO.selectGradeIdByCharacterId(characterId);
+        } catch (Exception e) {
+            return null; // 조회 실패 시 null
+        }
+    }
     private String json(Object o) {
         try { return om.writeValueAsString(o); }
         catch (Exception e) { return "{}"; }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
+import { LogOut, Bot, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = ({ onInfoClick }) => {
@@ -21,6 +21,7 @@ const Header = ({ onInfoClick }) => {
         { name: '캐릭터 뽑기', icon: Egg, link: '/create-character' },
         { name: '게임', icon: Swords, link: '/battlemode' },
         { name: '로그', icon: Scroll, link: '/logs' },
+        { name: '채팅', icon: Bot, link: '/chat-entry'},
     ];
 
     if (isLoading) {
@@ -70,7 +71,7 @@ const Header = ({ onInfoClick }) => {
                 {/* 로고/사이트 이름 */}
                 <Link
                     to="/"
-                    className="flex items-center space-x-2" 
+                    className="flex items-center space-x-2"
                 >
                     <Gamepad2
                         className="w-8 h-8 text-yellow-400 transform -rotate-6"
@@ -104,16 +105,16 @@ const Header = ({ onInfoClick }) => {
 
                 {/* 우측: i 버튼 + 사용자 영역 */}
                 <div className="flex items-center space-x-3">
-                    {/* i 버튼 */}
-                    <button
-                        type="button"
-                        onClick={() => onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-zinc-500 text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
-                        aria-label="도우미 열기"
-                        title="도우미"
-                    >
-                        <Info className="w-5 h-5" />
-                    </button>
+                    {/* AI 사용안내 버튼 */}
+                    <img
+                        src={process.env.PUBLIC_URL + "/images/InfoIcon.png"}
+                        alt="도우미 열기"
+                        onClick={() =>
+                            onInfoClick ? onInfoClick() : window.dispatchEvent(new Event('assistant:toggle'))
+                        }
+                        className="w-9 h-9 object-cover
+                        cursor-pointer hover:ring-yellow-400 hover:scale-105 transition duration-200"
+                    />
 
                     {/* 사용자 정보 및 로그아웃 */}
                     {isLoggedIn ? (
