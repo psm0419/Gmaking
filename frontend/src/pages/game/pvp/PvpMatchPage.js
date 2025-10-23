@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import Header from '../../../components/Header';
+import Header from "../../../components/Header";
 
 function PvpMatchPage() {
     const navigate = useNavigate();
     const token = localStorage.getItem("gmaking_token");
-
+    const location = useLocation();
+    const { rematch, opponent } = location.state || {};
     const [myCharacters, setMyCharacters] = useState([]);
     const [opponentCharacters, setOpponentCharacters] = useState([]);
     const [selectedMyChar, setSelectedMyChar] = useState(null);
     const [selectedEnemyChar, setSelectedEnemyChar] = useState(null);
+    
 
     // 토큰에서 userId 추출
     let userId = null;
@@ -50,6 +52,26 @@ function PvpMatchPage() {
                 console.error("캐릭터 목록 불러오기 실패:", err);
             });
     }, [token, userId, navigate]);
+
+    // ✅ 재대결 상태면 상대 고정 세팅
+    useEffect(() => {
+        if (rematch && opponent) {
+            setOpponentCharacters([{
+                characterId: opponent.characterId,
+                userId: opponent.userId,
+                characterName: opponent.characterName,
+                imageUrl: opponent.imageUrl,
+                gradeId: opponent.gradeId,
+                characterStat: {
+                    characterHp: opponent.stat.hp,
+                    characterAttack: opponent.stat.atk,
+                    characterDefense: opponent.stat.def,
+                    characterSpeed: opponent.stat.spd,
+                    criticalRate: opponent.stat.crit,
+                },
+            }]);
+        }
+    }, [rematch, opponent]);
 
     const findOpponent = () => {
         axios.get(`/api/pvp/match?userId=${userId}`)
