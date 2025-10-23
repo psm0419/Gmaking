@@ -1,0 +1,93 @@
+export const GUIDE_CONTENT = {
+  pvp: {
+    title: "PVP: 실시간 대전 & AI 해설",
+    pages: [
+      {
+        type: "text",
+        body: [
+          "겜만중의 PVP는 턴 동기화 방식으로 진행돼요.",
+          "AI는 전투 판정에 개입하지 않고, **하이라이트 해설/요약**을 담당해요.",
+          "라운드 종료 후, AI가 결정적 순간을 설명하고 플레이 팁을 요약해줘요.",
+        ],
+        note: "모델: 대사/요약 gpt-4o-mini, 전투 규칙은 백엔드 처리",
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pvp.png",
+        caption: "매칭 → 라운드 → 하이라이트 해설 흐름",
+      },
+    ],
+  },
+
+  pve: {
+    title: "PVE: 스토리텔러 AI",
+    pages: [
+      {
+        type: "text",
+        body: [
+          "혼자 던전을 탐험하며, AI가 진행을 **서사로 묘사**해요.",
+          "전투 규칙은 백엔드에서, AI는 상황 해설/대사 생성에 집중합니다.",
+          "매 턴마다 AI가 전투 상황을 해석하여 실제 RPG처럼 실시간 전투 로그를 생성합니다.",
+          "단순한 수치 로그가 아닌, 전투의 긴장감이나 캐릭터의 개성을 살린 서술형 전투대사까지 만들어내요.",
+          "전투 시작 전 AI가 확률 로직을 이용해 일반 몬스터 또는 보스 몬스터를 결정합니다.",
+          "단순한 시뮬레이션을 넘어 AI가 해설자 역할을 맡는 스토리형 자동 전투를 구현한 것이 PVE 시스템의 핵심이에요.",
+        ],
+        note: "사용 모델: GPT-4o-mini, TTS",
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pve1.png",
+        caption: "PVE 캐릭터 선택 창이에요! 캐릭터와 맵을 선택해보세요!",
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pve2.png",
+        caption: `선택한 해설 스타일이 GPT에 들어가는 프롬프트에 적용돼요.
+프롬프트는 지시문이라 생각하면 돼요. AI에게 원하는 해설을 지시해보세요.`,
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pve3.png",
+        caption: `전투를 시작해보세요! 전투를 시작하면 AI가 DB에 저장된 확률대로 일반몹이나 보스몹을 배정해줘요!
+음성으로 로그를 읽어주는 TTS 기능도 있답니다.`,
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pve4.png",
+        caption: `백조가 우아하게 떠다니지만 아래에서는 바쁘게 움직이듯, 백엔드에서 전투 알고리즘이 진행돼요.
+그 결과를 전해받은 AI가 상황에 맞게 해설을 해줍니다. 스테이지 클리어 횟수에 따라 나중에 캐릭터를 성장할 수 있어요!`,
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pve5.png",
+        caption: `상단 헤더의 로그를 클릭하면 로그 페이지로 이동해요. 전투 내용을 보고 싶다면 언제든지 로그 페이지로 이동하세요!`,
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/pve6.png",
+        caption: `전투 내용을 상세하게 볼 수 있어요. 짜릿했던 전투의 기억을 다시 한 번 확인하세요.`,
+      },
+    ],
+  },
+
+  debate: {
+    title: "AI 토론",
+    pages: [
+      {
+        type: "text",
+        body: [
+          "주제를 고르고 라운드별로 발언합니다.",
+          "페르소나/롱메모리/요약 파이프라인으로 캐릭터성이 유지돼요.",
+        ],
+        note: "모델: gemini-2.0-flash(대화/요약), 롱메모리 파이프라인",
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/debate.png",
+        caption: "주제 선택 → 라운드 → 요약",
+      },
+    ],
+  },
+};
+
+export default GUIDE_CONTENT;
