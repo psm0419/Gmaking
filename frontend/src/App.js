@@ -1,6 +1,8 @@
 
 import { useAuth } from './context/AuthContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+
 import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
@@ -21,7 +23,6 @@ import PostDetailPage from './pages/community/PostDetailPage';
 import BattleLogList from './pages/battleLog/BattleLogList';
 import TurnLogList from './pages/battleLog/TurnLogList';
 import RankingPage from './pages/RankingPage';
-
 import AiDebatePage from './pages/game/debate/AiDebatePage';
 import ProfileEditPage from'./pages/community/ProfileEditPage';
 import PvpMatchPage from './pages/game/pvp/PvpMatchPage';
@@ -32,7 +33,6 @@ import MiniGameList from './pages/game/minigame/MiniGameList';
 import BattleModeSelectPage from './pages/game/BattleModeSelectPage';
 import MemoryGame from './pages/game/minigame/MemoryGame';
 import CharacterAssistant from './components/assistant/CharacterAssistant';
-import React, { useState, useEffect } from 'react';
 import TermsPage from './pages/footer/TermsPage';
 import PrivacyPage from './pages/footer/PrivacyPage';
 import LicensePage from './pages/footer/LicensePage';
