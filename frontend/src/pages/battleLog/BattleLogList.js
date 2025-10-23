@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 function BattleLogList() {
     const [battleLogs, setBattleLogs] = useState([]);
@@ -90,7 +90,7 @@ function BattleLogList() {
                             onClick={() => setTypeFilter(type)}
                             className={`px-5 py-2 rounded-xl font-medium transition duration-200 shadow-md
                                 ${typeFilter === type
-                                    ? "bg-blue-600 text-white shadow-blue-500/50"
+                                    ? "bg-blue-500 text-white shadow-blue-600"
                                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                                 }`}
                         >

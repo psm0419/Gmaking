@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import axiosInstance from "../api/axiosInstance";
-import useChatExit from "../hooks/useChatExit";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import axiosInstance from "../../api/axiosInstance";
+import useChatExit from "../../hooks/useChatExit";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "";

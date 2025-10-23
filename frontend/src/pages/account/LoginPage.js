@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Gamepad2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle, FaComment, FaLeaf } from 'react-icons/fa';
@@ -24,8 +24,8 @@ const LoginPage = ({ onRegisterClick }) => {
 
         const ok = await login(userId, userPassword);
 
-        if (ok) { 
-            navigate('/'); 
+        if (ok) {
+            navigate('/');
             return;
         }
 
@@ -38,7 +38,7 @@ const LoginPage = ({ onRegisterClick }) => {
     const renderSocialLoginButtons = () => (
         <div className="space-y-3 pt-6 border-t border-gray-700">
             <p className="text-center text-gray-400 text-sm">또는 소셜 계정으로 로그인</p>
-            
+
             {/* Google 로그인 버튼 */}
             <a href={GOOGLE_AUTH_URL} className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-gray-900 bg-white hover:bg-gray-100 transition duration-200 shadow-md">
                 <FaGoogle className="w-5 h-5 mr-3 text-red-600" />
@@ -61,7 +61,7 @@ const LoginPage = ({ onRegisterClick }) => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
-            <div 
+            <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: "url('/GmakingLogin2.png')" }}
             />
@@ -69,8 +69,24 @@ const LoginPage = ({ onRegisterClick }) => {
             <div className="absolute inset-0 bg-black/2"></div>
 
             <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-gray-800/90 rounded-xl shadow-2xl backdrop-blur-sm">
+
+                <div className="text-center pb-4">
+                    <h2 className="text-5xl font-extrabold text-white tracking-wider leading-tight flex items-center justify-center space-x-2">
+                        <Gamepad2 className="w-10 h-10 text-yellow-400 transform -rotate-12" />
+                        <Link
+                            to="/"
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 to-yellow-700 animate-float"
+                            style={{
+                                textShadow: '0 4px 6px rgba(0, 0, 0, 0.4)',
+                                textDecoration: 'none'
+                            }}
+                        >
+                            겜만중
+                        </Link>
+                    </h2>
+                </div>
+
                 <h1 className="text-3xl font-extrabold text-white text-center flex items-center justify-center">
-                    <LogIn className="w-8 h-8 mr-3 text-yellow-400" />
                     로그인
                 </h1>
 
@@ -117,7 +133,7 @@ const LoginPage = ({ onRegisterClick }) => {
                 </form>
 
                 <div className="text-center pt-4">
-                    <Link 
+                    <Link
                         to="/register"
                         className="text-sm text-yellow-400 hover:text-yellow-300 flex items-center justify-center w-full"
                     >

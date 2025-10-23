@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Mail, CheckCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { findPasswordSendCodeApi, verifyEmailApi, changePasswordApi } from '../../api/authApi';
+import { findPasswordSendCodeApi, verifyEmailApi, changePasswordApi } from '../../api/auth/authApi';
 
 const FindPasswordPage = () => {
     const navigate = useNavigate();
@@ -13,9 +13,9 @@ const FindPasswordPage = () => {
         newPassword: '',
         confirmPassword: ''
     });
-    
+
     // 정보 입력/코드 발송, 코드 확인, 비밀번호 변경
-    const [step, setStep] = useState(1); 
+    const [step, setStep] = useState(1);
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,7 +38,7 @@ const FindPasswordPage = () => {
 
         try {
             const response = await findPasswordSendCodeApi(userId, userEmail);
-            
+
             if (response.data.success) {
                 setMessage(response.data.message);
                 setStep(2); // 2단계로 이동
@@ -69,10 +69,10 @@ const FindPasswordPage = () => {
 
         try {
             const response = await verifyEmailApi(userId, userEmail, code);
-            
+
             if (response.data.success) {
                 setMessage('이메일 인증이 완료되었습니다. 새 비밀번호를 입력해주세요.');
-                setStep(3); 
+                setStep(3);
             } else {
                 setMessage(response.data.message);
             }
@@ -91,11 +91,11 @@ const FindPasswordPage = () => {
         setIsSubmitting(true);
 
         const { userId, userEmail, newPassword, confirmPassword } = formData;
-        
+
         if (newPassword.length < 8) {
-             setMessage('비밀번호는 최소 8자 이상이어야 합니다.');
-             setIsSubmitting(false);
-             return;
+            setMessage('비밀번호는 최소 8자 이상이어야 합니다.');
+            setIsSubmitting(false);
+            return;
         }
         if (newPassword !== confirmPassword) {
             setMessage('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.');
@@ -105,10 +105,10 @@ const FindPasswordPage = () => {
 
         try {
             const response = await changePasswordApi(userId, userEmail, newPassword, confirmPassword);
-            
+
             if (response.data.success) {
                 setMessage(response.data.message);
-                setStep(4); 
+                setStep(4);
             } else {
                 setMessage(response.data.message);
             }
@@ -146,7 +146,7 @@ const FindPasswordPage = () => {
                     required
                 />
             </div>
-            
+
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -176,7 +176,7 @@ const FindPasswordPage = () => {
                     required
                 />
             </div>
-            
+
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -187,7 +187,7 @@ const FindPasswordPage = () => {
             </button>
         </form>
     );
-    
+
     // 비밀번호 변경
     const renderChangePasswordForm = () => (
         <form onSubmit={handleChangePassword} className="space-y-4">
@@ -213,7 +213,7 @@ const FindPasswordPage = () => {
                     required
                 />
             </div>
-            
+
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -252,7 +252,7 @@ const FindPasswordPage = () => {
                         {message}
                     </div>
                 )}
-                
+
                 {step === 1 && renderFindPasswordForm()}
                 {step === 2 && renderVerifyCodeForm()}
                 {step === 3 && renderChangePasswordForm()}
@@ -260,7 +260,7 @@ const FindPasswordPage = () => {
 
                 {/* 하단 링크 */}
                 <div className="text-center pt-4 border-t border-gray-700">
-                    <Link 
+                    <Link
                         to="/login"
                         className="text-sm text-gray-400 hover:text-gray-300 flex items-center justify-center w-full"
                     >

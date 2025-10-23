@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, ThumbsUp, Eye, Search, Plus, List, Tag, UserStar } from 'lucide-react'; 
-import Header from '../components/Header'; 
-import Footer from '../components/Footer';
+import Header from '../../components/Header'; 
+import Footer from '../../components/Footer';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../../context/AuthContext'; 
 
 // API 기본 URL 설정
 const API_BASE_URL = 'http://localhost:8080/community';

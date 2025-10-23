@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import axiosInstance from "../api/axiosInstance";
-import { useAuth } from '../context/AuthContext';
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import axiosInstance from "../../api/axiosInstance";
+import { useAuth } from '../../context/AuthContext';
 
 // ===== BASE URL & 프로필 전용 폴백/정규화 =====
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:8080";

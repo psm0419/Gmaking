@@ -9,8 +9,8 @@ const OAuth2RedirectHandler = () => {
     const { handleOAuth2Login } = useAuth();
 
     useEffect(() => {
-        let isCancelled = false; 
- 
+        let isCancelled = false;
+
         const processOAuth2Redirect = () => {
             const queryParams = new URLSearchParams(location.search);
             const token = queryParams.get('token');
@@ -24,11 +24,11 @@ const OAuth2RedirectHandler = () => {
             const isAdFree = queryParams.get('isAdFree');
             try {
                 if (token && userId) {
-                    const userInfo = { 
-                        userId, 
+                    const userInfo = {
+                        userId,
                         userName: userNickname,
-                        role, 
-                        hasCharacter: hasCharacter === 'true' || hasCharacter === true, 
+                        role,
+                        hasCharacter: hasCharacter === 'true' || hasCharacter === true,
                         userEmail,
                         characterImageUrl,
                         incubatorCount,
@@ -39,7 +39,7 @@ const OAuth2RedirectHandler = () => {
                         handleOAuth2Login(token, userInfo);
                         navigate('/', { replace: true });
                     }
-                    return; 
+                    return;
                 }
 
                 const error = queryParams.get('error');
@@ -48,14 +48,14 @@ const OAuth2RedirectHandler = () => {
                     if (!isCancelled) {
                         navigate('/login', { replace: true });
                     }
-                    return; 
+                    return;
                 }
 
                 console.log('잘못된 접근 또는 매개변수 누락. 로그인 페이지로 리다이렉트합니다.');
                 if (!isCancelled) {
                     navigate('/login', { replace: true });
                 }
-                
+
             } catch (e) {
                 console.error("OAuth2RedirectHandler 처리 중 예기치 않은 DOM 오류 발생:", e);
                 if (!isCancelled) {
@@ -63,11 +63,11 @@ const OAuth2RedirectHandler = () => {
                 }
             }
         };
-        
-        processOAuth2Redirect(); 
+
+        processOAuth2Redirect();
 
         return () => {
-            isCancelled = true; 
+            isCancelled = true;
         };
 
     }, [location, handleOAuth2Login, navigate]);

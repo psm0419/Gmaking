@@ -1,20 +1,20 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { findPasswordSendCodeApi, verifyEmailApi } from '../../api/authApi';
+import { findPasswordSendCodeApi, verifyEmailApi } from '../../api/auth/authApi';
 import { Mail, Key, ShieldOff } from 'lucide-react';
 
 const WithdrawPage = () => {
     const { user, withdrawUser } = useAuth();
     const navigate = useNavigate();
-    
+
     // 1: 이메일 발송, 2: 코드 확인, 3: 비밀번호 확인/탈퇴
-    const [phase, setPhase] = useState(1); 
+    const [phase, setPhase] = useState(1);
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [emailLoading, setEmailLoading] = useState(false);
-    
+
     const userId = user?.userId;
     const userEmail = user?.userEmail;
     const isSocialUser = useMemo(() => {
@@ -29,7 +29,7 @@ const WithdrawPage = () => {
             return;
         }
 
-        const confirmMessage = isSocialUser 
+        const confirmMessage = isSocialUser
             ? `소셜 계정 탈퇴를 위해 [${userEmail}]로 인증 코드를 발송합니다. 인증 완료 시 비밀번호 확인 없이 바로 탈퇴됩니다. 계속하시겠습니까?`
             : `일반 계정 탈퇴를 위해 [${userEmail}]로 인증 코드를 발송합니다. 계속하시겠습니까?`;
 
@@ -42,7 +42,7 @@ const WithdrawPage = () => {
         try {
             const response = await findPasswordSendCodeApi(userId, userEmail);
             alert(response.data.message || "인증 코드가 발송되었습니다.");
-            setPhase(2); 
+            setPhase(2);
         } catch (error) {
             const errorMessage = error.response?.data?.message || '인증 코드 발송 중 오류가 발생했습니다.';
             alert(`오류: ${errorMessage}`);
@@ -65,12 +65,12 @@ const WithdrawPage = () => {
             if (response.data.success) {
                 alert("인증에 성공했습니다.");
                 setIsEmailVerified(true);
-                
+
                 // 소셜 유저인 경우, 비밀번호 단계(phase 3)를 건너뛰고 바로 최종 탈퇴 함수 호출
                 if (isSocialUser) {
-                    await handleSocialWithdraw(); 
+                    await handleSocialWithdraw();
                 } else {
-                    setPhase(3); 
+                    setPhase(3);
                 }
             } else {
                 alert(`인증 실패: ${response.data.message}`);
@@ -93,7 +93,7 @@ const WithdrawPage = () => {
             // AuthContext의 withdrawUser 함수를 호출하되, 비밀번호는 null로 전달
             const success = await withdrawUser(userId, null);
             if (success) {
-                navigate('/'); 
+                navigate('/');
             }
         }
     }, [userId, withdrawUser, navigate]);
@@ -115,17 +115,17 @@ const WithdrawPage = () => {
             // AuthContext의 withdrawUser 함수를 호출하되, 비밀번호를 전달
             const success = await withdrawUser(userId, password);
             if (success) {
-                navigate('/'); 
+                navigate('/');
             }
         }
-    }, [userId, userEmail, password, withdrawUser, isSocialUser, handleSocialWithdraw]); 
-    
+    }, [userId, userEmail, password, withdrawUser, isSocialUser, handleSocialWithdraw]);
+
 
     // ------------------------------------------------------------------------------------ //
 
     const renderContent = useMemo(() => {
-        const emailVerifiedText = isEmailVerified 
-            ? "인증 완료" 
+        const emailVerifiedText = isEmailVerified
+            ? "인증 완료"
             : emailLoading ? "⏳ 코드 발송 중..." : "인증 코드를 발송해주세요.";
 
         switch (phase) {
@@ -137,11 +137,11 @@ const WithdrawPage = () => {
                             <p className="font-medium truncate">{userEmail}</p>
                         </div>
                         <p className="text-sm text-gray-400 mb-6">
-                            {isSocialUser 
-                                ? "소셜 계정은 이메일 인증 완료 후 비밀번호 확인 없이 바로 탈퇴됩니다." 
+                            {isSocialUser
+                                ? "소셜 계정은 이메일 인증 완료 후 비밀번호 확인 없이 바로 탈퇴됩니다."
                                 : "일반 계정은 이메일 인증 완료 후 비밀번호 확인을 통해 최종 탈퇴됩니다."}
                         </p>
-                        <button 
+                        <button
                             onClick={handleSendCode}
                             disabled={emailLoading}
                             className="w-full py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition duration-200 disabled:bg-gray-700 disabled:opacity-50"
@@ -168,14 +168,14 @@ const WithdrawPage = () => {
                             onChange={(e) => setCode(e.target.value)}
                             className="w-full px-4 py-3 mb-6 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-white"
                         />
-                        <button 
+                        <button
                             onClick={handleVerifyCode}
                             disabled={!code || isEmailVerified}
                             className="w-full py-3 bg-yellow-600 text-gray-900 font-bold rounded-lg hover:bg-yellow-700 transition duration-200 disabled:bg-gray-700 disabled:opacity-50"
                         >
                             {isEmailVerified ? '인증 완료됨' : '인증 코드 확인'}
                         </button>
-                        <button 
+                        <button
                             onClick={handleSendCode}
                             disabled={emailLoading}
                             className="w-full py-3 mt-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition duration-200 disabled:bg-gray-700 disabled:opacity-50"
@@ -186,14 +186,14 @@ const WithdrawPage = () => {
                 );
             case 3:
                 if (isSocialUser) {
-                     return (
+                    return (
                         <div className="text-center">
                             <ShieldOff className="w-16 h-16 mx-auto mb-4 text-red-500" />
                             <h2 className="text-xl font-bold text-white mb-2">소셜 계정 탈퇴 완료 준비</h2>
                             <p className="text-gray-400 mb-8">
                                 이메일 인증이 완료되었습니다. 비밀번호 확인 없이 최종 탈퇴 버튼을 눌러 계정을 영구 삭제할 수 있습니다.
                             </p>
-                            <button 
+                            <button
                                 onClick={handleSocialWithdraw}
                                 className="w-full py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition duration-200"
                             >
@@ -222,7 +222,7 @@ const WithdrawPage = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 mb-6 bg-gray-800 border border-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
                         />
-                        <button 
+                        <button
                             onClick={handleFinalWithdraw}
                             disabled={!password || !isEmailVerified}
                             className="w-full py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition duration-200 disabled:bg-gray-700 disabled:opacity-50"

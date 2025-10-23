@@ -9,11 +9,15 @@ import UserCharacterSummary from '../components/home/UserCharacterSummary';
 import CharacterCreationPrompt from '../components/home/CharacterCreationPrompt';
 
 
-const GuideLink = ({ title }) => (
-    <div className="flex justify-between items-center p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition cursor-pointer">
+const GuideLink = ({ title, href = "/guide" }) => (
+    <a
+        href={href}
+        className="flex justify-between items-center p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200"
+        style={{ textDecoration: 'none' }}
+    >
         <span className="text-gray-200 font-medium">{title}</span>
         <ChevronRight className="w-5 h-5 text-yellow-400" />
-    </div>
+    </a>
 );
 
 const HomePage = () => {
@@ -107,11 +111,11 @@ const HomePage = () => {
                                 초보자 가이드
                             </h3>
                             <div className="space-y-3">
-                                <GuideLink title="게임 시작하기 (필독)" />
-                                <GuideLink title="기본 조작법 익히기" />
-                                <GuideLink title="자주 묻는 질문 (FAQ)" />
-                                <GuideLink title="최신 패치 노트 확인" />
-                                <GuideLink title="실시간 고객 지원 연결" />
+                                <GuideLink title="플랫폼 소개" />
+                                <GuideLink title="캐릭터 생성" />
+                                <GuideLink title="주요 콘텐츠" />
+                                <GuideLink title="AI 대화 기능" />
+                                <GuideLink title="랭킹 및 로그 조회" />
                             </div>
                         </div>
                     </div>

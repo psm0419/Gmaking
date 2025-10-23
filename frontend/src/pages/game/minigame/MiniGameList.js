@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Zap, Brain, Type, Dice5, MessageSquare } from "lucide-react";
-import Header from '../components/Header';
+import Header from '../../../components/Header';
 
 function MiniGameList() {
     const navigate = useNavigate();

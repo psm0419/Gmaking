@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { User, Mail, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { findIdSendCodeApi, findIdVerifyCodeApi } from '../../api/authApi';
+import { findIdSendCodeApi, findIdVerifyCodeApi } from '../../api/auth/authApi';
 
 const FindIdPage = () => {
     const navigate = useNavigate();
-    
+
     const [formData, setFormData] = useState({
         userName: '',
         userEmail: '',
         code: ''
     });
-    
+
     // 정보 입력 및 코드 발송, 코드 확인 및 ID 표시
     const [step, setStep] = useState(1);
     const [message, setMessage] = useState('');
@@ -38,11 +38,11 @@ const FindIdPage = () => {
 
         try {
             const response = await findIdSendCodeApi(userName, userEmail);
-            
+
             if (response.data.success) {
                 setMessage(response.data.message);
-                setTempUserId(response.data.userId); 
-                setStep(2); 
+                setTempUserId(response.data.userId);
+                setStep(2);
             } else {
                 setMessage(response.data.message);
             }
@@ -70,7 +70,7 @@ const FindIdPage = () => {
         try {
             // tempUserId는 인증 코드가 발송된 ID
             const response = await findIdVerifyCodeApi(tempUserId, userEmail, code);
-            
+
             if (response.data.success) {
                 setFoundUserId(response.data.userId); // 마스킹된 최종 아이디
                 setMessage(response.data.message);
@@ -85,7 +85,7 @@ const FindIdPage = () => {
             setIsSubmitting(false);
         }
     };
-    
+
     // 정보 입력 및 코드 발송
     const renderFindIdForm = () => (
         <form onSubmit={handleSendCode} className="space-y-4">
@@ -111,7 +111,7 @@ const FindIdPage = () => {
                     required
                 />
             </div>
-            
+
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -141,7 +141,7 @@ const FindIdPage = () => {
                     required
                 />
             </div>
-            
+
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -183,20 +183,20 @@ const FindIdPage = () => {
                         {message}
                     </div>
                 )}
-                
+
                 {step === 1 && renderFindIdForm()}
                 {step === 2 && renderVerifyCodeForm()}
                 {step === 3 && renderResult()}
 
                 {/* 하단 링크 */}
                 <div className="text-center pt-4 border-t border-gray-700">
-                    <Link 
+                    <Link
                         to="/login"
                         className="text-sm text-gray-400 hover:text-gray-300 flex items-center justify-center w-full"
                     >
                         로그인 페이지로 돌아가기
                     </Link>
-                    <Link 
+                    <Link
                         to="/find-password"
                         className="mt-2 text-sm text-gray-400 hover:text-gray-300 flex items-center justify-center w-full"
                     >

@@ -15,7 +15,7 @@ const GuideSection = ({ title, children }) => {
             </button>
 
             {open && (
-                <div className="px-6 pb-4 text-sm text-gray-300 leading-relaxed border-t border-gray-700">
+                <div className="px-6 pb-4 pt-4 text-sm text-gray-300 leading-relaxed border-t border-gray-700">
                     {children}
                 </div>
             )}
@@ -49,7 +49,7 @@ const GuidePage = () => {
                         <li><span className="text-yellow-400">PVE</span> : AI 몬스터와 싸우는 모드. 전투 결과는 로그로 저장됩니다.</li>
                         <li><span className="text-yellow-400">PVP</span> : 유저 간 대전. 전투 후 상대방에게 알림 기능.</li>
                         <li><span className="text-yellow-400">토론 배틀</span> : 두 캐릭터를 선택 후 주제 입력 → AI가 토론하고 AI 심판이 승패 결정.</li>
-                        <li><span className="text-yellow-400">미니게임</span> : 간단한 카드 뒤집기, 기억력 테스트 등으로 AI와 대결.</li>
+                        <li><span className="text-yellow-400">미니게임</span> : 간단한 카드 뒤집기, 기억력 테스트 등으로 캐릭터 스탯 성장 가능</li>
                     </ul>
                 </GuideSection>
 
@@ -59,7 +59,7 @@ const GuidePage = () => {
                 </GuideSection>
 
                 <GuideSection title="6. 랭킹 및 로그 조회">
-                    각 전투의 결과, 승률, 토론 승패가 랭킹에 반영됩니다.<br />
+                    각 전투의 결과, 승률, 캐릭터 스탯이 랭킹에 반영됩니다.<br />
                     전투 로그 페이지에서 모든 기록을 날짜순으로 확인할 수 있습니다.
                 </GuideSection>
 
@@ -67,8 +67,8 @@ const GuidePage = () => {
                     문제가 발생하거나 건의사항이 있으면 다음으로 문의해주세요.<br />
                     <ul className="list-disc list-inside mt-2 space-y-1">
                         <li>이메일 : <span className="text-yellow-400">support@gmaking.com</span></li>
-                        <li>Discord : <span className="text-yellow-400">discord.gg/gmaking</span></li>
-                        <li>GitHub : <span className="text-yellow-400">github.com/gmaking</span></li>
+                        <li>Discord : <span className="text-yellow-400">https://discord.gg/xR6mhfz6</span></li>
+                        <li>GitHub : <span className="text-yellow-400">https://github.com/psm0419/Gmaking</span></li>
                     </ul>
                 </GuideSection>
 

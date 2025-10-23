@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Sword, Footprints, MessageSquare, Gamepad2 } from "lucide-react";
-import Header from "../components/Header";
+import { Swords, Footprints, MessageSquare, Gamepad2 } from "lucide-react";
+import Header from "../../components/Header";
 
 // 재사용 카드 컴포넌트
 function ModeCard({ icon: Icon, title, desc, to, accent }) {
@@ -77,17 +77,17 @@ export default function BattleModeSelectPage() {
                     {/* 제목 영역 */}
                     <header className="mb-12 text-center">
                         <h1 className="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-indigo-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-md">
-                            모드 선택
+                            게임 선택
                         </h1>
                         <p className="mt-3 text-slate-400 text-base md:text-lg">
-                            원하는 전투 방식을 선택하세요.
+                            원하는 게임을 선택하세요.
                         </p>
                     </header>
 
                     {/* 카드 영역 */}
                     <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         <ModeCard
-                            icon={Sword}
+                            icon={Swords}
                             title="PvP"
                             desc="플레이어와의 실시간 전투"
                             to="/pvp/match"
