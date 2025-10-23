@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,7 +13,9 @@ function GuidePage({ page }) {
           ))}
         </ul>
         {page.note && (
-          <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">{page.note}</div>
+          <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
+            {page.note}
+          </div>
         )}
       </div>
     );
@@ -30,7 +31,11 @@ function GuidePage({ page }) {
           loading="lazy"
           draggable={false}
         />
-        {page.caption && <figcaption className="mt-3 text-center text-sm text-zinc-600 whitespace-pre-line">{page.caption}</figcaption>}
+        {page.caption && (
+          <figcaption className="mt-3 text-center text-sm text-zinc-600 whitespace-pre-line">
+            {page.caption}
+          </figcaption>
+        )}
       </figure>
     );
   }
@@ -44,19 +49,20 @@ export default function GuideViewer({ guide, onClose, onGo }) {
   const prev = () => setIdx((i) => Math.max(0, i - 1));
   const next = () => setIdx((i) => Math.min(pages.length - 1, i + 1));
 
-  const key = guide?.__key; // (선택) 어떤 가이드인지 식별용
+  const key = guide?.__key;
 
   const GO_LABELS = {
     pve: "PVE 하러가기",
     pvp: "PVP 하러가기",
     debate: "AI 토론 하러가기",
-    chat: "채팅 하러가기"
+    chat: "채팅 하러가기",
   };
 
-  const GO_KEYS = ["pve", "pvp", "debate", "chat"];
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose?.()}
+    >
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -67,17 +73,26 @@ export default function GuideViewer({ guide, onClose, onGo }) {
           <div>
             <h2 className="text-xl font-bold text-zinc-900">{guide?.title}</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              {idx + 1} / {pages.length || 1}
+              {pages.length ? `${idx + 1} / ${pages.length}` : "1 / 1"}
             </p>
           </div>
-          <button onClick={onClose} className="rounded-xl px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100">
+          <button
+            onClick={onClose}
+            className="rounded-xl px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100"
+          >
             닫기
           </button>
         </div>
 
         <div className="min-h-[280px]">
           <AnimatePresence mode="wait">
-            <motion.div key={idx} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.18 }}>
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.18 }}
+            >
               <GuidePage page={pages[idx]} />
             </motion.div>
           </AnimatePresence>
@@ -89,7 +104,9 @@ export default function GuideViewer({ guide, onClose, onGo }) {
               onClick={prev}
               disabled={idx === 0}
               className={`rounded-lg border px-3 py-2 text-sm ${
-                idx === 0 ? "cursor-not-allowed border-zinc-200 text-zinc-300" : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                idx === 0
+                  ? "cursor-not-allowed border-zinc-200 text-zinc-300"
+                  : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"
               }`}
             >
               ← 이전
@@ -109,11 +126,11 @@ export default function GuideViewer({ guide, onClose, onGo }) {
 
           <div className="justify-self-end">
             {idx < pages.length - 1 ? (
-              <button onClick={next} className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-700">
+              <button className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-700" onClick={next}>
                 다음 →
               </button>
             ) : (
-              <button onClick={onClose} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+              <button className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700" onClick={onClose}>
                 완료
               </button>
             )}

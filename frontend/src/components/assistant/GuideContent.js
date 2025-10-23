@@ -15,50 +15,28 @@ export const GUIDE_CONTENT = {
         ],
         note: "모델: 대사/요약 gpt-4o-mini, 전투 규칙은 백엔드 처리",
       },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pvp1.png",
-        caption: "상대방 찾기를 누르면 PVP를 진행할 상대방을 백엔드가 찾아옵니다.",
-      },
-
-      {
-        type: "media",
-        imageUrl: "/images/guides/pvp2.png",
-        caption: "전투에 나갈 내 캐릭터와 상대 캐릭터를 고르고 전투 시작을 누르세요!",
-      },
-
+      { type: "media", imageUrl: "/images/guides/pvp1.png", caption: "상대방 찾기를 누르면 PVP를 진행할 상대방을 백엔드가 찾아옵니다." },
+      { type: "media", imageUrl: "/images/guides/pvp2.png", caption: "전투에 나갈 내 캐릭터와 상대 캐릭터를 고르고 전투 시작을 누르세요!" },
       {
         type: "media",
         imageUrl: "/images/guides/pvp3.png",
         caption: `커맨드를 고르세요! 커맨드는 각자 상성이 있어요.
         상성을 생각하고 전략적으로 접근해서 선택해야해야 승리할 가능성이 높아져요.`,
       },
-
       {
         type: "media",
         imageUrl: "/images/guides/pvp6.png",
         caption: `선택의 결과를 확인하세요! 당신이 고른 커맨드와 AI가 고른 커맨드의 상성을 백엔드가 확인하고
         AI가 결과를 생동감 있는 전투 해설로 제공합니다! 로그 전투의 재미에 빠져보세요!`,
       },
-
-      {
-        type: "media",
-        imageUrl: "/images/guides/pvp4.png",
-        caption: "전투가 끝나면 상대방과 자신에게 전투 결과가 알림으로 옵니다. 마이페이지에서 알림을 확인하세요!",
-      },
-
+      { type: "media", imageUrl: "/images/guides/pvp4.png", caption: "전투가 끝나면 상대방과 자신에게 전투 결과가 알림으로 옵니다. 마이페이지에서 알림을 확인하세요!" },
       {
         type: "media",
         imageUrl: "/images/guides/pvp5.png",
         caption: `재대결 버튼을 통해 다시 한 번 같은 상대와 싸울 수 있어요! 수련을 해서 재도전하거나 복수하세요!
         TIP) 로그 보러가기를 클릭하면 전투 결과를 자세하게 확인할 수 있어요.`,
       },
-
-      {
-        type: "media",
-        imageUrl: "/images/guides/pvp7.png",
-        caption: `로그를 확인해세요. 자신이 왜 졌는지, 뭐가 필요한지, 다음에는 어떻게 싸울 지 알 수 있습니다.`,
-      },
+      { type: "media", imageUrl: "/images/guides/pvp7.png", caption: `로그를 확인해세요. 자신이 왜 졌는지, 뭐가 필요한지, 다음에는 어떻게 싸울 지 알 수 있습니다.` },
     ],
   },
 
@@ -77,39 +55,12 @@ export const GUIDE_CONTENT = {
         ],
         note: "사용 모델: GPT-4o-mini, TTS",
       },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pve1.png",
-        caption: "PVE 캐릭터 선택 창이에요! 캐릭터와 맵을 선택해보세요!",
-      },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pve2.png",
-        caption: `선택한 해설 스타일이 GPT에 들어가는 프롬프트에 적용돼요.
-프롬프트는 지시문이라 생각하면 돼요. AI에게 원하는 해설을 지시해보세요.`,
-      },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pve3.png",
-        caption: `전투를 시작해보세요! 전투를 시작하면 AI가 DB에 저장된 확률대로 일반몹이나 보스몹을 배정해줘요!
-음성으로 로그를 읽어주는 TTS 기능도 있답니다.`,
-      },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pve4.png",
-        caption: `백조가 우아하게 떠다니지만 아래에서는 바쁘게 움직이듯, 백엔드에서 전투 알고리즘이 진행돼요.
-그 결과를 전해받은 AI가 상황에 맞게 해설을 해줍니다. 스테이지 클리어 횟수에 따라 나중에 캐릭터를 성장할 수 있어요!`,
-      },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pve5.png",
-        caption: `상단 헤더의 로그를 클릭하면 로그 페이지로 이동해요. 전투 내용을 보고 싶다면 언제든지 로그 페이지로 이동하세요!`,
-      },
-      {
-        type: "media",
-        imageUrl: "/images/guides/pve6.png",
-        caption: `전투 내용을 상세하게 볼 수 있어요. 짜릿했던 전투의 기억을 다시 한 번 확인하세요.`,
-      },
+      { type: "media", imageUrl: "/images/guides/pve1.png", caption: "PVE 캐릭터 선택 창이에요! 캐릭터와 맵을 선택해보세요!" },
+      { type: "media", imageUrl: "/images/guides/pve2.png", caption: `선택한 해설 스타일이 GPT에 들어가는 프롬프트에 적용돼요.\n프롬프트는 지시문이라 생각하면 돼요. AI에게 원하는 해설을 지시해보세요.` },
+      { type: "media", imageUrl: "/images/guides/pve3.png", caption: `전투를 시작해보세요! 전투를 시작하면 AI가 DB에 저장된 확률대로 일반몹이나 보스몹을 배정해줘요!\n음성으로 로그를 읽어주는 TTS 기능도 있답니다.` },
+      { type: "media", imageUrl: "/images/guides/pve4.png", caption: `백조가 우아하게 떠다니지만 아래에서는 바쁘게 움직이듯, 백엔드에서 전투 알고리즘이 진행돼요.\n그 결과를 전해받은 AI가 상황에 맞게 해설을 해줍니다. 스테이지 클리어 횟수에 따라 나중에 캐릭터를 성장할 수 있어요!` },
+      { type: "media", imageUrl: "/images/guides/pve5.png", caption: `상단 헤더의 로그를 클릭하면 로그 페이지로 이동해요. 전투 내용을 보고 싶다면 언제든지 로그 페이지로 이동하세요!` },
+      { type: "media", imageUrl: "/images/guides/pve6.png", caption: `전투 내용을 상세하게 볼 수 있어요. 짜릿했던 전투의 기억을 다시 한 번 확인하세요.` },
     ],
   },
 
@@ -129,77 +80,49 @@ export const GUIDE_CONTENT = {
         ],
         note: "모델: GPT-4o-mini, GPT-o1-mini, Gemini-2.0-flash",
       },
-      {
-        type: "media",
-        imageUrl: "/images/guides/debate1.png",
-        caption: "AI 토론 배틀 메인 화면입니다.",
-      },
-
-      {
-        type: "media",
-        imageUrl: "/images/guides/debate2.png",
-        caption: "토론에 참여할 캐릭터를 선택하고 주제를 입력해주세요. AI의 성격과 주제를 담은 프롬프트가 AI에게 전달됩니다.",
-      },
-
-      {
-        type: "media",
-        imageUrl: "/images/guides/debate3.png",
-        caption: "프롬프트로 전달받은 성격을 바탕으로 양 캐릭터의 토론이 진행되요. 토론이 끝나면 AI가 자신의 기준대로 평가를 진행해요!",
-        },
+      { type: "media", imageUrl: "/images/guides/debate1.png", caption: "AI 토론 배틀 메인 화면입니다." },
+      { type: "media", imageUrl: "/images/guides/debate2.png", caption: "토론에 참여할 캐릭터를 선택하고 주제를 입력해주세요. AI의 성격과 주제를 담은 프롬프트가 AI에게 전달됩니다." },
+      { type: "media", imageUrl: "/images/guides/debate3.png", caption: "프롬프트로 전달받은 성격을 바탕으로 양 캐릭터의 토론이 진행되요. 토론이 끝나면 AI가 자신의 기준대로 평가를 진행해요!" },
     ],
   },
 
   chat: {
-      title: "채팅: 기억하고 성장하는 관계형 AI",
-      pages: [
-        {
-          type: "text",
-          body: [
-            "겜만중의 채팅은 AI가 캐릭터로서 직접 대화를 생성해요",
-            "캐릭터마다 페르소나가 만들어져요. 당신이 채팅방에 입장할때, 벡엔드에서 성격과 캐릭터의 배경을 합쳐주고 그게 페르소나가 돼요.",
-            "페르소나는 캐릭터의 말투와 성격이 꾸준히 유지되게 하는 캐릭터성을 부여합니다.",
-            "대화가 길어지면 모든 내용을 저장하지 앟고, 롱메모리 파이프라인을 통해 중요한 부분을 요약해 기억에 남겨요.",
-            "대화 중에 중요 정보들을 추출해서 영구 저장해요. 원하는 호칭을 말해보세요! AI가 호칭을 추출하고 벡엔드가 이를 받아 영구적으로 기억합니다!",
-            "요약과 장기기억을 가지고 있기때문에, 매 대화는 점점 더 자연스럽고 개인화된 경험으로 발전합니다!"
-          ],
-          note: "모델: gemini-2.0-flash(요약/맥락/대사), gpt-4o-mini(보조 모델), 백엔드 파이프라인으로 조립",
-        },
-
-        {
-          type: "media",
-          imageUrl: "/images/guides/chat1.png",
-          caption: "대화하고 싶은 캐릭터를 마이페이지에서 선택하세요!",
-        },
-
-        {
-          type: "media",
-          imageUrl: "/images/guides/chat2.png",
-          caption: "캐릭터를 선택했다면 대화하기를 누르세요. 대기방으로 입장합니다!",
-        },
-
-        {
-          type: "media",
-          imageUrl: "/images/guides/chat3.png",
-          caption: `모든 대화는 00:00 시에 초기화되요. 하지만 캐릭터가 당신을 잊어버릴까 걱정하지 마세요!
+    title: "채팅: 기억하고 성장하는 관계형 AI",
+    pages: [
+      {
+        type: "text",
+        body: [
+          "겜만중의 채팅은 AI가 캐릭터로서 직접 대화를 생성해요",
+          "캐릭터마다 페르소나가 만들어져요. 당신이 채팅방에 입장할때, 벡엔드에서 성격과 캐릭터의 배경을 합쳐주고 그게 페르소나가 돼요.",
+          "페르소나는 캐릭터의 말투와 성격이 꾸준히 유지되게 하는 캐릭터성을 부여합니다.",
+          "대화가 길어지면 모든 내용을 저장하지 앟고, 롱메모리 파이프라인을 통해 중요한 부분을 요약해 기억에 남겨요.",
+          "대화 중에 중요 정보들을 추출해서 영구 저장해요. 원하는 호칭을 말해보세요! AI가 호칭을 추출하고 벡엔드가 이를 받아 영구적으로 기억합니다!",
+          "요약과 장기기억을 가지고 있기때문에, 매 대화는 점점 더 자연스럽고 개인화된 경험으로 발전합니다!",
+        ],
+        note: "모델: gemini-2.0-flash(요약/맥락/대사), gpt-4o-mini(보조 모델), 백엔드 파이프라인으로 조립",
+      },
+      { type: "media", imageUrl: "/images/guides/chat1.png", caption: "대화하고 싶은 캐릭터를 마이페이지에서 선택하세요!" },
+      { type: "media", imageUrl: "/images/guides/chat2.png", caption: "캐릭터를 선택했다면 대화하기를 누르세요. 대기방으로 입장합니다!" },
+      {
+        type: "media",
+        imageUrl: "/images/guides/chat3.png",
+        caption: `모든 대화는 00:00 시에 초기화되요. 하지만 캐릭터가 당신을 잊어버릴까 걱정하지 마세요!
           삭제 전에 AI가 당신과의 대화를 요약해서 저장해둔답니다.`,
-        },
-
-        {
-          type: "media",
-          imageUrl: "/images/guides/chat4.png",
-          caption: `프롬프트는 AI에 제공하는 지시문이라고 할 수 있어요. 앞서 말했던 페르소나 + 롱메모리 + 당신의 메세지가
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/chat4.png",
+        caption: `프롬프트는 AI에 제공하는 지시문이라고 할 수 있어요. 앞서 말했던 페르소나 + 롱메모리 + 당신의 메세지가
           프롬프트가 되어서 AI에게 전달되요! 백엔드가 모든 걸 처리하니까 당신은 캐릭터에게 가볍게 말을 걸어보세요!`,
-        },
-
-        {
-          type: "media",
-          imageUrl: "/images/guides/chat5.png",
-          caption: `우리 겜만중은 단순한 응답이 아닌, 당신과의 대화를 기억하고 캐릭터에 맞춘 응답을 하는 관계형 AI입니다.
+      },
+      {
+        type: "media",
+        imageUrl: "/images/guides/chat5.png",
+        caption: `우리 겜만중은 단순한 응답이 아닌, 당신과의 대화를 기억하고 캐릭터에 맞춘 응답을 하는 관계형 AI입니다.
           대화를 나눠보세요! 캐릭터는 점점 더 똑똑해지고 당신을 친근하게 대할거에요!`,
-        },
-
-      ],
-    },
+      },
+    ],
+  },
 };
 
 export default GUIDE_CONTENT;
