@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
+import { LogOut, Bot, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Header = ({ onInfoClick }) => {
@@ -21,6 +21,7 @@ const Header = ({ onInfoClick }) => {
         { name: '캐릭터 뽑기', icon: Egg, link: '/create-character' },
         { name: '게임', icon: Swords, link: '/battlemode' },
         { name: '로그', icon: Scroll, link: '/logs' },
+        { name: '채팅', icon: Bot, link: '/chat-entry'},
     ];
 
     if (isLoading) {
