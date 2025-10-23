@@ -1,8 +1,7 @@
 package com.project.gmaking.character.service;
 
+import com.project.gmaking.character.ai.BackgroundAi;
 import com.project.gmaking.character.dao.CharacterDAO;
-import com.project.gmaking.character.service.ClassificationService;
-import com.project.gmaking.character.service.GcsService;
 import com.project.gmaking.character.vo.*;
 import com.project.gmaking.login.dao.LoginDAO;
 import com.project.gmaking.login.vo.LoginVO;
@@ -30,6 +29,7 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
     private final CharacterStatDAO characterStatDAO;
     private final LoginDAO loginDAO;
     private final JwtTokenProvider jwtTokenProvider;
+    private final BackgroundAi backgroundAi;
 
 
     public CharacterServiceGptImpl(
@@ -39,7 +39,9 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             CharacterStatDAO characterStatDAO,
             LoginDAO loginDAO,
             JwtTokenProvider jwtTokenProvider,
-            GptImageService gptImageService) {
+            GptImageService gptImageService,
+            BackgroundAi backgroundAi
+        ) {
 
         this.classificationService = classificationService;
         this.gcsService = gcsService;
@@ -48,6 +50,7 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
         this.loginDAO = loginDAO;
         this.jwtTokenProvider = jwtTokenProvider;
         this.gptImageService = gptImageService;
+        this.backgroundAi = backgroundAi;
     }
 
     /**
@@ -115,14 +118,24 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             characterDAO.insertImage(imageVO);
             Long imageId = imageVO.getImageId();
 
-            // CharacterVO 생성 및 DB 저장
+            // Personality ID 생성
             Random random = new Random();
+            int personalityId = 1 + random.nextInt(3);
+
+            // GPT에게 배경정보 생성 요청
+            String backgroundStory = backgroundAi.generateCharacterBackground(
+                    finalData.getCharacterName(),
+                    finalData.getPredictedAnimal(),
+                    personalityId
+            );
+
+            // CharacterVO 생성 및 DB 저장
             CharacterVO characterVO = new CharacterVO();
             characterVO.setUserId(userId);
             characterVO.setImageId(imageId);
-            characterVO.setCharacterPersonalityId(1+ random.nextInt(3));
+            characterVO.setCharacterPersonalityId(personalityId);
             characterVO.setCharacterName(finalData.getCharacterName());
-            characterVO.setBackgroundInfo(finalData.getPredictedAnimal() + " 타입의 캐릭터");
+            characterVO.setBackgroundInfo(backgroundStory);
             characterVO.setGradeId(1);
             characterVO.setTotalStageClears(0);
             characterVO.setEvolutionStep(1);

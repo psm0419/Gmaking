@@ -161,6 +161,7 @@
         image_id,
         grade_id,
         character_personality_id,
+        background_info,
         evolution_step,
         total_stage_clears,
         created_by
@@ -171,6 +172,7 @@
         #{imageId},
         1,
         #{characterPersonalityId},
+        #{backgroundInfo},
         1,
         0,
         #{createdBy}
