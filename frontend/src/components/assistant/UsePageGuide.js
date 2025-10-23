@@ -67,7 +67,7 @@ const GUIDE_RULES = [
   },
 
   {
-    pattern: "/community",
+    pattern: "/create-charactor",
     guide: {
       text:
         `이곳은 캐릭터 생성 페이지야. 이 페이지에서는 무려 두 개의 AI 모델이 작동해.
