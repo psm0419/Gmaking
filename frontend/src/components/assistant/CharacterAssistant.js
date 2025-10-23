@@ -1,7 +1,11 @@
-// src/components/assistant/CharacterAssistant.js
+
 import React, { useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
 import GuideViewer from "./GuideViewer";
+import usePageGuide from "./UsePageGuide";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm"
+import remarkBreaks from "remark-breaks";
 
 /** 바깥 클릭 시 닫기 */
 function useOutsideClick(ref, onClickOutside) {
@@ -48,6 +52,8 @@ export default forwardRef(function CharacterAssistant(
   },
   ref
 ) {
+  const guideMeta = usePageGuide();
+  const [pageCta, setPageCta] = useState(null);
   const isSequence = images.length > 1;
   const isIntroSeq = Array.isArray(introImages) && introImages.length > 0;
 
@@ -216,6 +222,7 @@ export default forwardRef(function CharacterAssistant(
     setMessageText("");
     setHistory([]);
     setCtaForAi(false);
+    setPageCta(null);
   }, [open]);
 
   function handleAsk() {
@@ -229,18 +236,27 @@ export default forwardRef(function CharacterAssistant(
     setInput("");
   }
 
+
   function getMessageForOption(opt) {
     switch (opt) {
       case "인사하기":
-        return `안녕! 나는 겜만중의 도우미봇이야. 우리 사이트에 대해 궁금한게 있으면 편하게 질문해줘. 우리 사이트에 온 걸 환영해, ${userNickname || "방랑자"}!`;
+        return `안녕! 나는 겜만중의 도우미봇이야.
+        우리 사이트는 AI를 사용한 게임 사이트이자 AI를 체험하는 학습 사이트이기도 하기때문에 일반인도 쉽게 활용된 AI를 설명하는 역할을 개발자들이 나한테 맡겼어.
+        어떤 AI 모델이 사용되었는지, 이 페이지가 어떤 페이지인지 궁금할때마다 날 떠올려줘!
+        그럼 즐거운 시간되고, 다시 한 번 만나서 반가워! ${userNickname || "방랑자"}!`;
       case "겜만중이 뭐야?":
-        return "겜만중은 '게임 만드는 중'의 줄임말이야. AI 기술을 직접 체험하고 학습할 수 있는 AI 체험형 게임 플랫폼이지!";
+        return `겜만중은 **게임 만드는 중**의 줄임말이야. AI 기술을 직접 체험하고 학습할 수 있는 AI 체험형 게임 플랫폼이지!
+        우리 사이트에서는 AI로 캐릭터를 생성하기도 하고, 성장시키기도하고, 게임도 하고 채팅도 하면서 AI를 실제 체험할 수 있어!
+        혹시 사이트를 둘러보다가 궁금한 점이 생기면 **이 페이지는 뭐야?** 를 클릭하거나 질문을 입력해줘!`;
       case "AI가 뭐야?":
-        return "AI는 인공지능이야. 겜만중에서는 캐릭터 생성, 캐릭터 성장, 캐릭터와의 대화, 게임 해설 등에 AI가 쓰여. 더 자세히 알고 싶다면 아래 버튼을 눌러봐!";
+        return `AI는 간단하게 말해서 사람처럼 스스로 사고하고 판단 할 수 있도록 만든 인공지능이야. 사람들이 가장 많이 접하는 건 아무래도 쳇지피티겠지? 쳇지티 알아?
+        사실 우리 사이트에서도 쳇지피티를 이용해 많은 것을 하고 있어. 우리 겜만중에서는 직접 학습한 AI 모델부터 시중에 존재하는 AI를 활용해서 캐릭터를 생성하고, 성장시키고, 게임을 하고, 대화를 할 수 있어. 여러 컨텐츠를 즐기면서 다재다능한 AI가 어떤 식으로 활용되는지 봐줘.
+        우리 사이트에서 AI가 쓰인 컨텐츠에대해 좀 더 자세히 알고 싶어?`;
       case "오늘의 퀘스트":
         return "오늘의 퀘스트는 PVE 게임 3회 클리어하기야. 하러 가볼래?";
       case "이 페이지에 대해 알려줄래?":
-        return "지금 보고 있는 페이지는 홈페이지야. 홈페이지는 웹페이지의 얼굴이라고 할 수 있지.";
+        setPageCta(guideMeta?.cta ?? null);
+        return guideMeta?.text ?? "이 페이지에 대한 설명을 아직 준비하지 못했어요.";
       default:
         return "무엇을 도와줄까?";
     }
@@ -299,6 +315,7 @@ export default forwardRef(function CharacterAssistant(
         setMessageText("");
         setView("menu");
         setCtaForAi(false);
+        setPageCta(null);
         return h;
       }
       const prev = h[h.length - 1];
@@ -420,7 +437,18 @@ export default forwardRef(function CharacterAssistant(
             {view === "message" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
-                <div className="mb-3 whitespace-pre-wrap text-sm text-zinc-700">{messageText}</div>
+                <div className="mb-3 text-sm text-zinc-700 prose prose-zinc max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                     p: (props) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: (props) => <strong className="font-semibold" {...props} />,
+                      a: (props) => <a className="text-violet-600 underline" {...props} />
+                    }}
+                  >
+                    {messageText}
+                  </ReactMarkdown>
+                </div>
                 <div className="mb-3 flex items-center gap-2">
                   <button
                     type="button"
@@ -438,6 +466,22 @@ export default forwardRef(function CharacterAssistant(
                       응, 말해줘
                     </button>
                   )}
+
+                  {pageCta?.label && (
+                    <button
+                       type="button"
+                       onClick={() => {
+                         if (pageCta.action === "openGuide" && pageCta.key) {
+                           openGuide(pageCta.key);
+                         }
+                       }}
+                       className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    >
+                      {pageCta.label}
+                    </button>
+                  )}
+
+
                 </div>
               </>
             )}
@@ -445,7 +489,18 @@ export default forwardRef(function CharacterAssistant(
             {view === "aiTopics" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
-                <div className="mb-3 whitespace-pre-wrap text-sm text-zinc-700">{messageText}</div>
+                <div className="mb-3 text-sm text-zinc-700">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                        p: (props) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                        strong: (props) => <strong className="font-semibold" {...props} />,
+                        a: (props) => <a className="text-violet-600 underline" {...props} />
+                    }}
+                  >
+                    {messageText}
+                  </ReactMarkdown>
+                </div>
                 <div className="mb-3 space-y-2">
                   {["캐릭터 생성", "캐릭터 성장", "AI 활용 게임", "캐릭터와 채팅"].map((topic) => (
                     <button key={topic} onClick={() => handlePickAiTopic(topic)} className={topicBtnClass}>
@@ -468,7 +523,19 @@ export default forwardRef(function CharacterAssistant(
             {view === "aiGameModes" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
-                <div className="mb-3 whitespace-pre-wrap text-sm text-zinc-700">{messageText}</div>
+                <div className="mb-3 text-sm text-zinc-700">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                      p: (props) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: (props) => <strong className="font-semibold" {...props} />,
+                      a: (props) => <a className="text-violet-600 underline" {...props} />
+                    }}
+                  >
+                    {messageText}
+                  </ReactMarkdown>
+                </div>
+
                 <div className="mb-3 space-y-2">
                   {["PVE", "PVP", "AI 토론"].map((mode) => (
                     <button key={mode} onClick={() => handlePickGameMode(mode)} className={topicBtnClass}>
