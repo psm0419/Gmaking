@@ -86,7 +86,7 @@ function AiDebatePage() {
 
     return (
         <div><Header />
-            <div className="min-h-screen bg-gray-900 p-3 text-gray-100">
+            <div className="min-h-[calc(100vh-60px)] bg-gray-900 p-3 text-gray-100">
                 <div className="max-w-5xl mx-auto font-sans">
                     {/* 제목 */}
                     <h1 className="text-3xl font-extrabold mb-5 text-center text-yellow-400 drop-shadow-lg">
@@ -147,7 +147,7 @@ function AiDebatePage() {
                     {/* 로그 영역 */}
                     <div
                         ref={logRef}
-                        className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner"
+                        className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner no-scrollbar"
                     >
                         {dialogues
                             .filter(d => d.line && d.line.trim() !== "")

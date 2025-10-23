@@ -26,7 +26,8 @@ public class PvpResultModalVO {
     private String opponentCharacterName;// 상대 캐릭터 이름
     private String opponentImageUrl;    // 상대 캐릭터 이미지 URL
 
-    private Integer level;              // 상대 캐릭터 레벨
+    private Integer gradeId;
+
     private Integer hp;                 // HP
     private Integer atk;                // 공격력
     private Integer def;                // 방어력

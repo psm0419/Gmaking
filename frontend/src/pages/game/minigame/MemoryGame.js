@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Header from '../../../components/Header';
 
 const cardImages = [
     { src: "/images/memory/dog.png", matched: false },
@@ -16,6 +18,7 @@ function MiniGameMemory() {
     const [choiceTwo, setChoiceTwo] = useState(null);
     const [disabled, setDisabled] = useState(false);
     const [matchedCount, setMatchedCount] = useState(0);
+    const navigate = useNavigate();
 
     const shuffleCards = () => {
         const shuffled = [...cardImages, ...cardImages]
@@ -65,39 +68,41 @@ function MiniGameMemory() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col items-center text-white py-10">
-            <h1 className="text-4xl font-bold mb-8">🧠 기억력 게임</h1>
+        <div><Header />
+            <div className="min-h-[calc(100vh-60px)] bg-gray-900 flex flex-col items-center text-white py-10">
+                <h1 className="text-4xl font-bold mb-8">🧠 기억력 게임</h1>
 
-            <button
-                onClick={shuffleCards}
-                className="mb-8 px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold transition-all"
-            >
-                다시 시작
-            </button>
+                <button
+                    onClick={shuffleCards}
+                    className="mb-8 px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold transition-all"
+                >
+                    다시 시작
+                </button>
 
-            <div className="grid grid-cols-4 gap-4">
-                {cards.map((card) => (
-                    <Card
-                        key={card.id}
-                        card={card}
-                        handleChoice={handleChoice}
-                        flipped={card === choiceOne || card === choiceTwo || card.matched}
-                        disabled={disabled}
-                    />
-                ))}
-            </div>
-
-            <div className="mt-8 text-lg">
-                턴 수: <span className="font-bold">{turns}</span> |
-                맞춘 쌍: <span className="font-bold">{matchedCount}</span> /{" "}
-                {cardImages.length}
-            </div>
-
-            {matchedCount === cardImages.length && (
-                <div className="mt-6 text-2xl font-semibold text-green-400">
-                    모든 카드를 맞췄습니다! 기억력이 대단하군요!
+                <div className="grid grid-cols-4 gap-4">
+                    {cards.map((card) => (
+                        <Card
+                            key={card.id}
+                            card={card}
+                            handleChoice={handleChoice}
+                            flipped={card === choiceOne || card === choiceTwo || card.matched}
+                            disabled={disabled}
+                        />
+                    ))}
                 </div>
-            )}
+
+                <div className="mt-8 text-lg">
+                    턴 수: <span className="font-bold">{turns}</span> |
+                    맞춘 쌍: <span className="font-bold">{matchedCount}</span> /{" "}
+                    {cardImages.length}
+                </div>
+
+                {matchedCount === cardImages.length && (
+                    <div className="mt-6 text-2xl font-semibold text-green-400">
+                        모든 카드를 맞췄습니다! 기억력이 대단하군요!
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -1,6 +1,8 @@
 
 import { useAuth } from './context/AuthContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+
 import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
@@ -30,14 +32,14 @@ import ReactionGame from './pages/game/minigame/ReactionGame';
 import MiniGameList from './pages/game/minigame/MiniGameList';
 import BattleModeSelectPage from './pages/game/BattleModeSelectPage';
 import MemoryGame from './pages/game/minigame/MemoryGame';
-import CharacterAssistant from './components/helpBot/CharacterAssistant';
-import React, { useState, useEffect } from 'react';
+import CharacterAssistant from './components/assistant/CharacterAssistant';
 import TermsPage from './pages/footer/TermsPage';
 import PrivacyPage from './pages/footer/PrivacyPage';
 import LicensePage from './pages/footer/LicensePage';
 import GuidePage from './pages/footer/GuidePage';
 import AboutPage from './pages/footer/About';
 import TeamPage from './pages/footer/TeamPage';
+import TypingGame from './pages/game/minigame/TypingGame';
 
 
 // ProtectedRoute: 로그인 확인
@@ -112,6 +114,7 @@ function App() {
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
                 <Route path="/create-character" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
+                <Route path="/chat-entry" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>}/>
                 <Route path="/chat-entry/:characterId" element={<ProtectedRoute><ChatEntryPage/></ProtectedRoute>} />
                 <Route path="/chat/:characterId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                 <Route path="/my-page" element={<ProtectedRoute><MyPage/></ProtectedRoute>} />
@@ -129,6 +132,7 @@ function App() {
                 <Route path="/minigame" element={<MiniGameList />} />
                 <Route path="/battlemode" element={<BattleModeSelectPage />} />
                 <Route path="/minigame/memory" element={<MemoryGame />} />
+                <Route path="/minigame/typing" element={<TypingGame />} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -162,7 +166,7 @@ function App() {
                   ]}
                 frameMs={350}
                 name="겜만중 도우미"
-                options={["오늘의 퀘스트","PVP 입장","상점 열기"]}
+                options={["인사하기","겜만중이 뭐야?","AI가 뭐야?", "오늘의 퀘스트" ,"이 페이지에 대해 알려줄래?"]}
               />
             )}
 

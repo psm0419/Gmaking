@@ -266,7 +266,6 @@ public class PvpBattleServiceImpl implements PvpBattleService{
                 enemy != null ? enemy.getImageUrl() : null,         // opponentImageUrl
                 me != null ? me.getUserId() : null,                 // requesterUserId (수신자=나)
                 me != null ? me.getCharacterId() : null,            // requesterCharacterId
-                null,                                               // level (없으면 null)
                 enStat != null ? enStat.getCharacterHp()      : null,
                 enStat != null ? enStat.getCharacterAttack()  : null,
                 enStat != null ? enStat.getCharacterDefense() : null,
@@ -286,7 +285,6 @@ public class PvpBattleServiceImpl implements PvpBattleService{
                 me != null ? me.getImageUrl() : null,
                 enemy != null ? enemy.getUserId() : null,           // requesterUserId
                 enemy != null ? enemy.getCharacterId() : null,      // requesterCharacterId
-                null,
                 myStat != null ? myStat.getCharacterHp()      : null,
                 myStat != null ? myStat.getCharacterAttack()  : null,
                 myStat != null ? myStat.getCharacterDefense() : null,
