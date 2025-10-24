@@ -78,13 +78,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String characterImageUrl = oauth2Attributes.getLoginVO().getCharacterImageUrl();
         Integer incubatorCount = oauth2Attributes.getLoginVO().getIncubatorCount();
         boolean isAdFree = oauth2Attributes.getLoginVO().isAdFree();
+        Integer characterCount = oauth2Attributes.getLoginVO().getCharacterCount();
 
         // JWT 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname, hasCharacter, characterImageUrl, incubatorCount, isAdFree);
+        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname, hasCharacter, characterImageUrl, incubatorCount, isAdFree, characterCount);
         log.info(">>> [OAuth2 Success] JWT Token issued for user: {}", userId);
 
         // 리다이렉션 URL 생성 및 실행
-        String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes, hasCharacter, characterImageUrl, incubatorCount, isAdFree);
+        String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes, hasCharacter, characterImageUrl, incubatorCount, isAdFree, characterCount);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
@@ -98,7 +99,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     /**
      * JWT 토큰과 사용자 정보를 포함하는 리다이렉션 URL 생성
      */
-    private String buildTargetUrl(String jwtToken, OAuth2Attributes oauth2Attributes, boolean hasCharacter, String characterImageUrl, Integer incubatorCount, boolean isAdFree) {
+    private String buildTargetUrl(String jwtToken, OAuth2Attributes oauth2Attributes, boolean hasCharacter, String characterImageUrl, Integer incubatorCount, boolean isAdFree, Integer characterCount) {
         String userId = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserId(), StandardCharsets.UTF_8);
         String nickname = URLEncoder.encode(oauth2Attributes.getLoginVO().getUserNickname(), StandardCharsets.UTF_8);
         String role = URLEncoder.encode(oauth2Attributes.getLoginVO().getRole(), StandardCharsets.UTF_8);
@@ -106,13 +107,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String hasCharacterString = String.valueOf(hasCharacter);
         String incubatorCountString = String.valueOf(incubatorCount);
         String isAdFreeString = String.valueOf(isAdFree);
+        String characterCountString = String.valueOf(characterCount);
 
         String encodedCharacterImageUrl = "";
         if (characterImageUrl != null) {
             encodedCharacterImageUrl = URLEncoder.encode(characterImageUrl, StandardCharsets.UTF_8);
         }
 
-        return String.format("%s?token=%s&userId=%s&nickname=%s&role=%s&hasCharacter=%s&userEmail=%s&characterImageUrl=%s&incubatorCount=%s&isAdFree=%s",
+        return String.format("%s?token=%s&userId=%s&nickname=%s&role=%s&hasCharacter=%s&userEmail=%s&characterImageUrl=%s&incubatorCount=%s&isAdFree=%s&characterCount=%s",
                 FRONTEND_REDIRECT_URI,
                 jwtToken,
                 userId,
@@ -122,7 +124,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 userEmail,
                 encodedCharacterImageUrl,
                 incubatorCountString,
-                isAdFreeString
+                isAdFreeString,
+                characterCountString
         );
     }
 

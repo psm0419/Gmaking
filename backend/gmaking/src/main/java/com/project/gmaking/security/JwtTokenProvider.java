@@ -48,7 +48,7 @@ public class JwtTokenProvider {
      * @param isAdFree 광고 패스권
      * @return JWT 문자열
      */
-    public String createToken(String userId, String role, String userNickname, boolean hasCharacter, String characterImageUrl, Integer incubatorCount, boolean isAdFree) {
+    public String createToken(String userId, String role, String userNickname, boolean hasCharacter, String characterImageUrl, Integer incubatorCount, boolean isAdFree, Integer characterCount) {
         long now = (new Date()).getTime();
 
         Date validity = new Date(now + this.tokenValidityInMilliseconds);
@@ -63,6 +63,7 @@ public class JwtTokenProvider {
                 .claim("incubatorCount", incubatorCount)
                 .claim("isAdFree", isAdFree)
                 .signWith(SignatureAlgorithm.HS512, key)
+                .claim("characterCount", characterCount)
                 .setExpiration(validity)
                 .compact();
     }
