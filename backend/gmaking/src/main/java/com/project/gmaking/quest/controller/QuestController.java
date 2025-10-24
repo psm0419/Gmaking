@@ -1,9 +1,11 @@
 package com.project.gmaking.quest.controller;
 
 import com.project.gmaking.quest.service.QuestService;
+import com.project.gmaking.quest.vo.QuestRewardResponseVO;
 import com.project.gmaking.quest.vo.UserQuestVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +29,8 @@ public class QuestController {
 
     /** 수동 보상 수령 요청 */
     @PostMapping("/reward")
-    public String rewardQuest(@RequestParam String userId, @RequestParam int questId) {
-        questService.rewardQuest(userId, questId);
-        return "보상 수령 완료";
+    public ResponseEntity<QuestRewardResponseVO> rewardQuest(@RequestParam String userId, @RequestParam int questId) {
+        QuestRewardResponseVO response = questService.rewardQuest(userId, questId);
+        return ResponseEntity.ok(response);
     }
 }
