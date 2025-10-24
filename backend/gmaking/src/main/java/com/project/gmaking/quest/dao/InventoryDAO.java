@@ -17,4 +17,18 @@ public interface InventoryDAO {
         VALUES (#{userId}, #{productId}, #{quantity})
     """)
     void insert(@Param("userId") String userId, @Param("productId") int productId, @Param("quantity") int quantity);
+
+    /** 부화권 합산 수를 TB_USER.INCUBATOR_COUNT에 동기화 */
+    @Update("""
+        UPDATE TB_USER u
+        LEFT JOIN (
+            SELECT USER_ID, COALESCE(SUM(QUANTITY),0) AS CNT
+            FROM TB_USER_INVENTORY
+            WHERE PRODUCT_ID IN (4,5) AND USER_ID = #{userId}
+            GROUP BY USER_ID
+        ) s ON s.USER_ID = u.USER_ID
+        SET u.INCUBATOR_COUNT = COALESCE(s.CNT, 0)
+        WHERE u.USER_ID = #{userId}
+    """)
+    void refreshUserIncubatorCache(@Param("userId") String userId);
 }

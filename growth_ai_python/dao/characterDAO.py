@@ -3,7 +3,7 @@ from sqlalchemy import text
 from typing import Dict, Any, Optional, List
 
 # VO 모듈 임포트
-from ..vo.growthVO import GrowthModel, GrowthRequestVO
+from vo.growthVO import GrowthModel
 
 class CharacterDAO:
     """
@@ -13,10 +13,7 @@ class CharacterDAO:
         self.db = db
 
     def get_growth_info(self, user_id: str, character_id: int) -> Optional[Dict[str, Any]]:
-        """
-        캐릭터의 현재 진화 단계, 총 스탯, 클리어 횟수, 현재 이미지 URL을 조회합니다.
-        스탯 합계는 BASE + SUM(INCREMENT)로 계산합니다.
-        """
+        # 이 함수는 그대로 유지
         query = text("""
             SELECT 
                 c.EVOLUTION_STEP,
@@ -54,78 +51,35 @@ class CharacterDAO:
             return dict(result._mapping)
         return None
 
-    def get_image_data_by_step(self, evolution_step: int) -> Optional[Dict[str, Any]]:
-        """
-        특정 진화 단계에 해당하는 이미지 ID와 URL을 조회합니다.
-        (tb_image 테이블에 EVOLUTION_STEP 컬럼이 있다고 가정)
-        """
-        query = text("""
-            SELECT 
-                IMAGE_ID, IMAGE_URL
-            FROM 
-                tb_image 
-            WHERE 
-                EVOLUTION_STEP = :evolution_step 
-            LIMIT 1
-        """)
-
-        result = self.db.execute(query, {"evolution_step": evolution_step}).fetchone()
-
-        if result:
-            return dict(result._mapping)
-        return None
-
-    def update_evolution_data(self, user_id: str, character_id: int, new_step: int, new_image_id: int) -> bool:
-        """
-        tb_character 테이블의 EVOLUTION_STEP과 CURRENT_IMAGE_ID를 업데이트합니다.
-        """
-        update_character_query = text("""
-            UPDATE tb_character
-            SET 
-                EVOLUTION_STEP = :new_step,
-                IMAGE_ID = :new_image_id,
-                UPDATED_DATE = NOW()
-            WHERE 
-                USER_ID = :user_id AND CHARACTER_ID = :character_id
-        """)
-
-        params = {
-            "new_step": new_step,
-            "new_image_id": new_image_id,
-            "user_id": user_id,
-            "character_id": character_id
-        }
-
-        result = self.db.execute(update_character_query, params)
-        # SQLAlchemy Core에서는 result.rowcount로 업데이트 성공 여부 확인
-        return result.rowcount > 0
+    # 🚨 get_image_data_by_step 함수 제거: tb_image에 EVOLUTION_STEP 컬럼이 없으므로 제거.
+    # 🚨 update_character_evolution_data 함수 제거: Java 백엔드로 책임 이관.
 
     def insert_new_growth_record(self, growth_model: GrowthModel) -> bool:
         """
         tb_growth 테이블에 새로운 성장 기록을 삽입합니다.
+        (EVOLUTION_STEP이 없는 버전)
         """
         insert_growth_query = text("""
             INSERT INTO tb_growth (
-                CHARACTER_ID, EVOLUTION_STEP, 
+                CHARACTER_ID, 
                 INCREMENT_ATTACK, INCREMENT_DEFENSE, INCREMENT_HP, 
-                INCREMENT_SPEED, INCREMENT_CRITICAL_RATE,
+                INCREMENT_SPEED, INCREMENT_CRITICAL,
                 USER_ID, CREATED_BY, CREATED_DATE, UPDATED_DATE
             ) VALUES (
-                :character_id, :evolution_step, 
+                :character_id, 
                 :inc_attack, :inc_defense, :inc_hp, 
-                :inc_speed, :inc_critical_rate,
+                :inc_speed, :inc_critical,
                 :user_id, :created_by, NOW(), NOW()
             )
         """)
 
         params = {
             "character_id": growth_model.CHARACTER_ID,
-            "evolution_step": growth_model.EVOLUTION_STEP,
             "inc_attack": growth_model.INCREMENT_ATTACK,
             "inc_defense": growth_model.INCREMENT_DEFENSE,
             "inc_hp": growth_model.INCREMENT_HP,
             "inc_speed": growth_model.INCREMENT_SPEED,
-            "inc_critical_rate": growth_model.INCREMENT_CRITICAL_RATE,
+            "inc_critical": growth_model.INCREMENT_CRITICAL,
             "user_id": growth_model.USER_ID,
             "created_by": growth_model.CREATED_BY,
         }

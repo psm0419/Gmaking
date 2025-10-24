@@ -1,205 +1,11 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../../components/Header'; 
-import Footer from '../../components/Footer';
-import { ThumbsUp, Eye, Tag, MessageSquare, Edit3, Trash2, XCircle, Loader2, Send, Clock, Trophy, ShieldAlert, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext'; 
+import Header from '../components/Header'; 
+import Footer from '../components/Footer';
+import { ThumbsUp, Eye, Tag, MessageSquare, Edit3, Trash2, XCircle, Loader2, Send, Clock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext'; // 가정: useAuth는 { user, token }을 제공합니다.
 
 const API_BASE_URL = 'http://localhost:8080/community';
-
-const ReportModal = ({ show, loading, onClose, onSubmit }) => {
-    // 신고 사유를 관리하는 State
-    const [reason, setReason] = useState('');
-    const [detail, setDetail] = useState(''); // 기타 사유를 위한 상세 내용
-    const [isDetailRequired, setIsDetailRequired] = useState(false); // 상세 사유 입력 필요 여부
-
-    // 신고 사유 목록 (API 스펙에 맞춰 수정 필요)
-    const reportOptions = [
-        { value: 'SPAM', label: '스팸/홍보' },
-        { value: 'PORNOGRAPHY', label: '음란물 또는 불법 정보' },
-        { value: 'HATE_SPEECH', label: '혐오 발언 또는 차별적 표현' },
-        { value: 'HARASSMENT', label: '괴롭힘 및 따돌림' },
-        { value: 'ETC', label: '기타 (상세 입력 필요)' },
-    ];
-
-    useEffect(() => {
-        // 사유가 'ETC'인 경우에만 상세 입력 필드를 활성화
-        setIsDetailRequired(reason === 'ETC');
-    }, [reason]);
-
-    const handleFormSubmit = (e) => {
-        e.preventDefault();
-        
-        let finalReason = reason;
-
-        if (!finalReason) {
-            alert("신고 사유를 선택해주세요.");
-            return;
-        }
-
-        if (isDetailRequired) {
-            if (detail.trim().length < 5) {
-                alert("기타 사유의 경우 5자 이상의 상세 내용을 입력해주세요.");
-                return;
-            }
-            // 최종 사유에 상세 내용을 포함하여 전달
-            finalReason = `${reason}: ${detail.trim()}`;
-        }
-        
-        // PostDetailPage에서 전달받은 onSubmit (executeReport) 함수 호출
-        onSubmit(finalReason);
-    };
-
-    if (!show) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-            <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-red-700">
-                
-                {/* 모달 헤더 */}
-                <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-                    <h3 className="text-xl font-bold text-red-400 flex items-center">
-                        <ShieldAlert className="w-6 h-6 mr-2" /> 게시글 신고
-                    </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition">
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <p className="text-sm text-gray-400 mb-4">
-                    허위 신고 시 불이익을 받을 수 있습니다. 정확한 사유를 선택해주세요.
-                </p>
-
-                <form onSubmit={handleFormSubmit}>
-                    {/* 신고 사유 선택 */}
-                    <div className="space-y-3 mb-5">
-                        {reportOptions.map((option) => (
-                            <label key={option.value} className="flex items-center text-white cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="reportReason"
-                                    value={option.value}
-                                    checked={reason === option.value}
-                                    onChange={(e) => {
-                                        setReason(e.target.value);
-                                        if (e.target.value !== 'ETC') setDetail('');
-                                    }}
-                                    className="h-4 w-4 text-red-500 border-gray-600 focus:ring-red-500 bg-gray-700"
-                                />
-                                <span className="ml-3 text-sm">{option.label}</span>
-                            </label>
-                        ))}
-                    </div>
-
-                    {/* 기타 사유 상세 입력 */}
-                    {isDetailRequired && (
-                        <div className="mb-5">
-                            <label htmlFor="reportDetail" className="block text-sm font-medium text-gray-300 mb-1">
-                                상세 사유 (최소 5자)
-                            </label>
-                            <textarea
-                                id="reportDetail"
-                                value={detail}
-                                onChange={(e) => setDetail(e.target.value)}
-                                rows="3"
-                                className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600 focus:ring-red-500 focus:border-red-500 resize-none"
-                                placeholder="신고 사유를 구체적으로 작성해주세요."
-                                disabled={loading}
-                            />
-                        </div>
-                    )}
-
-                    {/* 버튼 */}
-                    <div className="flex justify-end space-x-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 transition disabled:opacity-50"
-                            disabled={loading}
-                        >
-                            취소
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-500 transition disabled:opacity-50 flex items-center"
-                            disabled={loading || !reason || (isDetailRequired && detail.trim().length < 5)}
-                        >
-                            {loading && <Loader2 className="animate-spin h-5 w-5 mr-2" />}
-                            신고 접수
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-// --- ProfileSummaryModal Component ---
-const ProfileSummaryModal = ({ show, profileData, onClose }) => {
-    if (!show || !profileData) return null;
-
-    // 백엔드 VO 필드명 사용
-    const profileImageUrl = profileData.characterImageUrl 
-        ? profileData.characterImageUrl 
-        : 'https://via.placeholder.com/150/000000/FFFFFF?text=No+Img'; 
-        
-    const userLevel = profileData.gradeId || 1; // Level (gradeId 사용)
-    const totalClears = profileData.totalStageClears || 0; // Total Stage Clears (새로 추가)
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-[60] flex justify-center items-center p-4" onClick={onClose}>
-            <div 
-                className="bg-gray-800 p-8 rounded-xl shadow-2xl border border-yellow-500 w-full max-w-sm transform transition-all duration-300 scale-100 opacity-100 relative"
-                onClick={(e) => e.stopPropagation()} 
-            >
-                <button 
-                    onClick={onClose} 
-                    className="absolute top-3 right-3 text-gray-400 hover:text-white transition"
-                    title="닫기"
-                >
-                    <XCircle className="w-6 h-6" />
-                </button>
-
-                <div className="flex flex-col items-center">
-                    {/* 프로필 이미지 */}
-                    <img 
-                        src={profileImageUrl} 
-                        alt="Profile Character" 
-                        className="w-24 h-24 object-cover rounded-full border-4 border-yellow-500 mb-4 shadow-lg"
-                    />
-                    
-                    {/* 닉네임 */}
-                    <h3 className="text-2xl font-bold text-white mb-2">{profileData.userNickname}</h3>
-                    
-                    {/* 레벨 (gradeId) */}
-                    <p className="text-md text-yellow-400 font-semibold mb-6">
-                        Lv. {userLevel} 
-                    </p>
-
-                    {/* ✅ 총 스테이지 클리어 횟수 추가 */}
-                    <div className="w-full space-y-3 p-4 bg-gray-700 rounded-lg">
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-400 flex items-center">
-                                <Trophy className="w-4 h-4 mr-2 text-blue-400"/>총 클리어 스테이지 
-                            </span>
-                            <span className="text-lg font-bold text-white">{totalClears} 회</span>
-                        </div>
-                    </div>
-                    
-                </div>
-
-                <div className="mt-6 text-center">
-                    <button
-                        onClick={onClose}
-                        className="w-full py-2 bg-yellow-500 text-gray-900 rounded-lg font-semibold hover:bg-yellow-400 transition"
-                    >
-                        확인
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // --- MessageToast Component (기존 유지) ---
 const MessageToast = ({ message, isError, onClose }) => {
@@ -226,7 +32,7 @@ const MessageToast = ({ message, isError, onClose }) => {
 };
 
 // --- Comment Component (수정/삭제/신고 기능 추가) ---
-const Comment = ({ comment, currentUserId, token, postId, fetchComments, showMessage, onReplyClick, replyingToCommentId, onNicknameClick, onReportComment }) => {
+const Comment = ({ comment, currentUserId, token, postId, fetchComments, showMessage, onReplyClick, replyingToCommentId }) => {
     const isAuthor = comment.userId === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(comment.content);
@@ -315,11 +121,8 @@ const Comment = ({ comment, currentUserId, token, postId, fetchComments, showMes
 
     // 댓글 신고 핸들러 (프론트엔드 알림만 구현)
     const handleReportComment = () => {
-        if (!token || !currentUserId) {
-            showMessage('로그인 후 신고할 수 있습니다.', true);
-            return;
-        }
-        onReportComment(comment.commentId); // 상위 컴포넌트로 commentId 전달
+        // TODO: [API 연동] 댓글 신고 API 호출 로직 추가
+        showMessage("댓글 신고 기능은 현재 준비 중입니다.", true);
     };
 
     // 1차 대댓글만 허용한다고 가정하고, 40px를 적용합니다.
@@ -335,10 +138,7 @@ const Comment = ({ comment, currentUserId, token, postId, fetchComments, showMes
         >
             <div className="flex justify-between items-center text-sm mb-1">
                 <div className="flex items-center">
-                    <span className={`font-bold mr-2 cursor-pointer transition 
-                            ${isAuthor ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-200 hover:text-white'}`}
-                        onClick={() => onNicknameClick(comment.userId)}
-                    >
+                    <span className={`font-bold mr-2 ${isAuthor ? 'text-yellow-400' : 'text-gray-200'}`}>
                         {/* 깊이가 있으면 "ㄴ" 표시 */}
                         {comment.commentDepth > 0 && <span className="mr-1 text-gray-500">ㄴ</span>}
                         {comment.userNickname}
@@ -586,7 +386,7 @@ const PostDetailPage = () => {
     const [commentsLoading, setCommentsLoading] = useState(false);
     const [commentSubmitting, setCommentSubmitting] = useState(false);
 
-    // 대댓글 관련 State 
+    // 대댓글 관련 State 추가
     const [replyingToCommentId, setReplyingToCommentId] = useState(null);
     const [replyingToNickname, setReplyingToNickname] = useState(null);
     const [replyCommentContent, setReplyCommentContent] = useState(''); // 대댓글 내용
@@ -594,18 +394,6 @@ const PostDetailPage = () => {
     // Toast State
     const [toastMessage, setToastMessage] = useState(null);
     const [isErrorToast, setIsErrorToast] = useState(false);
-
-    // 닉네임 모달 관련 State
-    const [showProfileModal, setShowProfileModal] = useState(false);
-    const [modalUserId, setModalUserId] = useState(null);
-    const [modalProfileData, setModalProfileData] = useState(null);
-    const [modalLoading, setModalLoading] = useState(false); // 모달 로딩 상태
-
-    // 신고 모달 관련 state
-    const [showReportModal, setShowReportModal] = useState(false); // 신고 모달 표시 여부
-    const [reportReason, setReportReason] = useState(''); // 신고 사유 (선택된 값)
-    const [reportLoading, setReportLoading] = useState(false); // 신고 API 호출 중 여부
-    const [reportTarget, setReportTarget] = useState({ type: null, id: null });
 
     // 현재 로그인 사용자 ID
     const currentUserId = user?.userId;
@@ -734,51 +522,7 @@ const PostDetailPage = () => {
         
     }, [postId, fetchPostDetail]); 
 
-    // --- Fetch Profile Summary Handler ---
-const fetchUserProfileSummary = useCallback(async (userId) => {
-    if (!userId) return;
-    
-    setModalLoading(true);
-    setModalUserId(userId);
-    setModalProfileData(null); // 이전 데이터 초기화
-    setShowProfileModal(true);
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/${userId}/profile-summary`, {
-            headers: {
-                'Authorization': token ? `Bearer ${token}` : '',
-            }
-        });
-
-        if (!response.ok) {
-            let errorDetail = `상태 코드: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorDetail = errorData.message || errorDetail;
-            } catch (e) {}
-            
-            throw new Error(errorDetail);
-        }
-
-        const data = await response.json();
-        setModalProfileData(data);
-        
-    } catch (error) {
-        console.error("프로필 요약 정보 로드 에러:", error);
-        showMessage(`프로필 로드에 실패했습니다: ${error.message}`, true);
-        setShowProfileModal(false); // 로드 실패 시 모달 닫기
-    } finally {
-        setModalLoading(false);
-    }
-}, [token, showMessage]);
-
-// --- 닉네임 클릭 핸들러 (게시글 작성자, 댓글 작성자 모두 사용) ---
-const handleNicknameClick = useCallback((userId) => {
-    if (!userId) return;
-    fetchUserProfileSummary(userId);
-}, [fetchUserProfileSummary]); 
-
-    // --- Action Handlers  ---
+    // --- Action Handlers (기존 유지) ---
 
     // 좋아요 토글 핸들러 
     const handleLikeToggle = async() =>{
@@ -817,7 +561,7 @@ const handleNicknameClick = useCallback((userId) => {
             setCurrentLikeCount(newCount); 
             setPost(prev => prev ? ({ ...prev, likeCount: newCount}) : null); 
 
-            const successMsg = newIsLiked ? "게시글을 추천했습니다!" : "추천을 취소했습니다.";
+            const successMsg = newIsLiked ? "게시글을 추천했습니다! 👍" : "추천을 취소했습니다.";
             showMessage(successMsg, false);
 
         } catch (error){
@@ -862,7 +606,7 @@ const handleNicknameClick = useCallback((userId) => {
                 throw new Error(errorDetail);
             }
 
-            showMessage("게시글이 성공적으로 삭제되었습니다.", false);
+            showMessage("게시글이 성공적으로 삭제되었습니다. 🎉", false);
             setTimeout(() => navigate('/community'), 2000); 
 
         } catch (error) {
@@ -894,6 +638,8 @@ const handleNicknameClick = useCallback((userId) => {
                 showMessage("댓글 작성 취소됨", true);
                 return;
             }
+            // 대댓글로 처리하려면 추가 로직 필요 (예: 대상 댓글의 commentId를 찾아 parentId로 설정)
+            // 여기서는 간단히 경고 후 진행 막음
             showMessage("대댓글은 '답글' 버튼을 통해 작성해주세요.", true);
             return;
         }
@@ -972,65 +718,6 @@ const handleNicknameClick = useCallback((userId) => {
         );
     }
 
-    const handleReport = () => {
-        if (!token || !currentUserId) {
-            showMessage('로그인 후 신고할 수 있습니다.', true);
-            return;
-        }
-        setReportTarget({ type: 'POST', id: postId });
-        setShowReportModal(true);
-    };
-
-    // --- 댓글 신고 핸들러 ---
-    const handleReportComment = (commentId) => {
-        setReportTarget({ type: 'COMMENT', id: commentId });
-        setShowReportModal(true);
-    };
-
-
-    // --- 신고 실행 로직 (ReportModal에서 실행될 함수) ---
-    const executeReport = async (reason) => {
-        if (!token || !postId) return;
-        
-        setReportLoading(true);
-        
-        // 신고 사유를 담아 POST 요청을 보냅니다.
-        const { type, id } = reportTarget;
-        const REPORT_URL = type === 'POST' 
-            ? `${API_BASE_URL}/posts/${id}/report`
-            : `${API_BASE_URL}/comments/${id}/report`;
-
-       try {
-            const response = await fetch(REPORT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ 
-                    reason: reason,
-                    targetType: type
-                })
-            });
-            if (!response.ok) {
-                let errorDetail = `상태 코드: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorDetail = errorData.message || errorDetail;
-                } catch (e) {}
-                throw new Error(errorDetail);
-            }
-            showMessage(`${type === 'POST' ? '게시글' : '댓글'}이 신고 접수되었습니다. 감사합니다.`, false);
-        } catch (error) {
-            console.error(`${type === 'POST' ? '게시글' : '댓글'} 신고 오류:`, error);
-            showMessage(`신고 처리 중 오류가 발생했습니다: ${error.message}`, true);
-        } finally {
-            setReportLoading(false);
-            setShowReportModal(false);
-            setReportTarget({ type: null, id: null });
-        }
-    };
-
     const formattedDate = new Date(post.createdDate).toLocaleDateString('ko-KR', { 
         year: 'numeric', month: '2-digit', day: '2-digit' 
     }).replace(/\.\s/g, '.').replace(/\.$/, ''); 
@@ -1051,21 +738,6 @@ const handleNicknameClick = useCallback((userId) => {
                 onCancel={() => setShowDeleteConfirm(false)} 
             />
 
-            {/* 닉네임 프로필 요약 모달 추가 */}
-            <ProfileSummaryModal
-                show={showProfileModal}
-                profileData={modalProfileData}
-                onClose={() => setShowProfileModal(false)}
-            />
-
-            {/* 신고 모달 추가 */}
-            <ReportModal 
-                show={showReportModal}
-                loading={reportLoading}
-                onClose={() => setShowReportModal(false)}
-                onSubmit={executeReport} 
-            />
-
             <main className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-20 flex-grow">
                 
                 <div className="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700 w-full">
@@ -1073,13 +745,7 @@ const handleNicknameClick = useCallback((userId) => {
                     {/* 상단 메타 정보 */}
                     <div className="flex justify-between items-center text-gray-400 mb-2 border-b border-gray-700 pb-2">
                         <div className="flex items-center space-x-2 text-sm">
-                            {/* 게시글 작성자 닉네임 클릭 핸들러 연결 */}
-                            <span 
-                                className="font-semibold text-yellow-400 cursor-pointer hover:text-yellow-300 transition"
-                                onClick={() => handleNicknameClick(post.userId)}
-                            >
-                                {post.userNickname || post.userId}
-                            </span>
+                            <span className="font-semibold text-yellow-400">{post.userNickname || post.userId}</span>
                             <span>|</span>
                             <span>{formattedDate}</span>
                         </div>
@@ -1132,10 +798,10 @@ const handleNicknameClick = useCallback((userId) => {
                             {isLiked ? '추천 취소' : '추천'} ({currentLikeCount}) 
                         </button>
                         <button 
-                            className="text-gray-400 text-sm hover:text-red-400 opacity-80 transition"
-                            onClick={handleReport}
+                            className="text-gray-400 text-sm hover:text-red-400 opacity-50 transition"
+                            onClick={() => showMessage("게시글 신고 기능은 현재 미구현 상태입니다.", true)}
                         >
-                            신고
+                            신고 (미구현)
                         </button>
                     </div>
 
@@ -1190,8 +856,6 @@ const handleNicknameClick = useCallback((userId) => {
                                         onReplyClick={handleReplyClick}
                                         // 대댓글 폼을 활성화할 댓글 ID를 전달합니다.
                                         replyingToCommentId={replyingToCommentId}
-                                        onNicknameClick={handleNicknameClick}
-                                        onReportComment={handleReportComment}
                                     />
 
                                     {/* 대댓글 폼 렌더링 (replyingToCommentId가 일치할 때) */}
