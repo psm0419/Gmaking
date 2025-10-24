@@ -328,9 +328,6 @@ function MyMain() {
                 requestBody,
                 { headers }
             );
-
-            alert(`${selected.name}의 성장 작업이 시작되었습니다!`);
-
             // 성공 후 상태 정리 및 데이터 갱신
             setIsGrowthModalOpen(false);
             await fetchSummaryData(true); // 데이터 갱신 (로딩 스피너 없이)
