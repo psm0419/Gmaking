@@ -16,32 +16,18 @@ public class QuestController {
 
     private final QuestService questService;
 
-    /**
-     * 로그인 시 유저의 일일 퀘스트 초기화 및 조회
-     */
+    /** 로그인 시 유저 퀘스트 조회 및 자동 생성 */
     @GetMapping("/daily")
     public List<UserQuestVO> getUserDailyQuests(@RequestParam String userId) {
-        log.info("[퀘스트 조회] userId={}", userId);
-
-        // 유저의 퀘스트 초기화 (없는 퀘스트는 생성)
         questService.initializeDailyQuests(userId);
-
-        // 퀘스트 목록 조회
-        List<UserQuestVO> quests = questService.getUserDailyQuests(userId);
-        log.info("[퀘스트 조회 완료] userId={}, count={}", userId, quests.size());
-
-        return quests;
+        List<UserQuestVO> list = questService.getUserDailyQuests(userId);
+        log.info("[퀘스트 조회 완료] userId={}, count={}", userId, list.size());
+        return list;
     }
 
-    /**
-     * 보상 수령 요청
-     */
+    /** 수동 보상 수령 요청 */
     @PostMapping("/reward")
-    public String receiveReward(
-            @RequestParam String userId,
-            @RequestParam int questId
-    ) {
-        log.info("[보상 수령 요청] userId={}, questId={}", userId, questId);
+    public String rewardQuest(@RequestParam String userId, @RequestParam int questId) {
         questService.rewardQuest(userId, questId);
         return "보상 수령 완료";
     }
