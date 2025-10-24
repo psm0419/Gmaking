@@ -579,29 +579,27 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
               </>
             ) : (
               <>
-                {/* 스테이지 클리어 횟수 */}
-                <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
-                  <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3">
+                  {/* 스테이지 클리어 횟수 */}
+                  <div className="rounded-xl bg-gray-900 px-4 ring-1 ring-gray-700
+                                  h-[72px] flex items-center justify-between">
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                       스테이지 클리어 횟수
                     </span>
-                    <span className="text-xl md:text-2xl font-extrabold text-white">
+                    <span className="text-xl md:text-2xl font-extrabold text-white leading-none">
                       {clearCount}회
                     </span>
                   </div>
-                </div>
 
-                {/* 다음 성장 조건 */}
-                <div className="mt-3 rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
-                  <div className="flex items-center justify-between">
+                  {/* 다음 성장 조건 */}
+                  <div className="rounded-xl bg-gray-900 px-4 ring-1 ring-gray-700
+                                  h-[72px] flex items-center justify-between">
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                       다음 성장 조건
                     </span>
-                    <div className="text-right">
-                      <span className="text-lg font-bold text-[#FFC700] block">
-                        클리어 {requiredClearCount}회 필요
-                      </span>
-                    </div>
+                    <span className="text-lg font-bold text-[#FFC700] leading-none">
+                      클리어 {requiredClearCount}회 필요
+                    </span>
                   </div>
                 </div>
               </>
