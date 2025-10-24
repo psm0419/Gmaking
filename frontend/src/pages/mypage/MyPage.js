@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { notificationsApi } from "../../api/notificationApi";
+import { Egg } from "lucide-react";
 
 // 분리된 웹알림 컴포넌트 + 분리된 PVP 결과 모달
 import NotificationBell from "../../components/notifications/NotificationBell";
@@ -314,7 +315,11 @@ function MyMain() {
                     <span className="text-base font-semibold text-white/90">보유 부화권</span>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl font-extrabold text-[#FFC700] drop-shadow-md">{incubatorCount}</span>
-                      <span role="img" aria-label="ticket" className="text-xl">🎟️</span>
+                      <Egg
+                        aria-hidden="true"
+                        className="h-6 w-6 text-amber-400 fill-amber-400"
+                        title="부화권"
+                      />
                     </div>
                   </div>
 
