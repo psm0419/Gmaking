@@ -22,4 +22,6 @@ public class LoginVO {
     private String characterImageUrl;
     private Integer incubatorCount;
     private boolean isAdFree;
+
+    private int characterCount;
 }

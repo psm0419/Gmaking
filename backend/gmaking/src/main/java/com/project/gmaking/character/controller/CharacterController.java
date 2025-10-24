@@ -109,6 +109,14 @@ public class CharacterController {
             // 새 토큰을 포함한 최종 응답 반환
             return ResponseEntity.ok(finalResponse);
 
+        } catch (IllegalStateException e) {
+            System.err.println("캐릭터 최종 확정 비즈니스 오류: " + e.getMessage());
+            return ResponseEntity.badRequest().body(CharacterGenerateResponseVO.builder()
+                    .characterName(finalData.getCharacterName())
+                    .imageUrl(finalData.getImageUrl())
+                    .predictedAnimal(finalData.getPredictedAnimal())
+                    .errorMessage(e.getMessage())
+                    .build());
         } catch (Exception e) {
             System.err.println("캐릭터 최종 확정 중 오류 발생: " + e.getMessage());
 

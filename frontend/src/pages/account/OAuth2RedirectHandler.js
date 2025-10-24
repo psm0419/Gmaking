@@ -22,6 +22,7 @@ const OAuth2RedirectHandler = () => {
             const characterImageUrl = queryParams.get('characterImageUrl');
             const incubatorCount = queryParams.get('incubatorCount');
             const isAdFree = queryParams.get('isAdFree');
+            const characterCount = queryParams.get('characterCount');
             try {
                 if (token && userId) {
                     const userInfo = {
@@ -32,7 +33,8 @@ const OAuth2RedirectHandler = () => {
                         userEmail,
                         characterImageUrl,
                         incubatorCount,
-                        isAdFree
+                        isAdFree,
+                        characterCount
                     };
 
                     if (!isCancelled) {

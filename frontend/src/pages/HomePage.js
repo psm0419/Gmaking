@@ -21,7 +21,7 @@ const GuideLink = ({ title, href = "/guide" }) => (
 );
 
 const HomePage = () => {
-    const { user } = useAuth();
+    const { user, characterCount } = useAuth();
     const hasCharacter = !!user?.hasCharacter;
     const characterImageUrl = user?.characterImageUrl || null;
     const displayName = user?.userNickname || user?.userName || user?.userId;
@@ -109,6 +109,7 @@ const HomePage = () => {
                                 characterImageUrl={characterImageUrl}
                                 incubatorCount={incubatorCount}
                                 isAdFree={isAdFree}
+                                characterCount={characterCount}
                             />
                         ) : (
                             <CharacterCreationPrompt />

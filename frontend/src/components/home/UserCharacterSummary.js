@@ -2,7 +2,7 @@ import React from 'react';
 import { User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const UserCharacterSummary = ({ user, displayName, characterImageUrl, incubatorCount, isAdFree }) => {
+const UserCharacterSummary = ({ user, displayName, characterImageUrl, incubatorCount, isAdFree, characterCount }) => {
     const navigate = useNavigate(); 
 
     const adFreeBadge = isAdFree 
@@ -29,11 +29,8 @@ const UserCharacterSummary = ({ user, displayName, characterImageUrl, incubatorC
                 </h3>
 
                 <div className="text-left bg-gray-700 p-4 rounded-lg space-y-2 text-sm text-gray-300 mt-4">
-                    <p>접속 시간: 124시간</p>
-                    <p>
-                        보유 부화권: {incubatorCount.toLocaleString()}개
-                    </p> {/* 부화권 정보를 반영 */}
-                    <p>최고 랭크: 다이아몬드 III</p>
+                    <p>보유 부화권: {incubatorCount.toLocaleString()}개</p> 
+                    <p>캐릭터 수: {characterCount}개</p>
                 </div>
                 
                 <button

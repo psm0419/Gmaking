@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
     const [characterImageUrl, setCharacterImageUrl] = useState(null);
     const [incubatorCount, setIncubatorCount] = useState(null);
     const [isAdFree, setIsAdFree] = useState(false);
+    const [characterCount, setCharacterCount] = useState(0);
 
     const logout = useCallback(() => {
         localStorage.removeItem('gmaking_token');
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('characterImageUrl');
         localStorage.removeItem('incubatorCount');
         localStorage.removeItem('isAdFree');
+        localStorage.removeItem('characterCount');
 
         setToken(null);
         setUser(null);
@@ -28,6 +30,7 @@ export const AuthProvider = ({ children }) => {
         setCharacterImageUrl(null);
         setIncubatorCount(null);
         setIsAdFree(false);
+        setCharacterCount(0);
     }, []);
 
     useEffect(() => {
@@ -40,6 +43,9 @@ export const AuthProvider = ({ children }) => {
         const storedIsAdFree = localStorage.getItem('isAdFree');
         const isAdFreeFromStorage =
             storedIsAdFree === '1' || storedIsAdFree === 'true';
+        
+        const storedCharacterCount = 
+            Number.parseInt(localStorage.getItem('characterCount') ?? '0', 10) || 0;
 
         if (!storedToken) {
             setIsLoading(false);
@@ -77,6 +83,9 @@ export const AuthProvider = ({ children }) => {
                     userPayload.isAdFree === true ||
                     userPayload.isAdFree === 'true' ||
                     isAdFreeFromStorage,
+                characterCount: userPayload.characterCount != null 
+                    ? Number(userPayload.characterCount) 
+                    : storedCharacterCount,
             };
 
             if (!currentUser.userId) {
@@ -90,6 +99,7 @@ export const AuthProvider = ({ children }) => {
             setCharacterImageUrl(currentUser.characterImageUrl);
             setIncubatorCount(currentUser.incubatorCount);
             setIsAdFree(currentUser.isAdFree);
+            setCharacterCount(currentUser.characterCount);
 
         } catch (error) {
             console.error('JWT 디코딩 실패 또는 사용자 정보 오류:', error);
@@ -111,7 +121,8 @@ export const AuthProvider = ({ children }) => {
                     hasCharacter: userInfo.hasCharacter || false,
                     characterImageUrl: userInfo.characterImageUrl || null,
                     incubatorCount: userInfo.incubatorCount || null,
-                    isAdFree: userInfo.isAdFree || false
+                    isAdFree: userInfo.isAdFree || false,
+                    characterCount: userInfo.characterCount || 0,
                 };
 
                 setToken(receivedToken);
@@ -121,6 +132,7 @@ export const AuthProvider = ({ children }) => {
                 setCharacterImageUrl(userWithCharStatus.characterImageUrl);
                 setIncubatorCount(userWithCharStatus.incubatorCount);
                 setIsAdFree(userWithCharStatus.isAdFree);
+                setCharacterCount(userWithCharStatus.characterCount);
 
                 localStorage.setItem('gmaking_token', receivedToken);
 
@@ -131,6 +143,7 @@ export const AuthProvider = ({ children }) => {
                 localStorage.setItem('has_character', userWithCharStatus.hasCharacter ? 'true' : 'false');
                 localStorage.setItem('incubatorCount', String(userWithCharStatus.incubatorCount ?? 0));
                 localStorage.setItem('isAdFree', userWithCharStatus.isAdFree ? '1' : '0');
+                localStorage.setItem('characterCount', String(userWithCharStatus.characterCount ?? 0));
 
                 return true;
             } else {
@@ -191,13 +204,19 @@ export const AuthProvider = ({ children }) => {
 
         const isUserAdFree =
             userInfo?.isAdFree === true || userInfo?.isAdFree === 'true';
+    
+        const charCount = 
+        userInfo?.characterCount != null && !Number.isNaN(Number(userInfo.characterCount))
+            ? Number(userInfo.characterCount)
+            : (Number.parseInt(localStorage.getItem('characterCount') ?? '0', 10) || 0);
 
         const userWithCharStatus = {
             ...userInfo,
             hasCharacter: isUserWithCharacter,
             characterImageUrl: imageUrl,
             isAdFree: isUserAdFree,
-            incubatorCount
+            incubatorCount,
+            characterCount: charCount,
         };
 
         setToken(receivedToken);
@@ -207,6 +226,7 @@ export const AuthProvider = ({ children }) => {
         setCharacterImageUrl(userWithCharStatus.characterImageUrl);
         setIncubatorCount(userWithCharStatus.incubatorCount);
         setIsAdFree(userWithCharStatus.isAdFree);
+        setCharacterCount(userWithCharStatus.characterCount);
 
         localStorage.setItem('gmaking_token', receivedToken);
 
@@ -217,6 +237,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('has_character', isUserWithCharacter ? 'true' : 'false');
         localStorage.setItem('incubatorCount', String(incubatorCount ?? 0));
         localStorage.setItem('isAdFree', isUserAdFree ? '1' : '0');
+        localStorage.setItem('characterCount', String(charCount ?? 0));
     }, []);
 
     // 캐릭터 생성 시 상태 갱신
@@ -306,12 +327,17 @@ export const AuthProvider = ({ children }) => {
 
             try {
                 const p = jwtDecode(newToken);
+                const newCharacterCount = p?.characterCount != null ? Number(p.characterCount) : null;
 
                 if (p?.incubatorCount != null) {
                     updateIncubatorCount({ set: Number(p.incubatorCount) });
                 }
                 if (typeof p?.isAdFree !== 'undefined') {
                     updateAdFree({ enabled: p.isAdFree });
+                }
+                if (newCharacterCount != null) {
+                    setCharacterCount(newCharacterCount); 
+                    localStorage.setItem('characterCount', String(newCharacterCount)); 
                 }
 
                 setUser((prev) =>
@@ -335,7 +361,7 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             isLoggedIn, token, user, isLoading,
-            hasCharacter, characterImageUrl, incubatorCount, isAdFree,
+            hasCharacter, characterImageUrl, incubatorCount, isAdFree, characterCount,
             login, logout,
             setCharacterCreated,
             withdrawUser, handleOAuth2Login,

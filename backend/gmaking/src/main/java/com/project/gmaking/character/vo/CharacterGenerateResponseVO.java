@@ -11,4 +11,5 @@ public class CharacterGenerateResponseVO {
     private String imageUrl;            // GCS에 저장된 최종 이미지 URL
     private String predictedAnimal;     // 분류된 동물 이름 (참고용)
     private String newToken;
+    private String errorMessage;
 }

@@ -54,7 +54,8 @@ public class LoginController {
                 authenticatedUser.isHasCharacter(),
                 authenticatedUser.getCharacterImageUrl(),
                 authenticatedUser.getIncubatorCount(),
-                authenticatedUser.isAdFree()
+                authenticatedUser.isAdFree(),
+                authenticatedUser.getCharacterCount()
         );
 
         // 로그인 성공

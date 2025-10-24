@@ -18,6 +18,8 @@
         <result column="CHARACTER_IMG_URL" property="characterImageUrl"/>
         <result column="INCUBATOR_COUNT" property="incubatorCount"/>
         <result column="IS_AD_FREE" property="isAdFree"/>
+
+        <result column="CHARACTER_COUNT" property="characterCount"/>
     </resultMap>
 
     <select id="selectUserById" resultMap="loginResultMap">
@@ -34,7 +36,8 @@
             T1.HAS_CHARACTER,
             T1.INCUBATOR_COUNT,
             T1.IS_AD_FREE,
-            TBI.IMAGE_URL AS CHARACTER_IMG_URL
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL,
+        (SELECT COUNT(*) FROM tb_character TBC_COUNT WHERE TBC_COUNT.USER_ID = T1.USER_ID) AS CHARACTER_COUNT
         FROM TB_USER T1
                  LEFT JOIN TB_CHARACTER TBC ON T1.CHARACTER_ID = TBC.CHARACTER_ID
                  LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
@@ -126,7 +129,8 @@
             T1.HAS_CHARACTER,
             T1.INCUBATOR_COUNT,
             T1.IS_AD_FREE,
-            TBI.IMAGE_URL AS CHARACTER_IMG_URL
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL,
+        (SELECT COUNT(*) FROM tb_character TBC_COUNT WHERE TBC_COUNT.USER_ID = T1.USER_ID) AS CHARACTER_COUNT
         FROM TB_USER T1
                  LEFT JOIN TB_CHARACTER TBC ON T1.CHARACTER_ID = TBC.CHARACTER_ID
                  LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
@@ -147,19 +151,30 @@
             T1.HAS_CHARACTER,
             T1.INCUBATOR_COUNT,
             T1.IS_AD_FREE,
-            TBI.IMAGE_URL AS CHARACTER_IMG_URL
+            TBI.IMAGE_URL AS CHARACTER_IMG_URL,
+            (SELECT COUNT(*) FROM tb_character TBC_COUNT WHERE TBC_COUNT.USER_ID = T1.USER_ID) AS CHARACTER_COUNT
         FROM TB_USER T1
-                 LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
-                 LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
+                LEFT JOIN TB_CHARACTER TBC ON T1.USER_ID = TBC.USER_ID
+                LEFT JOIN TB_IMAGE TBI ON TBC.IMAGE_ID = TBI.IMAGE_ID
         WHERE T1.USER_EMAIL = #{userEmail}
-        ORDER BY TBC.CREATED_DATE DESC LIMIT 1
+        ORDER BY TBC.CREATED_DATE DESC
+        LIMIT 1
     </select>
 
     <update id="updateUserCharacterInfo">
         UPDATE TB_USER
         SET
-            HAS_CHARACTER = TRUE
+            HAS_CHARACTER = TRUE,
+            CHARACTER_ID = #{characterId}
         WHERE USER_ID = #{userId}
+    </update>
+
+    <!-- 0개 미만으로 감소 방지 -->
+    <update id="decrementIncubatorCount">
+        UPDATE TB_USER
+        SET INCUBATOR_COUNT = INCUBATOR_COUNT - 1
+        WHERE USER_ID = #{userId}
+        AND INCUBATOR_COUNT &gt;= 1
     </update>
 
 </mapper>
