@@ -58,6 +58,7 @@ export default forwardRef(function CharacterAssistant(
     onGoToMinigame,
     onGoToChat,
     onGoToQuests,
+    onGoToCharacterCreate,
   },
   ref
 ) {
@@ -441,7 +442,7 @@ export default forwardRef(function CharacterAssistant(
 
 
   function handleGo(key) {
-    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame, quests: onGoToQuests, };
+    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame, quests: onGoToQuests, characterCreate: onGoToCharacterCreate};
     const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate", minigame: "/minigames", quests: "/quest", };
     const fn = handlers[key];
     if (typeof fn === "function") return fn();
@@ -689,6 +690,7 @@ export default forwardRef(function CharacterAssistant(
               minigame: onGoToMinigame,
               chat: onGoToChat,
               quests: onGoToQuests,
+              characterCreate : onGoToCharacterCreate,
             };
             if (typeof map[key] === "function") return map[key]();
             const fallback = {
@@ -698,6 +700,7 @@ export default forwardRef(function CharacterAssistant(
               minigame: "/minigames",
               chat: "/chat-entry",
               quests: "/quest",
+              characterCreate: "/create-character",
             }[key] || "/";
             window.location.href = fallback;
           }}

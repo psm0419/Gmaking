@@ -56,6 +56,7 @@ export default function GuideViewer({ guide, onClose, onGo }) {
     pvp: "PVP 하러가기",
     debate: "AI 토론 하러가기",
     chat: "채팅 하러가기",
+    characterCreate: "캐릭터 생성 하러가기"
   };
 
   return (
@@ -114,7 +115,7 @@ export default function GuideViewer({ guide, onClose, onGo }) {
           </div>
 
           <div className="justify-self-center">
-            {["pve", "pvp", "debate", "chat"].includes(key) && (
+            {["pve", "pvp", "debate", "chat", "characterCreate"].includes(key) && (
               <button
                 onClick={() => onGo?.(key)}
                 className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-400"
