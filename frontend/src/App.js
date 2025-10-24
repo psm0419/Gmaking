@@ -40,6 +40,7 @@ import GuidePage from './pages/footer/GuidePage';
 import AboutPage from './pages/footer/About';
 import TeamPage from './pages/footer/TeamPage';
 import TypingGame from './pages/game/minigame/TypingGame';
+import DailyQuestPage from './pages/DailyQuestPage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -110,6 +111,7 @@ function App() {
                 <Route path="/guide" element={<GuidePage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/team" element={<TeamPage />} />
+                <Route path="/quest" element={<DailyQuestPage />} />
                 
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />

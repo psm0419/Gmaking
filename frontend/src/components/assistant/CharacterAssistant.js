@@ -104,7 +104,9 @@ export default forwardRef(function CharacterAssistant(
   }
 
   const bubbleRef = useRef(null);
-  useOutsideClick(bubbleRef, () => setOpen(false));
+  useOutsideClick(bubbleRef, () => {
+    if (!showGuide) setOpen(false);
+  });
 
   const placementClass = useMemo(
     () => (bubblePlacement === "right" ? "left-full ml-3 origin-left" : "right-full mr-3 origin-right"),
@@ -229,7 +231,7 @@ export default forwardRef(function CharacterAssistant(
     const text = (input || "").trim();
     if (!text) return;
     onAsk?.(text);
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
     setMessageText(text);
     setView("message");
     setCtaForAi(false);
@@ -247,10 +249,10 @@ export default forwardRef(function CharacterAssistant(
       case "겜만중이 뭐야?":
         return `겜만중은 **게임 만드는 중**의 줄임말이야. AI 기술을 직접 체험하고 학습할 수 있는 AI 체험형 게임 플랫폼이지!
         우리 사이트에서는 AI로 캐릭터를 생성하기도 하고, 성장시키기도하고, 게임도 하고 채팅도 하면서 AI를 실제 체험할 수 있어!
-        혹시 사이트를 둘러보다가 궁금한 점이 생기면 **이 페이지는 뭐야?** 를 클릭하거나 질문을 입력해줘!`;
+        혹시 사이트를 둘러보다가 궁금한 점이 생기면 **이 페이지에 대해 알려줄래?** 를 클릭하거나 질문을 입력해줘!`;
       case "AI가 뭐야?":
-        return `AI는 간단하게 말해서 사람처럼 스스로 사고하고 판단 할 수 있도록 만든 인공지능이야. 사람들이 가장 많이 접하는 건 아무래도 쳇지피티겠지? 쳇지티 알아?
-        사실 우리 사이트에서도 쳇지피티를 이용해 많은 것을 하고 있어. 우리 겜만중에서는 직접 학습한 AI 모델부터 시중에 존재하는 AI를 활용해서 캐릭터를 생성하고, 성장시키고, 게임을 하고, 대화를 할 수 있어. 여러 컨텐츠를 즐기면서 다재다능한 AI가 어떤 식으로 활용되는지 봐줘.
+        return `AI는 간단하게 말해서 사람처럼 스스로 사고하고 판단 할 수 있도록 만든 인공지능이야. 사람들이 가장 많이 접하는 건 아무래도 챗지피티겠지? 챗지티 알아?
+        사실 우리 사이트에서도 챗지피티를 이용해 많은 것을 하고 있어. 우리 겜만중에서는 직접 학습한 AI 모델부터 시중에 존재하는 AI를 활용해서 캐릭터를 생성하고, 성장시키고, 게임을 하고, 대화를 할 수 있어. 여러 컨텐츠를 즐기면서 다재다능한 AI가 어떤 식으로 활용되는지 봐줘.
         우리 사이트에서 AI가 쓰인 컨텐츠에대해 좀 더 자세히 알고 싶어?`;
       case "오늘의 퀘스트":
         return "오늘의 퀘스트는 PVE 게임 3회 클리어하기야. 하러 가볼래?";
@@ -265,14 +267,14 @@ export default forwardRef(function CharacterAssistant(
   function handleChoose(opt) {
     onChoose?.(opt);
     const next = getMessageForOption(opt);
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
     setMessageText(next);
     setView("message");
     setCtaForAi(opt === "AI가 뭐야?");
   }
 
   function handleAiMore() {
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
     setMessageText("궁금한 주제를 골라줘!");
     setView("aiTopics");
     setCtaForAi(false);
@@ -280,14 +282,14 @@ export default forwardRef(function CharacterAssistant(
 
   function handlePickAiTopic(topic) {
     const topicMap = {
-      "캐릭터 생성": "AI가 캐릭터의 ‘성격(페르소나)’과 말투를 만들어. 캐릭터마다 반응이 달라!",
-      "캐릭터 성장": "대화/활동으로 캐릭터가 널 더 잘 이해하고 성장해.",
+      "캐릭터 생성": "AI가 캐릭터의 이미지와 성격, 배경을 만들어.",
+      "캐릭터 성장": "PVE 클리어 횟수로 캐릭터가 성장할 수 있어.",
       "AI 활용 게임": "AI는 해설자/스토리텔러 역할을 맡아 서사와 몰입도를 높여줘.",
       "캐릭터와 채팅": "단순 응답이 아니라 맥락을 이해하고 이어가는 대화야. 필요한 정보는 기억/요약해 다음에 더 똑똑해져.",
     };
 
     const text = topicMap[topic] ?? "준비 중이야!";
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
 
     if (topic === "캐릭터와 채팅") {
           setMessageText(topicMap["캐릭터와 채팅"]);
@@ -309,6 +311,12 @@ export default forwardRef(function CharacterAssistant(
     setCtaForAi(false);
   }
 
+  function pushSnapshot(h) {
+    const s = (messageText ?? "").trim();
+    if (!s.length) return h;
+    return [...h, { view, messageText, ctaForAi, pageCta }];
+  }
+
   function handleBack() {
     setHistory((h) => {
       if (h.length === 0) {
@@ -320,16 +328,27 @@ export default forwardRef(function CharacterAssistant(
       }
       const prev = h[h.length - 1];
       const nextStack = h.slice(0, -1);
-      const wasAiExplain = typeof prev === "string" && prev.includes("겜만중에서는");
-      setMessageText(prev);
-      setView(prev ? "message" : "menu");
-      setCtaForAi(!!wasAiExplain);
+
+      const prevStr = (prev?.messageText ?? "").trim();
+
+      if (!prevStr.length) {
+        setMessageText("");
+        setView("menu");
+        setCtaForAi(false);
+        setPageCta(null);
+        return nextStack;
+      }
+
+      setMessageText(prev.messageText ?? "");
+      setView(prev.view ?? "message");
+      setCtaForAi(!!prev.ctaForAi);
+      setPageCta(prev.pageCta ?? null);
       return nextStack;
     });
   }
 
   function handlePickGameMode(mode) {
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
 
     const guide = {
       PVE: "PVE: AI가 스토리텔러가 되어 네 진행을 서사로 풀어줘.",

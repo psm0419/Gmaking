@@ -9,6 +9,7 @@ import com.project.gmaking.map.dao.MapDAO;
 import com.project.gmaking.map.vo.MapVO;
 import com.project.gmaking.pve.dao.*;
 import com.project.gmaking.pve.vo.*;
+import com.project.gmaking.quest.service.QuestService;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class PveBattleServiceImpl implements PveBattleService {
     private final MapDAO mapDAO;
     private final OpenAIService openAIService;
     private final TurnLogDAO turnLogDAO;
+    private final QuestService questService;
 
     /** 맵 목록 조회 */
     @Override
@@ -352,6 +354,8 @@ public class PveBattleServiceImpl implements PveBattleService {
             battleDAO.updateBattleLogResult(battleLog);
 
             if (isWin) characterDAO.incrementStageClear(character.getCharacterId());
+
+            questService.updateQuestProgress(userId, "PVE");
 
         } catch (Exception e) {
             try {
