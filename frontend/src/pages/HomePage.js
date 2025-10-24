@@ -7,6 +7,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import UserCharacterSummary from '../components/home/UserCharacterSummary';
 import CharacterCreationPrompt from '../components/home/CharacterCreationPrompt';
+import { useNavigate } from 'react-router-dom';
 
 
 const GuideLink = ({ title, href = "/guide" }) => (
@@ -21,7 +22,7 @@ const GuideLink = ({ title, href = "/guide" }) => (
 );
 
 const HomePage = () => {
-    const { user } = useAuth();
+    const { user, characterCount } = useAuth();
     const hasCharacter = !!user?.hasCharacter;
     const characterImageUrl = user?.characterImageUrl || null;
     const displayName = user?.userNickname || user?.userName || user?.userId;
@@ -29,6 +30,7 @@ const HomePage = () => {
         ? Number(user.incubatorCount)
         : 0;
     const isAdFree = !!user?.isAdFree;
+    const navigate = useNavigate();
 
     useEffect(() => {
         const t = localStorage.getItem('gmaking_token');
@@ -68,18 +70,46 @@ const HomePage = () => {
       };
     }, []);
     
+    // 게임 시작 버튼 클릭 핸들러
+    const handleGameStartClick = () => {
+        console.log("Game Start Clicked! Navigating to /battlemode");
+        navigate('/battlemode');
+    };
+    
     return (
         <div><Header />
             <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow relative">
 
                     {/* 슬라이드 배너 - 원본 크기 그대로 표시 */}
-                    <div className="relative">
+                    <div className="relative z-0">
                         <img
                             src={slideBanner.img}
                             alt="슬라이드 배너"
                             className="block mx-auto w-full"
                         />
+                    </div>
+                    
+                    {/* 👇 GAME START 버튼 (겹치기 위해 absolute 포지셔닝 적용) */}
+                    <div 
+                        className="absolute z-10" 
+                        style={{ 
+                            top: '60%', 
+                            left: '50%', 
+                            transform: 'translate(-3.3rem, -35%)'
+                        }} 
+                    >
+                        <button
+                            onClick={handleGameStartClick}
+                            className="relative w-28 h-28 rounded-full bg-gradient-to-br from-blue-400 to-red-500 text-gray-900 font-extrabold text-2xl flex items-center justify-center
+                                       shadow-xl shadow-yellow-500/50 hover:shadow-blue-400/70 transform hover:scale-105 transition-all duration-300 ease-in-out
+                                       active:scale-90 active:ring-4 active:ring-yellow-400 active:ring-opacity-75 focus:outline-none overflow-hidden"
+                        >
+                            <span className="relative z-10 leading-none">
+                                GAME<br/>START
+                            </span>
+                            <span className="absolute inset-0 rounded-full bg-white opacity-0 animate-ripple"></span>
+                        </button>
                     </div>
 
 
@@ -102,17 +132,20 @@ const HomePage = () => {
                         </div>
 
                         {/* 중앙: 사용자 정보 요약 -> 분리된 컴포넌트로 대체 */}
-                        {hasCharacter ? (
-                            <UserCharacterSummary
-                                user={user}
-                                displayName={displayName}
-                                characterImageUrl={characterImageUrl}
-                                incubatorCount={incubatorCount}
-                                isAdFree={isAdFree}
-                            />
-                        ) : (
-                            <CharacterCreationPrompt />
-                        )}
+                        <div className="relative">
+                            {hasCharacter ? (
+                                <UserCharacterSummary
+                                    user={user}
+                                    displayName={displayName}
+                                    characterImageUrl={characterImageUrl}
+                                    incubatorCount={incubatorCount}
+                                    isAdFree={isAdFree}
+                                    characterCount={characterCount}
+                                />
+                            ) : (
+                                <CharacterCreationPrompt />
+                            )}
+                        </div>
 
                         {/* 오른쪽: 가이드 보기 */}
                         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">

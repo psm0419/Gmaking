@@ -6,6 +6,7 @@ import com.project.gmaking.character.vo.CharacterPersonalityVO;
 import com.project.gmaking.debate.ai.Judge;
 import com.project.gmaking.debate.ai.OpenAiClient;
 import com.project.gmaking.debate.vo.*;
+import com.project.gmaking.quest.service.QuestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -16,7 +17,8 @@ public class DebateServiceImpl implements DebateService {
 
     private final CharacterDAO characterDAO;
     private final OpenAiClient openAi;
-    private final List<Judge> judges; // GptJudge, GeminiJudge, GrokJudge 자동 주입
+    private final List<Judge> judges; // GptJudge, GeminiJudge, o1-mini 자동 주입
+    private final QuestService questService;
 
     @Override
     public CharacterVO getCharacter(Integer characterId) {
@@ -122,6 +124,16 @@ public class DebateServiceImpl implements DebateService {
         }
 
         Map<String, Object> judged = judge(topic, dialogue);
+
+        // 퀘스트 진행 업데이트 (토론 수행 시점)
+        try {
+            String userId = req.getUserId(); // DebateRequestVO 안에 userId 필드가 있다고 가정
+            if (userId != null && !userId.isBlank()) {
+                questService.updateQuestProgress(userId, "DEBATE");
+            }
+        } catch (Exception e) {
+            System.err.println("[DEBATE 퀘스트 업데이트 실패] " + e.getMessage());
+        }
 
         return DebateResultVO.builder()
                 .topic(topic)

@@ -8,7 +8,7 @@ import { generateCharacterPreview, finalizeCharacter } from '../api/characterCre
 
 const CharacterCreationPage = () => {
     const navigate = useNavigate();
-    const { setCharacterCreated, setToken, token } = useAuth();
+    const { setCharacterCreated, setToken, token, applyNewToken } = useAuth();
     const [imageFile, setImageFile] = useState(null);
     const [characterName, setCharacterName] = useState('');
 
@@ -109,8 +109,9 @@ const CharacterCreationPage = () => {
 
             // setToken useAuth에서 가져옴.
             if (response.newToken) {
-                setToken(response.newToken); 
+                setToken(response.newToken);
                 localStorage.setItem('gmaking_token', response.newToken);
+                applyNewToken(response.newToken);
             }
 
             // 최종 상태 변경 및 완료 메시지
@@ -122,7 +123,9 @@ const CharacterCreationPage = () => {
 
             let displayMessage = '캐릭터 최종 확정 실패: 다시 시도해 주세요.';
 
-            if (error.message) {
+            if (error.response && error.response.data && error.response.data.errorMessage) {
+                displayMessage = error.response.data.errorMessage;
+            } else if (error.message) {
                 if (error.message.includes('Duplicate entry')) {
                     displayMessage = `캐릭터 이름 '${characterName}'(이)가 이미 존재합니다. 다른 이름을 사용해주세요.`;
                 } else {

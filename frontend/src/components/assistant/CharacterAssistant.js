@@ -1,7 +1,11 @@
-// src/components/assistant/CharacterAssistant.js
 import React, { useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import GuideViewer from "./GuideViewer";
+import usePageGuide from "./UsePageGuide";
+
 
 /** 바깥 클릭 시 닫기 */
 function useOutsideClick(ref, onClickOutside) {
@@ -18,8 +22,15 @@ function useOutsideClick(ref, onClickOutside) {
   }, [ref, onClickOutside]);
 }
 
+// 동적 import로 가이드 로딩
+async function importGuide() {
+  const mod = await import("./GuideContent.js");
+  return (mod.default || mod.GUIDE_CONTENT);
+}
+
 export default forwardRef(function CharacterAssistant(
   {
+
     images = ["/images/character/idle.png"],
     name = "도우미",
     options = ["인사하기", "겜만중이 뭐야?", "AI가 뭐야?", "오늘의 퀘스트", "이 페이지에 대해 알려줄래?"],
@@ -44,12 +55,17 @@ export default forwardRef(function CharacterAssistant(
     onGoToPVE,
     onGoToPVP,
     onGoToDebate,
+    onGoToMinigame, // ★ 추가
     onGoToChat,
   },
   ref
 ) {
+  // ====== 상태들 ======
+  const pageGuide = usePageGuide();
+  const [pageCta, setPageCta] = useState(null);
   const isSequence = images.length > 1;
   const isIntroSeq = Array.isArray(introImages) && introImages.length > 0;
+  const [availableGameModes, setAvailableGameModes] = useState(["PVE", "PVP", "AI 토론", "미니게임"]);
 
   // open state (controlled/uncontrolled)
   const [openUncontrolled, setOpenUncontrolled] = useState(false);
@@ -97,8 +113,11 @@ export default forwardRef(function CharacterAssistant(
     }, gap);
   }
 
+  // 외부 클릭 닫기
   const bubbleRef = useRef(null);
-  useOutsideClick(bubbleRef, () => setOpen(false));
+  useOutsideClick(bubbleRef, () => {
+    if (!showGuide) setOpen(false);
+  });
 
   const placementClass = useMemo(
     () => (bubblePlacement === "right" ? "left-full ml-3 origin-left" : "right-full mr-3 origin-right"),
@@ -153,7 +172,12 @@ export default forwardRef(function CharacterAssistant(
     return clearAllTimers;
   }, [isSequence, phase, frameMs, blinkFrameMs, blinkMinMs, blinkMaxMs]);
 
-  const currentSrc = phase === "intro" ? (isIntroSeq ? introImages[introFrame] : images[0] ?? "") : isSequence ? images[frame] : images[0];
+  const currentSrc =
+    phase === "intro"
+      ? (isIntroSeq ? introImages[introFrame] : images[0] ?? "")
+      : isSequence
+      ? images[frame]
+      : images[0];
 
   // cross-fade
   const [displaySrc, setDisplaySrc] = useState(currentSrc);
@@ -191,8 +215,7 @@ export default forwardRef(function CharacterAssistant(
     try {
       setLoadingGuide(true);
       setErrGuide(null);
-      const mod = await import("./GuideContent.js");
-      const content = (mod.default || mod.GUIDE_CONTENT);
+      const content = await importGuide();
       const picked = content?.[key];
       if (!picked) throw new Error(`가이드 "${key}"를 찾을 수 없습니다.`);
       setGuideData({ ...picked, __key: key });
@@ -203,7 +226,6 @@ export default forwardRef(function CharacterAssistant(
       setLoadingGuide(false);
     }
   }
-
   function closeGuide() {
     setShowGuide(false);
     setGuideData(null);
@@ -216,31 +238,47 @@ export default forwardRef(function CharacterAssistant(
     setMessageText("");
     setHistory([]);
     setCtaForAi(false);
+    setPageCta(null);
   }, [open]);
+
+  function pushSnapshot(h) {
+    const s = (messageText ?? "").trim();
+    if (!s.length) return h;
+    return [...h, { view, messageText, ctaForAi, pageCta }];
+  }
 
   function handleAsk() {
     const text = (input || "").trim();
     if (!text) return;
     onAsk?.(text);
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
     setMessageText(text);
     setView("message");
     setCtaForAi(false);
     setInput("");
   }
 
+  // 프리셋 응답
   function getMessageForOption(opt) {
     switch (opt) {
       case "인사하기":
-        return `안녕! 나는 겜만중의 도우미봇이야. 우리 사이트에 대해 궁금한게 있으면 편하게 질문해줘. 우리 사이트에 온 걸 환영해, ${userNickname || "방랑자"}!`;
+        return `안녕! 나는 겜만중의 도우미봇이야.
+우리 사이트는 AI를 사용한 게임 사이트이자 AI를 체험하는 학습 사이트이기도 하기때문에 일반인도 쉽게 활용된 AI를 설명하는 역할을 개발자들이 나한테 맡겼어.
+어떤 AI 모델이 사용되었는지, 이 페이지가 어떤 페이지인지 궁금할때마다 날 떠올려줘!
+그럼 즐거운 시간되고, 다시 한 번 만나서 반가워! ${userNickname || "방랑자"}!`;
       case "겜만중이 뭐야?":
-        return "겜만중은 '게임 만드는 중'의 줄임말이야. AI 기술을 직접 체험하고 학습할 수 있는 AI 체험형 게임 플랫폼이지!";
+        return `겜만중은 **게임 만드는 중**의 줄임말이야. AI 기술을 직접 체험하고 학습할 수 있는 AI 체험형 게임 플랫폼이지!
+우리 사이트에서는 AI로 캐릭터를 생성하기도 하고, 성장시키기도하고, 게임도 하고 채팅도 하면서 AI를 실제 체험할 수 있어!
+혹시 사이트를 둘러보다가 궁금한 점이 생기면 **이 페이지에 대해 알려줄래?** 를 클릭하거나 질문을 입력해줘!`;
       case "AI가 뭐야?":
-        return "AI는 인공지능이야. 겜만중에서는 캐릭터 생성, 캐릭터 성장, 캐릭터와의 대화, 게임 해설 등에 AI가 쓰여. 더 자세히 알고 싶다면 아래 버튼을 눌러봐!";
+        return `AI는 간단하게 말해서 사람처럼 스스로 사고하고 판단 할 수 있도록 만든 인공지능이야. 사람들이 가장 많이 접하는 건 아무래도 챗지피티겠지?
+사실 우리 사이트에서도 챗지피티를 이용해 많은 것을 하고 있어. 우리 겜만중에서는 직접 학습한 AI 모델부터 시중에 존재하는 AI를 활용해서 캐릭터를 생성하고, 성장시키고, 게임을 하고, 대화를 할 수 있어. 여러 컨텐츠를 즐기면서 다재다능한 AI가 어떤 식으로 활용되는지 봐줘.
+우리 사이트에서 AI가 쓰인 컨텐츠에대해 좀 더 자세히 알고 싶어?`;
       case "오늘의 퀘스트":
         return "오늘의 퀘스트는 PVE 게임 3회 클리어하기야. 하러 가볼래?";
       case "이 페이지에 대해 알려줄래?":
-        return "지금 보고 있는 페이지는 홈페이지야. 홈페이지는 웹페이지의 얼굴이라고 할 수 있지.";
+        // 외부에서 setPageCta 해줄 수도 있으니 그대로 노출
+        return pageGuide?.text || "이 페이지에 대한 안내를 보여줄게!";
       default:
         return "무엇을 도와줄까?";
     }
@@ -249,14 +287,19 @@ export default forwardRef(function CharacterAssistant(
   function handleChoose(opt) {
     onChoose?.(opt);
     const next = getMessageForOption(opt);
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
     setMessageText(next);
     setView("message");
     setCtaForAi(opt === "AI가 뭐야?");
+    if (opt === "이 페이지에 대해 알려줄래?") {
+      setPageCta(pageGuide?.cta || null);
+    } else {
+      setPageCta(null);
+    }
   }
 
   function handleAiMore() {
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
     setMessageText("궁금한 주제를 골라줘!");
     setView("aiTopics");
     setCtaForAi(false);
@@ -264,30 +307,35 @@ export default forwardRef(function CharacterAssistant(
 
   function handlePickAiTopic(topic) {
     const topicMap = {
-      "캐릭터 생성": "AI가 캐릭터의 ‘성격(페르소나)’과 말투를 만들어. 캐릭터마다 반응이 달라!",
-      "캐릭터 성장": "대화/활동으로 캐릭터가 널 더 잘 이해하고 성장해.",
+      "캐릭터 생성": "AI가 캐릭터의 이미지와 성격, 배경을 만들어.",
+      "캐릭터 성장": "PVE 클리어 횟수로 캐릭터가 성장할 수 있어.",
       "AI 활용 게임": "AI는 해설자/스토리텔러 역할을 맡아 서사와 몰입도를 높여줘.",
       "캐릭터와 채팅": "단순 응답이 아니라 맥락을 이해하고 이어가는 대화야. 필요한 정보는 기억/요약해 다음에 더 똑똑해져.",
     };
-
     const text = topicMap[topic] ?? "준비 중이야!";
-    setHistory((h) => [...h, messageText]);
-
-    if (topic === "캐릭터와 채팅") {
-          setMessageText(topicMap["캐릭터와 채팅"]);
-          setView("message");
-          setCtaForAi(false);
-          openGuide("chat");             // ← 추가
-          return;
+    setHistory((h) => pushSnapshot(h));
+    if (topic === "캐릭터 생성") {
+      setMessageText(topicMap["캐릭터 생성"]);
+      setView("message");
+      setCtaForAi(false);
+      openGuide("characterCreate");
+      return;
     }
 
+    if (topic === "캐릭터와 채팅") {
+      setMessageText(topicMap["캐릭터와 채팅"]);
+      setView("message");
+      setCtaForAi(false);
+      openGuide("chat");
+      return;
+    }
     if (topic === "AI 활용 게임") {
       setMessageText(topicMap["AI 활용 게임"]);
       setView("aiGameModes");
       setCtaForAi(false);
+      setAvailableGameModes(["PVE", "PVP", "AI 토론"]);
       return;
     }
-
     setMessageText(text);
     setView("message");
     setCtaForAi(false);
@@ -299,25 +347,38 @@ export default forwardRef(function CharacterAssistant(
         setMessageText("");
         setView("menu");
         setCtaForAi(false);
+        setPageCta(null);
         return h;
       }
       const prev = h[h.length - 1];
       const nextStack = h.slice(0, -1);
-      const wasAiExplain = typeof prev === "string" && prev.includes("겜만중에서는");
-      setMessageText(prev);
-      setView(prev ? "message" : "menu");
-      setCtaForAi(!!wasAiExplain);
+      const prevStr = (prev?.messageText ?? "").trim();
+
+      if (!prevStr.length) {
+        setMessageText("");
+        setView("menu");
+        setCtaForAi(false);
+        setPageCta(null);
+        return nextStack;
+      }
+
+      setMessageText(prev.messageText ?? "");
+      setView(prev.view ?? "message");
+      setCtaForAi(!!prev.ctaForAi);
+      setPageCta(prev.pageCta ?? null);
       return nextStack;
     });
   }
 
+
   function handlePickGameMode(mode) {
-    setHistory((h) => [...h, messageText]);
+    setHistory((h) => pushSnapshot(h));
 
     const guide = {
       PVE: "PVE: AI가 스토리텔러가 되어 네 진행을 서사로 풀어줘.",
       PVP: "PVP: 상대와 대결! 결과와 하이라이트를 AI가 해설해줘.",
       "AI 토론": "AI 토론: 주제를 정해 AI와 설전을 벌여보자!",
+      미니게임: "성장에 필요한 간단한 게임들을 체험해봐! 반응속도 테서트, 기억력 게임, 타이핑 배틀 등 다양한 게임을 즐겨볼 수 있어. 나중에 성장할때 이 게임이 필요하니까 미리 해보는게 좋을거야!",
     };
 
     setMessageText(guide[mode] || "준비 중이야!");
@@ -327,13 +388,33 @@ export default forwardRef(function CharacterAssistant(
     if (mode === "PVE") openGuide("pve");
     if (mode === "PVP") openGuide("pvp");
     if (mode === "AI 토론") openGuide("debate");
+
   }
 
+  // 외부에서 바로 “모드 선택 큰 버튼”으로 진입시키는 공개 API
   useImperativeHandle(ref, () => ({
     open: () => setOpen(true),
     close: () => setOpen(false),
     toggle: () => setOpen((v) => !v),
     isOpen: () => !!open,
+    /** battlemode 다음 단계에서 호출 */
+    showGameModePicker: (message, cta) => {
+      setOpen(true);
+      setHistory([]);
+      setMessageText(message || "어떤 모드를 플레이할까? 아래에서 골라줘!");
+      setView("aiGameModes");
+      setCtaForAi(false);
+      setPageCta(cta || null);
+    },
+    /** 임의 메시지를 말풍선에 표시 (선택사항) */
+    showMessage: (message, cta) => {
+      setOpen(true);
+      setHistory([]);
+      setMessageText(message || "");
+      setView("message");
+      setCtaForAi(false);
+      setPageCta(cta || null);
+    },
   }));
 
   // animation presets
@@ -342,13 +423,17 @@ export default forwardRef(function CharacterAssistant(
   const currentAnimate = isIntroFirst ? { opacity: 1, scale: [0.7, 1.1, 1], y: 0 } : { opacity: 1, scale: [1, 1.02, 1], y: 0 };
   const currentDuration = isIntroFirst ? 0.6 : 0.24;
 
+  const smallChipBtn =
+    "rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-violet-400";
   const topicBtnClass =
     "w-full block rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-800 shadow-sm transform-gpu transition-all duration-150 hover:bg-violet-50 hover:border-violet-300 hover:shadow-lg hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-violet-400 active:translate-y-0 active:shadow-sm";
+  const bigModeBtnClass =
+    "w-full block rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-base font-extrabold text-zinc-900 shadow-md transform-gpu transition-all duration-150 hover:bg-violet-50 hover:border-violet-300 hover:shadow-lg hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-violet-400 active:translate-y-0 active:shadow-sm";
 
-  const GO_LABELS = { pve: "PVE 하러가기", pvp: "PVP 하러가기", debate: "AI 토론 하러가기" };
+
   function handleGo(key) {
-    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate };
-    const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate" };
+    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame };
+    const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate", minigame: "/minigames" };
     const fn = handlers[key];
     if (typeof fn === "function") return fn();
     window.location.href = fallbacks[key] || "/";
@@ -356,8 +441,14 @@ export default forwardRef(function CharacterAssistant(
 
   return (
     <div className="fixed bottom-6 right-6 z-[60] select-none">
-      {/* Character */}
-      <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="group relative block focus:outline-none">
+      {/* Character 버튼 */}
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="group relative block focus:outline-none"
+      >
         <div className="relative h-40 w-40 overflow-hidden">
           {prevSrc && (
             <motion.img
@@ -399,17 +490,15 @@ export default forwardRef(function CharacterAssistant(
         >
           <div className="relative max-w-[22rem] rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur-md">
             <div className={`absolute bottom-2 ${bubblePlacement === "right" ? "-left-2" : "-right-2"} h-4 w-4 rotate-45 border border-zinc-200 bg-white/95`} aria-hidden />
+
+            {/* MENU */}
             {view === "menu" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
                 <div className="mb-3 text-sm text-zinc-600">무엇을 할까요? 아래 문항을 선택하거나 직접 질문해주세요.</div>
                 <div className="mb-3 flex flex-wrap gap-2">
                   {options.map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => handleChoose(opt)}
-                      className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-violet-400"
-                    >
+                    <button key={opt} onClick={() => handleChoose(opt)} className={smallChipBtn}>
                       {opt}
                     </button>
                   ))}
@@ -417,10 +506,22 @@ export default forwardRef(function CharacterAssistant(
               </>
             )}
 
+            {/* MESSAGE */}
             {view === "message" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
-                <div className="mb-3 whitespace-pre-wrap text-sm text-zinc-700">{messageText}</div>
+                <div className="mb-3 text-sm text-zinc-700 prose prose-zinc max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                      p: (props) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: (props) => <strong className="font-semibold" {...props} />,
+                      a: (props) => <a className="text-violet-600 underline" {...props} />,
+                    }}
+                  >
+                    {messageText}
+                  </ReactMarkdown>
+                </div>
                 <div className="mb-3 flex items-center gap-2">
                   <button
                     type="button"
@@ -429,23 +530,63 @@ export default forwardRef(function CharacterAssistant(
                   >
                     ← 돌아가기
                   </button>
+
                   {ctaForAi && (
                     <button
                       type="button"
                       onClick={handleAiMore}
-                      className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-violet-400"
+                      className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
                     >
                       응, 말해줘
+                    </button>
+                  )}
+
+                  {pageCta?.label && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (pageCta.action === "openGuide" && pageCta.key) {
+                          openGuide(pageCta.key);
+                          return;
+                        }
+                        if (pageCta.action === "go" && pageCta.key) {
+                          handleGo(pageCta.key);
+                          return;
+                        }
+                        if (pageCta.action === "showModes") {
+                          setHistory((h) => pushSnapshot(h));
+                          setMessageText("어떤 모드를 플레이할까? 아래에서 골라줘!");
+                          setView("aiGameModes");
+                          setCtaForAi(false);
+                          setPageCta(null);
+                          return;
+                        }
+                      }}
+                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    >
+                      {pageCta.label}
                     </button>
                   )}
                 </div>
               </>
             )}
 
+            {/* AI TOPICS */}
             {view === "aiTopics" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
-                <div className="mb-3 whitespace-pre-wrap text-sm text-zinc-700">{messageText}</div>
+                <div className="mb-3 text-sm text-zinc-700">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                      p: (props) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: (props) => <strong className="font-semibold" {...props} />,
+                      a: (props) => <a className="text-violet-600 underline" {...props} />,
+                    }}
+                  >
+                    {messageText}
+                  </ReactMarkdown>
+                </div>
                 <div className="mb-3 space-y-2">
                   {["캐릭터 생성", "캐릭터 성장", "AI 활용 게임", "캐릭터와 채팅"].map((topic) => (
                     <button key={topic} onClick={() => handlePickAiTopic(topic)} className={topicBtnClass}>
@@ -465,18 +606,34 @@ export default forwardRef(function CharacterAssistant(
               </>
             )}
 
+            {/* GAME MODES (큰 버튼 4개) */}
             {view === "aiGameModes" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
-                <div className="mb-3 whitespace-pre-wrap text-sm text-zinc-700">{messageText}</div>
+                <div className="mb-3 text-sm text-zinc-700">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={{
+                      p: (props) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                      strong: (props) => <strong className="font-semibold" {...props} />,
+                      a: (props) => <a className="text-violet-600 underline" {...props} />,
+                    }}
+                  >
+                    {messageText || "모드를 골라줘!"}
+                  </ReactMarkdown>
+                </div>
+
                 <div className="mb-3 space-y-2">
-                  {["PVE", "PVP", "AI 토론"].map((mode) => (
-                    <button key={mode} onClick={() => handlePickGameMode(mode)} className={topicBtnClass}>
+                  {availableGameModes.map((mode) => (
+                    <button key={mode} onClick={() => handlePickGameMode(mode)} className={bigModeBtnClass}>
                       {mode}
                     </button>
                   ))}
                 </div>
-                <div className="mb-3">
+
+
+
+                <div>
                   <button
                     type="button"
                     onClick={handleBack}
@@ -488,7 +645,8 @@ export default forwardRef(function CharacterAssistant(
               </>
             )}
 
-            <div className="flex items-center gap-2">
+            {/* 입력창 */}
+            <div className="mt-3 flex items-center gap-2">
               <input
                 type="text"
                 value={input}
@@ -516,17 +674,19 @@ export default forwardRef(function CharacterAssistant(
           onClose={closeGuide}
           onGo={(key) => {
             const map = {
-                pve: onGoToPVE,
-                pvp: onGoToPVP,
-                debate: onGoToDebate,
-                chat: onGoToChat,
+              pve: onGoToPVE,
+              pvp: onGoToPVP,
+              debate: onGoToDebate,
+              minigame: onGoToMinigame,
+              chat: onGoToChat,
             };
             if (typeof map[key] === "function") return map[key]();
             const fallback = {
-                pve: "/pve/maps",
-                pvp: "/pvp/match",
-                debate: "/debate",
-                chat: "/chat-entry",
+              pve: "/pve/maps",
+              pvp: "/pvp/match",
+              debate: "/debate",
+              minigame: "/minigames",
+              chat: "/chat-entry",
             }[key] || "/";
             window.location.href = fallback;
           }}

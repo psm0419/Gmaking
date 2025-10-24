@@ -196,7 +196,7 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
 //                    updatedUser.getIncubatorCount(),
 //                    updatedUser.isAdFree()
 //            );
-
+            loginDAO.updateUserCharacterInfo(userId, characterId);
             LoginVO currentUser = loginDAO.selectUserById(userId);
 
             String newToken = jwtTokenProvider.createToken(
@@ -206,7 +206,8 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
                     currentUser.isHasCharacter(),
                     currentUser.getCharacterImageUrl(),
                     currentUser.getIncubatorCount(),
-                    currentUser.isAdFree()
+                    currentUser.isAdFree(),
+                    currentUser.getCharacterCount()
             );
 
             // newToken 포함
