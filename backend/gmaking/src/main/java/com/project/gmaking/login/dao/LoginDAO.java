@@ -79,4 +79,11 @@ public interface LoginDAO {
      */
     int updateUserCharacterInfo(@Param("userId") String userId, @Param("imageUrl") String imageUrl);
 
+    /**
+     * 특정 사용자의 부화권 수량을 1 감소
+     * @param userId 사용자 ID
+     * @return 성공적으로 업데이트된 레코드 수 (1 또는 0)
+     */
+    int decrementIncubatorCount(@Param("userId") String userId);
+
 }

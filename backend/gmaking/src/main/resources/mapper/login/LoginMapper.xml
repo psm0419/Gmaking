@@ -162,4 +162,12 @@
         WHERE USER_ID = #{userId}
     </update>
 
+    <!-- 0개 미만으로 감소 방지 -->
+    <update id="decrementIncubatorCount">
+        UPDATE TB_USER
+        SET INCUBATOR_COUNT = INCUBATOR_COUNT - 1
+        WHERE USER_ID = #{userId}
+        AND INCUBATOR_COUNT &gt;= 1
+    </update>
+
 </mapper>
