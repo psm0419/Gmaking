@@ -58,7 +58,7 @@ function normalizeHistory(raw) {
       id:
         m.id ??
         m.messageId ??
-        `m-${Date.now()}-${Math.random().toString(36).slice(2)}`, // 충돌 방지
+        `m-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       role,
       content: m.content ?? m.message ?? "",
     };
@@ -66,13 +66,12 @@ function normalizeHistory(raw) {
 }
 
 export default function ChatPage() {
-
   useEffect(() => {
-    document.body.classList.add('no-scrollbar');
-    document.documentElement.classList.add('no-scrollbar');
+    document.body.classList.add("no-scrollbar");
+    document.documentElement.classList.add("no-scrollbar");
     return () => {
-      document.body.classList.remove('no-scrollbar');
-      document.documentElement.classList.remove('no-scrollbar');
+      document.body.classList.remove("no-scrollbar");
+      document.documentElement.classList.remove("no-scrollbar");
     };
   }, []);
 
@@ -96,10 +95,10 @@ export default function ChatPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [showTopLoader, setShowTopLoader] = useState(false); // ⬅️ 상단 비주얼 로더 표시 제어
   const endRef = useRef(null);
   const scrollWrapRef = useRef(null);
 
-  // StrictMode에서 useEffect 이중 호출 방지용 락
   const enterOnceRef = useRef({ cid: null, called: false });
 
   // 스크롤 맨 아래로
@@ -108,6 +107,14 @@ export default function ChatPage() {
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // 상단 비주얼 로더 표시 로직
+  useEffect(() => {
+    const hasAssistant = messages.some((m) => m.role === "assistant");
+    const hasTyping = messages.some((m) => m.role === "typing");
+    // 히스토리 로딩 중이거나, 아직 assistant 없음 or 타이핑 중이면 표시
+    setShowTopLoader(historyLoading || hasTyping || !hasAssistant);
+  }, [historyLoading, messages]);
 
   /** 1) 초기: 캐릭터 목록 */
   useEffect(() => {
@@ -149,34 +156,30 @@ export default function ChatPage() {
 
   const loadIdRef = useRef(0);
 
-  /** 2) 캐릭터 전환: 입장 payload 있으면 재호출 없이 사용, 없으면 enter 호출 */
+  /** 2) 캐릭터 전환: enter 호출 */
   useEffect(() => {
     if (!selectedCharacter) {
+      setBusy(false);
       setMessages([]);
       return;
     }
 
+    setBusy(false);
     setMessages([]);
     const myLoadId = ++loadIdRef.current;
 
-    // A) 입장 페이지에서 전달된 payload가 현재 캐릭터와 매칭되면 그대로 사용
     if (
       enterPayload &&
       (enterPayload.characterId === selectedCharacter.id ||
         String(enterPayload.characterId) === String(selectedCharacter.id))
     ) {
       const list = normalizeHistory(enterPayload.history || []).reverse();
-
       if (myLoadId === loadIdRef.current) setMessages(list);
-      // 호출된 것으로 마킹
       enterOnceRef.current = { cid: selectedCharacter.id, called: true };
-
-      // 주소창 state 제거 (새로고침 시 중복 방지)
       navigate(".", { replace: true, state: {} });
       return;
     }
 
-    // B) state가 없을 때만 서버 호출
     if (enterOnceRef.current.cid !== selectedCharacter.id) {
       enterOnceRef.current = { cid: selectedCharacter.id, called: false };
     }
@@ -214,6 +217,10 @@ export default function ChatPage() {
     };
   }, [selectedCharacter?.id, enterPayload, navigate]);
 
+  /** 타이핑 말풍선 ID 생성 */
+  const createTyping = () =>
+    `typing-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
   /** 3) 메시지 전송 */
   const send = async () => {
     const t = text.trim();
@@ -221,31 +228,48 @@ export default function ChatPage() {
 
     const cidSnapshot = selectedCharacter.id;
     const uid = "u-" + Date.now();
+    const typingId = createTyping();
+
     setText("");
-    setMessages((prev) => [...prev, { id: uid, role: "user", content: t }]);
+    // 내 메시지 + 타이핑 말풍선 추가
+    setMessages((prev) => [
+      ...prev,
+      { id: uid, role: "user", content: t },
+      { id: typingId, role: "typing", content: "" },
+    ]);
 
     setBusy(true);
     try {
-      const { data } = await axiosInstance.post(
-        API.chatSend(cidSnapshot),
-        { message: t }
-      );
+      const { data } = await axiosInstance.post(API.chatSend(cidSnapshot), {
+        message: t,
+      });
+      // 아직 같은 캐릭터면 타이핑 말풍선을 실제 답변으로 교체
       if (cidSnapshot === selectedCharacter?.id) {
-        setMessages((prev) => [
-          ...prev,
-            { id: data?.messageId || "a-" + Date.now(), role: "assistant", content: data?.reply ?? "응답이 비어있어요." },
-        ]);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === typingId
+              ? {
+                  id: data?.messageId || "a-" + Date.now(),
+                  role: "assistant",
+                  content: data?.reply ?? "응답이 비어있어요.",
+                }
+              : m
+          )
+        );
       }
     } catch (err) {
       console.error("채팅 전송 실패:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: "a-" + Date.now(),
-          role: "assistant",
-          content: "서버 오류가 발생했습니다.",
-        },
-      ]);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === typingId
+            ? {
+                id: "a-" + Date.now(),
+                role: "assistant",
+                content: "서버 오류가 발생했습니다.",
+              }
+            : m
+        )
+      );
     } finally {
       setBusy(false);
     }
@@ -259,23 +283,42 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-200/70 flex flex-col">
+    <div className="min-h-screen w-full bg-slate-900 flex flex-col">
+      {/* 로컬 키프레임 */}
+      <style>{`
+        @keyframes dotJump {
+          0%, 60%, 100% { transform: translateY(0); opacity: .6; }
+          30% { transform: translateY(-4px); opacity: 1; }
+        }
+        @keyframes floatBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        /* 점 하나씩 나타났다 사라지는 루프 */
+        @keyframes dotAppear {
+          0% { opacity: 0; transform: scale(.8); }
+          10% { opacity: 1; transform: scale(1); }
+          30% { opacity: 1; }
+          40%, 100% { opacity: 0; transform: scale(.8); }
+        }
+      `}</style>
+
       <Header />
 
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-[1200px] h-[680px] rounded-[48px] bg-gray-800 p-6 shadow-inner translate-y-8">
-          <div className="w-full h-full rounded-[36px] bg-gray-800 overflow-hidden relative flex">
+        {/* 중간층 */}
+        <div className="w-[1200px] h-[680px] rounded-[48px] bg-slate-950/60 backdrop-blur-sm
+                        p-6 shadow-[0_0_0_1px_rgba(0,0,0,0.35),0_30px_80px_-20px_rgba(0,0,0,0.7)]
+                        ring-1 ring-black/40 translate-y-8">
+          {/* 본문 카드 */}
+          <div className="w-full h-full rounded-[36px] bg-slate-700/95 overflow-hidden relative flex ring-1 ring-slate-500/60">
             {/* ===== 사이드바 ===== */}
-            <aside className="w-[300px] bg-neutral-700 text-white relative flex flex-col rounded-tl-[36px] rounded-bl-[36px]">
-              {/* 둥근 가장자리 장식 (스크롤 방해 안 하도록) */}
-
-
-              {/* 스크롤 영역 */}
+            <aside className="w-[300px] bg-slate-700 text-slate-100 relative flex flex-col rounded-tl-[36px] rounded-bl-[36px] border-r border-slate-600/70">
               <div className="flex-1 overflow-y-auto pt-10 pb-6 px-2 relative z-10 no-scrollbar">
                 {loading ? (
-                  <div className="text-sm text-neutral-300 text-center">로드 중…</div>
+                  <div className="text-sm text-slate-300 text-center">로드 중…</div>
                 ) : characters.length === 0 ? (
-                  <div className="px-4 text-center text-neutral-300 text-sm">
+                  <div className="px-4 text-center text-slate-300 text-sm">
                     캐릭터가 없어요.
                     <br />
                     마이페이지에서 생성해 주세요.
@@ -296,35 +339,44 @@ export default function ChatPage() {
               </div>
             </aside>
 
-
             {/* ===== 채팅 본문 ===== */}
-            <section className="flex-1 flex flex-col bg-white">
-              <div className="flex items-center justify-between px-6 py-4 border-b">
-                <div className="font-semibold text-lg">
+            <section className="flex-1 flex flex-col bg-slate-600/40">
+              {/* 상단 바 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-600/70">
+                <div className="font-semibold text-lg text-slate-100">
                   {selectedCharacter ? selectedCharacter.name : "캐릭터"}
                 </div>
-                {historyLoading && (
-                  <div className="text-sm text-gray-500">대화 불러오는 중…</div>
-                )}
+                {/* 기존 텍스트 로더 대신 비주얼 로더를 상단 아래에 별도 표시 */}
               </div>
 
+              {/* ⬇️ 상단 비주얼 로더 */}
+              {showTopLoader && (
+                <TopVisualLoader />
+              )}
+
+              {/* 채팅 영역 */}
               <div
-                key={selectedCharacter?.id || "none"}     // 캐릭터 바뀌면 강제 리마운트
+                key={selectedCharacter?.id || "none"}
                 ref={scrollWrapRef}
-                className="flex-1 overflow-y-auto no-scrollbar px-14 py-10 space-y-5"
+                className="flex-1 overflow-y-auto no-scrollbar px-8 md:px-14 py-6 md:py-8 space-y-5"
               >
-                {messages.map((m) => (
-                  <Bubble key={m.id} role={m.role} content={m.content} />
-                ))}
+                {messages.map((m) =>
+                  m.role === "typing" ? (
+                    <TypingBubble key={m.id} />
+                  ) : (
+                    <Bubble key={m.id} role={m.role} content={m.content} />
+                  )
+                )}
                 <div ref={endRef} />
               </div>
 
-              {/* ===== 입력창 ===== */}
-              <div className="border-t px-14 py-6 bg-white">
+              {/* 입력창 */}
+              <div className="border-t border-slate-600/70 px-8 md:px-14 py-6 bg-slate-700/60">
                 <div className="flex items-end gap-4">
                   <textarea
-                    className="flex-1 min-h-[56px] max-h-[140px] resize-none rounded-3xl border border-gray-300 px-6 py-4 text-lg
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    className="flex-1 min-h-[56px] max-h-[140px] resize-none rounded-3xl
+                               border border-slate-600 bg-slate-800/80 text-slate-100 placeholder:text-slate-400
+                               px-6 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all duration-200"
                     placeholder={
                       selectedCharacter ? "메시지 입력" : "캐릭터를 먼저 선택하세요"
                     }
@@ -334,9 +386,9 @@ export default function ChatPage() {
                     disabled={!selectedCharacter}
                   />
                   <button
-                    className="h-[56px] min-w-[100px] rounded-3xl bg-gray-200 hover:bg-gray-300 active:bg-gray-400
-                               text-gray-900 text-xl font-medium shadow-sm transition-colors
-                               disabled:bg-gray-100 disabled:text-gray-400"
+                    className="h-[56px] min-w-[100px] rounded-3xl bg-violet-600 hover:bg-violet-500 active:bg-violet-700
+                               text-white text-xl font-medium shadow-sm ring-1 ring-violet-700/30
+                               disabled:bg-slate-600 disabled:text-white/60"
                     onClick={send}
                     disabled={!text.trim() || busy || !selectedCharacter}
                   >
@@ -362,6 +414,54 @@ export default function ChatPage() {
   );
 }
 
+/** ======================= 상단 비주얼 로더 ======================= */
+function TopVisualLoader() {
+  return (
+    <div className="px-6 md:px-8 py-3">
+      <div className="w-full rounded-2xl border border-slate-600/60 bg-slate-700/60 px-4 py-3 flex items-center gap-4">
+        {/* 아이콘: 편지가 통통 */}
+        <div
+          className="w-9 h-9 rounded-full bg-slate-200 text-slate-800 grid place-items-center"
+          style={{ animation: "floatBounce 1.4s ease-in-out infinite" }}
+          aria-hidden
+        >
+          {/* 편지 아이콘 (CSS-only) */}
+          <div className="relative w-5 h-3 bg-slate-800/90 rounded-sm">
+            <div className="absolute inset-0" style={{
+              clipPath: "polygon(0 0, 100% 0, 50% 60%)",
+              background: "rgba(255,255,255,.9)"
+            }}/>
+          </div>
+        </div>
+
+        {/* 텍스트 + 점 애니메이션 */}
+        <div className="flex-1">
+          <div className="text-slate-100 text-sm md:text-base font-medium">
+            캐릭터가 인삿말을 고르는 중
+            <span className="inline-flex items-center ml-1">
+              <Dot delay="0ms" />
+              <Dot delay="200ms" />
+              <Dot delay="400ms" />
+            </span>
+          </div>
+          <div className="text-slate-300/80 text-xs mt-1">
+            첫 응답을 준비하고 있어요. 잠시만 기다려 주세요.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Dot({ delay = "0ms" }) {
+  return (
+    <span
+      className="inline-block w-1.5 h-1.5 mx-[2px] rounded-full bg-slate-300"
+      style={{ animation: "dotAppear 1.2s linear infinite", animationDelay: delay }}
+    />
+  );
+}
+
 /** ======================= 아바타 아이템 ======================= */
 function AvatarItem({ selected = false, onClick, imageUrl, name }) {
   return (
@@ -370,11 +470,11 @@ function AvatarItem({ selected = false, onClick, imageUrl, name }) {
       onClick={onClick}
       className={`group relative w-[220px] h-[110px] rounded-2xl transition-all
                 ${selected
-                  ? "bg-neutral-600 ring-2 ring-amber-400"
-                    : "bg-neutral-800 hover:bg-neutral-700"}`}
+                  ? "bg-slate-600 ring-2 ring-amber-400"
+                  : "bg-slate-800 hover:bg-slate-700"}`}
       title={name}
     >
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-[72px] h-[72px] rounded-full bg-white ring-2 ring-neutral-500 overflow-hidden">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 w-[72px] h-[72px] rounded-full bg-slate-900 ring-2 ring-slate-500 overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -383,18 +483,18 @@ function AvatarItem({ selected = false, onClick, imageUrl, name }) {
             draggable={false}
           />
         ) : (
-          <div className="w-full h-full grid place-items-center text-neutral-400 text-xs">
+          <div className="w-full h-full grid place-items-center text-slate-400 text-xs">
             No Image
           </div>
         )}
       </div>
       <div className="absolute left-[100px] right-3 top-1/2 -translate-y-1/2">
         <div className={`line-clamp-2 text-left text-sm font-medium ${
-          selected ? "text-amber-400" : "text-white/90"
+          selected ? "text-amber-300" : "text-slate-100/90"
         }`}>
           {name}
         </div>
-        <div className="text-[11px] text-white/50 mt-1">클릭하여 전환</div>
+        <div className="text-[11px] text-slate-300 mt-1">클릭하여 전환</div>
       </div>
     </button>
   );
@@ -403,7 +503,7 @@ function AvatarItem({ selected = false, onClick, imageUrl, name }) {
 /** ======================= 채팅 말풍선 ======================= */
 function Bubble({ role, content }) {
   const mine = role === "user";
-  const bubble = mine ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900";
+  const bubble = mine ? "bg-violet-600 text-white" : "bg-slate-200 text-slate-900";
 
   return (
     <div className={`flex w-full ${mine ? "justify-end" : "justify-start"}`}>
@@ -411,13 +511,57 @@ function Bubble({ role, content }) {
         className={`relative max-w-[70%] whitespace-pre-wrap break-words rounded-[18px] px-4 py-2 shadow-sm ${bubble}`}
       >
         {content}
+
+        {/* 꼬리 */}
+        {mine ? (
+          <div
+            className="absolute w-0 h-0 right-[-7px] border-t-[6px] border-b-[6px] border-l-[8px]
+                       border-t-transparent border-b-transparent border-l-violet-600"
+            style={{ top: "16px" }}
+          />
+        ) : (
+          <>
+            <div
+              className="absolute w-0 h-0 left-[-10px] top-1/2 -translate-y-1/2
+                         border-t-[8px] border-b-[8px] border-r-[12px]
+                         border-t-transparent border-b-transparent border-r-slate-200"
+            />
+            <div
+              className="absolute left-[-2px] top-1/2 -translate-y-1/2
+                         w-3 h-3 bg-slate-200 rounded-bl-[12px]"
+              style={{ clipPath: "polygon(0% 0%, 100% 50%, 0% 100%)" }}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** ============== 타이핑 말풍선(… 점프 애니메이션) ============== */
+function TypingBubble() {
+  return (
+    <div className="flex w-full justify-start">
+      <div className="relative max-w-[70%] rounded-[18px] px-4 py-2 shadow-sm bg-slate-200 text-slate-900">
+        <div className="flex items-center gap-1 h-5" aria-label="AI가 입력 중">
+          <span className="inline-block w-2 h-2 rounded-full bg-slate-500"
+                style={{ animation: "dotJump 1.2s infinite", animationDelay: "0ms" }} />
+          <span className="inline-block w-2 h-2 rounded-full bg-slate-500"
+                style={{ animation: "dotJump 1.2s infinite", animationDelay: "150ms" }} />
+          <span className="inline-block w-2 h-2 rounded-full bg-slate-500"
+                style={{ animation: "dotJump 1.2s infinite", animationDelay: "300ms" }} />
+        </div>
+
+        {/* 캐릭터(assistant) 꼬리 */}
         <div
-          className={`absolute w-0 h-0 border-t-[6px] border-b-[6px] ${
-            mine
-              ? "right-[-7px] border-l-[8px] border-l-blue-500"
-              : "left-[-7px] border-r-[8px] border-r-gray-100"
-          } border-t-transparent border-b-transparent`}
-          style={{ top: "16px" }}
+          className="absolute w-0 h-0 left-[-10px] top-1/2 -translate-y-1/2
+                     border-t-[8px] border-b-[8px] border-r-[12px]
+                     border-t-transparent border-b-transparent border-r-slate-200"
+        />
+        <div
+          className="absolute left-[-2px] top-1/2 -translate-y-1/2
+                     w-3 h-3 bg-slate-200 rounded-bl-[12px]"
+          style={{ clipPath: "polygon(0% 0%, 100% 50%, 0% 100%)" }}
         />
       </div>
     </div>
