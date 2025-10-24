@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import Header from '../components/Header';
 
 export default function DailyQuestPage() {
-    const { user } = useAuth();
+    const { user, token, applyNewToken } = useAuth();
     const [quests, setQuests] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -48,11 +48,28 @@ export default function DailyQuestPage() {
 
         try {
             setLoading(true);
-            await axios.post(`/api/quest/reward`, null, {
+            
+            // 1. 보상 API 호출
+            const response = await axios.post(`/api/quest/reward`, null, {
                 params: { userId: user.userId, questId },
+                headers: {
+                    Authorization: `Bearer ${token}` 
+                }
             });
-            alert("보상을 수령했습니다!");
+
+            // 2. 서버 응답에서 새로운 토큰(newToken) 확인 및 적용
+            const result = response.data;
+            
+            if (result && typeof result === 'object' && result.newToken) {
+                applyNewToken(result.newToken);
+                alert(`${result.message || "보상 수령 완료!"} 부화권 개수가 추가되었습니다.`);
+            } else {
+                alert(`${result || "보상을 수령했습니다."} 상태 갱신을 위해 퀘스트 목록을 다시 불러옵니다.`);
+            }
+            
+            // 3. 퀘스트 목록 갱신 (REWARDED로 상태 변경을 반영)
             fetchQuests();
+            
         } catch (err) {
             console.error("보상 수령 실패:", err);
             alert("보상 수령 중 오류가 발생했습니다.");

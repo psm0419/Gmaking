@@ -1,9 +1,13 @@
 package com.project.gmaking.quest.service;
 
+import com.project.gmaking.login.dao.LoginDAO;
+import com.project.gmaking.login.vo.LoginVO;
 import com.project.gmaking.quest.dao.InventoryDAO;
 import com.project.gmaking.quest.dao.QuestDAO;
+import com.project.gmaking.quest.vo.QuestRewardResponseVO;
 import com.project.gmaking.quest.vo.QuestVO;
 import com.project.gmaking.quest.vo.UserQuestVO;
+import com.project.gmaking.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +23,8 @@ public class QuestServiceImpl implements QuestService {
 
     private final QuestDAO questDAO;
     private final InventoryDAO inventoryDAO;
-
+    private final LoginDAO loginDAO;
+    private final JwtTokenProvider jwtTokenProvider;
     /**
      * 유저의 일일 퀘스트가 없으면 생성
      */
@@ -88,7 +93,7 @@ public class QuestServiceImpl implements QuestService {
      */
     @Override
     @Transactional
-    public void rewardQuest(String userId, int questId) {
+    public QuestRewardResponseVO rewardQuest(String userId, int questId) {
         UserQuestVO userQuest = questDAO.findByUserAndQuest(userId, questId);
         if (userQuest == null)
             throw new IllegalArgumentException("해당 퀘스트가 존재하지 않습니다.");
@@ -99,11 +104,33 @@ public class QuestServiceImpl implements QuestService {
         if (quest == null)
             throw new IllegalArgumentException("퀘스트 정의를 찾을 수 없습니다.");
 
+        // 1. 보상 지급 및 DB 갱신 (부화권 카운트 포함)
         giveReward(userId, quest);
         questDAO.updateStatus(userId, questId, "REWARDED");
 
         log.info("[보상 수령 완료] userId={}, questId={}, reward={}x{}",
                 userId, questId, quest.getRewardProductId(), quest.getRewardQuantity());
+
+        // 2. 갱신된 정보로 사용자 데이터 재조회
+        LoginVO currentUser = loginDAO.selectUserById(userId);
+
+        // 3. 새 JWT 토큰 생성 (AuthContext.js 에서 사용될 최신 정보 포함)
+        String newToken = jwtTokenProvider.createToken(
+                currentUser.getUserId(),
+                currentUser.getRole(),
+                currentUser.getUserNickname(),
+                currentUser.isHasCharacter(),
+                currentUser.getCharacterImageUrl(),
+                currentUser.getIncubatorCount(),
+                currentUser.isAdFree(),
+                currentUser.getCharacterCount()
+        );
+
+        // 4. 응답 VO 반환
+        return QuestRewardResponseVO.builder()
+                .message("퀘스트 보상을 수령했습니다.")
+                .newToken(newToken)
+                .build();
     }
 
     /** 실제 보상 지급 로직 */

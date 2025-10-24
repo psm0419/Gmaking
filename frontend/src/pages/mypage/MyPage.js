@@ -545,10 +545,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
                         <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                             다음 성장 조건
                         </span>
-                        <div className="text-right">
-                            <span className="text-lg font-bold text-[#FFC700] block">
-                                등급 : {nextGradeLabel}
-                            </span>
+                        <div className="text-right">                            
                             <span className="text-sm font-medium text-white/70 block">
                                 ({requiredClearCount === "-" ? "최대 단계" : `클리어 ${requiredClearCount}회 필요`})
                             </span>
