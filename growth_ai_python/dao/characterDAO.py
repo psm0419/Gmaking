@@ -51,27 +51,28 @@ class CharacterDAO:
             return dict(result._mapping)
         return None
 
-    # 🚨 get_image_data_by_step 함수 제거: tb_image에 EVOLUTION_STEP 컬럼이 없으므로 제거.
-    # 🚨 update_character_evolution_data 함수 제거: Java 백엔드로 책임 이관.
-
     def insert_new_growth_record(self, growth_model: GrowthModel) -> bool:
         """
         tb_growth 테이블에 새로운 성장 기록을 삽입합니다.
-        (EVOLUTION_STEP이 없는 버전)
+        UPDATED_BY 필드를 추가하고, 날짜 필드는 NOW()를 사용합니다.
         """
         insert_growth_query = text("""
             INSERT INTO tb_growth (
                 CHARACTER_ID, 
                 INCREMENT_ATTACK, INCREMENT_DEFENSE, INCREMENT_HP, 
                 INCREMENT_SPEED, INCREMENT_CRITICAL,
-                USER_ID, CREATED_BY, CREATED_DATE, UPDATED_DATE
+                USER_ID, CREATED_BY, UPDATED_BY, CREATED_DATE, UPDATED_DATE
             ) VALUES (
                 :character_id, 
                 :inc_attack, :inc_defense, :inc_hp, 
                 :inc_speed, :inc_critical,
-                :user_id, :created_by, NOW(), NOW()
+                :user_id, :created_by, :updated_by, NOW(), NOW()
             )
         """)
+
+        # 💡 GrowthModel의 필드를 기반으로 파라미터 구성
+        # CREATED_BY와 UPDATED_BY가 USER_ID와 동일하다고 가정합니다.
+        user_id = growth_model.USER_ID
 
         params = {
             "character_id": growth_model.CHARACTER_ID,
@@ -80,9 +81,11 @@ class CharacterDAO:
             "inc_hp": growth_model.INCREMENT_HP,
             "inc_speed": growth_model.INCREMENT_SPEED,
             "inc_critical": growth_model.INCREMENT_CRITICAL,
-            "user_id": growth_model.USER_ID,
-            "created_by": growth_model.CREATED_BY,
+            "user_id": user_id,
+            "created_by": user_id, # 💡 USER_ID 사용
+            "updated_by": user_id, # 💡 UPDATED_BY 추가
         }
 
+        # SQL Alchemy는 트랜잭션을 자동으로 관리하므로, execute만 하면 됩니다.
         result = self.db.execute(insert_growth_query, params)
         return result.rowcount == 1
