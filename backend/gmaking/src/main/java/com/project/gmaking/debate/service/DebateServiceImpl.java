@@ -125,16 +125,6 @@ public class DebateServiceImpl implements DebateService {
 
         Map<String, Object> judged = judge(topic, dialogue);
 
-        // 퀘스트 진행 업데이트 (토론 수행 시점)
-        try {
-            String userId = req.getUserId(); // DebateRequestVO 안에 userId 필드가 있다고 가정
-            if (userId != null && !userId.isBlank()) {
-                questService.updateQuestProgress(userId, "DEBATE");
-            }
-        } catch (Exception e) {
-            System.err.println("[DEBATE 퀘스트 업데이트 실패] " + e.getMessage());
-        }
-
         return DebateResultVO.builder()
                 .topic(topic)
                 .dialogue(dialogue)

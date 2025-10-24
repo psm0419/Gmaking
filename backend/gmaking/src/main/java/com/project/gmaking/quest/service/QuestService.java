@@ -1,17 +1,14 @@
 package com.project.gmaking.quest.service;
 
 import com.project.gmaking.quest.vo.UserQuestVO;
-
 import java.util.List;
 
 public interface QuestService {
 
-    void resetDailyQuests();
-    void updateQuestProgress(String userId, String questType);
-    void initializeDailyQuests(String userId);
-    // 보상 수령
-    void rewardQuest(String userId, int questId);
+    void resetDailyQuests(); // 매일 자정 등 스케줄러로 초기화
+    void updateQuestProgress(String userId, String questType); // 퀘스트 진행 + 보상
+    void initializeDailyQuests(String userId); // 로그인 시 초기 생성
 
-    // 유저의 일일 퀘스트 조회용 (Controller에서 사용)
-    List<UserQuestVO> getUserDailyQuests(String userId);
+    void rewardQuest(String userId, int questId); // 수동 보상 수령
+    List<UserQuestVO> getUserDailyQuests(String userId); // 유저별 퀘스트 조회
 }
