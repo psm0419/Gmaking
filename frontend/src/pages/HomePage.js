@@ -50,8 +50,6 @@ const HomePage = () => {
     // 슬라이드 배너 및 이벤트 더미 데이터
     const slideBanner = {
         img: process.env.PUBLIC_URL + "/GmakingMain.png",
-        title: "겜만중 오픈 준비중",
-        description: "더미",
     };
 
     const events = [
@@ -90,19 +88,18 @@ const HomePage = () => {
                         />
                     </div>
                     
-                    {/* 👇 GAME START 버튼 (겹치기 위해 absolute 포지셔닝 적용) */}
                     <div 
                         className="absolute z-10" 
                         style={{ 
                             top: '60%', 
                             left: '50%', 
-                            transform: 'translate(-3.3rem, -35%)'
+                            transform: 'translate(-3rem, -75%)'
                         }} 
                     >
                         <button
                             onClick={handleGameStartClick}
                             className="relative w-28 h-28 rounded-full bg-gradient-to-br from-blue-400 to-red-500 text-gray-900 font-extrabold text-2xl flex items-center justify-center
-                                       shadow-xl shadow-yellow-500/50 hover:shadow-blue-400/70 transform hover:scale-105 transition-all duration-300 ease-in-out
+                                       shadow-[0_0_30px_0_rgba(253,224,71,0.3)] hover:shadow-[0_0_35px_0_rgba(147,197,253,0.3)] transform hover:scale-105 transition-all duration-300 ease-in-out
                                        active:scale-90 active:ring-4 active:ring-yellow-400 active:ring-opacity-75 focus:outline-none overflow-hidden"
                         >
                             <span className="relative z-10 leading-none">
