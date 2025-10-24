@@ -94,25 +94,9 @@ public class GrowthService {
         Long newImageId = currentImageId;
         Integer newStep = aiResponse.getNew_evolution_step() != null ? aiResponse.getNew_evolution_step() : nextStep;
 
-        // ❌ 로컬 파일 시스템 경로 및 이름 결정 로직 제거 (GCS에서 처리)
-        // String fileSystemDir = IMAGE_STORAGE_BASE_PATH + newUserId + "/";
-        // String fileName = newCharacterId + "_step" + newStep + ".png";
-        // File targetDir = new File(fileSystemDir);
-        // if (!targetDir.exists()) targetDir.mkdirs();
-        // File targetFile = new File(targetDir, fileName);
-
         try {
             // 5.2. Base64 디코딩 및 GCS 업로드
             byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-
-            // ❌ 로컬 파일 저장 로직 제거
-            // try (ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes)) {
-            //     BufferedImage bImage = ImageIO.read(bis);
-            //     if (bImage == null) {
-            //         throw new IOException("Failed to read image data from Base64 stream.");
-            //     }
-            //     ImageIO.write(bImage, "png", targetFile);
-            // }
 
             // 💡 [핵심] GCS 서비스 호출하여 이미지 업로드
             ImageUploadResponseVO uploadResult = gcsService.uploadBase64Image(
