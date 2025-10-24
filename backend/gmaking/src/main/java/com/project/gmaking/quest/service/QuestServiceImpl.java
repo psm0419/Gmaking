@@ -60,27 +60,18 @@ public class QuestServiceImpl implements QuestService {
         int updated = questDAO.incrementProgressByType(userId, questType);
         if (updated == 0) return; // 진행할 퀘스트 없음
 
-        // 목표 달성 여부 확인
         QuestVO quest = questDAO.findByType(questType);
         if (quest == null) return;
 
         UserQuestVO userQuest = questDAO.findByUserAndQuest(userId, quest.getQuestId());
         if (userQuest == null) return;
 
-        if (userQuest.getCurrentCount() >= quest.getTargetCount() &&
-                !"REWARDED".equals(userQuest.getStatus())) {
-
-            // 상태 완료 처리
+        // 목표 도달 시 COMPLETED로 변경 (자동 보상 지급 X)
+        if (userQuest.getCurrentCount() >= quest.getTargetCount()
+                && !"COMPLETED".equals(userQuest.getStatus())
+                && !"REWARDED".equals(userQuest.getStatus())) {
             questDAO.updateStatus(userId, quest.getQuestId(), "COMPLETED");
-
-            // 보상 지급
-            giveReward(userId, quest);
-
-            // 지급 완료 표시
-            questDAO.updateStatus(userId, quest.getQuestId(), "REWARDED");
-
-            log.info("[퀘스트 완료 및 보상 지급] userId={}, questType={}, reward={}x{}",
-                    userId, questType, quest.getRewardProductId(), quest.getRewardQuantity());
+            log.info("[퀘스트 완료] userId={}, questType={}, status=COMPLETED", userId, questType);
         }
     }
 
@@ -99,23 +90,23 @@ public class QuestServiceImpl implements QuestService {
     @Transactional
     public void rewardQuest(String userId, int questId) {
         UserQuestVO userQuest = questDAO.findByUserAndQuest(userId, questId);
-        if (userQuest == null) throw new IllegalArgumentException("해당 퀘스트가 존재하지 않습니다.");
+        if (userQuest == null)
+            throw new IllegalArgumentException("해당 퀘스트가 존재하지 않습니다.");
         if (!"COMPLETED".equals(userQuest.getStatus()))
             throw new IllegalStateException("아직 완료되지 않은 퀘스트입니다.");
 
         QuestVO quest = questDAO.findById(questId);
-        if (quest == null) throw new IllegalArgumentException("퀘스트 정의를 찾을 수 없습니다.");
+        if (quest == null)
+            throw new IllegalArgumentException("퀘스트 정의를 찾을 수 없습니다.");
 
         giveReward(userId, quest);
         questDAO.updateStatus(userId, questId, "REWARDED");
 
-        log.info("[수동 보상 지급 완료] userId={}, questId={}, reward={}x{}",
+        log.info("[보상 수령 완료] userId={}, questId={}, reward={}x{}",
                 userId, questId, quest.getRewardProductId(), quest.getRewardQuantity());
     }
 
-    /**
-     * 보상 지급 처리
-     */
+    /** 실제 보상 지급 로직 */
     @Transactional
     private void giveReward(String userId, QuestVO quest) {
         int productId = quest.getRewardProductId();
@@ -125,9 +116,10 @@ public class QuestServiceImpl implements QuestService {
         if (updated == 0) {
             inventoryDAO.insert(userId, productId, qty);
         }
-        // TB_USER.INCUBATOR_COUNT 최신화
+
+        // TB_USER.INCUBATOR_COUNT 동기화
         inventoryDAO.refreshUserIncubatorCache(userId);
 
-        log.info("[보상 지급] userId={}, productId={}, quantity={}", userId, productId, qty);
+        log.info("[보상 지급 완료] userId={}, productId={}, qty={}", userId, productId, qty);
     }
 }
