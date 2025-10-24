@@ -30,7 +30,7 @@ public class GrowthService {
     private final GrowthDAO growthDAO;
     private final RestTemplate restTemplate;
 
-    @Value("${ai.server.url:http://localhost:8000/api/v1/grow-character}")
+    @Value("${ai.server.url:http://localhost:8001/api/v1/grow-character}")
     private String aiServerUrl;
 
     private final String IMAGE_STORAGE_BASE_PATH = "/data/images/character/";
@@ -47,14 +47,18 @@ public class GrowthService {
         if (currentStep == null) {
             throw new RuntimeException("Character not found for ID: " + characterId);
         }
-        int nextStep = currentStep + 1;
+        int nextStep = currentStep + 1; // 다음 단계 계산 (DB 업데이트에 필요)
 
         // 2. 다음 단계에 해당하는 프롬프트 키(targetModification) 결정
-        String targetModificationKey = determineNextEvolutionKey(nextStep);
+        // 💡 [수정 3] determineEvolutionKeyForCurrentStep으로 메서드 이름 변경 및 currentStep 전달
+        String targetModificationKey = determineEvolutionKeyForCurrentStep(currentStep);
 
         // 3. AI 서버 요청 파라미터 구성 (VO에 값 설정)
+        // 💡 [수정] target_modification을 Java에서 결정한 키로 덮어씁니다.
         requestVO.setTarget_modification(targetModificationKey);
-        requestVO.setEvolution_step(nextStep);
+
+        // 💡 [CRITICAL FIX] Python 서버는 이 필드를 현재 단계(currentStep)로 기대합니다.
+        requestVO.setEvolution_step(currentStep); // 현재 단계로 설정
 
         // 4. AI 서버 통신
         ResponseEntity<GrowthResponseVO> aiResponseEntity;
@@ -64,6 +68,7 @@ public class GrowthService {
 
             HttpEntity<GrowthRequestVO> entity = new HttpEntity<>(requestVO, headers);
 
+            // 💡 aiServerUrl은 이제 올바른 Docker 호스트명을 포함하거나, 설정 파일에서 오버라이드될 것임.
             aiResponseEntity = restTemplate.exchange(
                     aiServerUrl,
                     HttpMethod.POST,
@@ -73,6 +78,10 @@ public class GrowthService {
 
         } catch (Exception e) {
             System.err.println("AI 서버 통신 실패: " + e.getMessage());
+            // 🚨 404가 발생한 경우, Python 서버가 정상 응답했으므로 오류 메시지를 명확히 분리하여 디버깅 용이하게 함
+            if (e.getMessage().contains("404")) {
+                System.err.println("경고: AI 서버 URL 또는 Python 라우팅 경로가 잘못되었습니다. 요청 URL: " + aiServerUrl);
+            }
             throw new RuntimeException("AI server request failed: " + e.getMessage(), e);
         }
 
@@ -167,21 +176,22 @@ public class GrowthService {
     /**
      * 성장 단계에 따라 AI 서버에 전달할 키(targetModification)를 결정합니다.
      * 이 키는 파이썬 서버가 단계별 프롬프트와 배경 로직을 실행하는 데 사용됩니다.
-     * @param step 다음 진화 단계 번호
+     * 💡 [수정 2] nextStep이 아닌 currentStep을 인자로 받도록 수정합니다.
+     * @param currentStep 현재 진화 단계 번호
      */
-    private String determineNextEvolutionKey(int step) {
-        // 파이썬 서버와 약속된 키를 사용해야 합니다.
-        switch (step) {
-            case 1:
-                return "EVO_KEY_INITIAL";
-            case 2:
+    private String determineEvolutionKeyForCurrentStep(int currentStep) {
+        switch (currentStep) {
+            case 1: // 현재 Egg -> 다음 Baby로 갈 때
                 return "EVO_KEY_EGG";
-            case 3:
+            case 2: // 현재 Baby -> 다음 Teen으로 갈 때
                 return "EVO_KEY_BABY";
-            case 4:
+            case 3: // 현재 Teen -> 다음 Adult로 갈 때
                 return "EVO_KEY_TEEN";
-            default:
+            case 4: // 현재 Adult -> 다음 Final(MAX)로 갈 때
                 return "EVO_KEY_FINAL";
+            default:
+                // 예상치 못한 단계는 오류 방지를 위해 유효하지 않은 키를 반환하여 Python 서버에서 걸러지게 합니다.
+                return "EVO_KEY_INVALID";
         }
     }
 }
