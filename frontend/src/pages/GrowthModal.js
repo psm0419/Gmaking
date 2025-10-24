@@ -3,35 +3,71 @@ import { createPortal } from 'react-dom';
 
 /**
  * 캐릭터 성장 확인 및 상태를 보여주는 모달 컴포넌트
- * @param {{open: boolean, characterName: string, incubatorCount: number, isGrowing: boolean, onConfirm: () => void, onClose: () => void}} props
+ * @param {{
+ *   open: boolean, 
+ *   characterName: string, 
+ *   incubatorCount: number, // 🚨 부화권 로직은 유지하되, 주 로직은 아님
+ *   isGrowing: boolean,
+ *   currentGradeLabel: string, // ✅ 현재 등급 레이블 (예: R)
+ *   nextGradeLabel: string, // ✅ '다음 등급' 대신 '다음 단계'의 레이블
+ *   requiredClearCount: number, // ✅ 요구 클리어 횟수 (예: 20)
+ *   currentClearCount: number, // ✅ 현재 클리어 횟수 (예: 15)
+ *   onConfirm: () => void, 
+ *   onClose: () => void
+ * }} props
  */
 export default function GrowthModal({
     open,
     characterName,
-    incubatorCount,
+    incubatorCount, 
     isGrowing,
+    currentGradeLabel,
+    nextGradeLabel,
+    requiredClearCount,
+    currentClearCount,
     onConfirm,
     onClose,
 }) {
     if (!open) return null;
 
-    const disabled = isGrowing || incubatorCount <= 0;
+    const disabled = isGrowing; 
+    
+    // 성장 조건 충족 여부를 여기서 한번 더 확인 (UI 표시를 위함)
+    const isConditionMet = currentClearCount >= requiredClearCount;
+    const isMaxGrade = nextGradeLabel === "최대 단계";
 
     const renderContent = () => {
-        if (isGrowing) {
+       if (isGrowing) {
             return (
-                <div className="text-center p-6">
-                    <svg className="animate-spin h-8 w-8 text-[#FFC700] mx-auto mb-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p className="text-white text-lg font-semibold">
-                        {characterName} 성장 작업 요청 중...
+                <div className="flex flex-col items-center justify-center p-8 min-h-[250px]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FFC700] border-t-transparent mb-6"></div>
+                    <h3 className="text-2xl font-bold text-white mb-2">캐릭터 진화 중...</h3>
+                    <p className="text-gray-400 text-center whitespace-nowrap">
+                        AI가 새로운 외형을 디자인하고 있습니다.
+                        <br />
+                        **잠시만 기다려 주세요**
                     </p>
-                    <p className="text-gray-400 text-sm mt-1">
-                        잠시만 기다려 주세요. (백엔드 작업 중)
-                    </p>
+                    {/* 로딩 중에는 모달을 닫을 수 없게 합니다 (UI만) */}
                 </div>
+            );
+        }
+
+        if (isMaxGrade) {
+            return (
+                <>
+                    <h3 className="text-xl font-bold text-white mb-4">성장 불가</h3>
+                    <p className="text-gray-300 mb-6">
+                        <span className="font-semibold text-[#FFC700]">{characterName}</span>을(를) **다음 단계**로 성장시키시겠습니까?
+                    </p>
+                    <div className="flex justify-end">
+                         <button
+                            onClick={onClose}
+                            className="px-5 py-2 rounded-lg text-white bg-gray-600 hover:bg-gray-500 transition"
+                        >
+                            닫기
+                        </button>
+                    </div>
+                </>
             );
         }
 
@@ -39,13 +75,20 @@ export default function GrowthModal({
             <>
                 <h3 className="text-xl font-bold text-white mb-4">캐릭터 성장 확인</h3>
                 <p className="text-gray-300 mb-6">
-                    <span className="font-semibold text-[#FFC700]">{characterName}</span>을(를) 다음 단계로 성장시키시겠습니까?
-                    이 작업은 부화권 <span className="font-bold text-red-400">1개</span>를 소모합니다.
+                    <span className="font-semibold text-[#FFC700]">{characterName}</span>을(를) 성장시키시겠습니까?
+                    <br/>성장에 성공하면 스탯이 추가됩니다.
                 </p>
-
-                <div className="flex justify-between items-center bg-gray-700 p-3 rounded-lg mb-6">
-                    <span className="text-gray-300 font-medium">현재 보유 부화권:</span>
-                    <span className="text-2xl font-extrabold text-[#FFC700]">{incubatorCount} 🎟️</span>
+                
+                {/* 성장 조건 표시 (부화권 대신 클리어 횟수를 강조) */}
+               <div className={`p-4 rounded-lg mb-6 ${isConditionMet ? 'bg-green-900/50 border border-green-600' : 'bg-red-900/50 border border-red-600'}`}>
+                    <span className="text-base font-semibold block mb-2 text-white/90">필수 성장 조건</span>
+                    
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-300 font-medium">성장 요구 횟수:</span>
+                        <span className={`text-xl font-extrabold ${isConditionMet ? 'text-green-400' : 'text-red-400'}`}>
+                            {currentClearCount} / {requiredClearCount}회
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex justify-end space-x-3">
@@ -56,16 +99,16 @@ export default function GrowthModal({
                     >
                         취소
                     </button>
-                    <button
+                   <button
                         onClick={onConfirm}
-                        disabled={disabled}
+                        disabled={disabled || !isConditionMet || incubatorCount <= 0}
                         className={`px-5 py-2 rounded-lg font-bold transition
-                            ${disabled 
+                            ${(disabled || !isConditionMet || incubatorCount <= 0) 
                                 ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
                                 : 'bg-[#FF8C00] text-white hover:bg-[#E07B00]'
                             }`}
                     >
-                        {incubatorCount <= 0 ? "부화권 부족" : "성장 시작"}
+                        {isConditionMet && incubatorCount > 0 ? "성장 시작" : "조건 미충족"}
                     </button>
                 </div>
             </>

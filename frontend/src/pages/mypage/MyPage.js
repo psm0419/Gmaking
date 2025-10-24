@@ -31,6 +31,16 @@ function getGradeLabel(gradeId) {
     default: return "-";
   }
 }
+
+// 등급별 성장 조건 정의
+const GROWTH_CONDITIONS = {
+  // 현재 등급 ID: { 다음 등급 ID, 요구 클리어 횟수 }
+    1: { nextGradeId: 2, requiredClearCount: 10 }, 
+    2: { nextGradeId: 3, requiredClearCount: 20 }, 
+    3: { nextGradeId: 4, requiredClearCount: 30 }, 
+    4: { nextGradeId: 5, requiredClearCount: 50 }, 
+};
+
 /* ──────────────────────────────────────────────────────────────── */
 /* 페이지 스켈레톤                                                   */
 /* ──────────────────────────────────────────────────────────────── */
@@ -139,6 +149,7 @@ function MyMain() {
             speed: stat?.speed ?? null,
             criticalRate: stat?.criticalRate ?? null,
             characterStatVO: stat,
+            stageClearCount: c.stageClearCount ?? 0,
           };
         });
         setCharacters(cards);
@@ -239,6 +250,29 @@ function MyMain() {
   const handleConfirmGrowth = async () => {
     if (!selected?.id || isGrowing || incubatorCount <= 0) return;
 
+    const currentGradeId = selected.grade;
+    const condition = GROWTH_CONDITIONS[currentGradeId];
+
+    // 1. 성장 가능 여부 확인 (최대 등급 체크)
+        if (!condition) {
+            alert(`[${selected.gradeLabel}]은(는) 더 이상 성장할 수 없는 최대 성장 단계입니다.`);
+            setIsGrowthModalOpen(false);
+            return;
+        }
+
+        const currentClearCount = selected.stageClearCount ?? 0;
+        
+        // 2. 스테이지 클리어 횟수 조건 확인
+        if (currentClearCount < condition.requiredClearCount) {
+            alert(
+                `캐릭터 성장에 실패했습니다. (${selected.name})\n` +
+                `다음 단계로 성장하려면, ` +
+            `스테이지를 최소 ${condition.requiredClearCount}회 클리어해야 합니다. (현재: ${currentClearCount}회)`
+            );
+            setIsGrowthModalOpen(false);
+            return;
+        }
+    
     setIsGrowing(true); // 로딩 시작
     try {
         const headers = {
@@ -246,15 +280,22 @@ function MyMain() {
             "Content-Type": "application/json",
         };
 
-        // TODO: 실제 백엔드 API 호출로 대체해야 합니다!
-        console.log(`[API Call Mock] Submitting growth job for character ${selected.id}...`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기 Mock
+        const requestBody = {
+          character_id: selected.id,
+          user_id: userId,
+          targetModification: "AUTO_EVOLVE",
+        };
 
-        alert(`${selected.name}의 성장 작업이 시작되었습니다! (백엔드 연결 필요)`);
+        await axios.post(
+                "/growth/character", 
+                requestBody,
+                { headers }
+            );
+
+        alert(`${selected.name}의 성장 작업이 시작되었습니다!`);
         
         // 성공 후 상태 정리
         setIsGrowthModalOpen(false);
-        // TODO: 마이페이지 데이터 및 부화권 개수 새로고침 로직 필요 (예: fetchSummaryData())
 
     } catch (e) {
         alert(e?.response?.data?.message || "캐릭터 성장에 실패했습니다.");
@@ -262,6 +303,8 @@ function MyMain() {
         setIsGrowing(false); // 로딩 종료
     }
 };
+
+  const selectedCharacterCondition = GROWTH_CONDITIONS[selected?.grade];
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 py-8">
@@ -310,11 +353,11 @@ function MyMain() {
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between rounded-lg bg-gray-700/70 p-4 shadow-inner border border-gray-700">
+                 <div className="flex items-center justify-between rounded-lg bg-gray-700/70 p-4 shadow-inner border border-gray-700">
                     <span className="text-base font-semibold text-white/90">보유 부화권</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-extrabold text-[#FFC700] drop-shadow-md">{incubatorCount}</span>
-                      <span role="img" aria-label="ticket" className="text-xl">🎟️</span>
+                        <span className="text-2xl font-extrabold text-[#FFC700] drop-shadow-md">{incubatorCount}</span>
+                        <span role="img" aria-label="ticket" className="text-xl">🎟️</span>
                     </div>
                   </div>
 
@@ -383,6 +426,10 @@ function MyMain() {
                 setIsGrowthModalOpen(false);
             }
         }}
+        currentGradeLabel={selected?.gradeLabel || "-"}
+        nextGradeLabel={selectedCharacterCondition ? getGradeLabel(selectedCharacterCondition.nextGradeId) : "최대 단계"} // 🚨 문구 수정
+        requiredClearCount={selectedCharacterCondition ? selectedCharacterCondition.requiredClearCount : 0}
+        currentClearCount={selected?.stageClearCount ?? 0}
       />
     </div>
   );
@@ -402,6 +449,12 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
   const _statsLoading = false;
   const _statsError = null;
   const fmt = (v) => (v == null ? "-" : `${v}`);
+  const clearCount = character?.stageClearCount ?? 0;
+
+  // 다음 성장 조건을 표시하기 위해 조건 가져오기
+  const condition = GROWTH_CONDITIONS[grade];
+  const nextGradeLabel = condition ? getGradeLabel(condition.nextGradeId) : "최대 단계"; 
+  const requiredClearCount = condition ? condition.requiredClearCount : "-";
 
   return (
     <section className="rounded-2xl border border-[#FFC700]/50 bg-gray-800 p-6 shadow-xl">
@@ -421,6 +474,36 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
         <StatCard label="공격력" value={fmt(atk)} />
         <StatCard label="속도" value={fmt(speed)} />
       </div>
+
+      {/* 클리어 횟수 및 다음 성장 조건 표시 추가 */}
+      <div className="mt-4 space-y-3">
+          <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
+              <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      스테이지 클리어 횟수
+                  </span>
+                  <span className="text-xl md:text-2xl font-extrabold text-white">
+                      {clearCount}회
+                  </span>
+              </div>
+          </div>
+
+          <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
+                <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        다음 성장 조건
+                    </span>
+                    <div className="text-right">
+                        <span className="text-lg font-bold text-[#FFC700] block">
+                            다음 단계
+                        </span>
+                        <span className="text-sm font-medium text-white/70 block">
+                            (클리어 {requiredClearCount}회 필요)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
       <div className="mt-3 rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
         <div className="flex items-center justify-between">

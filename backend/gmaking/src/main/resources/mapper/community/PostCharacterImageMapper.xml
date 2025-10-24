@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.project.gmaking.community.dao.PostCharacterImageDAO">
-    <select id="selectUserCharacterImage" resultType="com.project.gmaking.community.vo.PostCharacterImageVO">
+
+    <select id="selectUserCharacterImage"
+            parameterType="String"
+            resultType="com.project.gmaking.community.vo.PostCharacterImageVO">
+
         SELECT
-        tu.USER_NICKNAME AS userNickname,
-        ti.IMAGE_URL AS characterImageUrl
+        T1.user_nickname AS userNickname,
+        T3.image_url AS characterImageUrl,  T2.grade_id AS gradeId,
+        T2.total_stage_clears AS totalStageClears
         FROM
-        TB_USER tu
-        LEFT JOIN
-        TB_CHARACTER tc ON tu.CHARACTER_ID = tc.CHARACTER_ID
-        LEFT JOIN
-        TB_IMAGE ti ON tc.IMAGE_ID = ti.IMAGE_ID
+        TB_USER T1
+        INNER JOIN
+        TB_CHARACTER T2
+        ON T1.user_id = T2.user_id
+        INNER JOIN
+        TB_IMAGE T3   ON T2.image_id = T3.image_id
         WHERE
-        tu.USER_ID = #{userId}
+        T1.user_id = #{userId}
+
     </select>
+
 </mapper>

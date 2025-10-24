@@ -16,5 +16,7 @@ public class CharacterCardVO {
     private String imageUrl;
     private String grade;
 
+    private Integer stageClearCount;
+
     private MypageCharacterStatVO characterStatVO;
 }

@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../../components/Header'; 
-import Footer from '../../components/Footer';
+import Header from '../components/Header'; 
+import Footer from '../components/Footer';
 import { ThumbsUp, Eye, Tag, MessageSquare, Edit3, Trash2, XCircle, Loader2, Send, Clock, Trophy, ShieldAlert, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext'; 
 
 const API_BASE_URL = 'http://localhost:8080/community';
 

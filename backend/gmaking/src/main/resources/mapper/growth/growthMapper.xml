@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.gmaking.growth.dao.GrowthDAO">
+
+    <select id="findUserIdByCharacterId" parameterType="Long" resultType="String">
+        SELECT
+        USER_ID
+        FROM
+        tb_character
+        WHERE
+        CHARACTER_ID = #{characterId}
+    </select>
+
+    <select id="findCharacterEvolutionStep" parameterType="Long" resultType="Integer">
+        SELECT
+        EVOLUTION_STEP
+        FROM
+        tb_character
+        WHERE
+        CHARACTER_ID = #{characterId}
+    </select>
+
+    <select id="findCurrentImageId" parameterType="Long" resultType="Long">
+        SELECT
+        IMAGE_ID
+        FROM
+        tb_character
+        WHERE
+        CHARACTER_ID = #{characterId}
+    </select>
+
+    <update id="updateImageRecord">
+        UPDATE tb_image
+        SET
+        IMAGE_URL = #{image.imageUrl},
+        IMAGE_ORIGINAL_NAME = #{image.image_original_name},
+        IMAGE_NAME = 'character_evo_img',
+        IMAGE_TYPE = 1,
+        UPDATED_BY = #{userId},
+        UPDATED_DATE = NOW()
+        WHERE
+        IMAGE_ID = #{imageId}
+    </update>
+
+    <update id="updateCharacterEvolution">
+        UPDATE tb_character
+        SET
+        EVOLUTION_STEP = #{newStep},
+        IMAGE_ID = #{newImageId},
+        UPDATED_DATE = NOW()
+        WHERE
+        CHARACTER_ID = #{characterId}
+        AND USER_ID = #{userId}
+    </update>
+</mapper>
