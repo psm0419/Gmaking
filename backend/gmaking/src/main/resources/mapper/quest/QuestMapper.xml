@@ -49,8 +49,8 @@
         ELSE uq.COMPLETED_AT
         END
         WHERE uq.USER_ID = #{userId}
-        AND q.QUEST_TYPE = #{questType}
-        AND uq.STATUS = 'IN_PROGRESS';
+        AND UPPER(q.QUEST_TYPE) = UPPER(#{questType})
+        AND uq.STATUS = 'IN_PROGRESS'
     </update>
 
 
@@ -72,7 +72,7 @@
         LAST_RESET_DATE = #{today}
         WHERE
         STATUS IN ('COMPLETED', 'REWARDED', 'IN_PROGRESS')
-        AND (LAST_RESET_DATE IS NULL OR LAST_RESET_DATE &lt; #{today});
+        AND (LAST_RESET_DATE IS NULL OR LAST_RESET_DATE &lt; #{today})
     </update>
 
     <!-- 8. 유저별 일일 퀘스트 목록 조회 -->
