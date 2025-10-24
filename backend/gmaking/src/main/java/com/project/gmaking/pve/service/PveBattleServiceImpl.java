@@ -355,7 +355,14 @@ public class PveBattleServiceImpl implements PveBattleService {
 
             if (isWin) characterDAO.incrementStageClear(character.getCharacterId());
 
-            questService.updateQuestProgress(userId, "PVE");
+            if (isWin) {
+                String monsterName = monster.getMonsterName();
+                if (monsterName.contains("고블린") || monsterName.contains("늑대") || monsterName.contains("슬라임")) {
+                    questService.updateQuestProgress(userId, "PVE");
+                }
+                questService.updateQuestProgress(userId, "PVE_TOTAL");
+            }
+
 
         } catch (Exception e) {
             try {

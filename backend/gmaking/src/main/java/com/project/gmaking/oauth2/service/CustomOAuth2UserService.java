@@ -5,11 +5,13 @@ import com.project.gmaking.login.vo.LoginVO;
 import com.project.gmaking.oauth2.userinfo.OAuth2UserInfo;
 import com.project.gmaking.oauth2.userinfo.OAuth2UserInfoFactory;
 import com.project.gmaking.oauth2.vo.OAuth2Attributes;
+import com.project.gmaking.quest.service.QuestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -25,6 +27,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final LoginDAO loginDAO;
     private final PasswordEncoder passwordEncoder;
+    private final QuestService questService;
 
     /**
      * 소셜 로그인 후 사용자 정보를 가져와 처리
@@ -76,6 +79,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             // OAuth2UserInfo를 기반으로 DB 처리
             LoginVO user = saveOrUpdate(userInfo, socialId);
+
+            // 소셜 로그인 성공 시 일일 퀘스트 자동 부여
+            questService.initializeDailyQuests(user.getUserId());
 
             if (user == null) {
                 log.error(">>> [OAuth2 FATAL] saveOrUpdate completed, but returned null unexpectedly for {}", socialId);

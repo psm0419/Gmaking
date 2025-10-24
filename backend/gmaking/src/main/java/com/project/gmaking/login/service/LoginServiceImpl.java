@@ -8,6 +8,7 @@ import com.project.gmaking.login.service.LoginService;
 import com.project.gmaking.login.vo.LoginRequestVO;
 import com.project.gmaking.login.vo.LoginVO;
 import com.project.gmaking.login.vo.RegisterRequestVO;
+import com.project.gmaking.quest.service.QuestService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ public class LoginServiceImpl implements LoginService {
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService verificationService;
     private final EmailVerificationDAO verificationDAO;
+    private final QuestService questService;
 
     @Override
     public LoginVO authenticate(LoginRequestVO requestVO) {
@@ -43,6 +45,9 @@ public class LoginServiceImpl implements LoginService {
             if (!"Y".equals(user.getIsEmailVerified())) {
                 throw new IllegalArgumentException("이메일 인증이 완료되지 않은 사용자입니다.");
             }
+
+            // 로그인 성공 시 일일 퀘스트 자동 부여
+            questService.initializeDailyQuests(user.getUserId());
 
             // 로그인 성공, 보안을 위해 비밀번호 필드는 제거하고 반환
             user.setUserPassword(null);

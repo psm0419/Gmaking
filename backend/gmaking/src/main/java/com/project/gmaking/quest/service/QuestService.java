@@ -4,4 +4,5 @@ public interface QuestService {
 
     void resetDailyQuests();
     void updateQuestProgress(String userId, String questType);
+    void initializeDailyQuests(String userId);
 }

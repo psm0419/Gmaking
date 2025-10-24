@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -19,41 +19,62 @@ public class QuestServiceImpl implements QuestService {
     private final QuestDAO questDAO;
     private final InventoryDAO inventoryDAO;
 
+    /** 로그인 시 초기 퀘스트 생성 */
+    @Override
+    public void initializeDailyQuests(String userId) {
+        List<QuestVO> allQuests = questDAO.findAllDailyQuests();
+        for (QuestVO quest : allQuests) {
+            UserQuestVO existing = questDAO.findByUserAndQuest(userId, quest.getQuestId());
+            if (existing == null) {
+                UserQuestVO newQuest = new UserQuestVO();
+                newQuest.setUserId(userId);
+                newQuest.setQuestId(quest.getQuestId());
+                newQuest.setCurrentCount(0);
+                newQuest.setStatus("IN_PROGRESS");
+                questDAO.insertUserQuest(newQuest);
+                log.info(">>> [퀘스트 생성] {} - {}", userId, quest.getQuestType());
+            }
+        }
+    }
+
+    /** 자정 리셋 */
     @Override
     public void resetDailyQuests() {
         int updated = questDAO.resetDailyQuests(LocalDate.now());
         log.info("일일 퀘스트 {}건 초기화 완료", updated);
     }
 
+    /** 진행도 업데이트 */
     @Override
     public void updateQuestProgress(String userId, String questType) {
+        log.info("[퀘스트 진행 업데이트 호출] userId={}, questType={}", userId, questType);
+
+        int updated = questDAO.incrementProgressByType(userId, questType);
+        log.info("[퀘스트 업데이트 결과] {}, updated={}", questType, updated);
+
+        // ✅ PVE 수행 시에는 PVE_TOTAL도 같이 올려줌
+        if ("PVE".equals(questType)) {
+            int totalUpdated = questDAO.incrementProgressByType(userId, "PVE_TOTAL");
+            log.info("[누적 PVE_TOTAL 업데이트] updated={}", totalUpdated);
+        }
+
+        // 보상 지급 로직 유지
         QuestVO quest = questDAO.findByType(questType);
         if (quest == null) return;
 
-        UserQuestVO userQuest = questDAO.findByUserAndQuest(userId, quest.getQuestId());
-        if (userQuest == null) {
-            userQuest = new UserQuestVO();
-            userQuest.setUserId(userId);
-            userQuest.setQuestId(quest.getQuestId());
-            userQuest.setCurrentCount(0);
-            userQuest.setStatus("IN_PROGRESS");
-            questDAO.insertUserQuest(userQuest);
-        }
-
-        int newCount = userQuest.getCurrentCount() + 1;
-        userQuest.setCurrentCount(newCount);
-
-        if (newCount >= quest.getTargetCount() && !"COMPLETED".equals(userQuest.getStatus())) {
-            userQuest.setStatus("COMPLETED");
-            userQuest.setCompletedAt(LocalDateTime.now());
-            giveReward(userId, quest);
-            questDAO.updateStatus(userId, quest.getQuestId(), "REWARDED");
-            log.info("퀘스트 [{}] 완료 - 유저ID: {}, 보상 지급 완료", quest.getQuestName(), userId);
-        } else {
-            questDAO.updateProgress(userQuest);
-        }
+        List<UserQuestVO> userQuests = questDAO.findUserDailyQuests(userId);
+        userQuests.stream()
+                .filter(uq -> uq.getQuestId() == quest.getQuestId())
+                .filter(uq -> "COMPLETED".equals(uq.getStatus()))
+                .findFirst()
+                .ifPresent(uq -> {
+                    giveReward(userId, quest);
+                    questDAO.updateStatus(userId, quest.getQuestId(), "REWARDED");
+                    log.info(">>> [퀘스트 완료] {} - 보상 지급 완료", quest.getQuestType());
+                });
     }
 
+    /** 보상 지급 */
     private void giveReward(String userId, QuestVO quest) {
         int productId = quest.getRewardProductId();
         int rewardQty = quest.getRewardQuantity();
