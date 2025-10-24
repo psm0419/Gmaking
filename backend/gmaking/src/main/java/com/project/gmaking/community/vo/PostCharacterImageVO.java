@@ -10,4 +10,6 @@ import lombok.NoArgsConstructor;
 public class PostCharacterImageVO {
     private String userNickname;
     private String characterImageUrl;
+    private Integer gradeId;
+    private Integer totalStageClears;
 }

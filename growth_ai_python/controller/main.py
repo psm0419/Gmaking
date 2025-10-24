@@ -1,72 +1,55 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import Generator
+from typing import Optional
 
-from ..dao.db_context import get_db_session_local
-from ..vo.growthVO import GrowthRequestVO, GrowthResultResponseVO
-from ..service.growthService import GrowthService
+from dao.db_context import get_db_session_local
 
-# FastAPI 애플리케이션 초기화
-app = FastAPI(title="Character Growth API", version="1.0.0")
+from service.growthService import GrowthService
+from vo.growthVO import AiServerResponseVO, GrowthRequestVO # GrowthRequestVO 임포트 유지
 
-# Dependency: 데이터베이스 세션 가져오기
-def get_db() -> Generator[Session, None, None]:
-    """DB 세션을 생성하고 요청 완료 후 닫습니다."""
-    db = get_db_session_local()
-    try:
-        yield db
-    finally:
-        db.close()
+app = FastAPI()
 
-# POST /api/growth 엔드포인트 (Controller 역할 수행)
-@app.post(
-    "/api/growth",
-    response_model=GrowthResultResponseVO,
-    status_code=status.HTTP_200_OK,
-    summary="캐릭터 성장 처리",
-    description="클리어 횟수 조건을 충족하면 캐릭터를 다음 단계로 진화시키고 스탯을 부여합니다. (비용 없음)"
+# ⚠️ CORS 설정 (필수)
+origins = ["http://localhost:3000", "http://localhost:8080"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-async def evolve_character_endpoint(
-        request: GrowthRequestVO,
-        db: Session = Depends(get_db)
+
+@app.get("/")
+def read_root():
+    return {"message": "AI Image and Growth Server is running"}
+
+@app.post("/api/v1/grow-character", response_model=AiServerResponseVO)
+async def grow_character_endpoint(
+        request_vo: GrowthRequestVO, # 💡 수정: Form 대신 JSON Body (Pydantic Model)로 받음
+        db: Session = Depends(get_db_session_local)
 ):
     """
-    요청된 캐릭터 ID와 사용자 ID를 사용하여 성장을 시도하고,
-    성공하면 업데이트된 스탯과 진화 단계를 반환합니다.
+    Java 백엔드로부터 요청(JSON Body)을 받아 성장 로직을 실행하고,
+    AI 이미지(Base64)와 스탯 계산 결과를 반환합니다.
     """
-    growth_service = GrowthService(db)
+    try:
+        # 1. request_vo가 이미 Pydantic 모델로 유효성 검사를 통과했으므로 그대로 사용
 
-    # Service 계층 호출
-    result_vo, message = growth_service.evolve_character(request)
+        # 2. 서비스 계층 호출
+        service = GrowthService(db=db)
+        # 💡 수정: request_vo를 바로 전달
+        result_dict, error_message = service.evolve_character(request_vo)
 
-    if result_vo:
-        return result_vo
-    else:
-        # 실패 메시지에 따라 HTTP 예외 반환 (Controller의 응답 처리)
-        if "Character not found" in message:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=message
-            )
-        elif "max evolution" in message:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=message
-            )
-        elif "Insufficient stage clear" in message:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, # 조건 불충분 (클리어 횟수 부족)
-                detail=message
-            )
-        else:
-            # 기타 내부 서버 오류
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=message
-            )
+        if result_dict is None:
+            raise HTTPException(status_code=400, detail=error_message)
 
-# Health Check Endpoint
-@app.get("/")
-def health_check():
-    """API 서버 상태 확인용 엔드포인트"""
-    return {"status": "ok", "message": "Character Growth API is running."}
+        # 3. 응답 구성
+        return AiServerResponseVO(**result_dict)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # DB 트랜잭션 오류나 예상치 못한 서버 오류 처리
+        print(f"Controller Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Server side processing failed: {str(e)}")

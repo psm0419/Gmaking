@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.community.dao.PostReportDAO">
+
+    <insert id="insertReport" parameterType="com.project.gmaking.community.vo.PostReportVO" useGeneratedKeys="true" keyProperty="reportId">
+        INSERT INTO tb_report (
+        target_type,
+        target_id,
+        reporter_id,  reason_code,
+        reason_detail,
+        status,
+        created_by,
+        created_date
+        ) VALUES (
+        #{targetType},
+        #{targetId},
+        #{reporterId},  #{reasonCode},
+        #{reasonDetail},
+        #{status},
+        #{createdBy},
+        NOW()
+        )
+    </insert>
+
+    <select id="checkDuplicateReport" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_report
+        WHERE target_id = #{targetId}
+        AND target_type = #{targetType}
+        AND reporter_id = #{reporterId}
+        AND status = 'PENDING'
+    </select>
+
+</mapper>
