@@ -259,7 +259,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-200/70 flex flex-col font-sans">
+    <div className="min-h-screen w-full bg-gray-200/70 flex flex-col">
       <Header />
 
       <div className="flex-1 flex items-center justify-center">

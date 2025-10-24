@@ -188,7 +188,7 @@ export default function ChatEntryPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-200/70 flex flex-col font-sans">
+    <div className="min-h-screen w-full bg-gray-200/70 flex flex-col">
       <Header />
 
       <main className="flex-1 flex items-center justify-center">
