@@ -55,8 +55,9 @@ export default forwardRef(function CharacterAssistant(
     onGoToPVE,
     onGoToPVP,
     onGoToDebate,
-    onGoToMinigame, // ★ 추가
+    onGoToMinigame,
     onGoToChat,
+    onGoToQuests,
   },
   ref
 ) {
@@ -275,7 +276,9 @@ export default forwardRef(function CharacterAssistant(
 사실 우리 사이트에서도 챗지피티를 이용해 많은 것을 하고 있어. 우리 겜만중에서는 직접 학습한 AI 모델부터 시중에 존재하는 AI를 활용해서 캐릭터를 생성하고, 성장시키고, 게임을 하고, 대화를 할 수 있어. 여러 컨텐츠를 즐기면서 다재다능한 AI가 어떤 식으로 활용되는지 봐줘.
 우리 사이트에서 AI가 쓰인 컨텐츠에대해 좀 더 자세히 알고 싶어?`;
       case "오늘의 퀘스트":
-        return "오늘의 퀘스트는 PVE 게임 3회 클리어하기야. 하러 가볼래?";
+        return `오늘의 퀘스트 목록이야!
+        ▶ 토론배틀: 1회 수행\n\n▶ 미니게임: 1회 수행\n\n▶ PVE: 3회 승리\n\n▶ PVP: 3회 수행
+        진행 사항을 보고 싶으면 아래의 버튼을 눌러줘`;
       case "이 페이지에 대해 알려줄래?":
         // 외부에서 setPageCta 해줄 수도 있으니 그대로 노출
         return pageGuide?.text || "이 페이지에 대한 안내를 보여줄게!";
@@ -293,6 +296,12 @@ export default forwardRef(function CharacterAssistant(
     setCtaForAi(opt === "AI가 뭐야?");
     if (opt === "이 페이지에 대해 알려줄래?") {
       setPageCta(pageGuide?.cta || null);
+    } else if (opt === "오늘의 퀘스트") {
+      setPageCta({
+        action: "go",
+        key: "quests",
+        label: "퀘스트 보러가기",
+      });
     } else {
       setPageCta(null);
     }
@@ -432,8 +441,8 @@ export default forwardRef(function CharacterAssistant(
 
 
   function handleGo(key) {
-    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame };
-    const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate", minigame: "/minigames" };
+    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame, quests: onGoToQuests, };
+    const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate", minigame: "/minigames", quests: "/quest", };
     const fn = handlers[key];
     if (typeof fn === "function") return fn();
     window.location.href = fallbacks[key] || "/";
@@ -679,6 +688,7 @@ export default forwardRef(function CharacterAssistant(
               debate: onGoToDebate,
               minigame: onGoToMinigame,
               chat: onGoToChat,
+              quests: onGoToQuests,
             };
             if (typeof map[key] === "function") return map[key]();
             const fallback = {
@@ -687,6 +697,7 @@ export default forwardRef(function CharacterAssistant(
               debate: "/debate",
               minigame: "/minigames",
               chat: "/chat-entry",
+              quests: "/quest",
             }[key] || "/";
             window.location.href = fallback;
           }}

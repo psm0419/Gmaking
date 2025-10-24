@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { notificationsApi } from "../../api/notificationApi";
+import { Egg } from "lucide-react";
 
 // 분리된 웹알림 컴포넌트 + 분리된 PVP 결과 모달
 import NotificationBell from "../../components/notifications/NotificationBell";
@@ -53,7 +54,7 @@ const GROWTH_CONDITIONS = {
 };
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 페이지 스켈레톤                                                   */
+/* 페이지 스켈레톤
 /* ──────────────────────────────────────────────────────────────── */
 export default function MyPage() {
 
@@ -79,7 +80,7 @@ export default function MyPage() {
 }
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 메인                                                             */
+/* 메인
 /* ──────────────────────────────────────────────────────────────── */
 function MyMain() {
     const navigate = useNavigate();
@@ -492,9 +493,10 @@ function MyMain() {
 }
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 캐릭터 상세 패널                                                  */
+/* 캐릭터 상세 패널
 /* ──────────────────────────────────────────────────────────────── */
 function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
+    const [tab, setTab] = React.useState("stat");
     const name = character?.name ?? character?.characterName;
     const grade = character?.grade;
     const evolutionStep = character?.evolutionStep;
@@ -513,69 +515,100 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing }) {
 
     return (
         <section className="rounded-2xl border border-[#FFC700]/50 bg-gray-800 p-6 shadow-xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-                <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-                    {fmt(name)}
-                </h3>
-                <span className="inline-flex items-center gap-1 rounded-full border border-gray-600 bg-gray-900 px-3 py-1 text-sm font-semibold text-gray-200">
-                    <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
-                    등급 {getGradeLabel(grade)}
-                </span>
+            <div className="mb-5 flex items-center gap-3 flex-wrap">
+              <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+                {fmt(name)}
+              </h3>
+
+              {/* 탭 버튼 (이름 바로 옆) */}
+              <div className="inline-flex rounded-lg bg-gray-900 p-1 ring-1 ring-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setTab("stat")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition
+                    ${tab === "stat" ? "bg-[#FFC700] text-gray-900" : "text-gray-300 hover:text-white"}`}
+                >
+                  스탯
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("growth")}
+                  className={`ml-1 px-3 py-1.5 rounded-md text-xs font-bold transition
+                    ${tab === "growth" ? "bg-[#FFC700] text-gray-900" : "text-gray-300 hover:text-white"}`}
+                >
+                  성장단계
+                </button>
+              </div>
+
+              {/* 등급 뱃지 */}
+              <span className="inline-flex items-center gap-1 rounded-full border border-gray-600 bg-gray-900 px-3 py-1 text-sm font-semibold text-gray-200">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+                등급 {getGradeLabel(grade)}
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <StatCard label="체력" value={fmt(hp)} />
-                <StatCard label="방어력" value={fmt(def)} />
-                <StatCard label="공격력" value={fmt(atk)} />
-                <StatCard label="속도" value={fmt(speed)} />
-            </div>
 
-            {/* 클리어 횟수 및 다음 성장 조건 표시 추가 */}
-            <div className="mt-4 space-y-3">
-                <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            스테이지 클리어 횟수
-                        </span>
-                        <span className="text-xl md:text-2xl font-extrabold text-white">
-                            {clearCount}회
-                        </span>
-                    </div>
+            {/* 탭 내용 */}
+            {tab === "stat" ? (
+              <>
+                {/* 스탯 그리드 */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatCard label="체력" value={fmt(hp)} />
+                  <StatCard label="방어력" value={fmt(def)} />
+                  <StatCard label="공격력" value={fmt(atk)} />
+                  <StatCard label="속도" value={fmt(speed)} />
                 </div>
 
-                <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            다음 성장 조건
-                        </span>
-                        <div className="text-right">                            
-                            <span className="text-sm font-medium text-white/70 block">
-                                ({requiredClearCount === "-" ? "최대 단계" : `클리어 ${requiredClearCount}회 필요`})
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-3 rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
-                <div className="flex items-center justify-between">
+                {/* 치명타 확률 */}
+                <div className="mt-3 rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                        치명타 확률
+                      치명타 확률
                     </span>
                     <span className="text-xl md:text-2xl font-extrabold text-white">
-                        {typeof critRate === "number" ? `${critRate}%` : "-"}
+                      {typeof critRate === "number" ? `${critRate}%` : "-"}
                     </span>
-                </div>
-                {typeof critRate === "number" && (
+                  </div>
+                  {typeof critRate === "number" && (
                     <div className="mt-2 h-2 w-full rounded-full bg-gray-700">
-                        <div
-                            className="h-2 rounded-full bg-emerald-500 transition-all"
-                            style={{ width: `${Math.max(0, Math.min(100, critRate))}%` }}
-                            aria-label="치명타 확률"
-                        />
+                      <div
+                        className="h-2 rounded-full bg-emerald-500 transition-all"
+                        style={{ width: `${Math.max(0, Math.min(100, critRate))}%` }}
+                        aria-label="치명타 확률"
+                      />
                     </div>
-                )}
-            </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 스테이지 클리어 횟수 */}
+                <div className="rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      스테이지 클리어 횟수
+                    </span>
+                    <span className="text-xl md:text-2xl font-extrabold text-white">
+                      {clearCount}회
+                    </span>
+                  </div>
+                </div>
+
+                {/* 다음 성장 조건 */}
+                <div className="mt-3 rounded-xl bg-gray-900 px-4 py-3 ring-1 ring-gray-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                      다음 성장 조건
+                    </span>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-[#FFC700] block">
+                        클리어 {requiredClearCount}회 필요
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {_statsLoading && (
                 <div className="mt-3 rounded-md bg-white/10 px-3 py-2 text-sm text-gray-300">
@@ -631,7 +664,7 @@ function StatCard({ label, value }) {
 }
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 내 캐릭터 섹션                                                    */
+/* 내 캐릭터 섹션
 /* ──────────────────────────────────────────────────────────────── */
 function CharacterSection({
     characters = [],
@@ -757,7 +790,7 @@ function CharacterCard({
 }
 
 /* ──────────────────────────────────────────────────────────────── */
-/* 아이콘/유틸                                                       */
+/* 아이콘/유틸
 /* ──────────────────────────────────────────────────────────────── */
 function IconMail(props) {
     // className을 props로 받도록 수정
