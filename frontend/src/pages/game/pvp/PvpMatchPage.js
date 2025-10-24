@@ -53,7 +53,7 @@ function PvpMatchPage() {
             });
     }, [token, userId, navigate]);
 
-    // ✅ 재대결 상태면 상대 고정 세팅
+    // 재대결 상태면 상대 고정 세팅
     useEffect(() => {
         if (rematch && opponent) {
             setOpponentCharacters([{

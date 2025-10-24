@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Header from "../../../components/Header";
 
 function PveBattlePage() {
     const location = useLocation();
     const navigate = useNavigate();
     const { mapId, characterId } = location.state || {};
-    const [mapImageUrl, setMapImageUrl] = useState(null);    
+    const [mapImageUrl, setMapImageUrl] = useState(null);
     const [selectedCharacter, setSelectedCharacter] = useState(null);
     const [opponentMonster, setOpponentMonster] = useState(null);
     const [logs, setLogs] = useState([]);
@@ -34,8 +35,8 @@ function PveBattlePage() {
     let userId = null;
     if (token) {
         try {
-            const decodedToken = jwtDecode(token);            
-            userId = decodedToken.userId;             
+            const decodedToken = jwtDecode(token);
+            userId = decodedToken.userId;
         } catch (e) {
             console.error("토큰 디코딩 실패:", e);
             // 토큰이 유효하지 않으면 userId는 null로 남습니다.
@@ -87,10 +88,10 @@ function PveBattlePage() {
                 })
                 .catch(err => console.error("캐릭터 정보 로드 실패:", err));
         }
-        
+
         setOpponentMonster(null);
     }, [mapId, characterId, token, userId, navigate]);
-    
+
     useEffect(() => {
         // 로그가 추가될 때마다 스크롤을 맨 아래로 이동
         if (logContainerRef.current) {
@@ -148,7 +149,7 @@ function PveBattlePage() {
             return;
         }
 
-        setLogs([]);        
+        setLogs([]);
         setIsBattle(true);
 
         // WebSocket 연결
@@ -178,7 +179,7 @@ function PveBattlePage() {
 
             if (data.type === "end") {
                 // 전투 종료 시 상태 업데이트
-                setIsBattle(false);                
+                setIsBattle(false);
                 return;
             }
 
@@ -226,114 +227,116 @@ function PveBattlePage() {
     };
 
     return (
-        <div className="flex flex-col items-center p-8 min-h-screen" style={backgroundStyle}>
-            
-            {/* 캐릭터 및 몬스터 정보 표시 영역 */}
-            {(selectedCharacter) ? (
-                <div className="flex justify-around w-full max-w-4xl mb-4 p-4 bg-gray-900/80 rounded-xl shadow-2xl border border-yellow-500/50">
+        <div><Header />
+            <div className="flex flex-col items-center p-3 min-h-[calc(100vh-60px)]" style={backgroundStyle}>
 
-                    {/* 내 캐릭터 정보 */}
-                    <div className="text-center w-1/3 p-2 bg-gray-800/50 rounded-lg">                        
-                        <img
-                            src={selectedCharacter.imageUrl}
-                            alt={selectedCharacter.characterName}
-                            className="w-32 h-32 mx-auto mb-2 border border-yellow-400 rounded-lg bg-white/10"
-                        />
-                        <h2 className="text-2xl font-bold mb-2 text-yellow-400">{selectedCharacter.characterName}({getGradeLabel(selectedCharacter.gradeId)})</h2>
-                        <div className="text-l mt-2 text-gray-200">
-                            <p>HP: {selectedCharacter.characterStat?.characterHp} / ATK: {selectedCharacter.characterStat?.characterAttack}/ DEF: {selectedCharacter.characterStat?.characterDefense}</p>
-                            <p>SPEED: {selectedCharacter.characterStat?.characterSpeed} / CRITICAL: {selectedCharacter.characterStat?.criticalRate}%</p>
+                {/* 캐릭터 및 몬스터 정보 표시 영역 */}
+                {(selectedCharacter) ? (
+                    <div className="flex justify-around w-full max-w-4xl mb-4 p-4 bg-gray-900/80 rounded-xl shadow-2xl border border-yellow-500/50">
+
+                        {/* 내 캐릭터 정보 */}
+                        <div className="text-center w-1/3 p-1 bg-gray-800/50 rounded-lg">
+                            <img
+                                src={selectedCharacter.imageUrl}
+                                alt={selectedCharacter.characterName}
+                                className="w-32 h-32 mx-auto mb-2 border border-yellow-400 rounded-lg bg-white/10"
+                            />
+                            <h2 className="text-2xl font-bold mb-2 text-yellow-400">{selectedCharacter.characterName}({getGradeLabel(selectedCharacter.gradeId)})</h2>
+                            <div className="text-l mt-2 text-gray-200">
+                                <p>HP: {selectedCharacter.characterStat?.characterHp} / ATK: {selectedCharacter.characterStat?.characterAttack}/ DEF: {selectedCharacter.characterStat?.characterDefense}</p>
+                                <p>SPEED: {selectedCharacter.characterStat?.characterSpeed} / CRITICAL: {selectedCharacter.characterStat?.criticalRate}%</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center text-4xl font-extrabold text-red-500 w-1/3 justify-center">
+                            VS
+                        </div>
+
+                        {/* 몬스터 정보 */}
+                        <div className="text-center w-1/3 p-4 bg-gray-800/50 rounded-lg">
+                            {opponentMonster ? (
+                                <>
+                                    <h2 className="text-2xl font-bold mb-2 text-red-400">{opponentMonster.monsterName}</h2>
+                                    <img
+                                        src={`/images/monster/${opponentMonster.imageOriginalName}`}
+                                        alt={opponentMonster.monsterName}
+                                        className="w-32 h-32 mx-auto mb-2 border border-red-400 rounded-lg bg-white/10"
+                                    />
+                                    <div className="text-l mt-2 text-gray-200">
+                                        <p>HP: {opponentMonster.monsterHp} / ATK: {opponentMonster.monsterAttack} / DEF: {opponentMonster.monsterDefense}</p>
+                                        <p>SPEED: {opponentMonster.monsterSpeed} / CRITICAL: {opponentMonster.monsterCriticalRate}%</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-xl pt-10 text-gray-400">전투 시작 시 몬스터 조우...</p>
+                            )}
                         </div>
                     </div>
+                ) : (
+                    <p className="text-xl mb-4 text-gray-400">캐릭터 정보를 불러오는 중...</p>
+                )}
 
-                    <div className="flex items-center text-4xl font-extrabold text-red-500 w-1/3 justify-center">
-                        VS
-                    </div>
-
-                    {/* 몬스터 정보 */}
-                    <div className="text-center w-1/3 p-4 bg-gray-800/50 rounded-lg">
-                        {opponentMonster ? (
-                            <>
-                                <h2 className="text-2xl font-bold mb-2 text-red-400">{opponentMonster.monsterName}</h2>
-                                <img
-                                    src={`/images/monster/${opponentMonster.imageOriginalName}`}
-                                    alt={opponentMonster.monsterName}
-                                    className="w-32 h-32 mx-auto mb-2 border border-red-400 rounded-lg bg-white/10"
-                                />
-                                <div className="text-l mt-2 text-gray-200">
-                                    <p>HP: {opponentMonster.monsterHp} / ATK: {opponentMonster.monsterAttack} / DEF: {opponentMonster.monsterDefense}</p>
-                                    <p>SPEED: {opponentMonster.monsterSpeed} / CRITICAL: {opponentMonster.monsterCriticalRate}%</p>
-                                </div>
-                            </>
-                        ) : (
-                            <p className="text-xl pt-10 text-gray-400">전투 시작 시 몬스터 조우...</p>
-                        )}
-                    </div>
-                </div>
-            ) : (
-                <p className="text-xl mb-4 text-gray-400">캐릭터 정보를 불러오는 중...</p>
-            )}
-
-            {/* GPT 노트 스타일 선택 */}
-            <div className="mb-2 text-center">
-                <label className="mr-2 font-bold">해설 스타일 선택:</label>
-                <select
-                    value={noteStyle}
-                    onChange={(e) => setNoteStyle(e.target.value)}
-                    className="bg-gray-700 text-white p-2 rounded"
-                >
-                    {styles.map((style) => (
-                        <option key={style.key} value={style.key}>
-                            {style.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="flex gap-4 mt-3">
-                <button
-                    onClick={toggleTts}                    
-                    className={`${isTtsEnabled ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 hover:bg-gray-500"
-                        } px-6 py-3 rounded-xl transition`}
-                >
-                    {isTtsEnabled ? "음성 해설 끄기" : "음성 해설 켜기"}
-                </button>
-                
-                <button
-                    onClick={startBattle}
-                    // 캐릭터 정보가 로드된 후에만 버튼 활성화 (몬스터 정보는 이제 눌렀을 때 가져옴)
-                    disabled={isBattle || !selectedCharacter}
-                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
-                >
-                    {isBattle ? "전투 중..." : "전투 시작"}
-                </button>
-
-                <button
-                    onClick={() => navigate("/pve/maps")}
-                    disabled={isBattle}
-                    className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
-                >
-                    맵 선택
-                </button>
-                <button
-                    onClick={() => navigate("/")}
-                    disabled={isBattle}
-                    className="bg-green-600 px-6 py-3 rounded-xl hover:bg-green-500 disabled:bg-gray-400"
-                >
-                    홈으로
-                </button>
-            </div>
-            <div
-                className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 min-h-[375px] max-h-[375px] overflow-y-auto border border-gray-700 whitespace-pre-wrap"                
-            >
-                {logs.map((log, i) => (
-                    <p
-                        key={i}
-                        className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 break-words"
+                {/* GPT 노트 스타일 선택 */}
+                <div className="mb-1 text-center">
+                    <label className="mr-2 font-bold">해설 스타일 선택:</label>
+                    <select
+                        value={noteStyle}
+                        onChange={(e) => setNoteStyle(e.target.value)}
+                        className="bg-gray-700 text-white p-1 rounded"
                     >
-                        {log}
-                    </p>
-                ))}
-            </div>            
+                        {styles.map((style) => (
+                            <option key={style.key} value={style.key}>
+                                {style.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex gap-4 mt-3">
+                    <button
+                        onClick={toggleTts}
+                        className={`${isTtsEnabled ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 hover:bg-gray-500"
+                            } px-6 py-3 rounded-xl transition`}
+                    >
+                        {isTtsEnabled ? "음성 해설 끄기" : "음성 해설 켜기"}
+                    </button>
+
+                    <button
+                        onClick={startBattle}
+                        // 캐릭터 정보가 로드된 후에만 버튼 활성화 (몬스터 정보는 이제 눌렀을 때 가져옴)
+                        disabled={isBattle || !selectedCharacter}
+                        className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
+                    >
+                        {isBattle ? "전투 중..." : "전투 시작"}
+                    </button>
+
+                    <button
+                        onClick={() => navigate("/pve/maps")}
+                        disabled={isBattle}
+                        className="bg-blue-600 px-6 py-3 rounded-xl hover:bg-blue-500 disabled:bg-gray-500"
+                    >
+                        맵 선택
+                    </button>
+                    <button
+                        onClick={() => navigate("/")}
+                        disabled={isBattle}
+                        className="bg-green-600 px-6 py-3 rounded-xl hover:bg-green-500 disabled:bg-gray-400"
+                    >
+                        홈으로
+                    </button>
+                </div>
+                <div
+                    className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 min-h-[375px] max-h-[375px] overflow-y-auto border border-gray-700 whitespace-pre-wrap no-scrollbar"
+                >
+                    {logs.map((log, i) => (
+                        <p
+                            key={i}
+                            className="text-white text-lg mb-1 font-mono hover:bg-gray-700/50 transition-colors duration-150 break-words"
+                        >
+                            {log}
+                        </p>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }
