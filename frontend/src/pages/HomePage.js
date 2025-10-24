@@ -80,34 +80,27 @@ const HomePage = () => {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow relative">
 
                     {/* 슬라이드 배너 - 원본 크기 그대로 표시 */}
-                    <div className="relative z-0">
+                    <div className="relative">
                         <img
                             src={slideBanner.img}
                             alt="슬라이드 배너"
                             className="block mx-auto w-full"
                         />
-                    </div>
-
-                    <div
-                        className="absolute z-10"
-                        style={{
-                            top: '60%',
-                            left: '50%',
-                            transform: 'translate(-2.9rem, -78%)'
-                        }}
-                    >
                         <button
                             onClick={handleGameStartClick}
-                            className="relative w-[6.7rem] h-[6.7rem] rounded-full bg-gradient-to-br from-blue-400 to-red-500 text-gray-900 font-extrabold text-xl flex items-center justify-center
-                                        shadow-[0_0_25px_0_rgba(253,224,71,0.3)] hover:shadow-[0_0_30px_0_rgba(147,197,253,0.3)] transform hover:scale-105 transition-all duration-300 ease-in-out
-                                        active:scale-90 active:ring-4 active:ring-yellow-400 active:ring-opacity-75 focus:outline-none overflow-hidden"
+                            className="absolute top-[92%] left-1/2 transform -translate-x-1/2 -translate-y-1/2
+                            w-[6.7rem] h-[6.7rem] rounded-full bg-gradient-to-br from-blue-400 to-red-500
+                            text-gray-900 font-extrabold text-xl flex items-center justify-center
+                            shadow-[0_0_25px_0_rgba(253,224,71,0.3)]
+                            hover:shadow-[0_0_30px_0_rgba(147,197,253,0.3)]
+                            hover:scale-105 active:scale-90 active:ring-4 active:ring-yellow-400
+                            transition-all duration-300 ease-in-out focus:outline-none overflow-hidden"
                         >
                             <span className="relative z-10 leading-none">
                                 GAME<br />START
                             </span>
                             <span className="absolute inset-0 rounded-full bg-white opacity-0 animate-ripple"></span>
                         </button>
-
                     </div>
 
 
