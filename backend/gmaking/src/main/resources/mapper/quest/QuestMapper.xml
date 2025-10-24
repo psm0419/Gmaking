@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.quest.dao.QuestDAO">
+
+    <update id="resetDailyQuests">
+        UPDATE TB_USER_QUEST
+        SET
+        CURRENT_COUNT = 0,
+        STATUS = 'IN_PROGRESS',
+        STARTED_AT = NOW(),
+        COMPLETED_AT = NULL,
+        LAST_RESET_DATE = #{today}
+        WHERE
+        STATUS IN ('COMPLETED', 'REWARDED', 'IN_PROGRESS')
+        AND (LAST_RESET_DATE IS NULL OR LAST_RESET_DATE &lt; #{today});
+    </update>
+
+    <select id="findByType" parameterType="string" resultType="com.project.gmaking.quest.vo.QuestVO">
+        SELECT * FROM TB_QUEST WHERE QUEST_TYPE = #{questType}
+    </select>
+
+    <select id="findByUserAndQuest" resultType="com.project.gmaking.quest.vo.UserQuestVO">
+        SELECT * FROM TB_USER_QUEST WHERE USER_ID = #{userId} AND QUEST_ID = #{questId}
+    </select>
+
+    <insert id="insertUserQuest" parameterType="com.project.gmaking.quest.vo.UserQuestVO" useGeneratedKeys="true" keyProperty="userQuestId">
+        INSERT INTO TB_USER_QUEST (USER_ID, QUEST_ID, CURRENT_COUNT, STATUS, STARTED_AT)
+        VALUES (#{userId}, #{questId}, #{currentCount}, #{status}, NOW())
+    </insert>
+
+    <update id="updateProgress" parameterType="com.project.gmaking.quest.vo.UserQuestVO">
+        UPDATE TB_USER_QUEST
+        SET CURRENT_COUNT = #{currentCount}, STATUS = #{status}, COMPLETED_AT = #{completedAt}
+        WHERE USER_QUEST_ID = #{userQuestId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE TB_USER_QUEST
+        SET STATUS = #{status}, COMPLETED_AT = NOW()
+        WHERE USER_ID = #{userId} AND QUEST_ID = #{questId}
+    </update>
+
+</mapper>

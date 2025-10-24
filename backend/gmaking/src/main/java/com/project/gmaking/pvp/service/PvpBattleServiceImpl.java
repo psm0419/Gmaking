@@ -11,6 +11,7 @@ import com.project.gmaking.pve.vo.TurnLogVO;
 import com.project.gmaking.pve.vo.BattleLogVO;
 import com.project.gmaking.pvp.dao.PvpBattleDAO;
 import com.project.gmaking.pvp.vo.PvpBattleVO;
+import com.project.gmaking.quest.service.QuestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class PvpBattleServiceImpl implements PvpBattleService{
     private final TurnLogDAO turnLogDAO;
     private final ObjectMapper mapper;
     private final OpenAIService openAIService;
+    private final QuestService questService;
 
     // 알림 파사드 주입
     private final NotificationFacade notificationFacade;
@@ -223,7 +225,7 @@ public class PvpBattleServiceImpl implements PvpBattleService{
         boolean isWin = result.getEnemyHp() <= 0;
 
         // 2. BattleLogVO 생성 및 DB 저장
-        BattleLogVO log = new BattleLogVO(
+        BattleLogVO battleLog = new BattleLogVO(
                 result.getBattleId(),
                 result.getPlayer().getCharacterId(),
                 "PVP",
@@ -236,7 +238,15 @@ public class PvpBattleServiceImpl implements PvpBattleService{
                 null,
                 result.getLogs()
         );
-        pvpBattleDAO.updateBattleLogResult(log);
+        pvpBattleDAO.updateBattleLogResult(battleLog);
+
+        String userId = (result.getPlayer() != null) ? result.getPlayer().getUserId() : null;
+
+        if (userId != null) {
+            questService.updateQuestProgress(userId, "PVP");
+        } else {
+            log.warn("[PVP 퀘스트 갱신 실패] userId를 찾을 수 없습니다. battleId={}", result.getBattleId());
+        }
 
         // 알림 발송 (양측)
         sendPvpResultNotifications(result, isWin);

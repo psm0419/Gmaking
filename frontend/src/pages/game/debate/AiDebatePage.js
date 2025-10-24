@@ -43,7 +43,8 @@ function AiDebatePage() {
                     characterAId: aId,
                     characterBId: bId,
                     topic,
-                    turnsPerSide: 3
+                    turnsPerSide: 3,
+                    userId: userId 
                 }));
             }
         };

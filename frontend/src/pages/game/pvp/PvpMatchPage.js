@@ -103,7 +103,7 @@ function PvpMatchPage() {
 
     return (
         <div><Header />
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center text-white p-8">
+            <div className="min-h-[calc(100vh-60px)] bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center text-white p-8">
                 <div className="flex justify-center gap-4 mb-8">
                     <button
                         onClick={findOpponent}
