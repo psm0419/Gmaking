@@ -326,6 +326,13 @@ function MyMain() {
                       <span className="rounded-full bg-red-600 px-3 py-1 text-sm font-bold text-white shadow-sm">광고 시청</span>
                     )}
                   </div>
+
+                  <button
+                    onClick={() => navigate("/quest")}
+                    className="w-full rounded-lg bg-[#FFC700] hover:bg-[#E0B200] active:bg-[#C09B00] px-4 py-3 text-center text-sm font-bold text-gray-900 shadow-md transition"
+                  >
+                    오늘의 퀘스트 보러가기
+                  </button>
                 </div>
               </div>
             </div>
