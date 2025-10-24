@@ -1,16 +1,67 @@
-import React from 'react';
+import React, { useCallback} from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Bot, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { startCharacterGeneration } from '../api/characterCreationApi';
 
 const Header = ({ onInfoClick }) => {
     // isLoggedIn 상태를 추가로 가져옵니다.
-    const { user, logout, isLoggedIn, isLoading } = useAuth();
+    const { user, logout, isLoggedIn, isLoading, token, applyNewToken } = useAuth();
     const navigate = useNavigate();
 
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const roleColor = user?.role === 'ADMIN' ? 'text-red-400' : 'text-yellow-400';
+
+    const handleCharacterCreationStart = useCallback(async (e) => {
+        e.preventDefault(); 
+
+        // 1. 로그인 상태 체크
+        if (!isLoggedIn || !token || !user) {
+            alert('캐릭터 뽑기를 시작하려면 먼저 로그인해야 합니다.');
+            navigate('/login');
+            return;
+        }
+
+        const currentCount = user?.incubatorCount || 0;
+        
+        // 2. 부화권 1개 미만일 경우 예외 처리
+        if (currentCount <= 0) {
+            alert('캐릭터 뽑기를 시작할 수 없습니다. 부화권 수량이 부족합니다.');
+            return;
+        }
+
+        // 3. 사용자에게 확인 요청
+        const isConfirmed = window.confirm(
+            `캐릭터 뽑기를 시작하시겠습니까?\n\n이 작업으로 부화권이 1개 감소됩니다. (현재 ${currentCount}개)`
+        );
+
+        if (!isConfirmed) {
+            return; // 취소
+        }
+
+        try {
+            // 4. 부화권 차감 API 호출
+            const result = await startCharacterGeneration(token);
+
+            if (result.errorMessage) {
+                alert(`캐릭터 뽑기 시작 실패: ${result.errorMessage}`);
+                return;
+            }
+
+            // 5. 새 토큰 적용 및 페이지 이동
+            if (result.newToken) {
+                applyNewToken(result.newToken);
+            }
+            
+            navigate('/create-character'); // 캐릭터 생성 페이지로 이동
+
+        } catch (error) {
+            console.error('캐릭터 뽑기 시작 처리 중 오류 발생:', error);
+            alert('캐릭터 뽑기 시작 중 알 수 없는 서버 오류가 발생했습니다.');
+        }
+
+    }, [navigate, isLoggedIn, token, applyNewToken, user]);
 
     // 카테고리 메뉴 항목
     const categories = [
@@ -18,11 +69,12 @@ const Header = ({ onInfoClick }) => {
         { name: '상점', icon: ShoppingCart, link: '/shop' },
         { name: '랭킹', icon: Award, link: '/ranking' },
         { name: '커뮤니티', icon: MessageSquare, link: '/community' },
-        { name: '캐릭터 뽑기', icon: Egg, link: '/create-character' },
+        { name: '캐릭터 뽑기', icon: Egg, link: '/create-character', handler: handleCharacterCreationStart },
         { name: '게임', icon: Swords, link: '/battlemode' },
         { name: '로그', icon: Scroll, link: '/logs' },
         { name: '채팅', icon: Bot, link: '/chat-entry'},
     ];
+
 
     if (isLoading) {
         return (
@@ -95,6 +147,7 @@ const Header = ({ onInfoClick }) => {
                         <Link
                             key={item.name}
                             to={item.link}
+                            onClick={item.handler ? item.handler : null}
                             className="text-gray-300 hover:text-yellow-400 font-semibold transition duration-200 flex items-center"
                         >
                             <item.icon className="w-5 h-5 mr-1" />
