@@ -108,22 +108,6 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
         }
 
         try {
-            LoginVO userBeforeUpdate = loginDAO.selectUserById(userId);
-
-            Integer incubatorCount = userBeforeUpdate.getIncubatorCount();
-
-            if (incubatorCount == null || incubatorCount <= 0) {
-                logger.warn("캐릭터 최종 확정 실패: 부화권 수량 부족(User: {})", userId);
-                throw new IllegalArgumentException("부화권 수량이 부족합니다. 상점에서 부화권을 구매해주세요");
-            }
-
-            int updatedRows = loginDAO.decrementIncubatorCount(userId);
-
-            if (updatedRows == 0) {
-                logger.error("캐릭터 최종 확정 실패: 부화권 차감 DB 오류 (User: {})", userId);
-                throw new IllegalStateException("부화권 차감 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
-            }
-
             // ImageVO 생성 및 DB 저장
             ImageVO imageVO = new ImageVO();
             imageVO.setImageOriginalName(finalData.getCharacterName() + "_image");

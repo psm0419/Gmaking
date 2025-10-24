@@ -1,4 +1,33 @@
+import axios from 'axios';
+
 const API_BASE_URL = 'http://localhost:8080';
+
+/**
+ * 캐릭터 생성 시작 시 부화권을 차감하고 새 토큰을 반환합니다.
+ * @param {string} token 현재 JWT 토큰
+ * @returns {Promise<object>} 응답 데이터 (성공 시 { newToken: '...' }, 실패 시 { errorMessage: '...' })
+ */
+export const startCharacterGeneration = async (token) => {
+    try {
+        const response = await axios.post(
+            '/api/character/start-generation',
+            {}, 
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        // 400 Bad Request (부화권 부족) 에러 처리
+        if (error.response && error.response.data && error.response.data.errorMessage) {
+            return error.response.data; 
+        }
+        console.error('캐릭터 생성 시작 API 호출 오류:', error);
+        return { errorMessage: '캐릭터 생성 시작 중 서버 오류가 발생했습니다.' };
+    }
+};
 
 /**
  * 캐릭터 미리보기 생성 API 호출 함수 (DB 저장 X)
@@ -57,7 +86,7 @@ export async function generateCharacterPreview(imageFile, characterName, token, 
  * @param {string} token JWT 토큰
  * @returns {Promise<object>} API 응답 JSON
  */
-export async function finalizeCharacter(characterData, token) { // 💡 인자 변경
+export async function finalizeCharacter(characterData, token) { 
     const response = await fetch(`${API_BASE_URL}/api/character/finalize`, {
         method: 'POST',
         headers: {

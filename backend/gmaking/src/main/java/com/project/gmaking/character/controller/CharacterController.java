@@ -2,6 +2,7 @@ package com.project.gmaking.character.controller;
 
 import com.project.gmaking.character.service.CharacterService;
 import com.project.gmaking.character.service.CharacterServiceGpt;
+import com.project.gmaking.character.service.CharacterStartService;
 import com.project.gmaking.character.vo.CharacterGenerateRequestVO;
 import com.project.gmaking.character.vo.CharacterGenerateResponseVO;
 import com.project.gmaking.character.vo.CharacterVO;
@@ -28,6 +29,7 @@ public class CharacterController {
     private final CharacterService characterService;
     private final CharacterServiceGpt characterServicegpt;
     private final JwtTokenProvider tokenProvider;
+    private final CharacterStartService characterStartService;
 
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -39,6 +41,46 @@ public class CharacterController {
     }
 
     // ---------------------------------------------------------------------------------
+
+    /**
+     * 0단계: 캐릭터 생성 시작 및 부화권 차감 API (DB 저장 X, 새 토큰 반환)
+     * POST /api/character/start-generation
+     */
+    @PostMapping("/start-generation")
+    public ResponseEntity<CharacterGenerateResponseVO> startCharacterGeneration(
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION) String authHeader) {
+
+        String userId;
+        try {
+            String token = resolveToken(authHeader);
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            userId = tokenProvider.getUserIdFromToken(token);
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            // 부화권 차감 및 새 토큰이 포함된 응답 VO 반환
+            CharacterGenerateResponseVO response = characterStartService.startCharacterGeneration(userId);
+
+            // 새 토큰을 포함한 응답 반환 (200 OK)
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalStateException e) {
+            // 부화권 부족, DB 오류 등
+            System.err.println("캐릭터 생성 시작 비즈니스 오류: " + e.getMessage());
+            return ResponseEntity.badRequest().body(CharacterGenerateResponseVO.builder()
+                    .errorMessage(e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            System.err.println("캐릭터 생성 시작 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(CharacterGenerateResponseVO.builder()
+                    .errorMessage("서버 내부 오류가 발생했습니다.")
+                    .build());
+        }
+    }
 
     /**
      * 1단계: 미리보기 생성/재생성 API (DB 저장 X)
