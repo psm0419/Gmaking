@@ -38,21 +38,21 @@
     <!-- 5-1. 퀘스트 타입 기반 진행도 +1 (JOIN 방식) -->
     <update id="incrementProgressByType">
         UPDATE TB_USER_QUEST uq
-        JOIN TB_QUEST q ON uq.QUEST_ID = q.QUEST_ID
-        SET
-        uq.CURRENT_COUNT = uq.CURRENT_COUNT + 1,
+        INNER JOIN TB_QUEST q ON uq.QUEST_ID = q.QUEST_ID
+        SET uq.CURRENT_COUNT = uq.CURRENT_COUNT + 1,
         uq.STATUS = CASE
         WHEN uq.CURRENT_COUNT + 1 >= q.TARGET_COUNT THEN 'COMPLETED'
         ELSE 'IN_PROGRESS'
         END,
         uq.COMPLETED_AT = CASE
-        WHEN uq.CURRENT_COUNT + 1 >= q.TARGET_COUNT THEN NOW()
+        WHEN uq.CURRENT_COUNT + 1 >= q.TARGET_COUNT THEN CURRENT_TIMESTAMP
         ELSE uq.COMPLETED_AT
         END
         WHERE uq.USER_ID = #{userId}
         AND q.QUEST_TYPE = #{questType}
         AND uq.STATUS = 'IN_PROGRESS';
     </update>
+
 
     <!-- 6. 상태 변경 -->
     <update id="updateStatus">

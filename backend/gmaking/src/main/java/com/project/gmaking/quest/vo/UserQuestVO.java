@@ -15,4 +15,9 @@ public class UserQuestVO {
     private LocalDateTime startedAt;     // 시작 시각
     private LocalDateTime completedAt;   // 완료 시각
     private LocalDate lastResetDate;     // 마지막 초기화 일자
+
+    // JOIN 시 포함될 정보
+    private String questName;
+    private Integer targetCount;
+    private String questType;
 }

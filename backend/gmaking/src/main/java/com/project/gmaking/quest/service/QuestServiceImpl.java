@@ -19,7 +19,6 @@ public class QuestServiceImpl implements QuestService {
     private final QuestDAO questDAO;
     private final InventoryDAO inventoryDAO;
 
-    /** 로그인 시 초기 퀘스트 생성 */
     @Override
     public void initializeDailyQuests(String userId) {
         List<QuestVO> allQuests = questDAO.findAllDailyQuests();
@@ -37,14 +36,12 @@ public class QuestServiceImpl implements QuestService {
         }
     }
 
-    /** 자정 리셋 */
     @Override
     public void resetDailyQuests() {
         int updated = questDAO.resetDailyQuests(LocalDate.now());
         log.info("일일 퀘스트 {}건 초기화 완료", updated);
     }
 
-    /** 진행도 업데이트 */
     @Override
     public void updateQuestProgress(String userId, String questType) {
         log.info("[퀘스트 진행 업데이트 호출] userId={}, questType={}", userId, questType);
@@ -52,13 +49,11 @@ public class QuestServiceImpl implements QuestService {
         int updated = questDAO.incrementProgressByType(userId, questType);
         log.info("[퀘스트 업데이트 결과] {}, updated={}", questType, updated);
 
-        // ✅ PVE 수행 시에는 PVE_TOTAL도 같이 올려줌
         if ("PVE".equals(questType)) {
             int totalUpdated = questDAO.incrementProgressByType(userId, "PVE_TOTAL");
             log.info("[누적 PVE_TOTAL 업데이트] updated={}", totalUpdated);
         }
 
-        // 보상 지급 로직 유지
         QuestVO quest = questDAO.findByType(questType);
         if (quest == null) return;
 
@@ -74,7 +69,28 @@ public class QuestServiceImpl implements QuestService {
                 });
     }
 
-    /** 보상 지급 */
+    @Override
+    public List<UserQuestVO> getUserDailyQuests(String userId) {
+        return questDAO.findUserDailyQuests(userId);
+    }
+
+    // 보상 수령 (Controller에서 직접 호출)
+    @Override
+    public void rewardQuest(String userId, int questId) {
+        UserQuestVO userQuest = questDAO.findByUserAndQuest(userId, questId);
+        if (userQuest == null) {
+            throw new IllegalArgumentException("해당 퀘스트가 존재하지 않습니다.");
+        }
+        if (!"COMPLETED".equals(userQuest.getStatus())) {
+            throw new IllegalStateException("아직 완료되지 않은 퀘스트입니다.");
+        }
+
+        QuestVO quest = questDAO.findByType(userQuest.getQuestType());
+        giveReward(userId, quest);
+        questDAO.updateStatus(userId, questId, "REWARDED");
+        log.info(">>> [보상 수령 완료] userId={}, questId={}", userId, questId);
+    }
+
     private void giveReward(String userId, QuestVO quest) {
         int productId = quest.getRewardProductId();
         int rewardQty = quest.getRewardQuantity();
