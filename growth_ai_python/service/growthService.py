@@ -11,7 +11,7 @@ from typing import Optional, Tuple, Dict, Any
 from dao.characterDAO import CharacterDAO
 from vo.growthVO import GrowthRequestVO, GrowthModel
 
-# === AI 통신 설정 (이전과 동일) ===
+# === AI 통신 설정 (유지) ===
 HORDE_API_KEY = "z_RIG25C3-Bpx7-kZ7i-hQ".strip() # 실제 키 사용
 HORDE_API_URL_SUBMIT = "https://stablehorde.net/api/v2/generate/async"
 HORDE_API_URL_FETCH = "https://stablehorde.net/api/v2/generate/status"
@@ -21,37 +21,54 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-# === 성장 로직 상수 (이전과 동일) ===
+# === 성장 로직 상수 (유지) ===
 MAX_EVOLUTION_STEP = 5
 GROWTH_INCREMENT_RANGE = (1, 5)
 REQUIRED_CLEARS = {1: 10, 2: 20, 3: 30}
 
-# === AI 변형 프롬프트 정의 (이전과 동일) ===
+# =========================================================================
+# 🛠️ AI 변형 프롬프트 정의 (키 이름만 Java 백엔드와 일치하도록 수정)
+#    - 프롬프트 내용(base_prompt, negative_prompt)은 요청에 따라 그대로 유지됩니다.
+# =========================================================================
 MODIFICATIONS = {
-    "background_color_sky": {
+    # Java에서 step=1일 때 보내는 키
+    "EVO_KEY_EGG": {
+        # 기존 "background_color_sky"의 내용을 할당
         "output_suffix": "background_sky.png",
         "base_prompt": "Replace the background with a solid sky blue color, preserve the entire original character and all details unchanged, modify only the background, 2D game style, 1024x1024.",
         "negative_prompt": "extra heads, extra limbs, multiple characters, text, blurry, messy, watermark, 3D, photorealistic, change in pose, change in character, character color change"
     },
-    "background_color_green": {
+
+    # Java에서 step=2일 때 보내는 키 (이전 오류의 원인)
+    "EVO_KEY_BABY": {
+        # 기존 "background_color_green"의 내용을 할당
         "output_suffix": "background_green.png",
         "base_prompt": "Replace the background with a solid green color, preserve the entire original character and all details unchanged, modify only the background, 2D game style, 1024x1024.",
         "negative_prompt": "extra heads, extra limbs, multiple characters, text, blurry, messy, watermark, 3D, photorealistic, change in pose, change in character, character color change"
     },
-    "background_color_red": {
+
+    # Java에서 step=3일 때 보내는 키
+    "EVO_KEY_TEEN": {
+        # 기존 "background_color_red"의 내용을 할당
         "output_suffix": "background_red.png",
         "base_prompt": "Replace the background with a solid red color, preserve the entire original character and all details unchanged, modify only the background, 2D game style, 1024x1024.",
         "negative_prompt": "extra heads, extra limbs, multiple characters, text, blurry, messy, watermark, 3D, photorealistic, change in pose, change in character, character color change"
     },
-    "background_color_yellow": {
+
+    # Java에서 step=4일 때 보내는 키
+    "EVO_KEY_FINAL": {
+        # 기존 "background_color_yellow"의 내용을 할당
         "output_suffix": "background_yellow.png",
         "base_prompt": "Replace the background with a solid yellow color, preserve the entire original character and all details unchanged, modify only the background, 2D game style, 1024x1024.",
         "negative_prompt": "extra heads, extra limbs, multiple characters, text, blurry, messy, watermark, 3D, photorealistic, change in pose, change in character, character color change"
     }
 }
+# =========================================================================
 
-# === 유틸리티 함수 (이전과 동일) ===
+
+# === 유틸리티 함수 (유지) ===
 def is_valid_image_data(img_data):
+    # ... (함수 내용 유지)
     if len(img_data) < 4: return False, None
     if img_data.startswith(b'\x89PNG'): return True, "PNG"
     elif img_data.startswith(b'\xff\xd8\xff'): return True, "JPEG"
@@ -60,6 +77,7 @@ def is_valid_image_data(img_data):
     return False, None
 
 def _download_and_encode_image(url: str) -> str:
+    # ... (함수 내용 유지)
     """외부 URL에서 이미지를 다운로드하여 Base64 문자열로 인코딩합니다."""
     try:
         response = requests.get(url, timeout=30)
@@ -75,12 +93,12 @@ class GrowthService:
         self.db = db
 
     # ------------------------------------------------------------------
-    # 🚨 _submit_job 함수 수정: 모델 및 파라미터 최적화 (이전과 동일)
+    # 🚨 _submit_job 함수 수정: 모델 및 파라미터 최적화 (유지)
     # ------------------------------------------------------------------
     def _submit_job(self, prompt, negative_prompt, input_img_b64):
         payload = {
             "prompt": prompt, "negative_prompt": negative_prompt,
-            "models": ["Anything Diffusion"], # 🌟 [수정] Anything Diffusion으로 변경 (더 빠르고 안정적인 2D 스타일)
+            "models": ["Anything Diffusion"], # 🌟 Anything Diffusion으로 변경 (더 빠르고 안정적인 2D 스타일)
             "source_image": input_img_b64,
             "source_processing": "img2img",
             "params": {
@@ -103,7 +121,7 @@ class GrowthService:
         return job_id
 
     # ------------------------------------------------------------------
-    # 🌟 [FINAL FIX] _fetch_result 함수: 이미지 데이터 진단 로직 추가 (이전과 동일)
+    # 🌟 [FINAL FIX] _fetch_result 함수: 이미지 데이터 진단 로직 추가 (유지)
     # ------------------------------------------------------------------
     def _fetch_result(self, job_id):
         max_wait = 1800 # 최대 30분 대기
@@ -214,8 +232,7 @@ class GrowthService:
 
 
     # ------------------------------------------------------------------
-    # ✅ [최종 수정] 핵심 성장 로직 (evolve_character)
-    # tb_image 조회 및 tb_character 업데이트 로직 제거
+    # ✅ [최종 수정] 핵심 성장 로직 (evolve_character) (유지)
     # ------------------------------------------------------------------
     def evolve_character(self, request: GrowthRequestVO) -> Tuple[Optional[Dict[str, Any]], str]:
         """캐릭터 성장, AI 이미지 생성, DB 성장 기록(tb_growth)을 처리합니다."""
@@ -288,10 +305,6 @@ class GrowthService:
             if not self.character_dao.insert_new_growth_record(new_growth_record):
                 self.db.rollback()
                 return None, "Failed to record new growth data to tb_growth."
-
-            # 5.2. tb_character의 EVOLUTION_STEP과 IMAGE_ID 업데이트 로직 제거:
-            # 이 책임은 AI 결과와 새 단계 정보를 받은 Java 백엔드에 있습니다.
-            # if not self.character_dao.update_character_evolution_data(...): # ❌ 제거
 
             # 5.3. 최종 커밋 (tb_growth 기록만 커밋)
             self.db.commit()

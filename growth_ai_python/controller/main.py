@@ -1,6 +1,4 @@
-# growth_ai_python/controller/main.py
-
-from fastapi import FastAPI, Depends, HTTPException, Form
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -8,7 +6,7 @@ from typing import Optional
 from dao.db_context import get_db_session_local
 
 from service.growthService import GrowthService
-from vo.growthVO import AiServerResponseVO, GrowthRequestVO
+from vo.growthVO import AiServerResponseVO, GrowthRequestVO # GrowthRequestVO 임포트 유지
 
 app = FastAPI()
 
@@ -28,27 +26,19 @@ def read_root():
 
 @app.post("/api/v1/grow-character", response_model=AiServerResponseVO)
 async def grow_character_endpoint(
-        user_id: str = Form(...),
-        character_id: int = Form(...),
-        target_modification: str = Form("default_growth"),
-        # 2. DB 의존성 주입 시, 임포트한 get_db_session_local 사용
+        request_vo: GrowthRequestVO, # 💡 수정: Form 대신 JSON Body (Pydantic Model)로 받음
         db: Session = Depends(get_db_session_local)
 ):
     """
-    Java 백엔드로부터 요청을 받아 성장 로직을 실행하고,
+    Java 백엔드로부터 요청(JSON Body)을 받아 성장 로직을 실행하고,
     AI 이미지(Base64)와 스탯 계산 결과를 반환합니다.
     """
     try:
-        # 1. GrowthRequestVO 생성
-        request_data = {
-            "user_id": user_id,
-            "character_id": character_id,
-            "target_modification": target_modification,
-        }
-        request_vo = GrowthRequestVO(**request_data)
+        # 1. request_vo가 이미 Pydantic 모델로 유효성 검사를 통과했으므로 그대로 사용
 
         # 2. 서비스 계층 호출
         service = GrowthService(db=db)
+        # 💡 수정: request_vo를 바로 전달
         result_dict, error_message = service.evolve_character(request_vo)
 
         if result_dict is None:

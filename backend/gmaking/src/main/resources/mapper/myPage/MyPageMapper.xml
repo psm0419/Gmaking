@@ -20,6 +20,7 @@
         <result property="evolutionStep" column="evolution_step"/>
         <result property="grade"         column="grade"/>
         <result property="imageUrl"      column="image_url"/>
+        <result property="stageClearCount" column="stage_clear_count"/>
 
         <!-- association: VO 필드명/타입/내부 프로퍼티 전부 VO에 맞추기 -->
         <association property="characterStatVO"
@@ -55,6 +56,7 @@
         c.evolution_step,
         c.grade_id AS grade,
         img.image_url AS image_url,
+        c.total_stage_clears AS stage_clear_count,
         s.character_hp,
         s.character_attack,
         s.character_defense,

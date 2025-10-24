@@ -21,14 +21,16 @@ public class GrowthController {
     @PostMapping("/character")
     public ResponseEntity<?> growCharacter(
             @RequestBody GrowthRequestVO growthRequestVO,
-            @AuthenticationPrincipal String userId) {
+            @AuthenticationPrincipal String principalUserId) {
+
         // 인증된 사용자 ID 검증
-        if(userId == null){
+        if(principalUserId == null){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"message\":\"유효한 사용자 정보가 없습니다. 다시 로그인해 주세요.\"}");
         }
 
-        // 주입받은 안전한 userId를 VO에 설정
-        growthRequestVO.setUserId(userId);
+        // 💡 핵심 수정: Snake Case 변수명에 맞게 Setter 호출
+        // @AuthenticationPrincipal에서 가져온 신뢰할 수 있는 ID로 VO의 user_id를 강제 설정
+        growthRequestVO.setUser_id(principalUserId);
 
         try{
             // 서비스 호출 및 최종 DB 업데이트 실행
@@ -38,10 +40,11 @@ public class GrowthController {
             return ResponseEntity.ok(growthResponseVO);
         } catch (RuntimeException e){
             // 서비스 계층에서 발생한 모든 RuntimeException은 500 에러로 처리
-            System.err.println("캐릭터 성장 처리 중 오류 발생: " + e.getMessage());
+            String errorMessage = "캐릭터 성장 처리 중 오류 발생: " + e.getMessage();
+            System.err.println(errorMessage);
+
             // 사용자에게는 일반적인 서버 오류 메시지를 반환
             return new ResponseEntity<>("{\"message\":\"캐릭터 성장 처리 중 서버 오류가 발생했습니다.\", \"detail\":\"" + e.getMessage() + "\"}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

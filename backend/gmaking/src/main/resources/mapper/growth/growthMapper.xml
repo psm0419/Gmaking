@@ -2,13 +2,45 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.project.gmaking.growth.dao.GrowthDAO">
 
-    <insert id="insertNewImageRecord" useGeneratedKeys="true" keyProperty="imageId">
-        INSERT INTO tb_image (
-        IMAGE_URL, USER_ID, CREATED_DATE, UPDATED_DATE
-        ) VALUES (
-        #{imageUrl}, #{userId}, NOW(), NOW()
-        )
-    </insert>
+    <select id="findUserIdByCharacterId" parameterType="Long" resultType="String">
+        SELECT
+        USER_ID
+        FROM
+        tb_character
+        WHERE
+        CHARACTER_ID = #{characterId}
+    </select>
+
+    <select id="findCharacterEvolutionStep" parameterType="Long" resultType="Integer">
+        SELECT
+        EVOLUTION_STEP
+        FROM
+        tb_character
+        WHERE
+        CHARACTER_ID = #{characterId}
+    </select>
+
+    <select id="findCurrentImageId" parameterType="Long" resultType="Long">
+        SELECT
+        IMAGE_ID
+        FROM
+        tb_character
+        WHERE
+        CHARACTER_ID = #{characterId}
+    </select>
+
+    <update id="updateImageRecord">
+        UPDATE tb_image
+        SET
+        IMAGE_URL = #{image.imageUrl},
+        IMAGE_ORIGINAL_NAME = #{image.image_original_name},
+        IMAGE_NAME = 'character_evo_img',
+        IMAGE_TYPE = 1,
+        UPDATED_BY = #{userId},
+        UPDATED_DATE = NOW()
+        WHERE
+        IMAGE_ID = #{imageId}
+    </update>
 
     <update id="updateCharacterEvolution">
         UPDATE tb_character
