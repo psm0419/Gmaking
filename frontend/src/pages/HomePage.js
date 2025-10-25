@@ -34,7 +34,7 @@ const HomePage = () => {
 
     const fetchRecentNotices = async () => {
         try {
-            // 페이지 1에서 4개만 가져오도록 요청
+            // 공지사항 나타낼 개수 결정
             const data = await getNotices(1, 8);
             setRecentNotices(data.noticeList || []);
         } catch (error) {
