@@ -67,4 +67,11 @@
         AND tcc.IS_DELETED = FALSE
     </select>
 
+    <update id="updateComment" parameterType="map">
+        UPDATE tb_community_comment  SET
+        CONTENT = #{content},          UPDATED_BY = #{modifiedBy},    UPDATED_DATE = NOW()           WHERE
+        COMMENT_ID = #{commentId}
+        AND IS_DELETED = 0
+    </update>
+
 </mapper>

@@ -3,7 +3,6 @@ package com.project.gmaking.community.service;
 import com.project.gmaking.community.dao.PostDAO;
 import com.project.gmaking.community.dao.PostLikeDAO;
 import com.project.gmaking.community.vo.PostLikeVO;
-import com.project.gmaking.community.vo.PostLikeDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +12,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class PosetLikeServiceImpl implements PostLikeService { // PostLikeService로 인터페이스 이름 변경 권장
+public class PostLikeServiceImpl implements PostLikeService { // PostLikeService로 인터페이스 이름 변경 권장
 
     private final PostLikeDAO postLikeDAO;
     private final PostDAO postDAO;
