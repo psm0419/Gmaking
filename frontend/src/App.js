@@ -41,6 +41,9 @@ import AboutPage from './pages/footer/About';
 import TeamPage from './pages/footer/TeamPage';
 import TypingGame from './pages/game/minigame/TypingGame';
 import DailyQuestPage from './pages/DailyQuestPage';
+import NoticeListPage from './pages/notice/NoticeListPage';
+import NoticeDetailPage from './pages/notice/NoticeDetailPage';
+import NoticeManagePage from './pages/notice/NoticeManagePage';
 
 
 // ProtectedRoute: 로그인 확인
@@ -112,7 +115,9 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/quest" element={<DailyQuestPage />} />
-                
+                <Route path="/notice" element={<NoticeListPage />} />
+                <Route path="/notice/:noticeId" element={<NoticeDetailPage />} />
+
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
                 <Route path="/create-character" element={<ProtectedRoute><CharacterCreationPage /></ProtectedRoute>} />
@@ -135,6 +140,8 @@ function App() {
                 <Route path="/battlemode" element={<BattleModeSelectPage />} />
                 <Route path="/minigame/memory" element={<MemoryGame />} />
                 <Route path="/minigame/typing" element={<TypingGame />} />
+                <Route path="/admin/notice/new" element={<ProtectedRoute><NoticeManagePage /></ProtectedRoute>} />
+                <Route path="/admin/notice/:noticeId/edit" element={<ProtectedRoute><NoticeManagePage /></ProtectedRoute>} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
