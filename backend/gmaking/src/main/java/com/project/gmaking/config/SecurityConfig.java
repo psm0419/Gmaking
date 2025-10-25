@@ -141,6 +141,14 @@ public class SecurityConfig {
                         // 조회수 증가
                         .requestMatchers(HttpMethod.POST, "/community/view/**").permitAll()
 
+                        // 공지 등록, 수정, 삭제 (ADMIN만 허용)
+                        .requestMatchers(HttpMethod.POST, "/api/notices").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/notices/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notices/**").hasRole("ADMIN")
+
+                        // 2. 공지 목록 및 상세 조회 (인증 없이 모두 허용)
+                        .requestMatchers(HttpMethod.GET, "/api/notices/**").permitAll()
+
                         // 나머지 모든 요청은 인증된 사용자에게만 허용
                         .anyRequest().authenticated()
                 )
