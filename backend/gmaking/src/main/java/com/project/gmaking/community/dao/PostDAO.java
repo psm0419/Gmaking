@@ -5,6 +5,7 @@ import com.project.gmaking.community.vo.PostVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface PostDAO {
@@ -32,4 +33,10 @@ public interface PostDAO {
 
     // 게시글 조회수 1 증가
     int incrementViewCount(Long postId);
+
+    // 카테고리별 게시글 수를 조회하는 메서드 추가
+    List<Map<String, Object>> selectCategoryCounts();
+
+    // 좋아요 수가 많은 상위 3개 게시글을 조회
+    List<PostVO> selectHotPosts();
 }

@@ -22,7 +22,7 @@ const CreatePostPage = () => {
     const [submissionMessage, setSubmissionMessage] = useState(null);
     
     // 카테고리 목록
-    const categories = ['자유 게시판', '질문/답변', '팁/정보', '거래'];
+    const categories = ['자유 게시판', '질문/답변', '팁/정보'];
     
     // 💡 뒤로가기/취소 처리 함수 추가
     const handleGoBack = () => {
@@ -155,7 +155,7 @@ const CreatePostPage = () => {
 
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
+        <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
             <Header />
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow w-full">

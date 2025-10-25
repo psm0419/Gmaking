@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,5 +156,36 @@ public class PostService {
         result.put("newLikeCount", finalCount);
 
         return result;
+    }
+
+    // 카테고리별 게시글 수를 조회하는 메서드
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getCategoryCounts() {
+        // 1. DAO를 통해 카테고리별 개수를 가져옵니다.
+        List<Map<String, Object>> categoryCounts = postDAO.selectCategoryCounts();
+
+        // 2. [선택] '전체' 카테고리를 맨 앞에 추가하고 총합을 계산합니다.
+        long totalCount = categoryCounts.stream()
+                .mapToLong(map -> ((Number) map.get("postCount")).longValue())
+                .sum();
+
+        Map<String, Object> totalCategory = new HashMap<>();
+        totalCategory.put("categoryCode", "ALL");
+        totalCategory.put("postCount", totalCount);
+
+        // 3. '전체' 카테고리를 리스트 맨 앞에 추가합니다.
+        List<Map<String, Object>> result = new ArrayList<>();
+        result.add(totalCategory);
+        result.addAll(categoryCounts);
+
+        // 4. [선택] categoryCode를 React에서 사용하기 편한 'name'으로 변환하는 로직 추가 가능
+
+        return result;
+    }
+
+    // 좋아요 수 기준 상위 3개 인기 게시글을 조회하는 메서드
+    @Transactional(readOnly = true)
+    public List<PostVO> getHotPosts() {
+        return postDAO.selectHotPosts();
     }
 }

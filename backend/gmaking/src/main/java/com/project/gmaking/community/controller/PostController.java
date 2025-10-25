@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -115,8 +116,28 @@ public class PostController {
     // 게시글 목록 조회 (수정 없음)
     @GetMapping
     public ResponseEntity<PostListDTO> getPostList(
-            @ModelAttribute PostPagingVO postPagingVO
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int amount,
+            @RequestParam(required = false) String categoryCode,
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String searchKeyword
     ) {
+        // 1. PostPagingVO 객체 생성
+        PostPagingVO postPagingVO = new PostPagingVO(pageNum, amount);
+
+        // 2. 검색 관련 필드 설정
+        if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            // 프론트의 'searchKeyword'를 VO의 'keyword' 필드에 설정
+            postPagingVO.setKeyword(searchKeyword);
+        }
+
+        // 검색 타입이 없으면 기본값('TC' - 제목+내용)을 설정합니다.
+        postPagingVO.setSearchType(searchType != null && !searchType.isEmpty() ? searchType : "TC");
+
+        // 3. 카테고리 필드 설정
+        postPagingVO.setCategoryCode(categoryCode);
+
+        // 4. 서비스 호출
         PostListDTO postListDTO = postService.getPostList(postPagingVO);
         return new ResponseEntity<>(postListDTO, HttpStatus.OK);
     }
@@ -179,5 +200,17 @@ public class PostController {
             System.err.println("게시글 삭제 중 오류 발생: " + e.getMessage());
             return new ResponseEntity<>("게시글 삭제 실패", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<Map<String, Object>>> getCategories() {
+        List<Map<String, Object>> categories = postService.getCategoryCounts();
+        return ResponseEntity.ok(categories);
+    }
+
+    @GetMapping("/hot-posts")
+    public ResponseEntity<List<PostVO>> getHotPosts() {
+        List<PostVO> hotPosts = postService.getHotPosts();
+        return ResponseEntity.ok(hotPosts);
     }
 }

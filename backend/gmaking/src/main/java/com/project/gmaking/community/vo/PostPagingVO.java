@@ -11,11 +11,13 @@ public class PostPagingVO {
 
     // 요청 파라미터
     private int pageNum = 1; // 현재 페이지 번호(기본 1)
-    private int amount = 10; // 페이지당 게시글 수(기본 10)
+    private int amount = 5; // 페이지당 게시글 수(기본 5)
 
     private String userId;
     private String searchType;
     private String keyword;
+
+    private String categoryCode;
 
     // 계산된 필드
     private int totalCount;         // 전체 게시글 수
@@ -37,6 +39,7 @@ public class PostPagingVO {
         this.userId = userId;
         this.searchType = searchType;
         this.keyword = keyword;
+        this.categoryCode = categoryCode;
     }
 
     // LIMIT 절의 OFFSET 계산

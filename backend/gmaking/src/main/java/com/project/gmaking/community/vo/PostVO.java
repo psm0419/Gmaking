@@ -17,6 +17,7 @@ public class PostVO {
     private String categoryCode;
     private Long viewCount;
     private Long likeCount;
+    private Long replyCount;
     private String isDeleted;
 
     private LocalDateTime createdDate;

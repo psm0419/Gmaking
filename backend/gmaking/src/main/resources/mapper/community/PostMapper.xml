@@ -9,6 +9,7 @@
         <result property="userNickname" column="USER_NICKNAME" /> <result property="categoryCode" column="CATEGORY_CODE" />
         <result property="viewCount" column="VIEW_COUNT" />
         <result property="likeCount" column="LIKE_COUNT" />
+        <result property="replyCount" column="REPLY_COUNT" />
         <result property="isDeleted" column="IS_DELETED" />
 
         <result property="createdDate" column="CREATED_DATE" />
@@ -64,17 +65,28 @@
         p.UPDATED_DATE,
         p.CATEGORY_CODE,
         p.VIEW_COUNT,
+        p.IS_DELETED,
 
-        u.USER_NICKNAME,  (
+        u.USER_NICKNAME,
+
+        (
         SELECT COUNT(l.POST_ID)
         FROM TB_COMMUNITY_LIKE l
         WHERE l.POST_ID = p.POST_ID
         ) AS LIKE_COUNT,
-        p.IS_DELETED,
+
+        (
+        SELECT COUNT(r.COMMENT_ID)
+        FROM TB_COMMUNITY_COMMENT r
+        WHERE r.POST_ID = p.POST_ID AND r.IS_DELETED = 0
+        ) AS REPLY_COUNT,
+
         p.CREATED_BY,
         p.UPDATED_BY
+
         FROM TB_COMMUNITY_POST p
-        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID  WHERE p.POST_ID = #{postId}
+        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID
+        WHERE p.POST_ID = #{postId}
     </select>
 
     <delete id="deletePost">
@@ -92,29 +104,101 @@
         p.UPDATED_DATE,
         p.CATEGORY_CODE,
         p.VIEW_COUNT,
+        p.IS_DELETED,
 
-        u.USER_NICKNAME,  (
+        u.USER_NICKNAME,
+
+        (
         SELECT COUNT(l.POST_ID)
         FROM TB_COMMUNITY_LIKE l
         WHERE l.POST_ID = p.POST_ID
         ) AS LIKE_COUNT,
-        p.IS_DELETED,
+
+        (
+        SELECT COUNT(c.COMMENT_ID)
+        FROM TB_COMMUNITY_COMMENT c
+        WHERE c.POST_ID = p.POST_ID AND c.IS_DELETED = 0
+        ) AS REPLY_COUNT,
+
         p.CREATED_BY,
         p.UPDATED_BY
+
         FROM TB_COMMUNITY_POST p
-        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID  <where>
-        <include refid="criteria"/>
-    </where>
+        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID
+
+        <where>
+            p.IS_DELETED = 'N'
+            <if test="keyword != null and keyword != ''">
+                AND (
+                <choose>
+                    <when test="searchType == 'T'.toString()">
+                        p.TITLE LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'C'.toString()">
+                        p.CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'W'.toString()">
+                        u.USER_NICKNAME LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchType == 'TC'.toString() or searchType == null or searchType == ''">
+                        p.TITLE LIKE CONCAT('%', #{keyword}, '%')
+                        OR p.CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        p.TITLE LIKE CONCAT('%', #{keyword}, '%')
+                        OR p.CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                        OR u.USER_NICKNAME LIKE CONCAT('%', #{keyword}, '%')
+                    </otherwise>
+                </choose>
+                )
+            </if>
+            <if test="userId != null and userId != ''">
+                AND p.USER_ID = #{userId} </if>
+            <if test="categoryCode != null and categoryCode != '' and categoryCode != 'ALL'.toString()">
+                AND p.CATEGORY_CODE = #{categoryCode}
+            </if>
+        </where>
         ORDER BY p.POST_ID DESC
         LIMIT #{amount} OFFSET #{skip}
     </select>
 
     <select id="selectPostCount" resultType="int">
-        SELECT COUNT(*)
-        FROM TB_COMMUNITY_POST
-        <where>
-            <include refid="criteria"/>
-        </where>
+        SELECT
+        COUNT(p.POST_ID)
+        FROM TB_COMMUNITY_POST p
+        LEFT JOIN TB_USER u ON p.USER_ID = u.USER_ID <where>
+        p.IS_DELETED = 'N'
+        <if test="keyword != null and keyword != ''">
+            AND (
+            <choose>
+                <when test="searchType == 'T'.toString()">
+                    p.TITLE LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'C'.toString()">
+                    p.CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'W'.toString()">
+                    u.USER_NICKNAME LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'TC'.toString() or searchType == null or searchType == ''">
+                    p.TITLE LIKE CONCAT('%', #{keyword}, '%')
+                    OR p.CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    p.TITLE LIKE CONCAT('%', #{keyword}, '%')
+                    OR p.CONTENT LIKE CONCAT('%', #{keyword}, '%')
+                    OR u.USER_NICKNAME LIKE CONCAT('%', #{keyword}, '%')
+                </otherwise>
+            </choose>
+            )
+        </if>
+        <if test="userId != null and userId != ''">
+            AND p.USER_ID = #{userId}
+        </if>
+        <if test="categoryCode != null and categoryCode != '' and categoryCode != 'ALL'.toString()">
+            AND p.CATEGORY_CODE = #{categoryCode}
+        </if>
+    </where>
     </select>
 
     <update id="updatePostLikeCount">
@@ -135,4 +219,32 @@
         WHERE post_id = #{postId}
     </update>
 
+    <select id="selectCategoryCounts" resultType="map">
+        SELECT
+        p.CATEGORY_CODE AS categoryCode,
+        COUNT(p.POST_ID) AS postCount
+        FROM TB_COMMUNITY_POST p
+        WHERE p.IS_DELETED = 'N'
+        GROUP BY p.CATEGORY_CODE
+        ORDER BY postCount DESC
+    </select>
+
+    <select id="selectHotPosts" resultMap="postResultMap">
+        SELECT
+        p.POST_ID,
+        p.TITLE,
+        p.USER_ID,
+
+        (
+        SELECT COUNT(l.POST_ID)
+        FROM TB_COMMUNITY_LIKE l
+        WHERE l.POST_ID = p.POST_ID
+        ) AS LIKE_COUNT
+
+        FROM TB_COMMUNITY_POST p
+        WHERE p.IS_DELETED = 'N'
+
+        ORDER BY LIKE_COUNT DESC, p.POST_ID DESC
+        LIMIT 3
+    </select>
 </mapper>
