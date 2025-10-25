@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 import { getNoticeDetail, createNotice, updateNotice } from '../../api/noticeApi';
 
 const NoticeManagePage = () => {

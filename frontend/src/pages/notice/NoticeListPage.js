@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { List, Plus, Eye } from 'lucide-react';
+import { Plus, Eye } from 'lucide-react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { getNotices } from '../../api/noticeApi';
 const NoticeItem = ({ title, authorNickname, date, noticeId, navigate, viewCount, isPinned }) => {
     const tagColor = isPinned ? 'bg-red-600' : 'bg-gray-600';
     const titleStyle = isPinned ? 'font-bold text-red-300' : 'font-medium text-white';
+    const displayAuthor = authorNickname === 'admin' ? '관리자' : authorNickname;
 
     return (
         <div 
@@ -27,7 +28,7 @@ const NoticeItem = ({ title, authorNickname, date, noticeId, navigate, viewCount
 
             {/* 정보 (모바일에서는 숨김) */}
             <div className="hidden sm:flex items-center text-sm text-gray-400 space-x-6 flex-shrink-0">
-                <span className="w-20 truncate text-center">{authorNickname}</span>
+                <span className="w-20 truncate text-center">{displayAuthor}</span>
                 
                 <div className="flex items-center space-x-1.5 w-12 justify-center">
                     <Eye className="w-4 h-4 text-gray-500" />

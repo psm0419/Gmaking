@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Eye, User, Edit, Trash2, List } from 'lucide-react';
 import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 import { useAuth } from '../../context/AuthContext';
 import { getNoticeDetail, deleteNotice } from '../../api/noticeApi'; // ⭐️ API 호출 함수 import
 
@@ -116,7 +115,7 @@ const NoticeDetailPage = () => {
                         <div className="flex flex-wrap items-center text-sm text-slate-400 mt-2 space-x-4 sm:space-x-6">
                             <span className="flex items-center">
                                 <User className="w-4 h-4 mr-1 text-slate-500" />
-                                {notice.createdBy}
+                                {notice.createdBy === 'admin' ? '관리자' : notice.createdBy}
                             </span>
                             <span className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1 text-slate-500" />
