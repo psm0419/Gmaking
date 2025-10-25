@@ -1,14 +1,13 @@
-import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ChevronRight, List } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import UserCharacterSummary from '../components/home/UserCharacterSummary';
 import CharacterCreationPrompt from '../components/home/CharacterCreationPrompt';
 import { useNavigate } from 'react-router-dom';
-
+import { getNotices } from '../api/noticeApi';
 
 const GuideLink = ({ title, href = "/guide" }) => (
     <a
@@ -31,6 +30,17 @@ const HomePage = () => {
         : 0;
     const isAdFree = !!user?.isAdFree;
     const navigate = useNavigate();
+    const [recentNotices, setRecentNotices] = useState([]);
+
+    const fetchRecentNotices = async () => {
+        try {
+            // 페이지 1에서 4개만 가져오도록 요청
+            const data = await getNotices(1, 8);
+            setRecentNotices(data.noticeList || []);
+        } catch (error) {
+            console.error("최신 공지사항 목록 조회 실패:", error);
+        }
+    };
 
     useEffect(() => {
         const t = localStorage.getItem('gmaking_token');
@@ -47,17 +57,14 @@ const HomePage = () => {
         }
     }, []);
 
+    useEffect(() => {
+        fetchRecentNotices();
+    }, []);
+
     // 슬라이드 배너 및 이벤트 더미 데이터
     const slideBanner = {
         img: process.env.PUBLIC_URL + "/GmakingMain.png",
     };
-
-    const events = [
-        { title: "[이벤트] 7일 접속 보상!", date: "10.01 ~ 10.07" },
-        { title: "[업데이트] 신규 코스튬 출시", date: "2025.10.01" },
-        { title: "[공지] 점검 완료 및 보상 지급", date: "2025.09.30" },
-        { title: "[이벤트] 출석 체크 보상 UP", date: "2025.09.28" },
-    ];
 
     React.useEffect(() => {
         document.body.classList.add('no-scrollbar');
@@ -109,16 +116,41 @@ const HomePage = () => {
 
                         {/* 왼쪽: 이벤트 목록 및 업데이트 정보 */}
                         <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-                            <h3 className="text-2xl font-bold mb-4 text-white border-b border-yellow-400 pb-2">
-                                이벤트 / 업데이트
-                            </h3>
+                            <div className="flex justify-between items-center mb-4 border-b border-yellow-400 pb-2">
+                                <h3 className="text-2xl font-bold text-white flex items-center">
+                                     <List className="w-6 h-6 mr-2 text-yellow-400" />
+                                    공지사항
+                                </h3>
+                                {/* 전체 목록 보기 버튼 */}
+                                <a 
+                                    href="/notice"
+                                    className="text-sm text-yellow-400 hover:text-yellow-300 transition font-medium flex items-center"
+                                    onClick={(e) => { e.preventDefault(); navigate('/notice'); }}
+                                >
+                                    더보기 <ChevronRight className="w-4 h-4 ml-1" />
+                                </a>
+                            </div>
                             <div className="space-y-3">
-                                {events.map((item, index) => (
-                                    <p key={index} className="text-gray-300 text-sm flex justify-between hover:text-yellow-400 transition cursor-pointer">
-                                        <span className="truncate">{item.title}</span>
-                                        <span className="text-gray-500 ml-4 flex-shrink-0">[{item.date}]</span>
+                                {recentNotices.length > 0 ? (
+                                    recentNotices.map((notice) => (
+                                        <p 
+                                            key={notice.noticeId} 
+                                            className="text-gray-300 text-sm flex justify-between hover:text-yellow-400 transition cursor-pointer"
+                                            onClick={() => navigate(`/notice/${notice.noticeId}`)}
+                                        >
+                                            <span className={`truncate ${notice.isPinned ? 'font-bold text-red-400' : ''}`}>
+                                                [{notice.isPinned ? '공지' : '일반'}] {notice.noticeTitle}
+                                            </span>
+                                            <span className="text-gray-500 ml-4 flex-shrink-0">
+                                                [{new Date(notice.createdDate).toLocaleDateString().slice(0, -1)}]
+                                            </span>
+                                        </p>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-500 text-center py-5">
+                                        등록된 공지사항이 없습니다.
                                     </p>
-                                ))}
+                                )}
                             </div>
                         </div>
 
