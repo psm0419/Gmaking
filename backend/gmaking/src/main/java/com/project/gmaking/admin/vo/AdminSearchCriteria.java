@@ -23,6 +23,7 @@ public class AdminSearchCriteria {
     private String filterIsSale;        // 상품 목록: 판매 여부 (IS_SALE) (Y/N)
     private String filterCategory;      // 게시글 목록: 카테고리 (CATEGORY_CODE)
     private String filterIsDeleted;     // 게시글 목록: 삭제 여부 (IS_DELETED) (Y/N)
+    private String filterType;          // 신고 목록: 대상 타입 (TARGET_TYPE)
 
     public AdminSearchCriteria() {
         this.page = 1;

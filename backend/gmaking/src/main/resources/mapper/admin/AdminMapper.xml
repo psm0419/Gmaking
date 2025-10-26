@@ -92,6 +92,23 @@
         <result property="commentCount" column="COMMENT_COUNT"/>
     </resultMap>
 
+    <resultMap id="ReportVOResultMap" type="com.project.gmaking.admin.vo.ReportVO">
+        <id property="reportId" column="REPORT_ID"/>
+        <result property="targetType" column="TARGET_TYPE"/>
+        <result property="targetId" column="TARGET_ID"/>
+        <result property="reporterId" column="REPORTER_ID"/>
+        <result property="reasonCode" column="REASON_CODE"/>
+        <result property="reasonDetail" column="REASON_DETAIL"/>
+        <result property="status" column="STATUS"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="updatedDate" column="UPDATED_DATE"/>
+
+        <result property="reporterNickname" column="REPORTER_NICKNAME"/>
+        <result property="processorNickname" column="PROCESSOR_NICKNAME"/>
+    </resultMap>
+
     <!-- .............................................................. -->
 
     <sql id="userWhereClause">
@@ -139,6 +156,7 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <!-- .............................................................. -->
 
     <sql id="characterWhereClause">
         <where>
@@ -175,6 +193,7 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <!-- .............................................................. -->
 
     <sql id="purchaseWhereClause">
         <where>
@@ -213,6 +232,7 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <!-- .............................................................. -->
 
     <sql id="inventoryWhereClause">
         <where>
@@ -249,6 +269,7 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <!-- .............................................................. -->
 
     <sql id="productWhereClause">
         <where>
@@ -281,6 +302,8 @@
         t1.PRODUCT_ID DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
+
+    <!-- .............................................................. -->
 
     <sql id="postWhereClause">
         <where>
@@ -327,6 +350,49 @@
             <include refid="postWhereClause"/>
         ORDER BY
         t1.CREATED_DATE DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- .............................................................. -->
+
+    <sql id="reportWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND (
+                T2.USER_NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%')
+                OR T1.REASON_DETAIL LIKE CONCAT('%', #{searchKeyword}, '%')
+                )
+            </if>
+            <if test="filterStatus != null and filterStatus != ''">
+                AND T1.STATUS = #{filterStatus}
+            </if>
+            <if test="filterType != null and filterType != ''">
+                AND T1.TARGET_TYPE = #{filterType}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllReports" resultType="int">
+        SELECT
+            COUNT(T1.REPORT_ID)
+        FROM
+            tb_report T1
+        JOIN
+            tb_user T2 ON T1.REPORTER_ID = T2.USER_ID
+            <include refid="reportWhereClause"/>
+    </select>
+
+    <select id="selectAllReports" resultMap="ReportVOResultMap">
+        SELECT
+        T1.REPORT_ID, T1.TARGET_TYPE, T1.TARGET_ID, T1.REPORTER_ID, T1.REASON_CODE, T1.REASON_DETAIL,
+        T1.STATUS, T1.CREATED_DATE, T1.UPDATED_DATE, T1.CREATED_BY, T1.UPDATED_BY,
+        NULL AS REPORTER_NICKNAME,  T3.USER_NICKNAME AS PROCESSOR_NICKNAME
+        FROM
+        tb_report T1
+        LEFT JOIN
+        tb_user T3 ON T1.UPDATED_BY = T3.USER_ID  <include refid="reportWhereClause"/>
+        ORDER BY
+        T1.CREATED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 

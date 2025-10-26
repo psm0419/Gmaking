@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, Bot, DollarSign, Archive, Package, MessageSquare } from 'lucide-react'; 
+import { Users, Bot, DollarSign, Archive, Package, MessageSquare, AlertTriangle } from 'lucide-react'; 
 import Header from '../../components/Header';
 import UserManagementTab from './UserManagementTab';
 import CharacterManagementTab from './CharacterManagementTab';
@@ -9,6 +9,7 @@ import PurchaseManagementTab from './PurchaseManagementTab';
 import InventoryManagementTab from './InventoryManagementTab';
 import ProductManagementTab from './ProductManagementTab';
 import CommunityPostManagementTab from './CommunityPostManagementTab';
+import ReportManagementTab from './ReportManagementTab';
 
 const TabButton = ({ isActive, onClick, icon, label }) => (
     <button
@@ -56,6 +57,8 @@ const AdminPage = () => {
                 return <ProductManagementTab />;
             case 'posts': 
                 return <CommunityPostManagementTab />;
+            case 'reports':
+                return <ReportManagementTab />;
             default:
                 return null;
         }
@@ -123,6 +126,12 @@ const AdminPage = () => {
                         onClick={() => handleTabChange('posts')}
                         icon={<MessageSquare className="w-5 h-5 mr-2" />}
                         label={`게시글 관리`}
+                    />
+                    <TabButton 
+                        isActive={activeTab === 'reports'} 
+                        onClick={() => handleTabChange('reports')}
+                        icon={<AlertTriangle className="w-5 h-5 mr-2" />}
+                        label={`신고 관리`}
                     />
                 </div>
 

@@ -91,6 +91,20 @@ export const fetchAllPosts = async (token, params = {}) => {
     const response = await axios.get(`${API_BASE_URL}/posts?${queryString}`, { 
         headers: getAuthHeaders(token) 
     });
-    
+    return response.data;
+};
+
+/**
+ * 8. 신고 목록 조회 (페이징/검색/필터 적용)
+ * GET /api/admin/reports
+ * @param {string} token 사용자 인증 토큰
+ * @param {object} params 검색 조건 객체 ({ page, pageSize, searchKeyword, filterStatus, filterType })
+ * @returns {Promise<object>} 신고 목록 데이터 및 페이징 정보
+ */
+export const fetchAllReports = async (token, params = {}) => {
+    const queryString = buildQueryString(params);
+    const response = await axios.get(`${API_BASE_URL}/reports?${queryString}`, { 
+        headers: getAuthHeaders(token) 
+    });
     return response.data;
 };

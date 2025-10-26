@@ -120,4 +120,20 @@ public class AdminController {
         Map<String, Object> result = adminService.getAllPosts(criteria);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/reports")
+    public ResponseEntity<Map<String, Object>> getAllReports(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(required = false) String searchKeyword,
+            @RequestParam(required = false) String filterStatus,
+            @RequestParam(required = false) String filterType
+    ) {
+        AdminSearchCriteria criteria = createCriteria(page, pageSize, searchKeyword);
+        criteria.setFilterStatus(filterStatus);
+        criteria.setFilterType(filterType);
+
+        Map<String, Object> result = adminService.getAllReports(criteria);
+        return ResponseEntity.ok(result);
+    }
 }

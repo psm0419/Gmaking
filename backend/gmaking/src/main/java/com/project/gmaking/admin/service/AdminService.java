@@ -82,6 +82,7 @@ public class AdminService {
         return result;
     }
 
+    // 게시글 목록 조회
     public Map<String, Object> getAllProducts(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllProducts(criteria);
         List<ProductVO> products = adminDAO.selectAllProducts(criteria);
@@ -97,12 +98,28 @@ public class AdminService {
         return result;
     }
 
+    // 신고 목록 조회
     public Map<String, Object> getAllPosts(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllPosts(criteria);
         List<CommunityPostVO> posts = adminDAO.selectAllPosts(criteria);
 
         Map<String, Object> result = new HashMap<>();
         result.put("list", posts);
+        result.put("totalCount", totalCount);
+        result.put("currentPage", criteria.getPage());
+        result.put("pageSize", criteria.getPageSize());
+        int totalPages = (int) Math.ceil((double) totalCount / criteria.getPageSize());
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    public Map<String, Object> getAllReports(AdminSearchCriteria criteria) {
+        int totalCount = adminDAO.countAllReports(criteria);
+        List<ReportVO> reports = adminDAO.selectAllReports(criteria);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("list", reports);
         result.put("totalCount", totalCount);
         result.put("currentPage", criteria.getPage());
         result.put("pageSize", criteria.getPageSize());
