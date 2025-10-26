@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Wand2, RefreshCw, CheckCircle, AlertTriangle, Trophy } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { generateCharacterPreview, finalizeCharacter } from '../api/characterCreation/characterCreationApi';
+import { useAuth } from '../../context/AuthContext';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import { generateCharacterPreview, finalizeCharacter } from '../../api/characterCreation/characterCreationApi';
 
 const CharacterCreationPage = () => {
     const navigate = useNavigate();

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "react-router-dom";
 
 const Footer = () => {
     return (
@@ -9,9 +10,9 @@ const Footer = () => {
                 <div>
                     <h4 className="text-gray-200 font-semibold mb-3">겜만중 소개</h4>
                     <ul className="space-y-2">
-                        <li><a href="/about" className="hover:text-white">플랫폼 개요</a></li>
-                        <li><a href="/team" className="hover:text-white">개발자 소개</a></li>
-                        <li><a href="/news" className="hover:text-white">공지사항</a></li>
+                        <li><Link to="/about" className="hover:text-white">플랫폼 개요</Link></li>
+                        <li><Link to="/team" className="hover:text-white">개발자 소개</Link></li>
+                        <li><Link to="/notice" className="hover:text-white">공지사항</Link></li>
                     </ul>
                 </div>
 
@@ -19,9 +20,8 @@ const Footer = () => {
                 <div>
                     <h4 className="text-gray-200 font-semibold mb-3">이용 안내</h4>
                     <ul className="space-y-2">
-                        <li><a href="/guide" className="hover:text-white">이용 가이드</a></li>
-                        <li><a href="/faq" className="hover:text-white">자주 묻는 질문</a></li>
-                        <li><a href="/support" className="hover:text-white">고객 지원</a></li>
+                        <li><Link to="/guide" className="hover:text-white">이용 가이드</Link></li>
+                        <li><Link to="/faq" className="hover:text-white">자주 묻는 질문</Link></li>
                     </ul>
                 </div>
 
@@ -29,9 +29,9 @@ const Footer = () => {
                 <div>
                     <h4 className="text-gray-200 font-semibold mb-3">정책</h4>
                     <ul className="space-y-2">
-                        <li><a href="/terms" className="hover:text-white">이용약관</a></li>
-                        <li><a href="/privacy" className="hover:text-white">개인정보처리방침</a></li>
-                        <li><a href="/license" className="hover:text-white">오픈소스 라이선스</a></li>
+                        <li><Link to="/terms" className="hover:text-white">이용약관</Link></li>
+                        <li><Link to="/privacy" className="hover:text-white">개인정보처리방침</Link></li>
+                        <li><Link to="/license" className="hover:text-white">오픈소스 라이선스</Link></li>
                     </ul>
                 </div>
 
@@ -42,9 +42,30 @@ const Footer = () => {
                         <li>이메일: support@gmaking.com</li>
                         <li>전화: 010-1234-5678</li>
                         <li className="flex space-x-3 mt-2">
-                            <a href="https://github.com/psm0419/Gmaking" className="hover:text-white">GitHub</a>
-                            <a href="https://www.notion.so/a7add19eacaa421892bc570f0c970733" className="hover:text-white">Notion</a>
-                            <a href="https://discord.gg/xR6mhfz6" className="hover:text-white">Discord</a>
+                            <a
+                                href="https://github.com/psm0419/Gmaking"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-white"
+                            >
+                                GitHub
+                            </a>
+                            <a
+                                href="https://www.notion.so/a7add19eacaa421892bc570f0c970733"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-white"
+                            >
+                                Notion
+                            </a>
+                            <a
+                                href="https://discord.gg/xR6mhfz6"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-white"
+                            >
+                                Discord
+                            </a>
                         </li>
                     </ul>
                 </div>

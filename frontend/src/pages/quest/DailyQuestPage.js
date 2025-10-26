@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../context/AuthContext";
-import Header from '../components/Header';
+import { useAuth } from "../../context/AuthContext";
+import Header from '../../components/Header';
 
 export default function DailyQuestPage() {
     const { user, token, applyNewToken } = useAuth();

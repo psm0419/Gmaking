@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Users, Bot, DollarSign, Archive } from 'lucide-react'; 
-import Header from '../components/Header';
-import UserManagementTab from './admin/UserManagementTab';
-import CharacterManagementTab from './admin/CharacterManagementTab';
-import PurchaseManagementTab from './admin/PurchaseManagementTab';
-import InventoryManagementTab from './admin/InventoryManagementTab';
+import Header from '../../components/Header';
+import UserManagementTab from './UserManagementTab';
+import CharacterManagementTab from './CharacterManagementTab';
+import PurchaseManagementTab from './PurchaseManagementTab';
+import InventoryManagementTab from './InventoryManagementTab';
 
 
 const TabButton = ({ isActive, onClick, icon, label }) => (

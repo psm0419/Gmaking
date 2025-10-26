@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 function RankingPage() {
     const [rankingType, setRankingType] = useState("character");

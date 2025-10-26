@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 
 import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
-import CharacterCreationPage from './pages/CharacterCreationPage';
+import CharacterCreationPage from './pages/characterCreation/CharacterCreationPage';
 import RegisterPage from './pages/account/RegisterPage';
 import FindIdPage from './pages/account/FindPasswordPage';
 import FindPasswordPage from './pages/account/FindPasswordPage';
@@ -15,14 +15,14 @@ import MyPage from './pages/mypage/MyPage';
 import PveBattlePage from './pages/game/pve/PveBattlePage';
 import MapSelection from './pages/game/pve/MapSelection';
 import WithdrawPage from './pages/account/WithdrawPage';
-import ShopPage from "./pages/ShopPage";
+import ShopPage from "./pages/shop/ShopPage";
 import ChatEntryPage from './pages/mypage/ChatEntryPage';
 import CommunityPage from './pages/community/CommunityPage';
 import CreatePostPage from './pages/community/CreatePostPage';
 import PostDetailPage from './pages/community/PostDetailPage';
 import BattleLogList from './pages/battleLog/BattleLogList';
 import TurnLogList from './pages/battleLog/TurnLogList';
-import RankingPage from './pages/RankingPage';
+import RankingPage from './pages/ranking/RankingPage';
 import AiDebatePage from './pages/game/debate/AiDebatePage';
 import ProfileEditPage from'./pages/community/ProfileEditPage';
 import PvpMatchPage from './pages/game/pvp/PvpMatchPage';
@@ -40,11 +40,12 @@ import GuidePage from './pages/footer/GuidePage';
 import AboutPage from './pages/footer/About';
 import TeamPage from './pages/footer/TeamPage';
 import TypingGame from './pages/game/minigame/TypingGame';
-import DailyQuestPage from './pages/DailyQuestPage';
+import DailyQuestPage from './pages/quest/DailyQuestPage';
 import NoticeListPage from './pages/notice/NoticeListPage';
 import NoticeDetailPage from './pages/notice/NoticeDetailPage';
 import NoticeManagePage from './pages/notice/NoticeManagePage';
-import AdminPage from './pages/AdminPage';
+import AdminPage from './pages/admin/AdminPage';
+import FaqPage from './pages/footer/FaqPage';
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
@@ -117,6 +118,7 @@ function App() {
                 <Route path="/quest" element={<DailyQuestPage />} />
                 <Route path="/notice" element={<NoticeListPage />} />
                 <Route path="/notice/:noticeId" element={<NoticeDetailPage />} />
+                <Route path="/faq" element={<FaqPage />} />
 
                 {/* 보호 경로 */}
                 <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />

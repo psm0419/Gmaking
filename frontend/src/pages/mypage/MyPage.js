@@ -13,7 +13,7 @@ import { Egg } from "lucide-react";
 import NotificationBell from "../../components/notifications/NotificationBell";
 import PvpResultModal from "../../components/notifications/PvpResultModal";
 
-import GrowthModal from "../GrowthModal";
+import GrowthModal from "../../components/GrowthModal";
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 
