@@ -124,7 +124,7 @@ const ReportManagementTab = () => {
 
     return (
         <div className="overflow-x-auto">
-            <div className="flex items-center justify-start mb-4 space-x-4">
+            <div className="flex items-center justify-between mb-4 space-x-4">
                 
                 {/* 신고 대상 타입 필터 */}
                 <select 
