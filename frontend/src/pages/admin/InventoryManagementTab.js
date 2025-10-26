@@ -92,12 +92,12 @@ const InventoryManagementTab = () => {
                     onChange={handleProductFilterChange}
                     className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-32"
                 >
-                    <option value="">전체 상품</option>
-                    <option value="1">광고 제거 패스 (30일)</option> 
-                    <option value="2">부화기 패키지 (5개)</option>
-                    <option value="3">부화기 대용량 (15개)</option>
-                    <option value="4">부화기</option>
-                    <option value="5">무료 지급 부화기</option>
+                    <option value="">상품 ID</option>
+                    <option value="1">1: 광고 제거 패스 (30일)</option> 
+                    <option value="2">2: 부화기 패키지 (5개)</option>
+                    <option value="3">3: 부화기 대용량 (15개)</option>
+                    <option value="4">4: 부화기</option>
+                    <option value="5">5: 무료 지급 부화기</option>
                 </select>
                 
                 {/* 검색 입력 필드 */}
