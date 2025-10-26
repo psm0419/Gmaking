@@ -130,7 +130,7 @@ const UserManagementTab = () => {
                     {users.map((user) => (
                         <tr key={user.userId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="text-sm font-medium text-white truncate max-w-[160px]">{user.userId}</div>
+                                <div className="text-sm font-medium text-white-400 truncate max-w-[160px]">{user.userId}</div>
                                 <div className="text-xs text-gray-400 truncate">{user.userNickname}</div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">

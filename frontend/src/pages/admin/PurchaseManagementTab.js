@@ -120,7 +120,7 @@ const PurchaseManagementTab = () => {
                         <tr key={p.purchaseId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 text-sm text-gray-300">{p.purchaseId}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="text-sm font-medium text-yellow-400 truncate max-w-[160px]">{p.userId}</div>
+                                <div className="text-sm font-medium text-white-400 truncate max-w-[160px]">{p.userId}</div>
                                 <div className="text-xs text-gray-400 truncate">{p.userNickname}</div>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-[200px]">{p.productNameSnap} ({p.productId})</td>
