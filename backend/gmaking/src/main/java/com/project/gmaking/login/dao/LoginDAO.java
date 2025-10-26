@@ -74,10 +74,9 @@ public interface LoginDAO {
     /**
      * 캐릭터 생성 완료 후, TB_USER의 대표 캐릭터 정보를 업데이트
      * @param userId 사용자 ID
-     * @param characterId 생성된 캐릭터 ID
      * @return 성공적으로 업데이트된 레코드 수
      */
-    int updateUserCharacterInfo(@Param("userId") String userId, @Param("characterId") Integer characterId);
+    int updateUserCharacterInfo(@Param("userId") String userId);
 
     /**
      * 특정 사용자의 부화권 수량을 1 감소

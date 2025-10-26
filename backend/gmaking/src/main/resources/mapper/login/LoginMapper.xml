@@ -164,8 +164,7 @@
     <update id="updateUserCharacterInfo">
         UPDATE TB_USER
         SET
-            HAS_CHARACTER = TRUE,
-            CHARACTER_ID = #{characterId}
+            HAS_CHARACTER = TRUE
         WHERE USER_ID = #{userId}
     </update>
 
