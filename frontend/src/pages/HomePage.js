@@ -84,7 +84,7 @@ const HomePage = () => {
     return (
         <div><Header />
             <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow relative">
+                <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow relative">
 
                     {/* 슬라이드 배너 - 원본 크기 그대로 표시 */}
                     <div className="relative">
