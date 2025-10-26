@@ -19,7 +19,7 @@ const DELETE_STATUS_OPTIONS = [
 
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 7,
     searchKeyword: '',
     filterCategory: '',    
     filterIsDeleted: 'N', 

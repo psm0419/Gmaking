@@ -21,7 +21,7 @@ const STATUS_OPTIONS = [
 
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 7,
     searchKeyword: '',
     filterType: '',       
     filterStatus: 'PENDING',
