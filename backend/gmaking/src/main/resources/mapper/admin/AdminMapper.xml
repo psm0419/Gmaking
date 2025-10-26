@@ -57,6 +57,27 @@
         <result property="userNickname" column="USER_NICKNAME"/>
     </resultMap>
 
+
+    <sql id="userWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND (t1.USER_NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%')
+                OR t1.USER_EMAIL LIKE CONCAT('%', #{searchKeyword}, '%'))
+            </if>
+            <if test="filterRole != null and filterRole != ''">
+                AND t1.ROLE = #{filterRole}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllUsers" resultType="int">
+        SELECT
+            COUNT(t1.USER_ID)
+        FROM
+            tb_user t1
+            <include refid="userWhereClause"/>
+    </select>
+
     <select id="selectAllUsers" resultMap="LoginVOResultMap">
         SELECT
             t1.USER_ID, t1.USER_NAME, t1.USER_EMAIL, t1.USER_NICKNAME, t1.ROLE, t1.CREATED_DATE,
@@ -69,15 +90,39 @@
             tb_character t3 ON t1.CHARACTER_ID = t3.CHARACTER_ID
         LEFT JOIN (
             SELECT USER_ID, COUNT(*) AS CHAR_COUNT FROM tb_character GROUP BY USER_ID
-        ) t4 ON t1.USER_ID = t4.USER_ID
+            ) t4 ON t1.USER_ID = t4.USER_ID
         LEFT JOIN (
             SELECT USER_ID, SUM(QUANTITY) AS INCUBATOR_COUNT
             FROM tb_user_inventory
             WHERE PRODUCT_ID = 999
-        GROUP BY USER_ID
+            GROUP BY USER_ID
         ) t5 ON t1.USER_ID = t5.USER_ID
+        <include refid="userWhereClause"/>
         ORDER BY
         t1.CREATED_DATE DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+
+    <sql id="characterWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND (t1.CHARACTER_NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+                OR t3.USER_NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%'))
+            </if>
+            <if test="filterGradeId != null">
+                AND t1.GRADE_ID = #{filterGradeId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllCharacters" resultType="int">
+        SELECT
+            COUNT(t1.CHARACTER_ID)
+        FROM
+            tb_character t1
+        LEFT JOIN tb_user t3 ON t1.USER_ID = t3.USER_ID
+        <include refid="characterWhereClause"/>
     </select>
 
     <select id="selectAllCharacters" resultMap="CharacterVOResultMap">
@@ -86,10 +131,35 @@
             t1.EVOLUTION_STEP, t1.CREATED_DATE, t2.IMAGE_URL, t3.USER_NICKNAME
         FROM
             tb_character t1
-        LEFT JOIN tb_image t2 ON t1.IMAGE_ID = t2.IMAGE_ID
-        LEFT JOIN tb_user t3 ON t1.USER_ID = t3.USER_ID
+            LEFT JOIN tb_image t2 ON t1.IMAGE_ID = t2.IMAGE_ID
+            LEFT JOIN tb_user t3 ON t1.USER_ID = t3.USER_ID
+            <include refid="characterWhereClause"/>
         ORDER BY
         t1.CREATED_DATE DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+
+    <sql id="purchaseWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND (t2.USER_NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%')
+                OR t1.PRODUCT_NAME_SNAP LIKE CONCAT('%', #{searchKeyword}, '%'))
+            </if>
+            <if test="filterStatus != null and filterStatus != ''">
+                AND t1.STATUS = #{filterStatus}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllPurchases" resultType="int">
+        SELECT
+            COUNT(t1.PURCHASE_ID)
+        FROM
+            tb_purchase t1
+        JOIN
+            tb_user t2 ON t1.USER_ID = t2.USER_ID
+            <include refid="purchaseWhereClause"/>
     </select>
 
     <select id="selectAllPurchases" resultMap="PurchaseVOResultMap">
@@ -101,8 +171,32 @@
             tb_purchase t1
         JOIN
             tb_user t2 ON t1.USER_ID = t2.USER_ID
+            <include refid="purchaseWhereClause"/>
         ORDER BY
         t1.CREATED_DATE DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+
+    <sql id="inventoryWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND t2.USER_NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="filterProductId != null">
+                AND t1.PRODUCT_ID = #{filterProductId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllInventory" resultType="int">
+        SELECT
+            COUNT(t1.INVENTORY_ID)
+        FROM
+            tb_user_inventory t1
+        JOIN
+            tb_user t2 ON t1.USER_ID = t2.USER_ID
+            <include refid="inventoryWhereClause"/>
     </select>
 
     <select id="selectAllInventory" resultMap="InventoryVOResultMap">
@@ -113,8 +207,10 @@
             tb_user_inventory t1
         JOIN
             tb_user t2 ON t1.USER_ID = t2.USER_ID
+            <include refid="inventoryWhereClause"/>
         ORDER BY
         t1.ACQUIRED_DATE DESC
+        LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
 </mapper>
