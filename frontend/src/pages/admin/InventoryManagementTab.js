@@ -119,7 +119,7 @@ const InventoryManagementTab = () => {
                 <thead className="bg-gray-700 text-xs uppercase font-semibold tracking-wider">
                     <tr>
                         <th className="px-4 py-3 text-left min-w-[80px]">ID</th>
-                        <th className="px-4 py-3 text-left min-w-[120px]">닉네임</th>
+                        <th className="px-4 py-3 text-left min-w-[120px]">ID / 닉네임</th>
                         <th className="px-4 py-3 text-left min-w-[180px]">상품 ID</th>
                         <th className="px-4 py-3 text-left min-w-[80px]">보유 개수</th>
                         <th className="px-4 py-3 text-left min-w-[130px]">획득일</th>
@@ -130,7 +130,10 @@ const InventoryManagementTab = () => {
                     {inventory.map((item) => (
                         <tr key={item.inventoryId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 text-sm text-gray-300">{item.inventoryId}</td>
-                            <td className="px-4 py-3 text-sm font-semibold text-yellow-400">{item.userNickname || item.userId}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="text-sm font-medium text-yellow-400 truncate max-w-[160px]">{item.userId}</div>
+                                <div className="text-xs text-gray-400 truncate">{item.userNickname}</div>
+                            </td>
                             <td className="px-4 py-3 text-sm text-gray-300">{item.productId}</td>
                             <td className="px-4 py-3 text-sm text-green-400 font-bold text-center">{item.quantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-400">{new Date(item.acquiredDate).toLocaleDateString()}</td>
