@@ -47,8 +47,8 @@ function MiniGameList() {
     return (
         <div>
             <Header />
-            <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-12 px-6">
-                <h1 className="text-4xl font-bold mb-10">🎮 미니게임 목록</h1>
+            <div className="h-[calc(100vh-60px)] bg-gray-900 text-white flex flex-col items-center py-12 px-6">
+                <h1 className="text-4xl font-bold mb-10">미니게임 목록</h1>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
                     {games.map((game) => (
