@@ -27,7 +27,7 @@ public class AdminSearchCriteria {
 
     public AdminSearchCriteria() {
         this.page = 1;
-        this.pageSize = 8;
+        this.pageSize = 6;
         calculateOffset();
     }
 
@@ -43,7 +43,7 @@ public class AdminSearchCriteria {
     }
 
     public void setPageSize(int pageSize) {
-        this.pageSize = (pageSize <= 0) ? 8 : pageSize;
+        this.pageSize = (pageSize <= 0) ? 6 : pageSize;
         calculateOffset();
     }
 

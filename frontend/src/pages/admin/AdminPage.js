@@ -68,14 +68,14 @@ const AdminPage = () => {
     // 로딩/에러 상태 UI
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center justify-center p-8">
+            <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-8">
                 <p className="text-xl text-yellow-400">관리자 페이지 로딩 중...</p>
             </div>
         );
     }
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center justify-center p-8">
+            <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-8">
                 <p className="text-xl text-red-500">❌ 전역 오류: {error}</p>
             </div>
         );
@@ -84,7 +84,7 @@ const AdminPage = () => {
     return (
         <div className="min-h-screen bg-gray-900 text-white">
             <Header />
-            <div className="max-w-7xl mx-auto p-6 shadow-xl rounded-xl mt-10">
+            <div className="max-w-7xl mx-auto p-5 shadow-xl rounded-xl mt-5">
                 <h1 className="text-3xl font-bold mb-6 text-yellow-400 border-b border-yellow-400 pb-2 flex items-center">
                     <Users className="w-7 h-7 mr-2" /> 관리자 대시보드
                 </h1>

@@ -35,7 +35,7 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(defaultValue = "6") int pageSize,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) String filterRole
     ) {
@@ -65,7 +65,7 @@ public class AdminController {
     @GetMapping("/purchases")
     public ResponseEntity<Map<String, Object>> getAllPurchases(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(defaultValue = "6") int pageSize,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) String filterStatus
     ) {
@@ -80,7 +80,7 @@ public class AdminController {
     @GetMapping("/inventory")
     public ResponseEntity<Map<String, Object>> getAllInventory(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(defaultValue = "6") int pageSize,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer filterProductId
     ) {
@@ -94,7 +94,7 @@ public class AdminController {
     @GetMapping("/products")
     public ResponseEntity<Map<String, Object>> getAllProducts(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(defaultValue = "6") int pageSize,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) String filterIsSale
     ) {
@@ -108,7 +108,7 @@ public class AdminController {
     @GetMapping("/posts")
     public ResponseEntity<Map<String, Object>> getAllPosts(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(defaultValue = "7") int pageSize,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) String filterCategory,
             @RequestParam(required = false) String filterIsDeleted
@@ -124,7 +124,7 @@ public class AdminController {
     @GetMapping("/reports")
     public ResponseEntity<Map<String, Object>> getAllReports(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(defaultValue = "7") int pageSize,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) String filterStatus,
             @RequestParam(required = false) String filterType
