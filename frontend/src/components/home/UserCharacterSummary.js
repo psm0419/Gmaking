@@ -2,7 +2,7 @@ import React, { useCallback} from 'react';
 import { User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { startCharacterGeneration } from '../../api/characterCreationApi';
+import { startCharacterGeneration } from '../../api/characterCreation/characterCreationApi';
 
 const UserCharacterSummary = ({ displayName, characterImageUrl, incubatorCount, isAdFree, characterCount }) => {
     const navigate = useNavigate(); 

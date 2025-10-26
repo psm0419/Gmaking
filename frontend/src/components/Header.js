@@ -2,7 +2,7 @@ import React, { useCallback} from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Bot, User, Gamepad2, Bell, ShoppingCart, Award, MessageSquare, Swords, Scroll, Egg, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { startCharacterGeneration } from '../api/characterCreationApi';
+import { startCharacterGeneration } from '../api/characterCreation/characterCreationApi';
 
 const Header = ({ onInfoClick }) => {
     // isLoggedIn 상태를 추가로 가져옵니다.
@@ -12,6 +12,13 @@ const Header = ({ onInfoClick }) => {
     // 표시될 사용자 이름/닉네임
     const displayName = user?.userNickname || user?.userName || user?.userId;
     const roleColor = user?.role === 'ADMIN' ? 'text-red-400' : 'text-yellow-400';
+
+    const isAdmin = user?.role === 'ADMIN';
+    const userProfilePath = isAdmin ? '/admin' : '/my-page';
+
+    const handleProfileClick = () => {
+        navigate(userProfilePath);
+    };
 
     const handleCharacterCreationStart = useCallback(async (e) => {
         e.preventDefault(); 
@@ -173,7 +180,10 @@ const Header = ({ onInfoClick }) => {
                     {isLoggedIn ? (
                         <div className="flex items-center space-x-4">
                             {user && (
-                                <span onClick={() => navigate('/my-page')} className={`text-lg font-semibold ${roleColor} flex items-center cursor-pointer`}>
+                                <span 
+                                    onClick={handleProfileClick}
+                                    className={`text-lg font-semibold ${roleColor} flex items-center cursor-pointer`} 
+                                >
                                     <User className="w-5 h-5 mr-2" />
                                     {displayName}
                                 </span>

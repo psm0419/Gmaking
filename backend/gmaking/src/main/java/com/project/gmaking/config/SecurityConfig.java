@@ -141,10 +141,16 @@ public class SecurityConfig {
                         // 조회수 증가
                         .requestMatchers(HttpMethod.POST, "/community/view/**").permitAll()
 
+                        // ----------------------------------- 관리자 ----------------------------------- //
+
                         // 공지 등록, 수정, 삭제 (ADMIN만 허용)
                         .requestMatchers(HttpMethod.POST, "/api/notices").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/notices/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notices/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/inventory/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/pvp-logs/**").hasRole("ADMIN")
 
                         // 2. 공지 목록 및 상세 조회 (인증 없이 모두 허용)
                         .requestMatchers(HttpMethod.GET, "/api/notices/**").permitAll()
