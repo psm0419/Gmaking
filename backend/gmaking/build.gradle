@@ -67,6 +67,12 @@ dependencies {
     // Google Cloud Storage Client
     implementation 'com.google.cloud:google-cloud-storage:2.35.0'
 
+    // LangChain4j + OpenAI
+    implementation 'dev.langchain4j:langchain4j:0.34.0'
+    implementation 'dev.langchain4j:langchain4j-spring-boot-starter:0.34.0'
+    implementation 'dev.langchain4j:langchain4j-open-ai:0.34.0'
+
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 }
 
 tasks.named('test') {

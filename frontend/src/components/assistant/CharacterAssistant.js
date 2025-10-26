@@ -6,7 +6,6 @@ import remarkBreaks from "remark-breaks";
 import GuideViewer from "./GuideViewer";
 import usePageGuide from "./UsePageGuide";
 
-
 /** 바깥 클릭 시 닫기 */
 function useOutsideClick(ref, onClickOutside) {
   useEffect(() => {
@@ -25,12 +24,11 @@ function useOutsideClick(ref, onClickOutside) {
 // 동적 import로 가이드 로딩
 async function importGuide() {
   const mod = await import("./GuideContent.js");
-  return (mod.default || mod.GUIDE_CONTENT);
+  return mod.default || mod.GUIDE_CONTENT;
 }
 
 export default forwardRef(function CharacterAssistant(
   {
-
     images = ["/images/character/idle.png"],
     name = "도우미",
     options = ["인사하기", "겜만중이 뭐야?", "AI가 뭐야?", "오늘의 퀘스트", "이 페이지에 대해 알려줄래?"],
@@ -77,6 +75,13 @@ export default forwardRef(function CharacterAssistant(
     onOpenChange?.(next);
     if (openProp === undefined) setOpenUncontrolled(next);
   };
+
+  function truncateAnswer(markdown = "", maxLines = 8) {
+    const lines = String(markdown).split(/\r?\n/);
+    if (lines.length <= maxLines) return markdown;
+    const cut = lines.slice(0, maxLines).join("\n");
+    return cut.trimEnd() + "\n…";
+  }
 
   // ===== Idle/Blink FSM =====
   const [frame, setFrame] = useState(0);
@@ -206,6 +211,8 @@ export default forwardRef(function CharacterAssistant(
   const [messageText, setMessageText] = useState("");
   const [history, setHistory] = useState([]);
   const [ctaForAi, setCtaForAi] = useState(false);
+  // 자동 가이드 버튼 상태 (예: { key: 'characterCreate', label: '캐릭터 생성 가이드' })
+  const [autoGuide, setAutoGuide] = useState(null);
 
   // === Guide (동적 import) ===
   const [showGuide, setShowGuide] = useState(false);
@@ -241,23 +248,71 @@ export default forwardRef(function CharacterAssistant(
     setHistory([]);
     setCtaForAi(false);
     setPageCta(null);
+    setAutoGuide(null);
+
   }, [open]);
 
   function pushSnapshot(h) {
     const s = (messageText ?? "").trim();
     if (!s.length) return h;
-    return [...h, { view, messageText, ctaForAi, pageCta }];
+    return [...h, { view, messageText, ctaForAi, pageCta, autoGuide }];
   }
 
   function handleAsk() {
     const text = (input || "").trim();
     if (!text) return;
+
     onAsk?.(text);
     setHistory((h) => pushSnapshot(h));
-    setMessageText(text);
+    // 1) 질문 에코 + 로딩 문구
+    setMessageText(`**질문:** ${text}\n\n_답변을 준비하고 있어요…_`);
     setView("message");
     setCtaForAi(false);
     setInput("");
+    setAutoGuide(null);
+
+
+    // 백엔드 RAG 호출 (단일 호출)
+    (async () => {
+      try {
+        const res = await fetch(`/api/guide/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: text }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json(); // { answer, sources? }
+
+        // 답변 렌더
+        const answer = data?.answer ?? "답변을 생성하지 못했어요.";
+        const compact = truncateAnswer(answer, 8);
+        setMessageText(`**질문:** ${text}\n\n${compact}`);
+
+        // 자동 가이드 버튼: 우선 sources[].guideKey 사용, 없으면 백업 regex
+        const s = Array.isArray(data?.sources) ? data.sources : [];
+        const hit = s.find((x) => x && x.guideKey);
+        if (hit) {
+          setAutoGuide({ key: hit.guideKey, label: "자세히보기" });
+        } else {
+          const fallbackKey = detectGuideKey(answer);
+          if (fallbackKey) setAutoGuide({ key: fallbackKey, label: "자세히보기" });
+        }
+      } catch (e) {
+        console.error(e);
+        setMessageText(`**질문:** ${text}\n\n죄송! 답변 중 오류가 났어요. 잠시 후 다시 시도해 주세요.`);
+      }
+    })();
+  }
+
+  // RAG 답변에서 관련 문서 힌트를 보고 guide_key 추론(백업용)
+  function detectGuideKey(answer = "") {
+    const s = String(answer);
+    const m = s.match(/guide_key\s*:\s*([A-Za-z0-9_-]+)/i);
+    if (m?.[1]) return m[1];
+    if (/\/guide\/character\/create/i.test(s) || /character\/create/i.test(s)) return "characterCreate";
+    if (/\/guide\/chat\b/i.test(s) || /\bAI\s*채팅\b/.test(s)) return "chat";
+    if (/(캐릭터\s*생성|create-?character)/i.test(s)) return "characterCreate";
+    return null;
   }
 
   // 프리셋 응답
@@ -281,7 +336,6 @@ export default forwardRef(function CharacterAssistant(
         ▶ 토론배틀: 1회 수행\n\n▶ 미니게임: 1회 수행\n\n▶ PVE: 3회 승리\n\n▶ PVP: 3회 수행
         진행 사항을 보고 싶으면 아래의 버튼을 눌러줘`;
       case "이 페이지에 대해 알려줄래?":
-        // 외부에서 setPageCta 해줄 수도 있으니 그대로 노출
         return pageGuide?.text || "이 페이지에 대한 안내를 보여줄게!";
       default:
         return "무엇을 도와줄까?";
@@ -331,7 +385,6 @@ export default forwardRef(function CharacterAssistant(
       openGuide("characterCreate");
       return;
     }
-
     if (topic === "캐릭터와 채팅") {
       setMessageText(topicMap["캐릭터와 채팅"]);
       setView("message");
@@ -358,6 +411,8 @@ export default forwardRef(function CharacterAssistant(
         setView("menu");
         setCtaForAi(false);
         setPageCta(null);
+        setAutoGuide(null);
+
         return h;
       }
       const prev = h[h.length - 1];
@@ -369,6 +424,8 @@ export default forwardRef(function CharacterAssistant(
         setView("menu");
         setCtaForAi(false);
         setPageCta(null);
+        setAutoGuide(null);
+
         return nextStack;
       }
 
@@ -376,21 +433,19 @@ export default forwardRef(function CharacterAssistant(
       setView(prev.view ?? "message");
       setCtaForAi(!!prev.ctaForAi);
       setPageCta(prev.pageCta ?? null);
+      setAutoGuide(prev.autoGuide ?? null);
       return nextStack;
     });
   }
 
-
   function handlePickGameMode(mode) {
     setHistory((h) => pushSnapshot(h));
-
     const guide = {
       PVE: "PVE: AI가 스토리텔러가 되어 네 진행을 서사로 풀어줘.",
       PVP: "PVP: 상대와 대결! 결과와 하이라이트를 AI가 해설해줘.",
       "AI 토론": "AI 토론: 주제를 정해 AI와 설전을 벌여보자!",
       미니게임: "성장에 필요한 간단한 게임들을 체험해봐! 반응속도 테서트, 기억력 게임, 타이핑 배틀 등 다양한 게임을 즐겨볼 수 있어. 나중에 성장할때 이 게임이 필요하니까 미리 해보는게 좋을거야!",
     };
-
     setMessageText(guide[mode] || "준비 중이야!");
     setView("message");
     setCtaForAi(false);
@@ -398,7 +453,6 @@ export default forwardRef(function CharacterAssistant(
     if (mode === "PVE") openGuide("pve");
     if (mode === "PVP") openGuide("pvp");
     if (mode === "AI 토론") openGuide("debate");
-
   }
 
   // 외부에서 바로 “모드 선택 큰 버튼”으로 진입시키는 공개 API
@@ -440,10 +494,9 @@ export default forwardRef(function CharacterAssistant(
   const bigModeBtnClass =
     "w-full block rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-base font-extrabold text-zinc-900 shadow-md transform-gpu transition-all duration-150 hover:bg-violet-50 hover:border-violet-300 hover:shadow-lg hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-violet-400 active:translate-y-0 active:shadow-sm";
 
-
   function handleGo(key) {
-    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame, quests: onGoToQuests, characterCreate: onGoToCharacterCreate};
-    const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate", minigame: "/minigames", quests: "/quest", };
+    const handlers = { pve: onGoToPVE, pvp: onGoToPVP, debate: onGoToDebate, minigame: onGoToMinigame, quests: onGoToQuests, characterCreate: onGoToCharacterCreate };
+    const fallbacks = { pve: "/pve/maps", pvp: "/pvp/match", debate: "/debate", minigame: "/minigames", quests: "/quest" };
     const fn = handlers[key];
     if (typeof fn === "function") return fn();
     window.location.href = fallbacks[key] || "/";
@@ -482,7 +535,9 @@ export default forwardRef(function CharacterAssistant(
             whileHover={phase !== "intro" ? { rotate: [0, -2, 2, 0] } : undefined}
           />
         </div>
-        <span className="pointer-events-none absolute -top-2 -right-2 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-semibold text-white shadow-lg">online</span>
+        <span className="pointer-events-none absolute -top-2 -right-2 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-semibold text-white shadow-lg">
+          online
+        </span>
         <span className="sr-only">{name}</span>
       </button>
 
@@ -499,7 +554,10 @@ export default forwardRef(function CharacterAssistant(
           className={`absolute bottom-2 ${placementClass}`}
         >
           <div className="relative max-w-[22rem] rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur-md">
-            <div className={`absolute bottom-2 ${bubblePlacement === "right" ? "-left-2" : "-right-2"} h-4 w-4 rotate-45 border border-zinc-200 bg-white/95`} aria-hidden />
+            <div
+              className={`absolute bottom-2 ${bubblePlacement === "right" ? "-left-2" : "-right-2"} h-4 w-4 rotate-45 border border-zinc-200 bg-white/95`}
+              aria-hidden
+            />
 
             {/* MENU */}
             {view === "menu" && (
@@ -520,6 +578,8 @@ export default forwardRef(function CharacterAssistant(
             {view === "message" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
+
+                {/* 긴 답변 접힘/펼침 컨테이너 */}
                 <div className="mb-3 text-sm text-zinc-700 prose prose-zinc max-w-none">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -532,7 +592,8 @@ export default forwardRef(function CharacterAssistant(
                     {messageText}
                   </ReactMarkdown>
                 </div>
-                <div className="mb-3 flex items-center gap-2">
+
+                <div className="mb-3 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleBack}
@@ -540,6 +601,19 @@ export default forwardRef(function CharacterAssistant(
                   >
                     ← 돌아가기
                   </button>
+
+
+
+                  {/* 자동 가이드 버튼 */}
+                  {autoGuide?.key && (
+                    <button
+                      type="button"
+                      onClick={() => openGuide(autoGuide.key)}
+                      className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    >
+                      {autoGuide.label || "가이드 열기"}
+                    </button>
+                  )}
 
                   {ctaForAi && (
                     <button
@@ -641,8 +715,6 @@ export default forwardRef(function CharacterAssistant(
                   ))}
                 </div>
 
-
-
                 <div>
                   <button
                     type="button"
@@ -690,7 +762,7 @@ export default forwardRef(function CharacterAssistant(
               minigame: onGoToMinigame,
               chat: onGoToChat,
               quests: onGoToQuests,
-              characterCreate : onGoToCharacterCreate,
+              characterCreate: onGoToCharacterCreate,
             };
             if (typeof map[key] === "function") return map[key]();
             const fallback = {
