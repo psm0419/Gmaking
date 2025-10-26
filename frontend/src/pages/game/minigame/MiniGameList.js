@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Brain, Type, Dice5, MessageSquare } from "lucide-react";
+import { Zap, Brain, Type } from "lucide-react";
 import Header from '../../../components/Header';
 
 function MiniGameList() {
@@ -27,21 +27,7 @@ function MiniGameList() {
             desc: "정확하고 빠르게 주문을 입력하세요.",
             icon: <Type className="w-10 h-10 text-green-400" />,
             color: "from-green-500 to-green-700",
-        },
-        {
-            id: "luck",
-            title: "운 시험 게임",
-            desc: "운명의 여신이 당신을 돕길 바랍니다.",
-            icon: <Dice5 className="w-10 h-10 text-purple-400" />,
-            color: "from-purple-500 to-purple-700",
-        },
-        {
-            id: "aiquiz",
-            title: "AI 퀴즈 챌린지",
-            desc: "AI가 낸 문제에 도전하세요!",
-            icon: <MessageSquare className="w-10 h-10 text-pink-400" />,
-            color: "from-pink-500 to-pink-700",
-        },
+        }        
     ];
 
     return (
