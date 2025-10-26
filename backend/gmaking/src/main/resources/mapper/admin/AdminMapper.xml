@@ -57,6 +57,23 @@
         <result property="userNickname" column="USER_NICKNAME"/>
     </resultMap>
 
+    <resultMap id="ProductVOResultMap" type="com.project.gmaking.admin.vo.ProductVO">
+        <id property="productId" column="PRODUCT_ID"/>
+        <result property="productName" column="PRODUCT_NAME"/>
+        <result property="productType" column="PRODUCT_TYPE"/>
+        <result property="price" column="PRICE"/>
+        <result property="currencyType" column="CURRENCY_TYPE"/>
+        <result property="isSale" column="IS_SALE"/>
+        <result property="durationDays" column="DURATION_DAYS"/>
+        <result property="packSize" column="PACK_SIZE"/>
+        <result property="grantProductId" column="GRANT_PRODUCT_ID"/>
+        <result property="salePrice" column="SALE_PRICE"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="updatedDate" column="UPDATED_DATE"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+    </resultMap>
+
 
     <sql id="userWhereClause">
         <where>
@@ -210,6 +227,39 @@
             <include refid="inventoryWhereClause"/>
         ORDER BY
         t1.ACQUIRED_DATE DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+
+    <sql id="productWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND t1.PRODUCT_NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="filterIsSale != null and filterIsSale != ''">
+                AND t1.IS_SALE = #{filterIsSale}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllProducts" resultType="int">
+        SELECT
+            COUNT(PRODUCT_ID)
+        FROM
+            tb_product t1
+            <include refid="productWhereClause"/>
+    </select>
+
+    <select id="selectAllProducts" resultMap="ProductVOResultMap">
+        SELECT
+            PRODUCT_ID, PRODUCT_NAME, PRODUCT_TYPE, PRICE, CURRENCY_TYPE, IS_SALE,
+            DURATION_DAYS, PACK_SIZE, GRANT_PRODUCT_ID, SALE_PRICE,
+            CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM
+            tb_product t1
+            <include refid="productWhereClause"/>
+        ORDER BY
+        t1.PRODUCT_ID DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 

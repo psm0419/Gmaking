@@ -66,3 +66,15 @@ export const fetchAllInventory = async (token, params = {}) => {
     const response = await axios.get(`${API_BASE_URL}/inventory?${queryString}`, { headers: getAuthHeaders(token) });
     return response.data;
 };
+
+/**
+ * 6. 상품 목록 조회 (페이징/검색/필터 적용)
+ * GET /api/admin/products
+ */
+export const fetchAllProducts = async (token, params = {}) => {
+    const queryString = buildQueryString(params);
+    const response = await axios.get(`${API_BASE_URL}/products?${queryString}`, { 
+        headers: getAuthHeaders(token) 
+    });
+    return response.data;
+};

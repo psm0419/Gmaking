@@ -20,6 +20,7 @@ public class AdminSearchCriteria {
     private Integer filterGradeId;      // 캐릭터 목록: 등급 (GRADE_ID)
     private String filterStatus;        // 구매 내역 목록: 상태 (STATUS)
     private Integer filterProductId;    // 인벤토리 목록: 상품 ID (PRODUCT_ID)
+    private String filterIsSale;        // 상품 목록: 판매 여부 (IS_SALE) (Y/N)
 
     public AdminSearchCriteria() {
         this.page = 1;

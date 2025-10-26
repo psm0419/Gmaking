@@ -90,4 +90,18 @@ public class AdminController {
         Map<String, Object> result = adminService.getAllInventory(criteria);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/products")
+    public ResponseEntity<Map<String, Object>> getAllProducts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(required = false) String searchKeyword,
+            @RequestParam(required = false) String filterIsSale
+    ) {
+        AdminSearchCriteria criteria = createCriteria(page, pageSize, searchKeyword);
+        criteria.setFilterIsSale(filterIsSale);
+
+        Map<String, Object> result = adminService.getAllProducts(criteria);
+        return ResponseEntity.ok(result);
+    }
 }

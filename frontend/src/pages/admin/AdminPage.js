@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, Bot, DollarSign, Archive } from 'lucide-react'; 
+import { Users, Bot, DollarSign, Archive, Package } from 'lucide-react'; 
 import Header from '../../components/Header';
 import UserManagementTab from './UserManagementTab';
 import CharacterManagementTab from './CharacterManagementTab';
 import PurchaseManagementTab from './PurchaseManagementTab';
 import InventoryManagementTab from './InventoryManagementTab';
-
+import ProductManagementTab from './ProductManagementTab';
 
 const TabButton = ({ isActive, onClick, icon, label }) => (
     <button
@@ -51,6 +51,8 @@ const AdminPage = () => {
                 return <PurchaseManagementTab />;
             case 'inventory':
                 return <InventoryManagementTab />;
+            case 'products':
+                return <ProductManagementTab />;
             default:
                 return null;
         }
@@ -106,6 +108,12 @@ const AdminPage = () => {
                         onClick={() => handleTabChange('inventory')}
                         icon={<Archive className="w-5 h-5 mr-2" />}
                         label={`인벤토리`}
+                    />
+                    <TabButton 
+                        isActive={activeTab === 'products'} 
+                        onClick={() => handleTabChange('products')}
+                        icon={<Package className="w-5 h-5 mr-2" />}
+                        label={`상품 관리`}
                     />
                 </div>
 

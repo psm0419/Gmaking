@@ -93,7 +93,7 @@ const UserManagementTab = () => {
                     onChange={handleRoleFilterChange}
                     className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-32"
                 >
-                    <option value="">전체 역할</option>
+                    <option value="">유저 역할</option>
                     <option value="ADMIN">ADMIN</option>
                     <option value="USER">USER</option>
                 </select>

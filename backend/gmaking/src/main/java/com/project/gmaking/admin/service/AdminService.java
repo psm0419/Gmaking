@@ -1,11 +1,8 @@
 package com.project.gmaking.admin.service;
 
 import com.project.gmaking.admin.dao.AdminDAO;
-import com.project.gmaking.admin.vo.CharacterVO;
-import com.project.gmaking.admin.vo.PurchaseVO;
-import com.project.gmaking.admin.vo.InventoryVO;
+import com.project.gmaking.admin.vo.*;
 import com.project.gmaking.login.vo.LoginVO;
-import com.project.gmaking.admin.vo.AdminSearchCriteria;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -76,6 +73,21 @@ public class AdminService {
 
         Map<String, Object> result = new HashMap<>();
         result.put("list", inventory);
+        result.put("totalCount", totalCount);
+        result.put("currentPage", criteria.getPage());
+        result.put("pageSize", criteria.getPageSize());
+        int totalPages = (int) Math.ceil((double) totalCount / criteria.getPageSize());
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    public Map<String, Object> getAllProducts(AdminSearchCriteria criteria) {
+        int totalCount = adminDAO.countAllProducts(criteria);
+        List<ProductVO> products = adminDAO.selectAllProducts(criteria);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("list", products);
         result.put("totalCount", totalCount);
         result.put("currentPage", criteria.getPage());
         result.put("pageSize", criteria.getPageSize());

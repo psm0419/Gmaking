@@ -1,10 +1,7 @@
 package com.project.gmaking.admin.dao;
 
-import com.project.gmaking.admin.vo.CharacterVO;
-import com.project.gmaking.admin.vo.PurchaseVO;
-import com.project.gmaking.admin.vo.InventoryVO;
+import com.project.gmaking.admin.vo.*;
 import com.project.gmaking.login.vo.LoginVO;
-import com.project.gmaking.admin.vo.AdminSearchCriteria;
 
 import java.util.List;
 
@@ -24,4 +21,8 @@ public interface AdminDAO {
     // 4. 인벤토리 목록
     List<InventoryVO> selectAllInventory(AdminSearchCriteria criteria);
     int countAllInventory(AdminSearchCriteria criteria);
+
+    // 5. 상품 목록
+    List<ProductVO>  selectAllProducts(AdminSearchCriteria criteria);
+    int countAllProducts(AdminSearchCriteria criteria);
 }
