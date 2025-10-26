@@ -1036,7 +1036,7 @@ const handleNicknameClick = useCallback((userId) => {
     }).replace(/\.\s/g, '.').replace(/\.$/, ''); 
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col">
             <Header />
             <MessageToast 
                 message={toastMessage} 
