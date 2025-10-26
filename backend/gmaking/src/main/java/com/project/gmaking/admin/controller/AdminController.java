@@ -104,4 +104,20 @@ public class AdminController {
         Map<String, Object> result = adminService.getAllProducts(criteria);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/posts")
+    public ResponseEntity<Map<String, Object>> getAllPosts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "8") int pageSize,
+            @RequestParam(required = false) String searchKeyword,
+            @RequestParam(required = false) String filterCategory,
+            @RequestParam(required = false) String filterIsDeleted
+    ) {
+        AdminSearchCriteria criteria = createCriteria(page, pageSize, searchKeyword);
+        criteria.setFilterCategory(filterCategory);
+        criteria.setFilterIsDeleted(filterIsDeleted);
+
+        Map<String, Object> result = adminService.getAllPosts(criteria);
+        return ResponseEntity.ok(result);
+    }
 }

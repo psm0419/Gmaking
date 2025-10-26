@@ -74,6 +74,25 @@
         <result property="updatedBy" column="UPDATED_BY"/>
     </resultMap>
 
+    <resultMap id="CommunityPostVOResultMap" type="com.project.gmaking.admin.vo.CommunityPostVO">
+        <id property="postId" column="POST_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="categoryCode" column="CATEGORY_CODE"/>
+        <result property="title" column="TITLE"/>
+        <result property="content" column="CONTENT"/>
+        <result property="viewCount" column="VIEW_COUNT"/>
+        <result property="likeCount" column="LIKE_COUNT"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="updatedDate" column="UPDATED_DATE"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+
+        <result property="userNickname" column="USER_NICKNAME"/>
+        <result property="commentCount" column="COMMENT_COUNT"/>
+    </resultMap>
+
+    <!-- .............................................................. -->
 
     <sql id="userWhereClause">
         <where>
@@ -260,6 +279,54 @@
             <include refid="productWhereClause"/>
         ORDER BY
         t1.PRODUCT_ID DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <sql id="postWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND (
+                    t1.TITLE LIKE CONCAT('%', #{searchKeyword}, '%')
+                    OR t2.USER_NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%')
+                )
+            </if>
+            <if test="filterCategory != null and filterCategory != ''">
+                AND t1.CATEGORY_CODE = #{filterCategory}
+            </if>
+            <if test="filterIsDeleted != null and filterIsDeleted != ''">
+                AND t1.IS_DELETED = #{filterIsDeleted}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllPosts" resultType="int">
+        SELECT
+            COUNT(t1.POST_ID)
+        FROM
+            tb_community_post t1
+        JOIN
+            tb_user t2 ON t1.USER_ID = t2.USER_ID
+            <include refid="postWhereClause"/>
+    </select>
+
+    <select id="selectAllPosts" resultMap="CommunityPostVOResultMap">
+        SELECT
+            t1.POST_ID, t1.USER_ID, t1.CATEGORY_CODE, t1.TITLE,
+            t1.CONTENT, t1.UPDATED_DATE, t1.UPDATED_BY, t1.VIEW_COUNT, t1.LIKE_COUNT, t1.IS_DELETED,
+            t1.CREATED_DATE, t1.CREATED_BY,
+            t2.USER_NICKNAME,
+            (
+                SELECT COUNT(c.COMMENT_ID)
+                FROM tb_community_comment c
+                WHERE c.POST_ID = t1.POST_ID AND c.IS_DELETED = 0
+            ) AS COMMENT_COUNT
+        FROM
+            tb_community_post t1
+        JOIN
+            tb_user t2 ON t1.USER_ID = t2.USER_ID
+            <include refid="postWhereClause"/>
+        ORDER BY
+        t1.CREATED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 

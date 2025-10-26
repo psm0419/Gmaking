@@ -96,4 +96,19 @@ public class AdminService {
 
         return result;
     }
+
+    public Map<String, Object> getAllPosts(AdminSearchCriteria criteria) {
+        int totalCount = adminDAO.countAllPosts(criteria);
+        List<CommunityPostVO> posts = adminDAO.selectAllPosts(criteria);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("list", posts);
+        result.put("totalCount", totalCount);
+        result.put("currentPage", criteria.getPage());
+        result.put("pageSize", criteria.getPageSize());
+        int totalPages = (int) Math.ceil((double) totalCount / criteria.getPageSize());
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
 }

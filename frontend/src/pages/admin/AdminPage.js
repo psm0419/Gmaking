@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, Bot, DollarSign, Archive, Package } from 'lucide-react'; 
+import { Users, Bot, DollarSign, Archive, Package, MessageSquare } from 'lucide-react'; 
 import Header from '../../components/Header';
 import UserManagementTab from './UserManagementTab';
 import CharacterManagementTab from './CharacterManagementTab';
 import PurchaseManagementTab from './PurchaseManagementTab';
 import InventoryManagementTab from './InventoryManagementTab';
 import ProductManagementTab from './ProductManagementTab';
+import CommunityPostManagementTab from './CommunityPostManagementTab';
 
 const TabButton = ({ isActive, onClick, icon, label }) => (
     <button
@@ -53,6 +54,8 @@ const AdminPage = () => {
                 return <InventoryManagementTab />;
             case 'products':
                 return <ProductManagementTab />;
+            case 'posts': 
+                return <CommunityPostManagementTab />;
             default:
                 return null;
         }
@@ -114,6 +117,12 @@ const AdminPage = () => {
                         onClick={() => handleTabChange('products')}
                         icon={<Package className="w-5 h-5 mr-2" />}
                         label={`상품 관리`}
+                    />
+                    <TabButton 
+                        isActive={activeTab === 'posts'} 
+                        onClick={() => handleTabChange('posts')}
+                        icon={<MessageSquare className="w-5 h-5 mr-2" />}
+                        label={`게시글 관리`}
                     />
                 </div>
 

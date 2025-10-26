@@ -25,4 +25,8 @@ public interface AdminDAO {
     // 5. 상품 목록
     List<ProductVO>  selectAllProducts(AdminSearchCriteria criteria);
     int countAllProducts(AdminSearchCriteria criteria);
+
+    // 6. 게시글 목록
+    List<CommunityPostVO> selectAllPosts(AdminSearchCriteria criteria);
+    int countAllPosts(AdminSearchCriteria criteria);
 }
