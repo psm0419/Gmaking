@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Eye, User, Edit, Trash2, List } from 'lucide-react';
 import Header from '../../components/Header';
@@ -16,6 +16,24 @@ const NoticeDetailPage = () => {
     const [error, setError] = useState(null);
 
     const IS_ADMIN = user && user.role === 'ADMIN';
+
+    const noticeContainerRef = useRef(null);
+
+    useEffect(() => {
+        const handleWheel = (e) => {
+            const container = noticeContainerRef.current;
+            if (!container) return;
+
+            // 기본 스크롤 막기
+            e.preventDefault();
+
+            // 내부 스크롤로 전달
+            container.scrollTop += e.deltaY;
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
 
     // 공지사항 상세
     useEffect(() => {
@@ -129,7 +147,8 @@ const NoticeDetailPage = () => {
                     </div>
 
                     <div
-                        className="prose prose-invert max-w-none text-lg leading-relaxed whitespace-pre-wrap text-slate-200 break-words flex-grow overflow-y-auto"
+                        ref={noticeContainerRef}
+                        className="prose prose-invert max-w-none text-lg leading-relaxed whitespace-pre-wrap text-slate-200 break-words flex-grow overflow-y-auto no-scrollbar"
                     >
                         {notice.noticeContent}
                     </div>
