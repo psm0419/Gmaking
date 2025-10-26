@@ -21,6 +21,54 @@ function useOutsideClick(ref, onClickOutside) {
   }, [ref, onClickOutside]);
 }
 
+function LoadingLullaby({ label = "조용히 답을 모으는 중…" }) {
+  return (
+    <div className="w-full">
+      <motion.div
+        className="relative overflow-hidden rounded-2xl border border-violet-100/70 bg-white/90 px-4 py-3 shadow-lg"
+        animate={{ boxShadow: ["0 4px 18px rgba(99,102,241,0.12)", "0 6px 22px rgba(147,51,234,0.18)", "0 4px 18px rgba(99,102,241,0.12)"] }}
+        transition={{ repeat: Infinity, duration: 2.6, ease: "easeInOut" }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="relative h-8 w-8"
+            animate={{ y: [0, -2, 0] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          >
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 opacity-90" />
+            <div className="absolute inset-0 translate-x-1 translate-y-1 rounded-full bg-white" />
+            <motion.span
+              className="absolute -right-0.5 top-0.5 h-1 w-1 rounded-full bg-violet-500"
+              animate={{ opacity: [0.4, 1, 0.4], scale: [0.9, 1.1, 0.9] }}
+              transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+            />
+            <motion.span
+              className="absolute -bottom-0.5 left-0.5 h-1 w-1 rounded-full bg-fuchsia-500"
+              animate={{ opacity: [0.4, 1, 0.4], scale: [0.9, 1.1, 0.9] }}
+              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut", delay: 0.2 }}
+            />
+          </motion.div>
+
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-semibold text-zinc-800">{label}</div>
+            <motion.div
+              className="mt-1 h-1.5 w-28 rounded-full bg-zinc-200/80"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+            >
+              <motion.div
+                className="h-full w-2/5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                animate={{ x: ["-10%", "70%", "-10%"] }}
+                transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+              />
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // 동적 import로 가이드 로딩
 async function importGuide() {
   const mod = await import("./GuideContent.js");
@@ -76,11 +124,30 @@ export default forwardRef(function CharacterAssistant(
     if (openProp === undefined) setOpenUncontrolled(next);
   };
 
-  function truncateAnswer(markdown = "", maxLines = 8) {
-    const lines = String(markdown).split(/\r?\n/);
-    if (lines.length <= maxLines) return markdown;
-    const cut = lines.slice(0, maxLines).join("\n");
-    return cut.trimEnd() + "\n…";
+  // --- 가이드 키 검증용: 알려진 키 + 실제 로드 키
+  const KNOWN_GUIDE_KEYS = ["characterCreate", "pve", "pvp", "debate", "chat", "minigame", "quests"];
+  const [guideKeys, setGuideKeys] = useState(KNOWN_GUIDE_KEYS);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const content = await importGuide();
+        const keys = Object.keys(content || {});
+        if (keys?.length) setGuideKeys(keys);
+      } catch {
+        /* 조용히 패스 */
+      }
+    })();
+  }, []);
+
+  function isValidGuideKey(key) {
+    if (!key) return false;
+    return Array.isArray(guideKeys) && guideKeys.includes(key);
+  }
+
+  function truncateAnswer(markdown = "") {
+    // 생략 로직 제거(요청)
+    return String(markdown);
   }
 
   // ===== Idle/Blink FSM =====
@@ -211,8 +278,8 @@ export default forwardRef(function CharacterAssistant(
   const [messageText, setMessageText] = useState("");
   const [history, setHistory] = useState([]);
   const [ctaForAi, setCtaForAi] = useState(false);
-  // 자동 가이드 버튼 상태 (예: { key: 'characterCreate', label: '캐릭터 생성 가이드' })
   const [autoGuide, setAutoGuide] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // === Guide (동적 import) ===
   const [showGuide, setShowGuide] = useState(false);
@@ -222,15 +289,21 @@ export default forwardRef(function CharacterAssistant(
 
   async function openGuide(key) {
     try {
+      if (!isValidGuideKey(key)) {
+        setAutoGuide(null);
+        return;
+      }
       setLoadingGuide(true);
       setErrGuide(null);
       const content = await importGuide();
       const picked = content?.[key];
-      if (!picked) throw new Error(`가이드 "${key}"를 찾을 수 없습니다.`);
+      if (!picked) throw new Error("NOT_FOUND");
       setGuideData({ ...picked, __key: key });
       setShowGuide(true);
     } catch (e) {
-      setErrGuide(e.message ?? String(e));
+      // 실패는 조용히: 버튼 숨기고 콘솔만
+      setAutoGuide(null);
+      console.warn("[guide] open failed:", key, e?.message || e);
     } finally {
       setLoadingGuide(false);
     }
@@ -249,7 +322,7 @@ export default forwardRef(function CharacterAssistant(
     setCtaForAi(false);
     setPageCta(null);
     setAutoGuide(null);
-
+    setIsLoading(false);
   }, [open]);
 
   function pushSnapshot(h) {
@@ -264,15 +337,13 @@ export default forwardRef(function CharacterAssistant(
 
     onAsk?.(text);
     setHistory((h) => pushSnapshot(h));
-    // 1) 질문 에코 + 로딩 문구
-    setMessageText(`**질문:** ${text}\n\n_답변을 준비하고 있어요…_`);
+    setMessageText(`**질문:** ${text}`);
     setView("message");
     setCtaForAi(false);
     setInput("");
     setAutoGuide(null);
+    setIsLoading(true);
 
-
-    // 백엔드 RAG 호출 (단일 호출)
     (async () => {
       try {
         const res = await fetch(`/api/guide/ask`, {
@@ -283,23 +354,28 @@ export default forwardRef(function CharacterAssistant(
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json(); // { answer, sources? }
 
-        // 답변 렌더
         const answer = data?.answer ?? "답변을 생성하지 못했어요.";
-        const compact = truncateAnswer(answer, 8);
-        setMessageText(`**질문:** ${text}\n\n${compact}`);
+        const full = truncateAnswer(answer);
+        setMessageText(`**질문:** ${text}\n\n${full}`);
+        setIsLoading(false);
 
-        // 자동 가이드 버튼: 우선 sources[].guideKey 사용, 없으면 백업 regex
+        // 자동 가이드 버튼 (검증된 키만 노출)
         const s = Array.isArray(data?.sources) ? data.sources : [];
-        const hit = s.find((x) => x && x.guideKey);
+        const hit = s.find((x) => x && x.guideKey && isValidGuideKey(x.guideKey));
         if (hit) {
           setAutoGuide({ key: hit.guideKey, label: "자세히보기" });
         } else {
           const fallbackKey = detectGuideKey(answer);
-          if (fallbackKey) setAutoGuide({ key: fallbackKey, label: "자세히보기" });
+          if (isValidGuideKey(fallbackKey)) {
+            setAutoGuide({ key: fallbackKey, label: "자세히보기" });
+          } else {
+            setAutoGuide(null);
+          }
         }
       } catch (e) {
         console.error(e);
         setMessageText(`**질문:** ${text}\n\n죄송! 답변 중 오류가 났어요. 잠시 후 다시 시도해 주세요.`);
+        setIsLoading(false);
       }
     })();
   }
@@ -333,7 +409,13 @@ export default forwardRef(function CharacterAssistant(
 우리 사이트에서 AI가 쓰인 컨텐츠에대해 좀 더 자세히 알고 싶어?`;
       case "오늘의 퀘스트":
         return `오늘의 퀘스트 목록이야!
-        ▶ 토론배틀: 1회 수행\n\n▶ 미니게임: 1회 수행\n\n▶ PVE: 3회 승리\n\n▶ PVP: 3회 수행
+        ▶ 토론배틀: 1회 수행
+
+▶ 미니게임: 1회 수행
+
+▶ PVE: 3회 승리
+
+▶ PVP: 3회 수행
         진행 사항을 보고 싶으면 아래의 버튼을 눌러줘`;
       case "이 페이지에 대해 알려줄래?":
         return pageGuide?.text || "이 페이지에 대한 안내를 보여줄게!";
@@ -412,7 +494,7 @@ export default forwardRef(function CharacterAssistant(
         setCtaForAi(false);
         setPageCta(null);
         setAutoGuide(null);
-
+        setIsLoading(false);
         return h;
       }
       const prev = h[h.length - 1];
@@ -425,7 +507,7 @@ export default forwardRef(function CharacterAssistant(
         setCtaForAi(false);
         setPageCta(null);
         setAutoGuide(null);
-
+        setIsLoading(false);
         return nextStack;
       }
 
@@ -461,7 +543,6 @@ export default forwardRef(function CharacterAssistant(
     close: () => setOpen(false),
     toggle: () => setOpen((v) => !v),
     isOpen: () => !!open,
-    /** battlemode 다음 단계에서 호출 */
     showGameModePicker: (message, cta) => {
       setOpen(true);
       setHistory([]);
@@ -470,7 +551,6 @@ export default forwardRef(function CharacterAssistant(
       setCtaForAi(false);
       setPageCta(cta || null);
     },
-    /** 임의 메시지를 말풍선에 표시 (선택사항) */
     showMessage: (message, cta) => {
       setOpen(true);
       setHistory([]);
@@ -579,7 +659,6 @@ export default forwardRef(function CharacterAssistant(
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
 
-                {/* 긴 답변 접힘/펼침 컨테이너 */}
                 <div className="mb-3 text-sm text-zinc-700 prose prose-zinc max-w-none">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -593,6 +672,12 @@ export default forwardRef(function CharacterAssistant(
                   </ReactMarkdown>
                 </div>
 
+                {isLoading && (
+                  <div className="mb-3">
+                    <LoadingLullaby label="조용히 답을 모으는 중…" />
+                  </div>
+                )}
+
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -602,10 +687,8 @@ export default forwardRef(function CharacterAssistant(
                     ← 돌아가기
                   </button>
 
-
-
-                  {/* 자동 가이드 버튼 */}
-                  {autoGuide?.key && (
+                  {/* 자동 가이드 버튼 (검증된 키만) */}
+                  {autoGuide?.key && isValidGuideKey(autoGuide.key) && (
                     <button
                       type="button"
                       onClick={() => openGuide(autoGuide.key)}
@@ -690,7 +773,7 @@ export default forwardRef(function CharacterAssistant(
               </>
             )}
 
-            {/* GAME MODES (큰 버튼 4개) */}
+            {/* GAME MODES */}
             {view === "aiGameModes" && (
               <>
                 <div className="mb-2 text-sm font-semibold text-zinc-700">{name}</div>
@@ -779,8 +862,9 @@ export default forwardRef(function CharacterAssistant(
         />
       )}
 
-      {errGuide && <div className="mt-2 text-sm text-red-600">가이드를 불러오지 못했습니다: {errGuide}</div>}
-      {loadingGuide && <div className="mt-2 text-sm text-zinc-500">가이드 불러오는 중…</div>}
+      {/* 사용자 화면에 에러/로딩 배너 노출하지 않음 */}
+      {/* {errGuide && <div className="mt-2 text-sm text-red-600">가이드를 불러오지 못했습니다: {errGuide}</div>}
+      {loadingGuide && <div className="mt-2 text-sm text-zinc-500">가이드 불러오는 중…</div>} */}
     </div>
   );
 });
