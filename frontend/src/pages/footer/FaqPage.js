@@ -19,7 +19,7 @@ const FaqItem = ({ question, answer }) => {
             </button>
 
             {open && (
-                <div className="px-6 pb-4 text-sm text-gray-300 leading-relaxed border-t border-gray-700">
+                <div className="px-6 pb-4 pt-4 text-sm text-gray-300 leading-relaxed border-t border-gray-700">
                     {answer}
                 </div>
             )}

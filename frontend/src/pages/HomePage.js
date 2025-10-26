@@ -7,7 +7,7 @@ import Footer from '../components/Footer';
 import UserCharacterSummary from '../components/home/UserCharacterSummary';
 import CharacterCreationPrompt from '../components/home/CharacterCreationPrompt';
 import { useNavigate } from 'react-router-dom';
-import { getNotices } from '../api/noticeApi';
+import { getNotices } from '../api/notice/noticeApi';
 
 const GuideLink = ({ title, href = "/guide" }) => (
     <a

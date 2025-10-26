@@ -4,7 +4,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext'; 
-import { getNotices } from '../../api/noticeApi'; 
+import { getNotices } from '../../api/notice/noticeApi'; 
 
 const NoticeItem = ({ title, authorNickname, date, noticeId, navigate, viewCount, isPinned }) => {
     const tagColor = isPinned ? 'bg-red-600' : 'bg-gray-600';

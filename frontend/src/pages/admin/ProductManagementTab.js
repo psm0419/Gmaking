@@ -1,25 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchAllPurchases } from '../../api/admin/adminApi';
+import { fetchAllProducts } from '../../api/admin/adminApi';
 import { Search } from 'lucide-react';
+
+const SALE_STATUS_OPTIONS = [
+    { value: '', label: '전체 판매 여부' },
+    { value: 'Y', label: '판매 중 (Y)' },
+    { value: 'N', label: '판매 중지 (N)' },
+];
 
 const initialCriteria = {
     page: 1,
     pageSize: 8,
     searchKeyword: '',
-    filterStatus: '',
+    filterType: '',   
+    filterIsSale: '',  
 };
 
-const PurchaseManagementTab = () => {
+const ProductManagementTab = () => {
     const { token, user } = useAuth();
-    const [purchases, setPurchases] = useState([]);
+    const [products, setProducts] = useState([]);
     const [criteria, setCriteria] = useState(initialCriteria);
     const [pagination, setPagination] = useState({ totalPages: 1, totalCount: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [tempSearchKeyword, setTempSearchKeyword] = useState('');
+    const [tempSearchKeyword, setTempSearchKeyword] = useState(''); 
 
-    const loadPurchases = useCallback(async () => {
+    const loadProducts = useCallback(async () => {
         if (user?.role !== 'ADMIN' || !token) {
             setIsLoading(false);
             return;
@@ -28,37 +35,51 @@ const PurchaseManagementTab = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await fetchAllPurchases(token, criteria);
-            setPurchases(data.list);
+            const data = await fetchAllProducts(token, criteria);
+            setProducts(data.list);
             setPagination({ 
                 totalPages: data.totalPages, 
                 totalCount: data.totalCount,
                 currentPage: data.currentPage, 
             });
         } catch (err) {
-            console.error("구매 내역 조회 실패:", err);
-            setError('구매 내역 목록을 불러오는 데 실패했습니다.');
+            console.error("상품 목록 조회 실패:", err);
+            setError('상품 목록을 불러오는 데 실패했습니다.');
         } finally {
             setIsLoading(false);
         }
     }, [token, user, criteria]);
 
     useEffect(() => {
-        loadPurchases();
-    }, [loadPurchases]);
+        loadProducts();
+    }, [loadProducts]);
     
     // 검색 및 필터 핸들러
     const handleTempSearchChange = (e) => {
         setTempSearchKeyword(e.target.value);
     };
-    
-    const handleStatusFilterChange = (e) => {
-        setCriteria(prev => ({ ...prev, filterStatus: e.target.value, page: 1 })); 
+
+    // 판매 여부 필터 변경
+    const handleSaleFilterChange = (e) => {
+        setCriteria(prev => ({ 
+            ...prev, 
+            filterIsSale: e.target.value, 
+            page: 1,
+            searchKeyword: '',
+        })); 
+        setTempSearchKeyword('');
     };
     
+    // 상품명 검색
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        setCriteria(prev => ({ ...prev, searchKeyword: tempSearchKeyword, page: 1 }));
+        setCriteria(prev => ({ 
+            ...prev, 
+            searchKeyword: tempSearchKeyword, 
+            page: 1, 
+            filterType: '', 
+            filterIsSale: '', 
+        }));
     };
 
     // 페이지 변경 핸들러
@@ -68,30 +89,29 @@ const PurchaseManagementTab = () => {
         }
     };
 
-    if (isLoading) return <div className="text-center py-10 text-yellow-400">구매 내역 목록 로딩 중...</div>;
+
+    if (isLoading) return <div className="text-center py-10 text-yellow-400">상품 목록 로딩 중...</div>;
     if (error) return <div className="text-center py-10 text-red-400">에러: {error}</div>;
 
     return (
         <div className="overflow-x-auto">
             <div className="flex items-center justify-between mb-4 space-x-4">
-                {/* 상태 필터링 */}
+                {/* 판매 여부 필터 */}
                 <select 
-                    value={criteria.filterStatus} 
-                    onChange={handleStatusFilterChange}
-                    className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-32"
+                    value={criteria.filterIsSale} 
+                    onChange={handleSaleFilterChange}
+                    className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-40"
                 >
-                    <option value="">전체 상태</option>
-                    <option value="PAID">결제 완료 (PAID)</option>
-                    <option value="CANCELLED">결제 취소 (CANCELLED)</option>
-                    <option value="REFUNDED">환불 완료 (REFUNDED)</option>
-                    <option value="READY">결제 대기 (READY)</option>
+                    {SALE_STATUS_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                 </select>
                 
                 {/* 검색 입력 필드 */}
                 <form onSubmit={handleSearchSubmit} className="flex flex-grow max-w-md">
                     <input
                         type="text"
-                        placeholder="닉네임, 상품명 검색"
+                        placeholder="상품명 검색"
                         value={tempSearchKeyword}
                         onChange={handleTempSearchChange}
                         className="p-2 border rounded-l bg-gray-700 border-gray-600 text-gray-300 w-full"
@@ -101,43 +121,42 @@ const PurchaseManagementTab = () => {
                     </button>
                 </form>
             </div>
-            
+
             <table className="w-full border-collapse text-sm text-gray-200">
                 <thead className="bg-gray-700 text-xs uppercase font-semibold tracking-wider">
                     <tr>
                         <th className="px-4 py-3 text-left min-w-[80px]">ID</th>
-                        <th className="px-4 py-3 text-left min-w-[120px]">ID / 닉네임</th>
-                        <th className="px-4 py-3 text-left min-w-[180px]">상품명 (ID)</th>
-                        <th className="px-4 py-3 text-left min-w-[100px]">결제 금액</th>
-                        <th className="px-4 py-3 text-left min-w-[80px]">상태</th>
-                        <th className="px-4 py-3 text-left min-w-[100px]">결제 수단</th>
-                        <th className="px-4 py-3 text-left min-w-[130px]">승인일</th>
-                        <th className="px-4 py-3 text-left min-w-[130px]">주문 번호</th>
+                        <th className="px-4 py-3 text-left min-w-[200px]">상품명</th>
+                        <th className="px-4 py-3 text-left min-w-[100px]">유형</th>
+                        <th className="px-4 py-3 text-right min-w-[100px]">가격</th>
+                        <th className="px-4 py-3 text-left min-w-[80px]">화폐</th>
+                        <th className="px-4 py-3 text-center min-w-[100px]">판매여부</th>
+                        <th className="px-4 py-3 text-left min-w-[130px]">등록일</th>
+                        <th className="px-4 py-3 text-center min-w-[80px]">액션</th>
                     </tr>
                 </thead>
                 <tbody className="bg-gray-800 divide-y divide-gray-700">
-                    {purchases.map((p) => (
-                        <tr key={p.purchaseId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
-                            <td className="px-4 py-3 text-sm text-gray-300">{p.purchaseId}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="text-sm font-medium text-white-400 truncate max-w-[160px]">{p.userId}</div>
-                                <div className="text-xs text-gray-400 truncate">{p.userNickname}</div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-[200px]">{p.productNameSnap} ({p.productId})</td>
-                            <td className="px-4 py-3 text-sm text-green-400 font-bold">{p.totalPriceSnap?.toLocaleString() || p.amountPaid?.toLocaleString()} 원</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${p.status === 'PAID' ? 'bg-green-600/20 text-green-400' : p.status === 'CANCELLED' || p.status === 'REFUNDED' ? 'bg-red-600/20 text-red-400' : 'bg-gray-600/20 text-gray-400'}`}>
-                                    {p.status}
+                    {products.map((item) => (
+                        <tr key={item.productId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
+                            <td className="px-4 py-3 text-sm text-gray-300">{item.productId}</td>
+                            <td className="px-4 py-3 text-sm font-semibold text-yellow-400">{item.productName}</td>
+                            <td className="px-4 py-3 text-sm text-gray-300">{item.productType}</td>
+                            <td className="px-4 py-3 text-sm text-right text-green-400 font-bold">{item.price?.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-sm text-gray-300">{item.currencyType}</td>
+                            <td className="px-4 py-3 text-center">
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${item.isSale === 'Y' ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'}`}>
+                                    {item.isSale === 'Y' ? '판매 중' : '중지'}
                                 </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-300">{p.method || '-'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-400">{p.approvedAt ? new Date(p.approvedAt).toLocaleDateString() : '-'}</td>
-                            <td className="px-4 py-3 text-xs text-gray-400 truncate max-w-[130px]">{p.merchantUid}</td>
+                            <td className="px-4 py-3 text-sm text-gray-400">{new Date(item.createdDate).toLocaleDateString()}</td>
+                            <td className="px-4 py-3 text-center">
+                                <button className="text-blue-400 hover:text-blue-300 transition text-xs">수정</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-            {purchases.length === 0 && (<div className="py-8 text-center text-gray-500">조회된 구매 내역이 없습니다.</div>)}
+            {products.length === 0 && (<div className="py-8 text-center text-gray-500">조회된 상품 목록이 없습니다.</div>)}
 
             {pagination.totalPages > 1 && (
                 <div className="flex justify-center items-center space-x-4 mt-6">
@@ -164,4 +183,4 @@ const PurchaseManagementTab = () => {
     );
 };
 
-export default PurchaseManagementTab;
+export default ProductManagementTab;

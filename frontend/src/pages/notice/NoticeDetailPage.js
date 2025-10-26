@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Eye, User, Edit, Trash2, List } from 'lucide-react';
 import Header from '../../components/Header';
 import { useAuth } from '../../context/AuthContext';
-import { getNoticeDetail, deleteNotice } from '../../api/noticeApi'; // ⭐️ API 호출 함수 import
+import { getNoticeDetail, deleteNotice } from '../../api/notice/noticeApi'; // ⭐️ API 호출 함수 import
 
 const NoticeDetailPage = () => {
     const navigate = useNavigate();
