@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.certification.dao.CharacterCertificateDao">
+
+    <resultMap id="CharacterCertificateMap"
+               type="com.project.gmaking.certification.vo.CharacterCertificateVO"> <!-- ✅ 여기 -->
+        <result property="userNickname"     column="userNickname"/>
+        <result property="characterId"      column="characterId"/>
+        <result property="characterName"    column="characterName"/>
+        <result property="gradeId"          column="gradeId"/>
+        <result property="backgroundInfo"   column="backgroundInfo"/>
+        <result property="evolutionStep"    column="evolutionStep"/>
+        <result property="totalStageClears" column="totalStageClears"/>
+        <result property="imageId"          column="imageId"/>
+
+        <result property="hp"               column="hp"/>
+        <result property="attack"           column="attack"/>
+        <result property="defense"          column="defense"/>
+        <result property="speed"            column="speed"/>
+        <result property="criticalRate"     column="criticalRate"/>
+
+        <result property="personality"      column="personality"/>
+
+        <result property="pveCount"         column="pveCount"/>
+        <result property="pvpCount"         column="pvpCount"/>
+    </resultMap>
+
+    <select id="findCertificateByCharacterId"
+            parameterType="int"
+            resultMap="CharacterCertificateMap">
+        SELECT
+        u.USER_NICKNAME          AS userNickname,
+        c.CHARACTER_ID           AS characterId,
+        c.CHARACTER_NAME         AS characterName,
+        c.GRADE_ID               AS gradeId,
+        c.BACKGROUND_INFO        AS backgroundInfo,
+        c.EVOLUTION_STEP         AS evolutionStep,
+        c.TOTAL_STAGE_CLEARS     AS totalStageClears,
+        c.IMAGE_ID               AS imageId,
+        s.CHARACTER_HP           AS hp,
+        s.CHARACTER_ATTACK       AS attack,
+        s.CHARACTER_DEFENSE      AS defense,
+        s.CHARACTER_SPEED        AS speed,
+        s.CRITICAL_RATE          AS criticalRate,
+        p.PERSONALITY_DESCRIPTION AS personality,
+        (SELECT COUNT(*) FROM tb_battle_log bl
+        WHERE bl.BATTLE_TYPE='PVE'
+        AND bl.CHARACTER_ID = CAST(#{characterId} AS CHAR)) AS pveCount,
+        (SELECT COUNT(*) FROM tb_battle_log bl
+        WHERE bl.BATTLE_TYPE='PVP'
+        AND bl.CHARACTER_ID = CAST(#{characterId} AS CHAR)) AS pvpCount
+        FROM tb_character c
+        LEFT JOIN tb_user u                ON u.USER_ID = c.USER_ID
+        LEFT JOIN tb_character_stat s      ON s.CHARACTER_ID = c.CHARACTER_ID
+        LEFT JOIN tb_character_personality p
+        ON p.CHARACTER_PERSONALITY_ID = c.CHARACTER_PERSONALITY_ID
+        WHERE c.CHARACTER_ID = #{characterId}
+    </select>
+
+</mapper>
