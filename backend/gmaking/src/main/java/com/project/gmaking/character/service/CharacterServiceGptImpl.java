@@ -76,11 +76,11 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
 
                                 try {
                                     // GCS 임시 저장 (DB 저장 X) 이미지 파일을 GCS에 저장하고 URL을 받음.
-                                    ImageUploadResponseVO imageResponse = gcsService.uploadBase64Image(imageBytes, "temp-characters", "png", userId);
+                                    ImageUploadResponseVO imageResponse = gcsService.uploadBase64Image(imageBytes, userId, "png", userId);
 
                                     return Mono.just(CharacterGenerateResponseVO.builder()
                                             .characterName(requestVO.getCharacterName())
-                                            .imageUrl(imageResponse.getFileUrl()) // 미리보기 URL
+                                            .imageUrl(imageResponse.getFileUrl())
                                             .predictedAnimal(predictedAnimal)
                                             .build());
 
