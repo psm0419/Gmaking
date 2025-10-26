@@ -31,4 +31,12 @@ public interface PostCommentService {
      * @param userId 삭제를 요청한 사용자 ID
      */
     void deleteComment(Long commentId, String userId);
+
+    /**
+     * 댓글을 수정합니다.
+     * @param commentId 수정할 댓글 ID
+     * @param userId 수정을 요청한 사용자 ID (권한 확인용)
+     * @param requestVO 수정 내용이 담긴 VO
+     */
+    void updateComment(Long commentId, String userId, PostCommentRequestVO requestVO);
 }

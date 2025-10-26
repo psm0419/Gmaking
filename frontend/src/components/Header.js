@@ -173,7 +173,7 @@ const Header = ({ onInfoClick }) => {
                     {isLoggedIn ? (
                         <div className="flex items-center space-x-4">
                             {user && (
-                                <span onClick={() => navigate('/my-page')} className={`text-lg font-semibold ${roleColor} flex items-center`}>
+                                <span onClick={() => navigate('/my-page')} className={`text-lg font-semibold ${roleColor} flex items-center cursor-pointer`}>
                                     <User className="w-5 h-5 mr-2" />
                                     {displayName}
                                 </span>

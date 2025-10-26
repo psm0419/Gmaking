@@ -24,4 +24,7 @@ public interface PostCommentDAO {
 
     // 특정 게시글의 전체 댓글 개수를 조회
     long countComments(@Param("postId") Long postId);
+
+    // 댓글 수정 메서드 추가
+    int updateComment(Map<String, Object> params);
 }
