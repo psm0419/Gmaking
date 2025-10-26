@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.admin.dao.AdminDAO">
+
+    <resultMap id="LoginVOResultMap" type="com.project.gmaking.login.vo.LoginVO">
+        <id property="userId" column="USER_ID"/>
+        <result property="userName" column="USER_NAME"/>
+        <result property="userEmail" column="USER_EMAIL"/>
+        <result property="userNickname" column="USER_NICKNAME"/>
+        <result property="role" column="ROLE"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+
+        <result property="characterName" column="REPR_CHARACTER_NAME"/>
+        <result property="characterCount" column="CHARACTER_COUNT"/>
+        <result property="incubatorCount" column="INCUBATOR_COUNT"/>
+    </resultMap>
+
+    <resultMap id="CharacterVOResultMap" type="com.project.gmaking.admin.vo.CharacterVO">
+        <id property="characterId" column="CHARACTER_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="characterName" column="CHARACTER_NAME"/>
+        <result property="gradeId" column="GRADE_ID"/>
+        <result property="totalStageClears" column="TOTAL_STAGE_CLEARS"/>
+        <result property="evolutionStep" column="EVOLUTION_STEP"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+
+        <result property="imageUrl" column="IMAGE_URL"/>
+        <result property="userNickname" column="USER_NICKNAME"/>
+    </resultMap>
+
+    <resultMap id="PurchaseVOResultMap" type="com.project.gmaking.admin.vo.PurchaseVO">
+        <id property="purchaseId" column="PURCHASE_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="productId" column="PRODUCT_ID"/>
+        <result property="quantity" column="QUANTITY"/>
+        <result property="amountPaid" column="AMOUNT_PAID"/>
+        <result property="method" column="METHOD"/>
+        <result property="merchantUid" column="MERCHANT_UID"/>
+        <result property="status" column="STATUS"/>
+        <result property="productNameSnap" column="PRODUCT_NAME_SNAP"/>
+        <result property="totalPriceSnap" column="TOTAL_PRICE_SNAP"/>
+        <result property="approvedAt" column="APPROVED_AT"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+
+        <result property="userNickname" column="USER_NICKNAME"/>
+    </resultMap>
+
+    <resultMap id="InventoryVOResultMap" type="com.project.gmaking.admin.vo.InventoryVO">
+        <id property="inventoryId" column="INVENTORY_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="productId" column="PRODUCT_ID"/>
+        <result property="quantity" column="QUANTITY"/>
+        <result property="expiryDate" column="EXPIRY_DATE"/>
+        <result property="acquiredDate" column="ACQUIRED_DATE"/>
+
+        <result property="userNickname" column="USER_NICKNAME"/>
+    </resultMap>
+
+    <select id="selectAllUsers" resultMap="LoginVOResultMap">
+        SELECT
+            t1.USER_ID, t1.USER_NAME, t1.USER_EMAIL, t1.USER_NICKNAME, t1.ROLE, t1.CREATED_DATE,
+            t3.CHARACTER_NAME AS REPR_CHARACTER_NAME,
+            COALESCE(t4.CHAR_COUNT, 0) AS CHARACTER_COUNT,
+            COALESCE(t5.INCUBATOR_COUNT, 0) AS INCUBATOR_COUNT
+        FROM
+            tb_user t1
+        LEFT JOIN
+            tb_character t3 ON t1.CHARACTER_ID = t3.CHARACTER_ID
+        LEFT JOIN (
+            SELECT USER_ID, COUNT(*) AS CHAR_COUNT FROM tb_character GROUP BY USER_ID
+        ) t4 ON t1.USER_ID = t4.USER_ID
+        LEFT JOIN (
+            SELECT USER_ID, SUM(QUANTITY) AS INCUBATOR_COUNT
+            FROM tb_user_inventory
+            WHERE PRODUCT_ID = 999
+        GROUP BY USER_ID
+        ) t5 ON t1.USER_ID = t5.USER_ID
+        ORDER BY
+        t1.CREATED_DATE DESC
+    </select>
+
+    <select id="selectAllCharacters" resultMap="CharacterVOResultMap">
+        SELECT
+            t1.CHARACTER_ID, t1.USER_ID, t1.CHARACTER_NAME, t1.GRADE_ID, t1.TOTAL_STAGE_CLEARS,
+            t1.EVOLUTION_STEP, t1.CREATED_DATE, t2.IMAGE_URL, t3.USER_NICKNAME
+        FROM
+            tb_character t1
+        LEFT JOIN tb_image t2 ON t1.IMAGE_ID = t2.IMAGE_ID
+        LEFT JOIN tb_user t3 ON t1.USER_ID = t3.USER_ID
+        ORDER BY
+        t1.CREATED_DATE DESC
+    </select>
+
+    <select id="selectAllPurchases" resultMap="PurchaseVOResultMap">
+        SELECT
+            t1.PURCHASE_ID, t1.USER_ID, t1.PRODUCT_ID, t1.QUANTITY, t1.AMOUNT_PAID, t1.METHOD,
+            t1.MERCHANT_UID, t1.STATUS, t1.PRODUCT_NAME_SNAP, t1.TOTAL_PRICE_SNAP,
+            t1.APPROVED_AT, t1.CREATED_DATE, t2.USER_NICKNAME
+        FROM
+            tb_purchase t1
+        JOIN
+            tb_user t2 ON t1.USER_ID = t2.USER_ID
+        ORDER BY
+        t1.CREATED_DATE DESC
+    </select>
+
+    <select id="selectAllInventory" resultMap="InventoryVOResultMap">
+        SELECT
+            t1.INVENTORY_ID, t1.USER_ID, t1.PRODUCT_ID, t1.QUANTITY, t1.EXPIRY_DATE,
+            t1.ACQUIRED_DATE, t2.USER_NICKNAME
+        FROM
+            tb_user_inventory t1
+        JOIN
+            tb_user t2 ON t1.USER_ID = t2.USER_ID
+        ORDER BY
+        t1.ACQUIRED_DATE DESC
+    </select>
+
+</mapper>

@@ -4,7 +4,7 @@ import { Upload, Wand2, RefreshCw, CheckCircle, AlertTriangle, Trophy } from 'lu
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { generateCharacterPreview, finalizeCharacter } from '../api/characterCreationApi';
+import { generateCharacterPreview, finalizeCharacter } from '../api/characterCreation/characterCreationApi';
 
 const CharacterCreationPage = () => {
     const navigate = useNavigate();

@@ -44,7 +44,7 @@ import DailyQuestPage from './pages/DailyQuestPage';
 import NoticeListPage from './pages/notice/NoticeListPage';
 import NoticeDetailPage from './pages/notice/NoticeDetailPage';
 import NoticeManagePage from './pages/notice/NoticeManagePage';
-
+import AdminPage from './pages/AdminPage';
 
 // ProtectedRoute: 로그인 확인
 const ProtectedRoute = ({ children }) => {
@@ -142,6 +142,7 @@ function App() {
                 <Route path="/minigame/typing" element={<TypingGame />} />
                 <Route path="/admin/notice/new" element={<ProtectedRoute><NoticeManagePage /></ProtectedRoute>} />
                 <Route path="/admin/notice/:noticeId/edit" element={<ProtectedRoute><NoticeManagePage /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
                 {/* 그 외 모든 경로를 메인으로 이동 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
