@@ -24,7 +24,7 @@ import BattleLogList from './pages/battleLog/BattleLogList';
 import TurnLogList from './pages/battleLog/TurnLogList';
 import RankingPage from './pages/ranking/RankingPage';
 import AiDebatePage from './pages/game/debate/AiDebatePage';
-import ProfileEditPage from'./pages/community/ProfileEditPage';
+import ProfileEditPage from'./pages/mypage/ProfileEditPage';
 import PvpMatchPage from './pages/game/pvp/PvpMatchPage';
 import PvpBattlePage from './pages/game/pvp/PvpBattlePage';
 import PostEditPage from './pages/community/PostEditPage';

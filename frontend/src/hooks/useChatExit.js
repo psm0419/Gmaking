@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import axiosInstance from "../api/axiosInstance";
+import axiosInstance from "../api/mypage/axiosInstance";
 
 // (선택) 공통 헤더 생성 – axios 인셉터를 쓰고 있으면 생략해도 됨
 function buildAuthHeader() {

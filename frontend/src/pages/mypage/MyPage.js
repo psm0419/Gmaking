@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { useAuth } from "../../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { notificationsApi } from "../../api/notificationApi";
+import { notificationsApi } from "../../api/notifications/notificationApi";
 import { Egg } from "lucide-react";
 import CertificatePrint from "./CertificatePrint";
 

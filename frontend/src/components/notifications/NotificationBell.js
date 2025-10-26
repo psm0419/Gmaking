@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import useNotificationsSocket from "../../hooks/useNotificationsSocket";
-import { notificationsApi as api } from "../../api/notificationApi";
+import { notificationsApi as api } from "../../api/notifications/notificationApi";
 
 export default function NotificationBell({
   onOpenPvpModal,
