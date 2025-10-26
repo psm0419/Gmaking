@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../../../components/Header";
@@ -36,6 +36,7 @@ function PvpBattlePage() {
     const [enemyCurrentHp, setEnemyCurrentHp] = useState(enemyCharacter.characterStat.characterHp);
     const [isProcessing, setIsProcessing] = useState(false);
     const [specialCooldown, setSpecialCooldown] = useState(0);
+    const logContainerRef = useRef(null);
 
     // 체력 퍼센트 계산
     const calcHpPercent = (current, max) => Math.max(0, Math.round((current / max) * 100));
@@ -117,9 +118,26 @@ function PvpBattlePage() {
         }
     };
 
+    // window의 스크롤 내부 컨테이너로 전달
+    useEffect(() => {
+        const handleWheel = (e) => {
+            const container = logContainerRef.current;
+            if (!container) return;
+
+            // 기본 스크롤 막기
+            e.preventDefault();
+
+            // 내부 스크롤로 전달
+            container.scrollTop += e.deltaY;
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
+
     return (
         <div><Header />
-            <div className="flex flex-col items-center p-2 text-white bg-gray-900 min-h-[calc(100vh-60px)]">
+            <div className="flex flex-col items-center p-2 text-white bg-gray-900 h-[calc(100vh-60px)]">
                 <h1 className="text-3xl font-bold mb-4">PVP 전투</h1>
 
                 <div className="flex justify-between w-3/4 mb-10">
@@ -171,6 +189,7 @@ function PvpBattlePage() {
                             <p className="text-gray-200">방어 VS 공격 (방어력의 2배 피해)<br />회피 VS 필살기 (방어력의 3배 피해)</p>
                             <p className="text-blue-400 font-semibold mt-3">동일 커맨드</p>
                             <p className="text-gray-200">공격 VS 공격(서로 기본 피해)<br />필살기 VS 필살기(서로 2배 피해)<br />방어 VS 방어, 회피 VS 회피: 피해 없음</p>
+                            <p>동시 사망시 공격자 패배</p>
                         </div>
                     </div>
 
@@ -207,7 +226,9 @@ function PvpBattlePage() {
                 </div>
 
                 {/* 전투 로그 */}
-                <div className="bg-gray-800 p-6 rounded-xl w-2/3 text-left overflow-y-auto whitespace-pre-wrap max-h-64 no-scrollbar">
+                <div
+                    ref={logContainerRef}
+                    className="bg-gray-800 p-6 rounded-xl w-2/3 text-left overflow-y-auto whitespace-pre-wrap max-h-64 no-scrollbar">
                     {battleLogs.length > 0 ? battleLogs.map((log, idx) => <p key={idx}>{log}</p>) : <p>전투 로그가 여기에 표시됩니다.</p>}
                 </div>
 

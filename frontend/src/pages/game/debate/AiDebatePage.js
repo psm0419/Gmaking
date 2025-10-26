@@ -15,6 +15,7 @@ function AiDebatePage() {
     const [dialogues, setDialogues] = useState([]);
     const [loading, setLoading] = useState(false);
     const logRef = useRef(null);
+    const logContainerRef = useRef(null);
 
     useEffect(() => {
         if (!userId) return;
@@ -27,6 +28,23 @@ function AiDebatePage() {
         if (logRef.current)
             logRef.current.scrollTop = logRef.current.scrollHeight;
     }, [dialogues]);
+
+    // window의 스크롤 내부 컨테이너로 전달
+        useEffect(() => {
+            const handleWheel = (e) => {
+                const container = logContainerRef.current;
+                if (!container) return;
+    
+                // 기본 스크롤 막기
+                e.preventDefault();
+    
+                // 내부 스크롤로 전달
+                container.scrollTop += e.deltaY;
+            };
+    
+            window.addEventListener("wheel", handleWheel, { passive: false });
+            return () => window.removeEventListener("wheel", handleWheel);
+        }, []);
 
     const startDebate = async () => {
         if (!aId || !bId || aId === bId)
@@ -147,7 +165,10 @@ function AiDebatePage() {
 
                     {/* 로그 영역 */}
                     <div
-                        ref={logRef}
+                        ref={(el) => {
+                            logRef.current = el;
+                            logContainerRef.current = el;
+                        }}
                         className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner no-scrollbar"
                     >
                         {dialogues

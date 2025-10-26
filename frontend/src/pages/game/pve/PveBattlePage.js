@@ -99,6 +99,23 @@ function PveBattlePage() {
         }
     }, [logs]);
 
+    // window의 스크롤 내부 컨테이너로 전달
+    useEffect(() => {
+        const handleWheel = (e) => {
+            const container = logContainerRef.current;
+            if (!container) return;
+
+            // 기본 스크롤 막기
+            e.preventDefault();
+
+            // 내부 스크롤로 전달
+            container.scrollTop += e.deltaY;
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
+
     useEffect(() => {
         if (!isTtsEnabled || logs.length === 0) return;
 
@@ -228,7 +245,7 @@ function PveBattlePage() {
 
     return (
         <div><Header />
-            <div className="flex flex-col items-center p-3 min-h-[calc(100vh-60px)]" style={backgroundStyle}>
+            <div className="flex flex-col items-center p-3 h-[calc(100vh-60px)] overflow-hidden" style={backgroundStyle}>
 
                 {/* 캐릭터 및 몬스터 정보 표시 영역 */}
                 {(selectedCharacter) ? (
@@ -253,15 +270,15 @@ function PveBattlePage() {
                         </div>
 
                         {/* 몬스터 정보 */}
-                        <div className="text-center w-1/3 p-4 bg-gray-800/50 rounded-lg">
+                        <div className="text-center w-1/3 p-1 bg-gray-800/50 rounded-lg">
                             {opponentMonster ? (
                                 <>
-                                    <h2 className="text-2xl font-bold mb-2 text-red-400">{opponentMonster.monsterName}</h2>
                                     <img
                                         src={`/images/monster/${opponentMonster.imageOriginalName}`}
                                         alt={opponentMonster.monsterName}
                                         className="w-32 h-32 mx-auto mb-2 border border-red-400 rounded-lg bg-white/10"
                                     />
+                                    <h2 className="text-2xl font-bold mb-2 text-red-400">{opponentMonster.monsterName}</h2>
                                     <div className="text-l mt-2 text-gray-200">
                                         <p>HP: {opponentMonster.monsterHp} / ATK: {opponentMonster.monsterAttack} / DEF: {opponentMonster.monsterDefense}</p>
                                         <p>SPEED: {opponentMonster.monsterSpeed} / CRITICAL: {opponentMonster.monsterCriticalRate}%</p>
@@ -325,7 +342,8 @@ function PveBattlePage() {
                     </button>
                 </div>
                 <div
-                    className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 min-h-[375px] max-h-[375px] overflow-y-auto border border-gray-700 whitespace-pre-wrap no-scrollbar"
+                    ref={logContainerRef}
+                    className="mt-6 bg-gray-900/80 p-6 rounded-xl w-4/5 flex-grow overflow-y-auto border border-gray-700 whitespace-pre-wrap no-scrollbar"
                 >
                     {logs.map((log, i) => (
                         <p

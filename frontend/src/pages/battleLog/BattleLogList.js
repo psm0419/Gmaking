@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -14,6 +14,7 @@ function BattleLogList() {
     const myCharacterIds = Object.keys(characterMap).map(id => Number(id));
 
     let userId = null;
+    const logContainerRef = useRef(null);
     if (token) {
         try {
             const decoded = jwtDecode(token);
@@ -72,6 +73,23 @@ function BattleLogList() {
         console.log("현재 필터:", typeFilter);
     }, [typeFilter]);
 
+    // window의 스크롤 내부 컨테이너로 전달
+    useEffect(() => {
+        const handleWheel = (e) => {
+            const container = logContainerRef.current;
+            if (!container) return;
+
+            // 기본 스크롤 막기
+            e.preventDefault();
+
+            // 내부 스크롤로 전달
+            container.scrollTop += e.deltaY;
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
+
     return (
         <div className="h-screen flex flex-col bg-gray-900">
             <Header />
@@ -110,7 +128,9 @@ function BattleLogList() {
             </div>
 
             {/* 로그 목록만 스크롤 */}
-            <div className="flex-1 overflow-auto w-full max-w-4xl mx-auto px-6 pb-6 mb-5 no-scrollbar">
+            <div
+                ref={logContainerRef}
+                className="flex-1 overflow-auto w-full max-w-4xl mx-auto px-6 pb-6 mb-5 no-scrollbar">
                 {filteredLogs.length === 0 ? (
                     <p className="text-center text-gray-500 py-8">
                         {searchTerm

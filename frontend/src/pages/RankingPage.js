@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Header from '../components/Header';
 
 function RankingPage() {
     const [rankingType, setRankingType] = useState("character");
     const [rankings, setRankings] = useState([]);
+    const logContainerRef = useRef(null);
 
     const getGradeLabel = (gradeId) => {
         switch (gradeId) {
@@ -86,7 +87,21 @@ function RankingPage() {
         </div>
     );
 
+    // window의 스크롤 내부 컨테이너로 전달
+    useEffect(() => {
+        const handleWheel = (e) => {
+            const container = logContainerRef.current;
+            if (!container) return;
 
+            // 기본 스크롤 막기
+            e.preventDefault();
+
+            // 내부 스크롤로 전달
+            container.scrollTop += e.deltaY;
+        };
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
 
     return (
         <div className="h-screen flex flex-col bg-gray-900 overflow-hidden">
@@ -120,7 +135,9 @@ function RankingPage() {
             </div>
 
             {/* 내부 스크롤 영역 */}
-            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-6 mb-5 no-scrollbar">
+            <div
+                ref={logContainerRef}
+                className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-6 mb-5 no-scrollbar">
                 {renderTable()}
             </div>
         </div>
