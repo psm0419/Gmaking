@@ -323,7 +323,7 @@ const ProductManagementTab = () => {
                 </form>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
+                    className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition"
                 >
                     <PlusCircle className="w-5 h-5 mr-2" /> 상품 추가
                 </button>
