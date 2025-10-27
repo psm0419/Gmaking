@@ -1,11 +1,8 @@
 package com.project.gmaking.admin.controller;
 
 import com.project.gmaking.admin.service.AdminService;
-import com.project.gmaking.admin.vo.CharacterVO;
-import com.project.gmaking.admin.vo.PurchaseVO;
-import com.project.gmaking.admin.vo.InventoryVO;
+import com.project.gmaking.admin.vo.*;
 import com.project.gmaking.login.vo.LoginVO;
-import com.project.gmaking.admin.vo.AdminSearchCriteria;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -109,6 +106,30 @@ public class AdminController {
 
         Map<String, Object> result = adminService.getAllProducts(criteria);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 상품 정보 수정
+     * PUT /api/admin/products/{productId}
+     */
+    @PutMapping("/products/{productId}")
+    public ResponseEntity<Void> updateProduct(
+            @PathVariable("productId") int productId,
+            @RequestBody ProductVO productVO
+    ) {
+        productVO.setProductId(productId);
+        adminService.updateProduct(productVO);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 상품 삭제
+     * DELETE /api/admin/products/{productId}
+     */
+    @DeleteMapping("/products/{productId}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable("productId") int productId) {
+        adminService.deleteProduct(productId);
+        return ResponseEntity.noContent().build();
     }
 
     // -------------------------------------------------------------------------- //

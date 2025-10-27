@@ -16,7 +16,6 @@ public interface AdminDAO {
     int countAllCharacters(AdminSearchCriteria criteria);
     String getUserIdByCharacterId(int characterId);                     // 삭제할 캐릭터의 USER_ID 조회
     Integer getCharacterImageId(int characterId);                       // 캐릭터 이미지 ID 조회
-
     void deleteCharacterStat(int characterId);                          // 캐릭터 능력치 삭제
     void deleteCharacter(int characterId);                              // 캐릭터 정보 삭제 (tb_character)
     void deleteImage(int imageId);                                      // 이미지 정보 삭제
@@ -33,6 +32,8 @@ public interface AdminDAO {
     // 5. 상품 목록
     List<ProductVO>  selectAllProducts(AdminSearchCriteria criteria);
     int countAllProducts(AdminSearchCriteria criteria);
+    void updateProduct(ProductVO productVO);                            // 상품 수정
+    void deleteProduct(int productId);                                  // 상품 삭제
 
     // 6. 게시글 목록
     List<CommunityPostVO> selectAllPosts(AdminSearchCriteria criteria);

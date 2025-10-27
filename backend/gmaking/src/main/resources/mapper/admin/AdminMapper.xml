@@ -334,6 +334,28 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <!-- 상품 수정, 삭제 -->
+    <update id="updateProduct">
+        UPDATE tb_product
+        SET
+            PRODUCT_NAME = #{productName},
+            PRODUCT_TYPE = #{productType},
+            PRICE = #{price},
+            CURRENCY_TYPE = #{currencyType},
+            IS_SALE = #{isSale},
+            DURATION_DAYS = #{durationDays},
+            PACK_SIZE = #{packSize},
+            GRANT_PRODUCT_ID = #{grantProductId},
+            SALE_PRICE = #{salePrice},
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = #{updatedBy} WHERE
+            PRODUCT_ID = #{productId}
+    </update>
+
+    <delete id="deleteProduct">
+        DELETE FROM tb_product WHERE PRODUCT_ID = #{productId}
+    </delete>
+
     <!-- .............................................................. -->
 
     <sql id="postWhereClause">
