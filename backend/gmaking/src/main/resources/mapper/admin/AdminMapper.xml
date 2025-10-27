@@ -193,6 +193,37 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <!-- 캐릭터 삭제 -->
+    <select id="getCharacterImageId" resultType="int">
+        SELECT IMAGE_ID FROM tb_character WHERE CHARACTER_ID = #{characterId}
+    </select>
+
+    <select id="getUserIdByCharacterId" resultType="string">
+        SELECT USER_ID FROM tb_character WHERE CHARACTER_ID = #{characterId}
+    </select>
+
+    <delete id="deleteCharacterStat">
+        DELETE FROM tb_character_stat WHERE CHARACTER_ID = #{characterId}
+    </delete>
+
+    <delete id="deleteCharacter">
+        DELETE FROM tb_character WHERE CHARACTER_ID = #{characterId}
+    </delete>
+
+    <delete id="deleteImage">
+        DELETE FROM tb_image WHERE IMAGE_ID = #{imageId}
+    </delete>
+
+    <update id="resetUserCharacterInfo">
+        UPDATE tb_user
+        SET
+            CHARACTER_ID = NULL,
+            HAS_CHARACTER = 0
+        WHERE
+            USER_ID = #{userId}
+            AND CHARACTER_ID = #{characterId}
+    </update>
+
     <!-- .............................................................. -->
 
     <sql id="purchaseWhereClause">

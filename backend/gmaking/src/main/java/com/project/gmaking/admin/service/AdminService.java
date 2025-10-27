@@ -5,6 +5,7 @@ import com.project.gmaking.admin.vo.*;
 import com.project.gmaking.login.vo.LoginVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,8 @@ public class AdminService {
         return result;
     }
 
+    // -------------------------------------------------------------------------- //
+
     // 캐릭터 목록 조회
     public Map<String, Object> getAllCharacters(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllCharacters(criteria);
@@ -49,6 +52,38 @@ public class AdminService {
 
         return result;
     }
+
+    /**
+     * 캐릭터 및 연관 데이터 삭제 (Transactional)
+     * @param characterId 삭제할 캐릭터 ID
+     */
+    @Transactional
+    public void deleteCharacter(int characterId) {
+        // tb_character에서 USER_ID를 가져옴
+        String userId = adminDAO.getUserIdByCharacterId(characterId);
+        Integer imageId = adminDAO.getCharacterImageId(characterId);
+
+        // 캐릭터 능력치 삭제 (tb_character_stat)
+        adminDAO.deleteCharacterStat(characterId);
+
+        // 캐릭터 정보 삭제 (tb_character)
+        adminDAO.deleteCharacter(characterId);
+
+        // 이미지 정보 삭제 (tb_image)
+        if (imageId != null) {
+            adminDAO.deleteImage(imageId);
+        }
+
+        // 유저 정보 업데이트: 삭제된 캐릭터가 대표 캐릭터였을 경우 초기화
+        if (userId != null) {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+            params.put("characterId", characterId);
+            adminDAO.resetUserCharacterInfo(params);
+        }
+    }
+
+    // -------------------------------------------------------------------------- //
 
     // 구매 내역 조회
     public Map<String, Object> getAllPurchases(AdminSearchCriteria criteria) {
@@ -66,6 +101,8 @@ public class AdminService {
         return result;
     }
 
+    // -------------------------------------------------------------------------- //
+
     // 인벤토리 목록 조회
     public Map<String, Object> getAllInventory(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllInventory(criteria);
@@ -82,7 +119,9 @@ public class AdminService {
         return result;
     }
 
-    // 게시글 목록 조회
+    // -------------------------------------------------------------------------- //
+
+    // 신고 목록 조회
     public Map<String, Object> getAllProducts(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllProducts(criteria);
         List<ProductVO> products = adminDAO.selectAllProducts(criteria);
@@ -98,7 +137,9 @@ public class AdminService {
         return result;
     }
 
-    // 신고 목록 조회
+    // -------------------------------------------------------------------------- //
+
+    // 게시글 목록 조회
     public Map<String, Object> getAllPosts(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllPosts(criteria);
         List<CommunityPostVO> posts = adminDAO.selectAllPosts(criteria);
@@ -114,6 +155,9 @@ public class AdminService {
         return result;
     }
 
+    // -------------------------------------------------------------------------- //
+
+    // 신고 목록 조회
     public Map<String, Object> getAllReports(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllReports(criteria);
         List<ReportVO> reports = adminDAO.selectAllReports(criteria);

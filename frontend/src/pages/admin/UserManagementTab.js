@@ -68,17 +68,17 @@ const UserManagementTab = () => {
         }
     };
 
-    const handleDelete = async (userId) => {
-        if (!window.confirm(`정말로 사용자 ID: ${userId} 를 삭제하시겠습니까?`)) return;
-        try {
-            await deleteUser(token, userId);
-            alert(`사용자 ${userId}가 삭제되었습니다.`);
-            loadUsers(); // 목록 새로고침
-        } catch (err) {
-            alert('사용자 삭제에 실패했습니다. (권한 또는 서버 문제)');
-            console.error(err);
-        }
-    };
+    // const handleDelete = async (userId) => {
+    //     if (!window.confirm(`정말로 사용자 ID: ${userId} 를 삭제하시겠습니까?`)) return;
+    //     try {
+    //         await deleteUser(token, userId);
+    //         alert(`사용자 ${userId}가 삭제되었습니다.`);
+    //         loadUsers(); // 목록 새로고침
+    //     } catch (err) {
+    //         alert('사용자 삭제에 실패했습니다. (권한 또는 서버 문제)');
+    //         console.error(err);
+    //     }
+    // };
 
     // 로딩 및 에러 UI 
     if (isLoading) return <div className="text-center py-10 text-yellow-400">사용자 목록 로딩 중...</div>;
@@ -123,7 +123,7 @@ const UserManagementTab = () => {
                         <th className="px-4 py-3 text-left min-w-[80px]">캐릭터 수</th>
                         <th className="px-4 py-3 text-left min-w-[80px]">부화권</th>
                         <th className="px-4 py-3 text-left min-w-[130px]">가입일</th>
-                        <th className="px-4 py-3 text-center min-w-[100px]">관리</th>
+                        {/* <th className="px-4 py-3 text-center min-w-[100px]">관리</th> */}
                     </tr>
                 </thead>
                 <tbody className="bg-gray-800 divide-y divide-gray-700">
@@ -143,7 +143,7 @@ const UserManagementTab = () => {
                             <td className="px-4 py-3 text-gray-300 text-center">{user.characterCount}</td>
                             <td className="px-4 py-3 text-gray-300 text-center">{user.incubatorCount}</td>
                             <td className="px-4 py-3 text-gray-400">{new Date(user.createdDate).toLocaleDateString()}</td>
-                            <td className="px-4 py-3 text-center space-x-2">
+                            {/* <td className="px-4 py-3 text-center space-x-2">
                                 <button className="text-blue-400 hover:text-blue-300 transition flex items-center justify-center mx-auto"><Edit className="w-4 h-4 mr-1" />수정</button>
                                 <button
                                     onClick={() => handleDelete(user.userId)}
@@ -151,7 +151,7 @@ const UserManagementTab = () => {
                                 >
                                     <Trash2 className="w-4 h-4 mr-1" />삭제
                                 </button>
-                            </td>
+                            </td> */}
                         </tr>
                     ))}
                 </tbody>

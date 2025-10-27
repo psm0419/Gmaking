@@ -18,7 +18,7 @@ const buildQueryString = (params) => {
 };
 
 /**
- * 1. 사용자 목록 조회 (페이징/검색 적용)
+ * 사용자 목록 조회 (페이징/검색 적용)
  * GET /api/admin/users
  */
 export const fetchAllUsers = async (token, params = {}) => {
@@ -28,7 +28,7 @@ export const fetchAllUsers = async (token, params = {}) => {
 };
 
 /**
- * 2. 사용자 삭제
+ * 사용자 삭제
  * DELETE /api/admin/users/{userId}
  */
 export const deleteUser = async (token, userId) => {
@@ -38,7 +38,7 @@ export const deleteUser = async (token, userId) => {
 
 
 /**
- * 3. 캐릭터 목록 조회 (페이징/검색 적용)
+ * 캐릭터 목록 조회 (페이징/검색 적용)
  * GET /api/admin/characters
  */
 export const fetchAllCharacters = async (token, params = {}) => {
@@ -48,7 +48,18 @@ export const fetchAllCharacters = async (token, params = {}) => {
 };
 
 /**
- * 4. 구매 내역 목록 조회 (페이징/검색 적용)
+ * 캐릭터 삭제
+ * DELETE /api/admin/characters/{characterId}
+ * @param {string} token 사용자 인증 토큰
+ * @param {number} characterId 삭제할 캐릭터 ID
+ */
+export const deleteCharacter = async (token, characterId) => {
+    const response = await axios.delete(`${API_BASE_URL}/characters/${characterId}`, { headers: getAuthHeaders(token) });
+    return response.data;
+};
+
+/**
+ * 구매 내역 목록 조회 (페이징/검색 적용)
  * GET /api/admin/purchases
  */
 export const fetchAllPurchases = async (token, params = {}) => {
@@ -58,7 +69,7 @@ export const fetchAllPurchases = async (token, params = {}) => {
 };
 
 /**
- * 5. 인벤토리 목록 조회 (페이징/검색 적용)
+ * 인벤토리 목록 조회 (페이징/검색 적용)
  * GET /api/admin/inventory
  */
 export const fetchAllInventory = async (token, params = {}) => {
@@ -68,7 +79,7 @@ export const fetchAllInventory = async (token, params = {}) => {
 };
 
 /**
- * 6. 상품 목록 조회 (페이징/검색/필터 적용)
+ * 상품 목록 조회 (페이징/검색/필터 적용)
  * GET /api/admin/products
  */
 export const fetchAllProducts = async (token, params = {}) => {
@@ -80,7 +91,7 @@ export const fetchAllProducts = async (token, params = {}) => {
 };
 
 /**
- * 7. 게시글 목록 조회 (페이징/검색/필터 적용)
+ * 게시글 목록 조회 (페이징/검색/필터 적용)
  * GET /api/admin/posts
  * @param {string} token 사용자 인증 토큰
  * @param {object} params 검색 조건 객체 ({ page, pageSize, searchKeyword, filterCategory, filterIsDeleted })
@@ -95,7 +106,7 @@ export const fetchAllPosts = async (token, params = {}) => {
 };
 
 /**
- * 8. 신고 목록 조회 (페이징/검색/필터 적용)
+ * 신고 목록 조회 (페이징/검색/필터 적용)
  * GET /api/admin/reports
  * @param {string} token 사용자 인증 토큰
  * @param {object} params 검색 조건 객체 ({ page, pageSize, searchKeyword, filterStatus, filterType })

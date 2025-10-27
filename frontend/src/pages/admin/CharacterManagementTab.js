@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchAllCharacters } from '../../api/admin/adminApi';
+import { fetchAllCharacters, deleteCharacter } from '../../api/admin/adminApi';
 import { Trash2, Search } from 'lucide-react';
 
 const initialCriteria = {
@@ -43,6 +43,30 @@ const CharacterManagementTab = () => {
             setIsLoading(false);
         }
     }, [token, user, criteria]);
+
+    const handleDeleteCharacter = async (characterId, characterName) => {
+        if (!window.confirm(`[${characterName}] 캐릭터를 정말로 삭제하시겠습니까?\n\n*주의: 해당 캐릭터와 관련된 모든 데이터(능력치, 배틀 로그 등)가 영구적으로 삭제됩니다.`)) {
+            return;
+        }
+
+        try {
+            await deleteCharacter(token, characterId);
+            alert(`[${characterName}] 캐릭터가 성공적으로 삭제되었습니다.`);
+            
+            // 삭제 후 목록 새로고침
+            // 현재 페이지의 마지막 항목을 삭제한 경우, 이전 페이지로 이동
+            const isLastItemOnPage = characters.length === 1 && criteria.page > 1;
+            if (isLastItemOnPage) {
+                setCriteria(prev => ({ ...prev, page: prev.page - 1 }));
+            } else {
+                loadCharacters(); // 같은 페이지 새로고침
+            }
+
+        } catch (err) {
+            console.error('캐릭터 삭제 실패:', err);
+            setError(err.response?.data?.message || '캐릭터 삭제 중 오류가 발생했습니다.');
+        }
+    };
 
     useEffect(() => {
         loadCharacters();
@@ -127,7 +151,13 @@ const CharacterManagementTab = () => {
                             <td className="px-4 py-3 text-sm text-gray-300 text-center">{char.evolutionStep}</td>
                             <td className="px-4 py-3 text-sm text-gray-400">{new Date(char.createdDate).toLocaleDateString()}</td>
                             <td className="px-4 py-3 text-center space-x-2">
-                                <button className="text-red-400 hover:text-red-300 transition flex items-center justify-center mx-auto"><Trash2 className="w-4 h-4 mr-1" />삭제</button>
+                                <button
+                                    onClick={() => handleDeleteCharacter(char.characterId, char.characterName)}
+                                    className="text-red-500 hover:text-red-400 p-1 rounded transition duration-150"
+                                    title="캐릭터 삭제"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
                             </td>
                         </tr>
                     ))}

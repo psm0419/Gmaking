@@ -4,6 +4,7 @@ import com.project.gmaking.admin.vo.*;
 import com.project.gmaking.login.vo.LoginVO;
 
 import java.util.List;
+import java.util.Map;
 
 public interface AdminDAO {
     // 1. 사용자 목록
@@ -13,6 +14,13 @@ public interface AdminDAO {
     // 2. 캐릭터 목록
     List<CharacterVO> selectAllCharacters(AdminSearchCriteria criteria);
     int countAllCharacters(AdminSearchCriteria criteria);
+    String getUserIdByCharacterId(int characterId);                     // 삭제할 캐릭터의 USER_ID 조회
+    Integer getCharacterImageId(int characterId);                       // 캐릭터 이미지 ID 조회
+
+    void deleteCharacterStat(int characterId);                          // 캐릭터 능력치 삭제
+    void deleteCharacter(int characterId);                              // 캐릭터 정보 삭제 (tb_character)
+    void deleteImage(int imageId);                                      // 이미지 정보 삭제
+    void resetUserCharacterInfo(Map<String, Object> params);            // tb_user 대표 캐릭터 초기화
 
     // 3. 구매 내역 목록
     List<PurchaseVO> selectAllPurchases(AdminSearchCriteria criteria);
