@@ -134,7 +134,7 @@ class GrowthService:
                 "steps": 28, 
                 "width": 1024,
                 "height": 1024,
-                "denoising_strength": 0.5 # 강도
+                "denoising_strength": 0.54 # 강도
             },
             "nsfw": False
         }
