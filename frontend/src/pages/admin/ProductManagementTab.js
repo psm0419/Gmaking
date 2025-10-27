@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAllProducts, createProduct, updateProduct, deleteProduct } from '../../api/admin/adminApi';
-import { Search, Edit, Trash2, Save, X, PlusCircle  } from 'lucide-react'; 
+import { Search, Edit, Trash2, Save, X, PlusCircle } from 'lucide-react';
 
 const SALE_STATUS_OPTIONS = [
     { value: '', label: '전체 판매 여부' },
@@ -10,13 +10,14 @@ const SALE_STATUS_OPTIONS = [
 ];
 
 const PRODUCT_TYPE_OPTIONS = [
-    { value: 'ENTITLEMENT', label: 'ENTITLEMENT' },
-    { value: 'CONSUMABLE', label: 'CONSUMABLE' },
+    { value: 'ENTITLEMENT', label: '기간제 상품' },
+    { value: 'CONSUMABLE', label: '소모성 상품' },
 ];
 
 const CURRENCY_TYPE_OPTIONS = [
-    { value: 'FREE', label: 'FREE' },
-    { value: 'FLAT', label: 'FLAT' },
+  { value: 'FREE', label: '무료' },
+  { value: 'FLAT', label: '정액제' },
+  { value: 'FIAT', label: '현금' },
 ];
 
 const initialCriteria = {
@@ -335,7 +336,7 @@ const ProductManagementTab = () => {
                         <th className="px-4 py-3 text-left min-w-[200px]">상품명</th>
                         <th className="px-4 py-3 text-left min-w-[100px]">유형</th>
                         <th className="px-4 py-3 text-right min-w-[100px]">정가</th>
-                        <th className="px-4 py-3 text-left min-w-[80px]">화폐</th>
+                        <th className="px-4 py-3 text-left min-w-[80px]">결제유형</th>
                         <th className="px-4 py-3 text-center min-w-[100px]">판매여부</th>
                         <th className="px-4 py-3 text-center min-w-[60px]">기간</th>
                         <th className="px-4 py-3 text-center min-w-[60px]">패키지</th>
@@ -376,11 +377,14 @@ const ProductManagementTab = () => {
                                             onChange={handleEditChange}
                                             className="w-full p-1 text-xs rounded bg-gray-600 border border-gray-500 text-gray-100"
                                         >
-                                            {PRODUCT_TYPE_OPTIONS.slice(1).map(option => ( // 전체 유형 제외
-                                                <option key={option.value} value={option.value}>{option.label}</option>
+                                            {PRODUCT_TYPE_OPTIONS.map(option => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
                                             ))}
                                         </select>
                                     ) : (
+                                        PRODUCT_TYPE_OPTIONS.find(opt => opt.value === item.productType)?.label ||
                                         item.productType
                                     )}
                                 </td>
@@ -410,13 +414,17 @@ const ProductManagementTab = () => {
                                             className="w-full p-1 text-xs rounded bg-gray-600 border border-gray-500 text-gray-100"
                                         >
                                             {CURRENCY_TYPE_OPTIONS.map(option => (
-                                                <option key={option.value} value={option.value}>{option.label}</option>
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
                                             ))}
                                         </select>
                                     ) : (
+                                        CURRENCY_TYPE_OPTIONS.find(opt => opt.value === item.currencyType)?.label ||
                                         item.currencyType
                                     )}
                                 </td>
+
 
                                 {/* 6. 판매여부 */}
                                 <td className="px-4 py-3 text-center">
