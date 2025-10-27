@@ -30,7 +30,7 @@ public class ConversationSummarizePipelineService {
     private static final int PATCH_TURN_LIMIT = 24;
 
     // "마지막 요약 이후" 누적 길이 임계치(정규화 후 문자 수)
-    private static final int DELTA_LEN_THRESHOLD = 400;
+    private static final int DELTA_LEN_THRESHOLD = 180;
 
     // 저장 허용 카테고리
     private static final Set<String> CAT_WHITELIST =
@@ -86,6 +86,8 @@ public class ConversationSummarizePipelineService {
             }
             Collections.reverse(recent);
 
+
+
             // 마지막 요약 이후만 필터링
             int lastTurnIdSaved = saved.getLastTurnId() == null ? 0 : saved.getLastTurnId();
             List<DialogueVO> deltaTurns = recent.stream()
@@ -100,6 +102,11 @@ public class ConversationSummarizePipelineService {
                         .replaceAll("\\s+", " ")            // 공백 압축
                         .trim();
                 deltaCharsSinceLast += c.length();
+            }
+
+            boolean smallTalkButManyTurns = deltaTurns.size() >= 4; // 초반 4턴 누적되면 요약 시도
+            if (!forced && !smallTalkButManyTurns && deltaCharsSinceLast < DELTA_LEN_THRESHOLD) {
+                return false;
             }
 
             if (!forced && deltaCharsSinceLast < DELTA_LEN_THRESHOLD) {
@@ -133,7 +140,7 @@ public class ConversationSummarizePipelineService {
             vo.setConversationId(convId);
             vo.setRollingSummary(updated);
             vo.setLastTurnId(lastTurnId);
-            vo.setUpdatedBy(actor);
+            vo.setUpdatedBy(actorOrPipeline(actor));
             conversationSummaryDAO.updateSummaryByConversationId(vo);
 
             // 5) 장기 기억 저장(업서트, 카테고리/정규화 주제) — 반드시 "사용자 발화" 근거만
@@ -141,7 +148,7 @@ public class ConversationSummarizePipelineService {
                 // delta 기준으로 sender 매핑 (근거 검증)
                 Map<Integer, DialogueSender> idToSender = senderMap(deltaTurns);
 
-                int cand = result.getMemories() == null ? 0 : result.getMemories().size();
+                int cand = result.getMemories().size();
                 int kept = 0, dropNoMeta = 0, dropNotUser = 0, dropCat = 0, dropLen = 0, dropConf = 0, dropOther = 0;
 
                 for (var m : result.getMemories()) {
@@ -195,7 +202,7 @@ public class ConversationSummarizePipelineService {
                         kept++;
                         if (kept >= 2) break; // 한 번에 최대 2개만 저장
                     } catch (Exception ex) {
-                        dropOther++; // 예외는 other로 집계
+                        dropOther++;
                         log.debug("[LM] drop by exception: {}", ex.toString());
                     }
                 }
@@ -242,7 +249,7 @@ public class ConversationSummarizePipelineService {
         return m;
     }
 
-    // meta에서 sourceMid 뽑기 (MemoryCandidate에 전용 필드가 없어도 동작)
+    // meta에서 sourceMid 뽑기
     private Integer getSourceMid(SummarizeResult.MemoryCandidate m) {
         try {
             Object meta = m.getMeta();
@@ -322,7 +329,6 @@ public class ConversationSummarizePipelineService {
         }
     }
 
-    // (서버단 예비 게이트 — 프롬프트 보호망과 중복되지만 안전장치로 유지)
     private boolean isGoodMemory(SummarizeResult.MemoryCandidate m) {
         if (m == null || Boolean.TRUE.equals(m.getPii())) return false;
         String cat = m.getCategory() == null ? "" : m.getCategory().toUpperCase(Locale.ROOT);

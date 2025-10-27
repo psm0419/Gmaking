@@ -4,8 +4,8 @@ import com.project.gmaking.chat.dao.ChatDAO;
 import com.project.gmaking.chat.dao.ConversationDAO;
 import com.project.gmaking.chat.dao.ConversationSummaryDAO;
 import com.project.gmaking.chat.llm.LlmClient;
-import com.project.gmaking.chat.vo.DialogueVO;
 import com.project.gmaking.chat.vo.ConversationSummaryVO;
+import com.project.gmaking.chat.vo.DialogueVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,11 +18,34 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ConversationSummaryService {
+
     private final ChatDAO chatDAO;
     private final ConversationDAO conversationDAO;
     private final LlmClient llmClient;
     private final ConversationSummaryDAO conversationSummaryDAO;
 
+    /**
+     * 현재 저장된 롤링 요약 텍스트를 반환.
+     * - 저장 레코드가 없거나 비어있으면 null 반환(상위 레이어에서 '없음' 판단을 쉽게 하기 위함)
+     */
+    @Transactional(readOnly = true)
+    public String getSummaryText(Integer convId) {
+        try {
+            ConversationSummaryVO vo = conversationSummaryDAO.selectByConversationId(convId);
+            if (vo == null) return null;
+            String s = vo.getRollingSummary();
+            return (s == null || s.isBlank()) ? null : s;
+        } catch (Exception e) {
+            log.warn("[ConversationSummary] getSummaryText failed convId={}", convId, e);
+            return null;
+        }
+    }
+
+    /**
+     * 최근 로그를 요약하여 upsert 저장(독립 트랜잭션).
+     * - 대화 로그가 없으면 false
+     * - 요약 실패/빈 요약이면 false
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public boolean summarizeAndSave(Integer convId, String actor) {
         var conv = conversationDAO.selectById(convId);
@@ -55,7 +78,7 @@ public class ConversationSummaryService {
         }
 
         if (summary == null || summary.isBlank()) {
-            log.warn("ConversationSummary : empty summary. convId={}", convId);
+            log.warn("ConversationSummary: empty summary. convId={}", convId);
             return false;
         }
 

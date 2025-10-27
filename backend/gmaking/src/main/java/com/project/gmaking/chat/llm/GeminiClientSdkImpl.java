@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @Component
-public class GeminiClientSdkImpl implements LlmClient{
+public class GeminiClientSdkImpl implements LlmClient {
 
     @Value("${gemini.api.key:}")
     private String apiKey;
@@ -105,6 +105,85 @@ public class GeminiClientSdkImpl implements LlmClient{
         return (text == null || text.isBlank()) ? "빈 응답입니다." : text.trim();
     }
 
+    // ===========================
+    // 요약/장기기억 "주입" 버전 (새로 추가)
+    // ===========================
+    /**
+     * 롤링요약(conversationSummary)과 장기기억(memories)을 프리픽스 컨텍스트로 주입한 뒤 대화 호출.
+     * 기존 chat/chatWithHistory를 건드리지 않고, 서비스단에서 선택적으로 이 메서드를 사용.
+     */
+    public String chatWithMemory(String systemPrompt,
+                                 String conversationSummary,          // 롤링 요약 (nullable)
+                                 List<MemoryItem> memories,           // 장기기억 (nullable)
+                                 List<DialogueVO> historyChrono,
+                                 String latestUserMessage) throws Exception {
+        Client client = buildClient();
+        List<Content> contents = new ArrayList<>();
+
+        // 0) 시스템 프롬프트
+        if (notBlank(systemPrompt)) {
+            contents.add(Content.builder()
+                    .role("user")
+                    .parts(List.of(Part.fromText("[SYSTEM INSTRUCTION]\n" + systemPrompt)))
+                    .build());
+        }
+
+        // 0.5) 메모리 컨텍스트 프리픽스
+        StringBuilder memBuf = new StringBuilder();
+        if (notBlank(conversationSummary)) {
+            memBuf.append("## CONVERSATION_SUMMARY\n")
+                    .append(trimTo(conversationSummary, 1200)).append("\n\n");
+        }
+        if (memories != null && !memories.isEmpty()) {
+            memBuf.append("## LONG_TERM_MEMORIES (user-authored only)\n");
+            for (MemoryItem m : limit(memories, 6)) { // 과도한 주입 방지
+                memBuf.append("- [").append(nz(m.category())).append("] ")
+                        .append(nz(m.subject())).append(" : ")
+                        .append(trimTo(nz(m.value()), 180));
+                if (notBlank(m.dueAt())) {
+                    memBuf.append(" (due: ").append(m.dueAt()).append(")");
+                }
+                memBuf.append("\n");
+            }
+            memBuf.append("\n사용자 선호/일정은 참고용이며, **사실로 단정하지 말고** 맥락에 맞게만 활용하세요.\n");
+        }
+        if (memBuf.length() > 0) {
+            contents.add(Content.builder()
+                    .role("user")
+                    .parts(List.of(Part.fromText("[MEMORY CONTEXT]\n" + memBuf)))
+                    .build());
+        }
+
+        // 1) 과거 히스토리
+        if (historyChrono != null && !historyChrono.isEmpty()) {
+            for (DialogueVO d : historyChrono) {
+                String role = (d.getSender() == DialogueSender.user) ? "user" : "model";
+                String text = d.getContent() == null ? "" : d.getContent();
+                if (text.isBlank()) continue;
+
+                contents.add(Content.builder()
+                        .role(role)
+                        .parts(List.of(Part.fromText(text)))
+                        .build());
+            }
+        }
+
+        // 2) 이번 유저 발화
+        contents.add(Content.builder()
+                .role("user")
+                .parts(List.of(Part.fromText(nullToEmpty(latestUserMessage))))
+                .build());
+
+        // 3) 모델 호출
+        GenerateContentResponse res = withRetry(
+                () -> client.models.generateContent(modelName, contents, null),
+                "chatWithMemory:" + modelName
+        );
+        String text = res.text();
+        LlmContext.set(modelName);
+        return (text == null || text.isBlank()) ? "빈 응답입니다." : text.trim();
+    }
+
     // 요약 + 장기기억 추출
     @Override
     public SummarizeResult summarizeAndExtract(String existingSummary,
@@ -152,8 +231,6 @@ public class GeminiClientSdkImpl implements LlmClient{
           ]
         }
         """.formatted("ko".equalsIgnoreCase(locale) ? "한국어로 작성" : "respond in " + locale);
-
-
 
         String user = """
                 <EXISTING>
@@ -257,6 +334,20 @@ public class GeminiClientSdkImpl implements LlmClient{
     // ===== helpers =====
     private static String nullToEmpty(String s) { return (s == null) ? "" : s; }
 
+    private static boolean notBlank(String s) { return s != null && !s.isBlank(); }
+
+    private static String nz(String s) { return s == null ? "" : s; }
+
+    private static String trimTo(String s, int max) {
+        if (s == null) return "";
+        return (s.length() > max) ? s.substring(0, max) + "…" : s;
+    }
+
+    private static <T> List<T> limit(List<T> list, int n) {
+        if (list == null) return List.of();
+        return list.size() > n ? list.subList(0, n) : list;
+    }
+
     private static String extractFirstJson(String s) {
         // ```json ... ``` 제거
         String cleaned = s.replaceAll("```json", "```").trim();
@@ -314,4 +405,15 @@ public class GeminiClientSdkImpl implements LlmClient{
         // c) 못 구하면 재시도 판단을 위해 -1 반환
         return -1;
     }
+
+    // ===========================
+    // 장기기억 주입용 레코드 (서비스단 DTO 매핑해 전달)
+    // ===========================
+    @lombok.Builder
+    public static record MemoryItem(
+            String category,   // FAVORITE | DISLIKE | SCHEDULE
+            String subject,    // 1~6 단어
+            String value,      // 5~200자
+            String dueAt       // YYYY-MM-DD(THH:mm) | null
+    ) {}
 }

@@ -53,7 +53,7 @@ export default function DailyQuestPage() {
             const response = await axios.post(`/api/quest/reward`, null, {
                 params: { userId: user.userId, questId },
                 headers: {
-                    Authorization: `Bearer ${token}` 
+                    Authorization: `Bearer ${token}`
                 }
             });
 
@@ -81,15 +81,15 @@ export default function DailyQuestPage() {
     return (
         <div>
             <Header />
-            <div className="min-h-[calc(100vh-60px)] bg-gray-900 p-6 text-gray-100 font-sans">
-                <h1 className="text-2xl font-bold mb-6 text-yellow-400">
+            <div className="min-h-[calc(100vh-60px)] bg-gray-900 py-10 px-4 text-gray-100">
+                <h1 className="text-3xl font-bold mb-10 text-center text-yellow-400">
                     오늘의 퀘스트
                 </h1>
 
                 {quests.length === 0 ? (
-                    <p className="text-gray-400">진행 중인 퀘스트가 없습니다.</p>
+                    <p className="text-gray-400 text-center">진행 중인 퀘스트가 없습니다.</p>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="max-w-2xl mx-auto flex flex-col items-center space-y-6">
                         {quests.map((q) => {
                             const percent = getProgressPercent(q.currentCount, q.targetCount);
                             const isCompleted = q.status === "COMPLETED";
@@ -98,10 +98,11 @@ export default function DailyQuestPage() {
                             return (
                                 <div
                                     key={q.questId}
-                                    className="bg-gray-800 rounded-xl p-4 shadow-md border border-gray-700"
+                                    className="w-full bg-gray-800 rounded-2xl p-5 shadow-lg border border-gray-700 hover:border-yellow-400 transition-all"
                                 >
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h2 className="text-lg font-semibold">{q.questName}</h2>
+                                    {/* 상단: 이름 + 상태 */}
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h2 className="text-xl font-semibold text-white">{q.questName}</h2>
                                         <span
                                             className={`px-3 py-1 text-sm rounded-full ${getStatusColor(q.status)}`}
                                         >
@@ -111,31 +112,34 @@ export default function DailyQuestPage() {
                                         </span>
                                     </div>
 
-                                    <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                                    {/* 진행도 바 */}
+                                    <div className="w-full bg-gray-700 rounded-full h-3 mb-3">
                                         <div
                                             className="bg-yellow-400 h-3 rounded-full transition-all duration-500"
                                             style={{ width: `${percent}%` }}
                                         ></div>
                                     </div>
 
-                                    <p className="text-sm text-gray-400 mb-3">
-                                        {q.currentCount} / {q.targetCount} 완료
-                                    </p>
+                                    {/* 하단: 진행상황 + 버튼 */}
+                                    <div className="flex items-center">
+                                        <p className="text-sm text-gray-400">
+                                            {q.currentCount} / {q.targetCount} 완료
+                                        </p>
 
-                                    {/* 완료 시 '보상 수령' 버튼 표시 */}
-                                    {isCompleted && !isRewarded && (
-                                        <button
-                                            onClick={() => handleReward(q.questId)}
-                                            disabled={loading}
-                                            className={`px-4 py-2 rounded-lg text-sm font-semibold shadow-md transition-all
+                                        {isCompleted && !isRewarded && (
+                                            <button
+                                                onClick={() => handleReward(q.questId)}
+                                                disabled={loading}
+                                                className={`ml-auto px-4 py-2 rounded-lg text-sm font-semibold shadow-md transition-all
                                                 ${loading
-                                                    ? "bg-gray-500 cursor-not-allowed"
-                                                    : "bg-green-600 hover:bg-green-700"
-                                                }`}
-                                        >
-                                            {loading ? "처리 중..." : "보상 수령"}
-                                        </button>
-                                    )}
+                                                        ? "bg-gray-500 cursor-not-allowed"
+                                                        : "bg-green-600 hover:bg-green-700"
+                                                    }`}
+                                            >
+                                                {loading ? "처리 중..." : "보상 수령"}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
