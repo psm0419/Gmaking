@@ -145,8 +145,14 @@ function BattleLogList() {
                             const isAttack = isPVE ? true : myCharacterIds.includes(log.characterId);
                             const roleLabel = isAttack ? "공격" : "방어";
 
-                            const myCharName = isAttack ? log.characterName : log.opponentName;
-                            const opponentName = isAttack ? log.opponentName : log.characterName;
+                            const safeCharName = (name) => name || "삭제된 캐릭터";
+
+                            const myCharName = isAttack
+                                ? safeCharName(log.characterName)
+                                : safeCharName(log.opponentName);
+                            const opponentName = isAttack
+                                ? safeCharName(log.opponentName)
+                                : safeCharName(log.characterName);
 
                             return (
                                 <li
