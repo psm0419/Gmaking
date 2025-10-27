@@ -10,12 +10,6 @@ const CATEGORY_OPTIONS = [
     { value: '질문/답변', label: '질문/답변' },
 ];
 
-const DELETE_STATUS_OPTIONS = [
-    { value: '', label: '전체 상태' },
-    { value: 'N', label: '정상 게시글 (N)' },
-    { value: 'Y', label: '삭제된 게시글 (Y)' },
-];
-
 const initialCriteria = {
     page: 1,
     pageSize: 7,
@@ -120,26 +114,16 @@ const CommunityPostManagementTab = () => {
                     ))}
                 </select>
 
-                <select
-                    name="filterIsDeleted"
-                    value={criteria.filterIsDeleted}
-                    onChange={handleFilterChange}
-                    className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-40"
-                >
-                    {DELETE_STATUS_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                </select>
                 <form onSubmit={handleSearch} className="flex flex-grow max-w-sm mt-2 sm:mt-0">
                     <input
                         type="text"
                         name="searchKeyword"
-                        value={searchInputValue} // 로컬 상태 사용
-                        onChange={handleSearchInputChange} // 로컬 핸들러 사용
+                        value={searchInputValue} 
+                        onChange={handleSearchInputChange} 
                         placeholder="제목, 작성자 닉네임, 내용 검색"
                         className="p-2 border rounded-l bg-gray-700 border-gray-600 text-gray-300 w-full focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <button type="submit" className="p-2 bg-blue-600 hover:bg-blue-700 rounded-r text-white flex items-center transition duration-150">
+                    <button type="submit" className="p-2 bg-gray-600 hover:bg-blue-700 rounded-r text-white flex items-center">
                         <Search size={20} />
                     </button>
                 </form>
@@ -179,7 +163,7 @@ const CommunityPostManagementTab = () => {
                             <td className="px-4 py-3 text-sm text-center text-gray-400">{post.viewCount}</td>
                             <td className="px-4 py-3 text-sm text-center text-green-400 font-bold">{post.likeCount}</td>
                             <td className="px-4 py-3 text-sm text-center">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.isDeleted === 'Y' ? 'bg-red-800 text-red-300' : 'bg-green-800 text-green-300'}`}>
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${post.isDeleted === 'Y' ? 'bg-red-600/20 text-red-400' : 'bg-green-600/20 text-green-400'}`}>
                                     {post.isDeleted === 'Y' ? '삭제됨' : '정상'}
                                 </span>
                             </td>
