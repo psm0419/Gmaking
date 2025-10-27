@@ -121,7 +121,7 @@ public class AdminService {
 
     // -------------------------------------------------------------------------- //
 
-    // 신고 목록 조회
+    // 상품 목록 조회
     public Map<String, Object> getAllProducts(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllProducts(criteria);
         List<ProductVO> products = adminDAO.selectAllProducts(criteria);
@@ -135,6 +135,21 @@ public class AdminService {
         result.put("totalPages", totalPages);
 
         return result;
+    }
+
+    // 상품 수정
+    public void updateProduct(ProductVO productVO) {
+        adminDAO.updateProduct(productVO);
+    }
+
+    // 상품 삭제
+    public void deleteProduct(int productId) {
+        adminDAO.deleteProduct(productId);
+    }
+
+    // 상품 추가
+    public int createProduct(ProductVO product) {
+        return adminDAO.insertProduct(product);
     }
 
     // -------------------------------------------------------------------------- //

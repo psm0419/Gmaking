@@ -47,12 +47,12 @@ const AdminPage = () => {
         switch (activeTab) {
             case 'users':
                 return <UserManagementTab />;
-            case 'characters':
-                return <CharacterManagementTab />;
-            case 'purchases':
-                return <PurchaseManagementTab />;
             case 'inventory':
                 return <InventoryManagementTab />;
+            case 'purchases':
+                return <PurchaseManagementTab />;
+            case 'characters':
+                return <CharacterManagementTab />;
             case 'products':
                 return <ProductManagementTab />;
             case 'posts': 
@@ -98,10 +98,10 @@ const AdminPage = () => {
                         label={`사용자 관리`} 
                     />
                     <TabButton 
-                        isActive={activeTab === 'characters'} 
-                        onClick={() => handleTabChange('characters')}
-                        icon={<Bot className="w-5 h-5 mr-2" />}
-                        label={`캐릭터 관리`}
+                        isActive={activeTab === 'inventory'} 
+                        onClick={() => handleTabChange('inventory')}
+                        icon={<Archive className="w-5 h-5 mr-2" />}
+                        label={`인벤토리`}
                     />
                     <TabButton 
                         isActive={activeTab === 'purchases'} 
@@ -110,10 +110,10 @@ const AdminPage = () => {
                         label={`구매 내역`}
                     />
                     <TabButton 
-                        isActive={activeTab === 'inventory'} 
-                        onClick={() => handleTabChange('inventory')}
-                        icon={<Archive className="w-5 h-5 mr-2" />}
-                        label={`인벤토리`}
+                        isActive={activeTab === 'characters'} 
+                        onClick={() => handleTabChange('characters')}
+                        icon={<Bot className="w-5 h-5 mr-2" />}
+                        label={`캐릭터 관리`}
                     />
                     <TabButton 
                         isActive={activeTab === 'products'} 
