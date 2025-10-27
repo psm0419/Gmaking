@@ -79,6 +79,20 @@ export const fetchAllInventory = async (token, params = {}) => {
 };
 
 /**
+ * 특정 사용자에게 아이템 지급 (부화권 등)
+ * POST /api/admin/inventory/give-item
+ * @param {string} token 사용자 인증 토큰
+ * @param {object} data 지급할 아이템 정보 ({ userId, productId, quantity })
+ * @returns {Promise<object>} 응답 데이터
+ */
+export const giveItemToUser = async (token, data) => {
+    const response = await axios.post(`${API_BASE_URL}/inventory/give-item`, data, { 
+        headers: getAuthHeaders(token) 
+    });
+    return response.data;
+};
+
+/**
  * 상품 목록 조회 (페이징/검색/필터 적용)
  * GET /api/admin/products
  */

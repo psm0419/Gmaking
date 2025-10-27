@@ -5,6 +5,7 @@ import com.project.gmaking.admin.vo.*;
 import com.project.gmaking.login.vo.LoginVO;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -95,6 +96,28 @@ public class AdminController {
 
         Map<String, Object> result = adminService.getAllInventory(criteria);
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/inventory/give-item")
+    public ResponseEntity<String> giveItemToUser(@RequestBody Map<String, Object> request) {
+        try {
+            String userId = (String) request.get("userId");
+            Integer productId = request.get("productId") instanceof Integer ? (Integer) request.get("productId") : Integer.parseInt(request.get("productId").toString());
+            Integer quantity = request.get("quantity") instanceof Integer ? (Integer) request.get("quantity") : Integer.parseInt(request.get("quantity").toString());
+
+            if (userId == null || userId.isEmpty() || productId == null || quantity == null || quantity <= 0) {
+                return ResponseEntity.badRequest().body("사용자 ID, 상품 ID, 수량을 올바르게 입력해주세요.");
+            }
+
+            adminService.giveItemToUser(userId, productId, quantity);
+            return ResponseEntity.ok("아이템 지급이 완료되었습니다.");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("아이템 지급 중 서버 오류가 발생했습니다.");
+        }
     }
 
     // -------------------------------------------------------------------------- //

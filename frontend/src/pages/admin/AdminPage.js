@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Users, Bot, DollarSign, Archive, Package, MessageSquare, AlertTriangle } from 'lucide-react'; 
@@ -31,6 +31,11 @@ const AdminPage = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('users');
     const [error, setError] = useState(null); 
+    const [userRefreshKey, setUserRefreshKey] = useState(0); 
+    
+    const handleUserRefresh = useCallback(() => {
+        setUserRefreshKey(prev => prev + 1);
+    }, []);
 
     useEffect(() => {
         if (!isLoading && user?.role !== 'ADMIN') {
@@ -46,9 +51,9 @@ const AdminPage = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'users':
-                return <UserManagementTab />;
+                return <UserManagementTab refreshTrigger={userRefreshKey} />;
             case 'inventory':
-                return <InventoryManagementTab />;
+                return <InventoryManagementTab onUserRefresh={handleUserRefresh} />;
             case 'purchases':
                 return <PurchaseManagementTab />;
             case 'characters':

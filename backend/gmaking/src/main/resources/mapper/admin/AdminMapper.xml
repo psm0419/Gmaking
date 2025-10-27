@@ -147,7 +147,7 @@
         LEFT JOIN (
             SELECT USER_ID, SUM(QUANTITY) AS INCUBATOR_COUNT
             FROM tb_user_inventory
-            WHERE PRODUCT_ID = 999
+            WHERE PRODUCT_ID = 4
             GROUP BY USER_ID
         ) t5 ON t1.USER_ID = t5.USER_ID
         <include refid="userWhereClause"/>
@@ -299,6 +299,22 @@
         t1.ACQUIRED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
+
+    <insert id="giveItemToUser" parameterType="map">
+        INSERT INTO tb_user_inventory (USER_ID, PRODUCT_ID, QUANTITY, ACQUIRED_DATE)
+        VALUES (#{userId}, #{productId}, #{quantity}, NOW())
+        ON DUPLICATE KEY UPDATE
+            QUANTITY = QUANTITY + #{quantity},
+            UPDATED_DATE = NOW()
+    </insert>
+
+    <update id="updateUserIncubatorCount" parameterType="map">
+        UPDATE tb_user
+        SET
+            INCUBATOR_COUNT = INCUBATOR_COUNT + #{quantity}
+        WHERE
+            USER_ID = #{userId}
+    </update>
 
     <!-- .............................................................. -->
 

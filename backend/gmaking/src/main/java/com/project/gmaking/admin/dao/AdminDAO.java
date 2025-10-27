@@ -25,9 +25,11 @@ public interface AdminDAO {
     List<PurchaseVO> selectAllPurchases(AdminSearchCriteria criteria);
     int countAllPurchases(AdminSearchCriteria criteria);
 
-    // 4. 인벤토리 목록
+    // 4. 인벤토리 목록 (부화권 지급, 부화권 카운트 업데이트)
     List<InventoryVO> selectAllInventory(AdminSearchCriteria criteria);
     int countAllInventory(AdminSearchCriteria criteria);
+    void giveItemToUser(Map<String, Object> params);
+    void updateUserIncubatorCount(Map<String, Object> params);
 
     // 5. 상품 목록
     List<ProductVO>  selectAllProducts(AdminSearchCriteria criteria);

@@ -119,6 +119,26 @@ public class AdminService {
         return result;
     }
 
+    @Transactional
+    public void giveItemToUser(String userId, int productId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("productId", productId);
+        params.put("quantity", quantity);
+
+        // 인벤토리 업데이트 (tb_user_inventory)
+        adminDAO.giveItemToUser(params);
+
+        // 인큐베이터 카운트 업데이트 (tb_user) - 상품 ID 4, 5 (부화기 관련)일 경우
+        if (productId == 4 || productId == 5) {
+            adminDAO.updateUserIncubatorCount(params);
+        }
+    }
+
     // -------------------------------------------------------------------------- //
 
     // 상품 목록 조회
