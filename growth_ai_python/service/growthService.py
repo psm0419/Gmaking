@@ -371,3 +371,6 @@ class GrowthService:
             print(f"🚨 캐릭터 성장 중 예외 발생: {e}")
             self.db.rollback()
             return None, "Internal server error during growth process."
+        
+        # uvicorn controller.main:app --host 0.0.0.0 --port 8001 --reload
+        # uvicorn controller.main:app --reload --port 8001
