@@ -189,7 +189,7 @@ function PvpBattlePage() {
                             <p className="text-gray-200">방어 VS 공격 (방어력의 2배 피해)<br />회피 VS 필살기 (방어력의 3배 피해)</p>
                             <p className="text-blue-400 font-semibold mt-3">동일 커맨드</p>
                             <p className="text-gray-200">공격 VS 공격(서로 기본 피해)<br />필살기 VS 필살기(서로 2배 피해)<br />방어 VS 방어, 회피 VS 회피: 피해 없음</p>
-                            <p>동시 사망시 공격자 패배</p>
+                            <p>동시 사망시 공격자 승리</p>
                         </div>
                     </div>
 
