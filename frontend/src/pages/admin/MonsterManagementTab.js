@@ -7,11 +7,11 @@ const initialCriteria = {
     page: 1,
     pageSize: 6,
     searchKeyword: '',
-    filterMonsterType: '',
+    filterMonsterType: '', 
 };
 
 const MonsterFormModal = ({ monsterData, onClose, onSuccess }) => {
-    const { token } = useAuth();
+    const { token, user } = useAuth(); // user 정보도 활용
     const isEditMode = !!monsterData;
     const [formData, setFormData] = useState({
         monsterName: monsterData?.monsterName || '',
@@ -24,7 +24,8 @@ const MonsterFormModal = ({ monsterData, onClose, onSuccess }) => {
         imageFile: null,
     });
 
-    const [previewImage, setPreviewImage] = useState(monsterData?.imagePath || null);
+    // GCS URL 필드명에 맞게 imagePath -> imageUrl로 수정
+    const [previewImage, setPreviewImage] = useState(monsterData?.imageUrl || null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -44,44 +45,60 @@ const MonsterFormModal = ({ monsterData, onClose, onSuccess }) => {
             };
             reader.readAsDataURL(file);
         } else {
-            setPreviewImage(monsterData?.imagePath || null);
+            // 파일 선택 취소 시 기존 이미지 또는 null로 복원
+            setPreviewImage(monsterData?.imageUrl || null);
         }
     };
 
+    // 몬스터 생성/수정 시 Multipart/form-data 구성 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const form = new FormData();
-            form.append('monsterName', formData.monsterName);
-            form.append('monsterType', formData.monsterType);
-            form.append('monsterHp', formData.monsterHp);
-            form.append('monsterAttack', formData.monsterAttack);
-            form.append('monsterDefense', formData.monsterDefense);
-            form.append('monsterSpeed', formData.monsterSpeed);
+            const formDataPayload = new FormData();
 
-            if (formData.monsterCriticalRate !== null && formData.monsterCriticalRate !== undefined) {
-                form.append('monsterCriticalRate', formData.monsterCriticalRate);
+            // 1. 몬스터 데이터를 JSON 문자열로 변환하여 'monsterData' 파트로 추가
+            const monsterDataJson = JSON.stringify({
+                // 수정 시에만 monsterId 포함
+                monsterId: isEditMode ? monsterData.monsterId : undefined,
+                monsterName: formData.monsterName,
+                monsterType: formData.monsterType,
+                monsterHp: parseInt(formData.monsterHp),
+                monsterAttack: parseInt(formData.monsterAttack),
+                monsterDefense: parseInt(formData.monsterDefense),
+                monsterSpeed: parseInt(formData.monsterSpeed),
+                monsterCriticalRate: parseInt(formData.monsterCriticalRate),
+                // createdBy/updatedBy를 JSON 본문에 포함
+                createdBy: !isEditMode ? 'ADMIN' : undefined,
+                updatedBy: isEditMode ? 'ADMIN' : undefined,
+            });
+
+            // Spring의 @RequestPart("monsterData")에 대응하기 위해 Blob으로 감싸서 전송
+            formDataPayload.append('monsterData', new Blob([monsterDataJson], { type: 'application/json' }));
+
+            // 2. 이미지 파일 추가 (멀티파트 파트)
+            if (isEditMode) {
+                if (formData.imageFile) {
+                    // Spring의 @RequestPart(value = "newImageFile")에 대응
+                    formDataPayload.append('newImageFile', formData.imageFile);
+                }
+            } else {
+                // 등록 모드: imageFile은 필수
+                if (!formData.imageFile) {
+                    setError("새 몬스터를 생성하려면 이미지 파일을 선택해야 합니다.");
+                    setLoading(false);
+                    return;
+                }
+                // Spring의 @RequestPart("imageFile")에 대응
+                formDataPayload.append('imageFile', formData.imageFile);
             }
-
-            const modifier = 'ADMIN'; 
 
             if (isEditMode) {
-                form.append('updatedBy', modifier);
+                await updateMonster(token, monsterData.monsterId, formDataPayload);
             } else {
-                form.append('createdBy', modifier);
-            }
-
-            if (formData.imageFile) {
-                form.append('imageFile', formData.imageFile);
-            }
-
-            if (isEditMode) {
-                await updateMonster(token, monsterData.monsterId, form);
-            } else {
-                await createMonster(token, form);
+                await createMonster(token, formDataPayload);
             }
 
             alert(`몬스터가 성공적으로 ${isEditMode ? '수정' : '생성'}되었습니다.`);
@@ -89,7 +106,7 @@ const MonsterFormModal = ({ monsterData, onClose, onSuccess }) => {
             onClose();
 
         } catch (err) {
-            console.error("Submission Error:", err);
+            console.error("Submission Error:", err.response || err);
             const errorMessage = err.response?.data?.message || err.message || `몬스터 ${isEditMode ? '수정' : '생성'} 중 오류가 발생했습니다.`;
             setError(errorMessage);
         } finally {
@@ -226,7 +243,7 @@ const MonsterManagementTab = () => {
                 page: criteria.page,
                 pageSize: criteria.pageSize,
                 searchKeyword: criteria.searchKeyword,
-                filterMonsterType: criteria.filterMonsterType
+                filterMonsterType: criteria.filterMonsterType // ⭐️ 올바른 필터 이름 사용
             });
 
             setMonsters(data.list);
@@ -292,7 +309,6 @@ const MonsterManagementTab = () => {
             await deleteMonster(token, monsterId);
             alert('몬스터가 삭제되었습니다.');
 
-            // 삭제 후 현재 페이지의 항목이 0개가 되면 이전 페이지로 이동 (사용자 목록 로직 반영)
             const remainingMonsters = monsters.filter(m => m.monsterId !== monsterId);
             const newPage = remainingMonsters.length === 0 && criteria.page > 1 ? criteria.page - 1 : criteria.page;
 
@@ -307,6 +323,7 @@ const MonsterManagementTab = () => {
         setIsModalOpen(false);
         fetchMonsters();
     };
+
     // ----------------------------
 
     if (isLoading) return <div className="text-center py-10 text-yellow-400">몬스터 목록 로딩 중...</div>;
@@ -381,21 +398,19 @@ const MonsterManagementTab = () => {
                                 <tr key={monster.monsterId} className="border-b border-gray-800 hover:bg-gray-700 transition duration-150">
                                     <td className="px-4 py-2">{monster.monsterId}</td>
                                     <td className="px-4 py-2">
-                                        {monster.imagePath ? (
+                                        {monster.imageUrl ? (
                                             <img
-                                                src={monster.imagePath}
+                                                src={monster.imageUrl} // ⭐️ imageUrl 필드 사용
                                                 alt={monster.monsterName}
-                                                className="w-10 h-10 object-cover rounded"
+                                                className="w-10 h-10 object-cover rounded mx-auto"
                                             />
-                                        ) : (
-                                            <div className="w-10 h-10 bg-gray-600 rounded flex items-center justify-center text-xs">NO IMG</div>
-                                        )}
+                                        ) : 'No Image'}
                                     </td>
                                     <td className="px-4 py-2 font-medium">{monster.monsterName}</td>
                                     <td className="px-4 py-2">
                                         <span className={`px-2 py-1 text-xs font-semibold rounded ${monster.monsterType === 'BOSS'
-                                                ? 'bg-red-900 text-red-300'
-                                                : 'bg-green-900 text-green-300'
+                                            ? 'bg-red-900 text-red-300'
+                                            : 'bg-green-900 text-green-300'
                                             }`}>
                                             {monster.monsterType}
                                         </span>

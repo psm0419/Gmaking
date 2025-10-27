@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -223,7 +224,10 @@ public class AdminController {
 
     // -------------------------------------------------------------------------- //
 
-    // 8. 몬스터 목록 조회 (페이징, 검색, 필터링 적용)
+    /**
+     * 몬스터 목록 조회 (Read List)
+     * GET /api/admin/monsters?page=1&pageSize=6&searchKeyword=오크
+     */
     @GetMapping("/monsters")
     public ResponseEntity<Map<String, Object>> getAllMonsters(
             @RequestParam(defaultValue = "1") int page,
@@ -238,42 +242,72 @@ public class AdminController {
         return ResponseEntity.ok(result);
     }
 
-    // 몬스터 생성 (이미지 파일 포함)
-    @PostMapping("/monsters")
-    public ResponseEntity<Void> createMonster(
-            @ModelAttribute MonsterVO monster,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
-    ) throws Exception { // IOException 처리 필요
-        adminService.createMonster(monster, imageFile);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    // 몬스터 상세 조회
+    /**
+     * 몬스터 상세 조회 (Read Detail)
+     * GET /api/admin/monsters/{monsterId}
+     */
     @GetMapping("/monsters/{monsterId}")
-    public ResponseEntity<MonsterVO> getMonster(@PathVariable("monsterId") int monsterId) {
-        MonsterVO monster = adminService.getMonsterById(monsterId);
+    public ResponseEntity<MonsterVO> getMonsterDetail(@PathVariable("monsterId") int monsterId) {
+        MonsterVO monster = adminService.getMonsterDetail(monsterId);
         if (monster == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(monster);
     }
 
-    // 몬스터 수정 (이미지 파일 포함)
+    /**
+     * 몬스터 등록 (Create)
+     * POST /api/admin/monsters (multipart/form-data)
+     * 이미지 파일과 몬스터 정보(JSON)를 함께 받음
+     */
+    @PostMapping("/monsters")
+    public ResponseEntity<Void> createMonster(
+            @RequestPart("monsterData") MonsterVO monsterVO,
+            @RequestPart("imageFile") MultipartFile imageFile
+    ) {
+        try {
+            adminService.createMonster(monsterVO, imageFile);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 몬스터 수정 (Update)
+     * PUT /api/admin/monsters/{monsterId} (multipart/form-data)
+     * 이미지 파일을 옵션으로 받음
+     */
     @PutMapping("/monsters/{monsterId}")
     public ResponseEntity<Void> updateMonster(
             @PathVariable("monsterId") int monsterId,
-            @ModelAttribute MonsterVO monster,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
-    ) throws Exception { // IOException 처리 필요
-        monster.setMonsterId(monsterId);
-        adminService.updateMonster(monster, imageFile);
-        return ResponseEntity.ok().build();
+            @RequestPart("monsterData") MonsterVO monsterVO,
+            @RequestPart(value = "newImageFile", required = false) MultipartFile newImageFile
+    ) {
+        try {
+            monsterVO.setMonsterId(monsterId);
+            adminService.updateMonster(monsterVO, newImageFile);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    // 몬스터 삭제
+    /**
+     * 몬스터 삭제 (Delete)
+     * DELETE /api/admin/monsters/{monsterId}
+     */
     @DeleteMapping("/monsters/{monsterId}")
     public ResponseEntity<Void> deleteMonster(@PathVariable("monsterId") int monsterId) {
-        adminService.deleteMonster(monsterId);
-        return ResponseEntity.noContent().build();
+        try {
+            adminService.deleteMonster(monsterId);
+            return ResponseEntity.noContent().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

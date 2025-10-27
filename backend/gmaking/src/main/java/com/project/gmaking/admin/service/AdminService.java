@@ -25,6 +25,10 @@ public class AdminService {
     private final GcsService gcsService;
     private final String GCS_MONSTER_FOLDER = "monster";
 
+    private String getCurrentAdminId() {
+        return "ADMIN";
+    }
+
     // 사용자 목록 조회
     public Map<String, Object> getAllUsers(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllUsers(criteria);
@@ -225,7 +229,7 @@ public class AdminService {
     // -------------------------------------------------------------------------- //
 
     /**
-     * 8. 몬스터 목록 조회 (페이징/검색/필터 적용)
+     * 몬스터 목록 조회 (Read List)
      */
     public Map<String, Object> getAllMonsters(AdminSearchCriteria criteria) {
         int totalCount = adminDAO.countAllMonsters(criteria);
@@ -243,60 +247,109 @@ public class AdminService {
     }
 
     /**
-     * 몬스터 이미지 파일 저장 (GCS 사용)
-     * @param imageFile 업로드된 파일
-     * @return 저장된 파일의 공개 URL
+     * 몬스터 상세 조회 (Read Detail)
      */
-    private String saveMonsterImageToGCS(MultipartFile imageFile) throws IOException {
-        if (imageFile == null || imageFile.isEmpty()) {
-            return null;
+    public MonsterVO getMonsterDetail(int monsterId) {
+        return adminDAO.selectMonsterDetail(monsterId);
+    }
+
+    /**
+     * 몬스터 등록 (Create)
+     */
+    @Transactional
+    public void createMonster(MonsterVO monsterVO, MultipartFile imageFile) throws IOException {
+        String adminId = getCurrentAdminId();
+
+        if (imageFile.isEmpty()) {
+            throw new IllegalArgumentException("몬스터 이미지는 필수입니다.");
         }
 
-        // GcsService의 uploadFile 메서드를 사용하여 GCS에 업로드
-        ImageUploadResponseVO response = gcsService.uploadFile(imageFile, GCS_MONSTER_FOLDER);
+        // GCS에 이미지 업로드
+        ImageUploadResponseVO uploadResponse = gcsService.uploadFile(imageFile, GCS_MONSTER_FOLDER);
 
-        // DB에는 공개 URL을 저장
-        return response.getFileUrl();
+        // tb_image에 정보 삽입
+        ImageVO imageVO = new ImageVO();
+        imageVO.setImageOriginalName(imageFile.getOriginalFilename());
+        imageVO.setImageUrl(uploadResponse.getFileUrl());
+        imageVO.setImageName(uploadResponse.getFileName());
+        imageVO.setImageType(2);
+        imageVO.setCreatedBy(adminId);
+
+        adminDAO.insertImage(imageVO);
+
+        // 3. tb_monster에 정보 삽입
+        monsterVO.setImageId(imageVO.getImageId());
+        monsterVO.setCreatedBy(adminId);
+
+        adminDAO.insertMonster(monsterVO);
     }
 
     /**
-     * 몬스터 생성 (GCS 사용)
+     * 몬스터 정보 수정 (Update)
+     * 새 이미지가 있다면, GCS 업로드 및 기존 이미지 삭제 처리 포함
      */
     @Transactional
-    public void createMonster(MonsterVO monster, MultipartFile imageFile) throws IOException {
-        String imagePath = saveMonsterImageToGCS(imageFile);
-        monster.setImagePath(imagePath);
-        adminDAO.insertMonster(monster);
-    }
+    public void updateMonster(MonsterVO monsterVO, MultipartFile newImageFile) throws IOException {
+        String adminId = getCurrentAdminId();
 
-    /**
-     * 몬스터 상세 조회
-     */
-    public MonsterVO getMonsterById(int monsterId) {
-        return adminDAO.selectMonsterById(monsterId);
-    }
+        // 이미지 파일 처리
+        if (newImageFile != null && !newImageFile.isEmpty()) {
 
-    /**
-     * 몬스터 수정 (GCS 사용)
-     */
-    @Transactional
-    public void updateMonster(MonsterVO monster, MultipartFile imageFile) throws IOException {
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String newImagePath = saveMonsterImageToGCS(imageFile);
-            monster.setImagePath(newImagePath);
-        } else {
-            monster.setImagePath(null);
+            // 기존 몬스터 정보 조회
+            MonsterVO oldMonster = adminDAO.selectMonsterDetail(monsterVO.getMonsterId());
+            if (oldMonster == null) {
+                throw new IllegalArgumentException("존재하지 않는 몬스터입니다.");
+            }
+            Integer imageId = oldMonster.getImageId();
+            String oldImageName = oldMonster.getImageName();
+            ImageUploadResponseVO uploadResponse = gcsService.uploadFile(newImageFile, GCS_MONSTER_FOLDER);
+
+            // tb_image 정보 업데이트
+            ImageVO imageVO = new ImageVO();
+            imageVO.setImageId(imageId);
+            imageVO.setImageOriginalName(newImageFile.getOriginalFilename());
+            imageVO.setImageUrl(uploadResponse.getFileUrl());
+            imageVO.setImageName(uploadResponse.getFileName());
+            imageVO.setUpdatedBy(adminId);
+
+            adminDAO.updateImage(imageVO);
+
+            // GCS에서 기존 이미지 삭제
+            if (oldImageName != null) {
+                gcsService.deleteFile(oldImageName);
+            }
         }
 
-        adminDAO.updateMonster(monster);
+        // 2. tb_monster 정보 업데이트
+        monsterVO.setUpdatedBy(adminId);
+        adminDAO.updateMonster(monsterVO);
     }
 
     /**
-     * 몬스터 삭제
+     * 몬스터 삭제 (Delete)
+     * DB 삭제 전 GCS 파일 삭제를 위해 이미지 정보를 먼저 조회
      */
     @Transactional
-    public void deleteMonster(int monsterId) {
-        adminDAO.deleteMonsterById(monsterId);
+    public void deleteMonster(int monsterId) throws IOException {
+
+        // 몬스터 정보 조회 (삭제할 이미지 ID와 이름 확보)
+        MonsterVO monsterToDelete = adminDAO.selectMonsterDetail(monsterId);
+
+        if (monsterToDelete == null) {
+            return;
+        }
+
+        Integer imageId = monsterToDelete.getImageId();
+        String imageName = monsterToDelete.getImageName();
+
+        // DB 정보 삭제 (부모 -> 자식)
+        adminDAO.deleteMonster(monsterId);
+        adminDAO.deleteImage(imageId);
+
+        // GCS에서 파일 삭제
+        if (imageName != null) {
+            gcsService.deleteFile(imageName);
+        }
     }
 
 }
