@@ -72,7 +72,7 @@ const CommunityPostManagementTab = () => {
     };
 
     const handlePostClick = (postId) => {
-        const postDetailUrl = `/community/post/${postId}`;
+        const postDetailUrl = `/community/${postId}`;
         window.open(postDetailUrl, '_blank');
     };
 
