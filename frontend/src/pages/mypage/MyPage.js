@@ -7,8 +7,8 @@ import { useAuth } from "../../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { notificationsApi } from "../../api/notifications/notificationApi";
-import { Egg } from "lucide-react";
 import CertificatePrint from "./CertificatePrint";
+import { Egg } from "lucide-react";
 
 // 분리된 웹알림 컴포넌트 + 분리된 PVP 결과 모달
 import NotificationBell from "../../components/notifications/NotificationBell";
@@ -210,7 +210,7 @@ function MyMain() {
             c.persona?.description ??
             null;
 
-          const backgroundInfo =
+        const backgroundInfo =
             c.backgroundInfo ??
             c.background ??
             c.backgroundDescription ??
@@ -277,7 +277,7 @@ function MyMain() {
     fetchSummaryData();
   }, [fetchSummaryData]);
 
-  // ✅ 수정: 상세 열 때 인증서 API 병합
+  // 상세 열 때 인증서 API 병합
   const onOpenCharacter = async (c) => {
     // 먼저 요약 데이터로 즉시 표시
     setSelected(c);
@@ -396,12 +396,12 @@ function MyMain() {
   };
 
   /* =========================
-   *  ✅ 인증서 프린트 상태/핸들러
+   *  인증서 프린트 상태/핸들러
    * ========================= */
   const [certificateData, setCertificateData] = useState(null); // 인쇄용 데이터
   const [printOpen, setPrintOpen] = useState(false);
 
-  // ✅ 수정: 인쇄 직전 인증서 API 반영
+  // 인쇄 직전 인증서 API 반영
   const handlePrintCertificate = useCallback(
     async (c) => {
       if (!c?.id) return;
@@ -458,13 +458,12 @@ function MyMain() {
         issuedAt: new Date().toISOString(),
       };
 
+      try { window.__notifyPause?.(); } catch {}
       setCertificateData(final);
       setPrintOpen(true);
     },
     [nickname, fetchCertificate]
   );
-
-
 
   if (loading) {
     return (
@@ -530,9 +529,13 @@ function MyMain() {
                     <span className="text-base font-semibold text-white/90">보유 부화권</span>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl font-extrabold text-[#FFC700] drop-shadow-md">{incubatorCount}</span>
-                      <span role="img" aria-label="ticket" className="text-xl">
-                        🎟️
-                      </span>
+                      <Egg
+                        role="img"
+                        aria-label="egg"
+                        className="w-5 h-5 text-[#FFC700]"
+                        strokeWidth={2.5}
+                        fill="#FFC700"
+                      />
                     </div>
                   </div>
 
@@ -566,7 +569,7 @@ function MyMain() {
             onChat={onChat}
             onSend={onSend}
             isGrowing={isGrowing}
-            onPrintCertificate={handlePrintCertificate} // ✅ 인쇄 핸들러
+            onPrintCertificate={handlePrintCertificate} // 인쇄 핸들러
           />
         )}
       </div>
@@ -605,16 +608,19 @@ function MyMain() {
         currentClearCount={selected?.stageClearCount ?? 0}
       />
 
-      {/* ✅ 프린트 전용 인증서 뷰 (포털) */}
+      {/* 프린트 전용 인증서 뷰 (포털) */}
       <CertificatePrint
         open={printOpen}
         data={certificateData}
+        onFinish={({ reason }) => {
+          // 프린트 다이얼로그는 성공/취소를 구분해주지 않으므로 후속 안내 없음
+          setTimeout(() => {
+            try { window.__notifyResume?.(); } catch {}
+          }, 800);
+        }}
         onClose={() => {
           setPrintOpen(false);
-          setCertificateData(null); // 필요 없으면 주석 처리 가능
-          // 토스트 쓰면 여기서 호출
-          if (window?.toast?.success) window.toast.success("저장 완료!");
-          else alert("저장 완료!");
+          setCertificateData(null);
         }}
       />
     </div>
@@ -725,7 +731,7 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing, onPrint
       )}
 
       {_statsLoading && (
-        <div className="mt-3 rounded-md bg-white/10 px-3 py-2 text-sm text-gray-300">스탯 불러오는 중...</div>
+        <div className="mt-3 rounded-md bg白/10 px-3 py-2 text-sm text-gray-300">스탯 불러오는 중...</div>
       )}
       {_statsError && (
         <div className="mt-3 rounded-md bg-red-900/50 px-3 py-2 text-sm font-medium text-red-300">{_statsError}</div>
@@ -901,7 +907,7 @@ function MoreMenuInline() {
 
   const btnRef = useRef(null);
   const panelRef = useRef(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 }); // width는 필요없음
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   const handleEditProfile = () => {
     setOpen(false);
@@ -917,23 +923,25 @@ function MoreMenuInline() {
     }
   };
 
+
   const updatePosition = useCallback(() => {
     const btn = btnRef.current;
     const panel = panelRef.current;
     if (!btn || !panel) return;
 
     const r = btn.getBoundingClientRect();
-    const margin = 8;
-    // 패널을 버튼 우측에 정렬하고, 중앙에서 약간 왼쪽으로 조정
-    const OFFSET_X = -150;
-    const OFFSET_Y = 10;
+    const margin = 0;   // 버튼과 패널 사이 간격
+    const offsetY = 0; // 아래로 내려주는 값
+    const panelW = panel.offsetWidth;
 
-    let pw = panel.offsetWidth;
-    // 버튼 오른쪽 끝을 기준으로, 왼쪽으로 패널 너비만큼 이동
-    let left = r.right - pw + OFFSET_X;
-    // 화면 경계 체크
-    left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
-    const top = r.bottom + OFFSET_Y;
+    // 버튼의 "오른쪽"에 고정해서 붙이기
+    let left = r.right + margin;
+
+    // 화면 오른쪽 밖으로 너무 튀어나가면 살짝만 안쪽으로 (하지만 '오른쪽 기준'은 유지)
+    const maxLeft = window.innerWidth - panelW - margin;
+    left = Math.min(left, maxLeft);
+
+    const top = r.bottom + offsetY;
 
     setPos({ top, left });
   }, []);
@@ -957,7 +965,6 @@ function MoreMenuInline() {
     };
 
     window.addEventListener("resize", onResizeScroll);
-    // Passive: true를 사용하여 성능 개선
     window.addEventListener("scroll", onResizeScroll, { capture: true, passive: true });
     document.addEventListener("mousedown", onDown);
     document.addEventListener("touchstart", onDown, { passive: true });
@@ -993,9 +1000,10 @@ function MoreMenuInline() {
             className="fixed z-[100] w-64 rounded-2xl bg-gray-900 shadow-xl ring-1 ring-white/10 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
-            {/* 팝업 위치 조정에 맞게 화살표 위치 수정 */}
-            <div className="absolute -top-2 right-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-900 drop-shadow" />
-
+            {/* ▲ 위쪽 화살표 (패널 상단, 왼쪽에 배치해서 버튼을 가리키는 느낌) */}
+            <div
+              className="absolute -top-2 left-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-900 drop-shadow"
+            />
             <div className="px-4 py-3 border-b border-gray-700 text-sm text-gray-400">더보기</div>
             <div className="p-2">
               <button
@@ -1017,6 +1025,7 @@ function MoreMenuInline() {
     </div>
   );
 }
+
 
 function IconMore(props) {
   return (

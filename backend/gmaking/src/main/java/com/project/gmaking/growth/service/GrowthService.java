@@ -28,6 +28,7 @@ public class GrowthService {
     private final GcsService gcsService; // 💡 GcsService 주입
 
     // AI 서버 URL 설정 (포트 8001 유지)
+    //@Value("${ai.server.url:http://192.168.1.107:8001/api/v1/grow-character}")
     @Value("${ai.server.url:http://localhost:8001/api/v1/grow-character}")
     private String aiServerUrl;
 
