@@ -33,6 +33,36 @@ export const AuthProvider = ({ children }) => {
         setCharacterCount(0);
     }, []);
 
+    // 부화권 갱신 함수 (applyNewToken의 의존성)
+    const updateIncubatorCount = useCallback((opts) => {
+        setIncubatorCount(prev => {
+            let next = 0;
+            if (opts?.set != null) {
+                next = Number(opts.set);
+            } else if (opts?.add != null) {
+                next = Number(prev ?? 0) + Number(opts.add);
+            } else {
+                next = Number(prev ?? 0);
+            }
+            if (!Number.isFinite(next) || next < 0) next = 0;
+
+            setUser(prevUser => prevUser ? { ...prevUser, incubatorCount: next } : prevUser);
+            localStorage.setItem('incubatorCount', String(next));
+            return next;
+        });
+    }, []);
+
+    // 광고패스 갱신 함수 (applyNewToken의 의존성)
+    const updateAdFree = useCallback(({ enabled } = {}) => {
+        const bool =
+            enabled === true || enabled === 'true' || enabled === 1 || enabled === '1';
+
+        setIsAdFree(bool);
+        setUser(prevUser => prevUser ? { ...prevUser, isAdFree: bool } : prevUser);
+        localStorage.setItem('isAdFree', bool ? '1' : '0');
+    }, []);
+
+
     useEffect(() => {
         const storedToken = localStorage.getItem('gmaking_token');
         const storedHasCharacter = localStorage.getItem('has_character') === 'true';
@@ -75,9 +105,11 @@ export const AuthProvider = ({ children }) => {
                     userPayload.hasCharacter === 'true' ||
                     storedHasCharacter,
                 characterImageUrl:
-                    (storedImage && storedImage.trim() !== '')
-                        ? storedImage
-                        : (userPayload.characterImageUrl || null),
+                    userPayload.characterImageUrl 
+                        ? userPayload.characterImageUrl 
+                        : (storedImage && storedImage.trim() !== '') 
+                            ? storedImage 
+                            : null,
                 incubatorCount: (Number.parseInt(localStorage.getItem('incubatorCount') ?? '0', 10) || 0),
                 isAdFree:
                     userPayload.isAdFree === true ||
@@ -138,6 +170,8 @@ export const AuthProvider = ({ children }) => {
 
                 if (userWithCharStatus.characterImageUrl && userWithCharStatus.characterImageUrl.trim() !== '') {
                     localStorage.setItem('characterImageUrl', userWithCharStatus.characterImageUrl.trim());
+                } else {
+                    localStorage.removeItem('characterImageUrl'); // NULL이면 제거
                 }
 
                 localStorage.setItem('has_character', userWithCharStatus.hasCharacter ? 'true' : 'false');
@@ -204,7 +238,7 @@ export const AuthProvider = ({ children }) => {
 
         const isUserAdFree =
             userInfo?.isAdFree === true || userInfo?.isAdFree === 'true';
-    
+        
         const charCount = 
         userInfo?.characterCount != null && !Number.isNaN(Number(userInfo.characterCount))
             ? Number(userInfo.characterCount)
@@ -232,6 +266,8 @@ export const AuthProvider = ({ children }) => {
 
         if (imageUrl && String(imageUrl).trim() !== '') {
             localStorage.setItem('characterImageUrl', String(imageUrl).trim());
+        } else {
+             localStorage.removeItem('characterImageUrl'); // NULL이면 제거
         }
 
         localStorage.setItem('has_character', isUserWithCharacter ? 'true' : 'false');
@@ -240,13 +276,19 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('characterCount', String(charCount ?? 0));
     }, []);
 
-    // 캐릭터 생성 시 상태 갱신
+    // 문제
     const setCharacterCreated = useCallback((imageUrl) => {
         setHasCharacter(true);
         setCharacterImageUrl(imageUrl);
 
         localStorage.setItem('has_character', 'true');
-        localStorage.setItem('characterImageUrl', imageUrl);
+
+        if (imageUrl && imageUrl.trim() !== '') {
+            localStorage.setItem('characterImageUrl', imageUrl);
+        } else {
+            localStorage.removeItem('characterImageUrl');
+        }
+
 
         if (user) {
             setUser(prev => ({
@@ -271,6 +313,8 @@ export const AuthProvider = ({ children }) => {
     const updateRepresentativeCharacter = useCallback((imageUrl, characterId) => {
         if (imageUrl && String(imageUrl).trim() !== '') {
             localStorage.setItem('characterImageUrl', String(imageUrl).trim());
+        } else {
+            localStorage.removeItem('characterImageUrl');
         }
 
         setCharacterImageUrl(imageUrl);
@@ -287,46 +331,33 @@ export const AuthProvider = ({ children }) => {
         }
     }, [user]);
 
-    // 부화권 구매 후 부화 패키지 개수 갱신
-    const updateIncubatorCount = useCallback((opts) => {
-        setIncubatorCount(prev => {
-            let next = 0;
-            if (opts?.set != null) {
-                next = Number(opts.set);
-            } else if (opts?.add != null) {
-                next = Number(prev ?? 0) + Number(opts.add);
-            } else {
-                next = Number(prev ?? 0);
-            }
-            if (!Number.isFinite(next) || next < 0) next = 0;
-
-            // user 상태 동기화
-            setUser(prevUser => prevUser ? { ...prevUser, incubatorCount: next } : prevUser);
-
-            // 로컬스토리지 반영
-            localStorage.setItem('incubatorCount', String(next));
-            return next;
-        });
-    }, []);
-
-    // 광고패스 갱신: on/off
-    const updateAdFree = useCallback(({ enabled } = {}) => {
-        const bool =
-            enabled === true || enabled === 'true' || enabled === 1 || enabled === '1';
-
-        setIsAdFree(bool);
-        setUser(prevUser => prevUser ? { ...prevUser, isAdFree: bool } : prevUser);
-        localStorage.setItem('isAdFree', bool ? '1' : '0');
-    }, []);
-
+    // applyNewToken 함수: 토큰에서 hasCharacter와 characterImageUrl을 추출하여 갱신
     const applyNewToken = useCallback(
         (newToken) => {
             if (!newToken) return;
+            
+            // 토큰을 로컬 스토리지에 저장하고 상태에 반영
             localStorage.setItem('gmaking_token', newToken);
             setToken(newToken);
 
             try {
                 const p = jwtDecode(newToken);
+                
+                // hasCharacter 갱신 (캐릭터 생성 여부)
+                const newHasCharacter = p?.hasCharacter === true || p?.hasCharacter === 'true';
+                setHasCharacter(newHasCharacter);
+                localStorage.setItem('has_character', newHasCharacter ? 'true' : 'false');
+
+                // characterImageUrl 갱신 (대표 캐릭터 설정 여부)
+                const newCharacterImageUrl = p?.characterImageUrl || null;
+                setCharacterImageUrl(newCharacterImageUrl);
+                
+                if (newCharacterImageUrl && String(newCharacterImageUrl).trim() !== '') {
+                    localStorage.setItem('characterImageUrl', String(newCharacterImageUrl).trim());
+                } else {
+                    localStorage.removeItem('characterImageUrl'); // NULL이면 로컬 스토리지에서 제거
+                }
+
                 const newCharacterCount = p?.characterCount != null ? Number(p.characterCount) : null;
 
                 if (p?.incubatorCount != null) {
@@ -344,10 +375,14 @@ export const AuthProvider = ({ children }) => {
                     prev
                         ? {
                             ...prev,
+                            // user 객체에도 hasCharacter와 characterImageUrl 갱신
+                            hasCharacter: newHasCharacter, 
+                            characterImageUrl: newCharacterImageUrl,
                             incubatorCount:
                                 p?.incubatorCount != null ? Number(p.incubatorCount) : prev.incubatorCount,
                             isAdFree:
                                 typeof p?.isAdFree !== 'undefined' ? !!p.isAdFree : prev.isAdFree,
+                            characterCount: newCharacterCount != null ? newCharacterCount : prev.characterCount,
                         }
                         : prev
                 );
@@ -355,7 +390,8 @@ export const AuthProvider = ({ children }) => {
                 console.warn('[applyNewToken] decode failed', e);
             }
         },
-        [updateIncubatorCount, updateAdFree]
+        // 의존성 배열에 모든 상태 Setter 함수 추가
+        [setHasCharacter, setCharacterImageUrl, setToken, setUser, updateIncubatorCount, updateAdFree, setCharacterCount]
     );
 
     return (

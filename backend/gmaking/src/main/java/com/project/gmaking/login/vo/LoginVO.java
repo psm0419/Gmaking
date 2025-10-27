@@ -24,4 +24,6 @@ public class LoginVO {
     private boolean isAdFree;
 
     private int characterCount;
+
+    private Integer characterId;
 }

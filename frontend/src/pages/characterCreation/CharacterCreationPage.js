@@ -104,13 +104,7 @@ const CharacterCreationPage = () => {
             // 최종 확정 API 호출
             const response = await finalizeCharacter(finalCharacterData, token);
 
-            // Auth Context와 LocalStorage 업데이트
-            // setCharacterCreated(response.imageUrl); 
-
-            // setToken useAuth에서 가져옴.
             if (response.newToken) {
-                setToken(response.newToken);
-                localStorage.setItem('gmaking_token', response.newToken);
                 applyNewToken(response.newToken);
             }
 

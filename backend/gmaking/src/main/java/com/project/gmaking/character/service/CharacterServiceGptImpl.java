@@ -199,12 +199,17 @@ public class CharacterServiceGptImpl implements CharacterServiceGpt {
             loginDAO.updateUserCharacterInfo(userId);
             LoginVO currentUser = loginDAO.selectUserById(userId);
 
+            String finalImageUrl = currentUser.getCharacterImageUrl();
+            if (currentUser.getCharacterId() == null) {
+                finalImageUrl = null;
+            }
+
             String newToken = jwtTokenProvider.createToken(
                     currentUser.getUserId(),
                     currentUser.getRole(),
                     currentUser.getUserNickname(),
                     currentUser.isHasCharacter(),
-                    currentUser.getCharacterImageUrl(),
+                    finalImageUrl,
                     currentUser.getIncubatorCount(),
                     currentUser.isAdFree(),
                     currentUser.getCharacterCount()

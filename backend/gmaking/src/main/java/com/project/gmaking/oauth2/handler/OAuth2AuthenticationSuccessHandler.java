@@ -75,17 +75,23 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String role = oauth2Attributes.getLoginVO().getRole();
         String userNickname = oauth2Attributes.getLoginVO().getUserNickname();
         boolean hasCharacter = oauth2Attributes.getLoginVO().isHasCharacter();
+        Integer characterId = oauth2Attributes.getLoginVO().getCharacterId();
         String characterImageUrl = oauth2Attributes.getLoginVO().getCharacterImageUrl();
         Integer incubatorCount = oauth2Attributes.getLoginVO().getIncubatorCount();
         boolean isAdFree = oauth2Attributes.getLoginVO().isAdFree();
         Integer characterCount = oauth2Attributes.getLoginVO().getCharacterCount();
 
+        String finalCharacterImageUrl = characterImageUrl;
+        if (characterId == null) {
+            finalCharacterImageUrl = null;
+        }
+
         // JWT 토큰 생성
-        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname, hasCharacter, characterImageUrl, incubatorCount, isAdFree, characterCount);
+        String jwtToken = jwtTokenProvider.createToken(userId, role, userNickname, hasCharacter, finalCharacterImageUrl, incubatorCount, isAdFree, characterCount);
         log.info(">>> [OAuth2 Success] JWT Token issued for user: {}", userId);
 
         // 리다이렉션 URL 생성 및 실행
-        String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes, hasCharacter, characterImageUrl, incubatorCount, isAdFree, characterCount);
+        String targetUrl = buildTargetUrl(jwtToken, oauth2Attributes, hasCharacter, finalCharacterImageUrl, incubatorCount, isAdFree, characterCount);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
