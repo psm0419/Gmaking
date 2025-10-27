@@ -334,6 +334,32 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <insert id="insertProduct" parameterType="com.project.gmaking.admin.vo.ProductVO">
+        INSERT INTO tb_product (
+            PRODUCT_NAME,
+            PRODUCT_TYPE,
+            PRICE,
+            CURRENCY_TYPE,
+            IS_SALE,
+            CREATED_BY,
+            DURATION_DAYS,
+            pack_size,
+            GRANT_PRODUCT_ID,
+            sale_price
+        ) VALUES (
+            #{productName},
+            #{productType},
+            #{price},
+            #{currencyType},
+            #{isSale},
+            #{createdBy},
+            #{durationDays},
+            #{packSize},
+            #{grantProductId},
+            #{salePrice}
+        )
+    </insert>
+
     <!-- 상품 수정, 삭제 -->
     <update id="updateProduct">
         UPDATE tb_product

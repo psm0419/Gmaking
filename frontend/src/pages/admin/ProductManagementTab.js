@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchAllProducts, updateProduct, deleteProduct } from '../../api/admin/adminApi';
-import { Search, Edit, Trash2, Save, X } from 'lucide-react'; // ✏️ Edit, Trash2, Save, X 아이콘 임포트
+import { fetchAllProducts, createProduct, updateProduct, deleteProduct } from '../../api/admin/adminApi';
+import { Search, Edit, Trash2, Save, X, PlusCircle  } from 'lucide-react'; 
 
 const SALE_STATUS_OPTIONS = [
     { value: '', label: '전체 판매 여부' },
@@ -37,6 +37,18 @@ const ProductManagementTab = () => {
     const [tempSearchKeyword, setTempSearchKeyword] = useState('');
     const [editingProduct, setEditingProduct] = useState(null);
     const [editData, setEditData] = useState({});
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newProduct, setNewProduct] = useState({
+        productName: '',
+        productType: 'ENTITLEMENT',
+        price: 0,
+        currencyType: 'FLAT',
+        isSale: 'Y',
+        durationDays: null,
+        packSize: null,
+        grantProductId: null,
+        salePrice: null,
+    });
 
     const loadProducts = useCallback(async () => {
         if (user?.role !== 'ADMIN' || !token) {
@@ -62,6 +74,53 @@ const ProductManagementTab = () => {
             setIsLoading(false);
         }
     }, [token, user, criteria]);
+
+    const handleAddProduct = async () => {
+        if (!newProduct.productName.trim()) {
+            alert('상품명을 입력하세요.');
+            return;
+        }
+        if (!window.confirm(`[${newProduct.productName}] 상품을 등록하시겠습니까?`)) return;
+
+        try {
+            const dataToSave = {
+                ...newProduct,
+                createdBy: user.userId || 'ADMIN',
+                price: Number(newProduct.price) || 0,
+                durationDays: newProduct.durationDays ? Number(newProduct.durationDays) : null,
+                packSize: newProduct.packSize ? Number(newProduct.packSize) : null,
+                grantProductId: newProduct.grantProductId ? Number(newProduct.grantProductId) : null,
+                salePrice: newProduct.salePrice ? Number(newProduct.salePrice) : null,
+            };
+
+            await createProduct(token, dataToSave);
+            alert('상품이 성공적으로 등록되었습니다.');
+            setShowAddModal(false);
+            setNewProduct({
+                productName: '',
+                productType: 'ENTITLEMENT',
+                price: 0,
+                currencyType: 'FLAT',
+                isSale: 'Y',
+                durationDays: null,
+                packSize: null,
+                grantProductId: null,
+                salePrice: null,
+            });
+            loadProducts();
+        } catch (err) {
+            console.error('상품 등록 실패:', err);
+            alert(err.response?.data?.message || '상품 등록 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleNewProductChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setNewProduct(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? (checked ? 'Y' : 'N') : value
+        }));
+    };
 
     const handleEditClick = (product) => {
         setEditingProduct(product.productId);
@@ -190,7 +249,7 @@ const ProductManagementTab = () => {
             ...prev,
             searchKeyword: tempSearchKeyword,
             page: 1,
-            
+
         }));
     };
 
@@ -208,7 +267,7 @@ const ProductManagementTab = () => {
     // 인라인 편집을 위한 공통 Input 컴포넌트
     const InlineInput = ({ name, value, type = 'text', onChange, className = '' }) => (
         <input
-            type={type === 'number' ? 'text' : type} 
+            type={type === 'number' ? 'text' : type}
             name={name}
             value={value === null || value === undefined ? '' : value}
             onChange={e => {
@@ -261,6 +320,12 @@ const ProductManagementTab = () => {
                         <Search className="w-5 h-5" />
                     </button>
                 </form>
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
+                >
+                    <PlusCircle className="w-5 h-5 mr-2" /> 상품 추가
+                </button>
             </div>
 
             <table className="w-full border-collapse text-sm text-gray-200">
@@ -269,7 +334,7 @@ const ProductManagementTab = () => {
                         <th className="px-4 py-3 text-left min-w-[80px]">ID</th>
                         <th className="px-4 py-3 text-left min-w-[200px]">상품명</th>
                         <th className="px-4 py-3 text-left min-w-[100px]">유형</th>
-                        <th className="px-4 py-3 text-right min-w-[100px]">가격</th>
+                        <th className="px-4 py-3 text-right min-w-[100px]">정가</th>
                         <th className="px-4 py-3 text-left min-w-[80px]">화폐</th>
                         <th className="px-4 py-3 text-center min-w-[100px]">판매여부</th>
                         <th className="px-4 py-3 text-center min-w-[60px]">기간</th>
@@ -499,6 +564,155 @@ const ProductManagementTab = () => {
                     </button>
                 </div>
             )}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-2xl relative border border-gray-700">
+                        {/* 닫기 버튼 */}
+                        <button
+                            onClick={() => setShowAddModal(false)}
+                            className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                        >
+                            <X size={22} />
+                        </button>
+
+                        <h2 className="text-xl font-bold mb-4 text-center text-white">상품 추가</h2>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-200">
+                            {/* 상품명 */}
+                            <div className="col-span-2">
+                                <label className="block mb-1 text-gray-400">상품명</label>
+                                <input
+                                    type="text"
+                                    name="productName"
+                                    value={newProduct.productName}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                            </div>
+
+                            {/* 상품유형 */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">상품유형</label>
+                                <select
+                                    name="productType"
+                                    value={newProduct.productType}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                >
+                                    {PRODUCT_TYPE_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 화폐유형 */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">화폐유형</label>
+                                <select
+                                    name="currencyType"
+                                    value={newProduct.currencyType}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                >
+                                    {CURRENCY_TYPE_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 정가 */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">정가</label>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    value={newProduct.price}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                />
+                            </div>
+
+                            {/* 할인 가격 */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">할인 가격</label>
+                                <input
+                                    type="number"
+                                    name="salePrice"
+                                    value={newProduct.salePrice || ''}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                />
+                            </div>
+
+                            {/* 기간 */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">기간(일)</label>
+                                <input
+                                    type="number"
+                                    name="durationDays"
+                                    value={newProduct.durationDays || ''}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                />
+                            </div>
+
+                            {/* 패키지 크기 */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">패키지 크기</label>
+                                <input
+                                    type="number"
+                                    name="packSize"
+                                    value={newProduct.packSize || ''}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                />
+                            </div>
+
+                            {/* 증정 상품 ID */}
+                            <div>
+                                <label className="block mb-1 text-gray-400">증정 상품 ID</label>
+                                <input
+                                    type="number"
+                                    name="grantProductId"
+                                    value={newProduct.grantProductId || ''}
+                                    onChange={handleNewProductChange}
+                                    className="w-full p-2 rounded bg-gray-700 border border-gray-600"
+                                />
+                            </div>
+
+                            {/* 판매 여부 */}
+                            <div className="flex items-center space-x-2 mt-6">
+                                <input
+                                    type="checkbox"
+                                    name="isSale"
+                                    checked={newProduct.isSale === 'Y'}
+                                    onChange={handleNewProductChange}
+                                    className="h-4 w-4 text-blue-500 border-gray-500 bg-gray-700 rounded"
+                                />
+                                <label className="text-gray-300">판매 중</label>
+                            </div>
+                        </div>
+
+                        {/* 버튼 영역 */}
+                        <div className="flex justify-end mt-6 space-x-3">
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-gray-200"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleAddProduct}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white"
+                            >
+                                등록
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
         </div>
     );
 };

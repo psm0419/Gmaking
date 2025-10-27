@@ -108,6 +108,20 @@ public class AdminController {
         return ResponseEntity.ok(result);
     }
 
+    // 상품 추가
+    @PostMapping("/products")
+    public ResponseEntity<String> createProduct(@RequestBody ProductVO productVO) {
+        try {
+            adminService.createProduct(productVO);
+
+            return ResponseEntity.ok("상품이 성공적으로 등록되었습니다.");
+
+        } catch (Exception e) {
+            System.err.println("상품 등록 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("상품 등록에 실패했습니다.");
+        }
+    }
+
     /**
      * 상품 정보 수정
      * PUT /api/admin/products/{productId}

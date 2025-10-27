@@ -137,20 +137,19 @@ public class AdminService {
         return result;
     }
 
-    /**
-     * 상품 정보 수정
-     * @param productVO 수정할 상품 정보를 담은 VO
-     */
+    // 상품 수정
     public void updateProduct(ProductVO productVO) {
         adminDAO.updateProduct(productVO);
     }
 
-    /**
-     * 상품 정보 삭제
-     * @param productId 삭제할 상품 ID
-     */
+    // 상품 삭제
     public void deleteProduct(int productId) {
         adminDAO.deleteProduct(productId);
+    }
+
+    // 상품 추가
+    public int createProduct(ProductVO product) {
+        return adminDAO.insertProduct(product);
     }
 
     // -------------------------------------------------------------------------- //

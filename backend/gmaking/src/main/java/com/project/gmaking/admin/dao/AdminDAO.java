@@ -32,6 +32,7 @@ public interface AdminDAO {
     // 5. 상품 목록
     List<ProductVO>  selectAllProducts(AdminSearchCriteria criteria);
     int countAllProducts(AdminSearchCriteria criteria);
+    int insertProduct(ProductVO product);
     void updateProduct(ProductVO productVO);                            // 상품 수정
     void deleteProduct(int productId);                                  // 상품 삭제
 

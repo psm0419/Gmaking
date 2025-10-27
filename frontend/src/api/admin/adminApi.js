@@ -91,6 +91,20 @@ export const fetchAllProducts = async (token, params = {}) => {
 };
 
 /**
+ * 상품 추가
+ * POST /api/admin/products
+ * @param {string} token 사용자 인증 토큰
+ * @param {object} productData 등록할 상품 데이터 객체
+ * @returns {Promise<object>} 응답 데이터
+ */
+export const createProduct = async (token, productData) => {
+    const response = await axios.post(`${API_BASE_URL}/products`, productData, { 
+        headers: getAuthHeaders(token) 
+    });
+    return response.data;
+};
+
+/**
  * 상품 정보 수정
  * PUT /api/admin/products/{productId}
  */
