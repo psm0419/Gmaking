@@ -109,6 +109,21 @@
         <result property="processorNickname" column="PROCESSOR_NICKNAME"/>
     </resultMap>
 
+    <resultMap id="MonsterVOResultMap" type="com.project.gmaking.admin.vo.MonsterVO">
+        <id property="monsterId" column="MONSTER_ID"/>
+        <result property="imagePath" column="IMAGE_ID"/> <result property="monsterName" column="MONSTER_NAME"/>
+        <result property="monsterType" column="MONSTER_TYPE"/>
+        <result property="monsterHp" column="MONSTER_HP"/>
+        <result property="monsterAttack" column="MONSTER_ATTACK"/>
+        <result property="monsterDefense" column="MONSTER_DEFENSE"/>
+        <result property="monsterSpeed" column="MONSTER_SPEED"/>
+        <result property="monsterCriticalRate" column="MONSTER_CRITICAL_RATE"/>
+        <result property="createdDate" column="CREATED_DATE"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="updatedDate" column="UPDATED_DATE"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+    </resultMap>
+
     <!-- .............................................................. -->
 
     <sql id="userWhereClause">
@@ -147,7 +162,7 @@
         LEFT JOIN (
             SELECT USER_ID, SUM(QUANTITY) AS INCUBATOR_COUNT
             FROM tb_user_inventory
-            WHERE PRODUCT_ID = 999
+            WHERE PRODUCT_ID = 4
             GROUP BY USER_ID
         ) t5 ON t1.USER_ID = t5.USER_ID
         <include refid="userWhereClause"/>
@@ -299,6 +314,22 @@
         t1.ACQUIRED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
+
+    <insert id="giveItemToUser" parameterType="map">
+        INSERT INTO tb_user_inventory (USER_ID, PRODUCT_ID, QUANTITY, ACQUIRED_DATE)
+        VALUES (#{userId}, #{productId}, #{quantity}, NOW())
+        ON DUPLICATE KEY UPDATE
+            QUANTITY = QUANTITY + #{quantity},
+            UPDATED_DATE = NOW()
+    </insert>
+
+    <update id="updateUserIncubatorCount" parameterType="map">
+        UPDATE tb_user
+        SET
+            INCUBATOR_COUNT = INCUBATOR_COUNT + #{quantity}
+        WHERE
+            USER_ID = #{userId}
+    </update>
 
     <!-- .............................................................. -->
 
@@ -486,5 +517,74 @@
         T1.CREATED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
+
+    <!-- .............................................................. -->
+
+    <sql id="monsterWhereClause">
+        <where>
+            <if test="searchKeyword != null and searchKeyword != ''">
+                AND MONSTER_NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="filterMonsterType != null and filterMonsterType != ''">
+                AND MONSTER_TYPE = #{filterMonsterType}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countAllMonsters" resultType="int">
+        SELECT COUNT(MONSTER_ID)
+        FROM tb_monster
+        <include refid="monsterWhereClause"/>
+    </select>
+
+    <select id="selectAllMonsters" resultMap="MonsterVOResultMap">
+        SELECT
+            MONSTER_ID, IMAGE_ID, MONSTER_NAME, MONSTER_TYPE, MONSTER_HP, MONSTER_ATTACK, MONSTER_DEFENSE,
+            MONSTER_SPEED, MONSTER_CRITICAL_RATE, CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM tb_monster
+            <include refid="monsterWhereClause"/>
+        ORDER BY MONSTER_ID DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="selectMonsterById" resultMap="MonsterVOResultMap">
+        SELECT
+            MONSTER_ID, IMAGE_ID, MONSTER_NAME, MONSTER_TYPE, MONSTER_HP, MONSTER_ATTACK, MONSTER_DEFENSE,
+            MONSTER_SPEED, MONSTER_CRITICAL_RATE, CREATED_DATE, CREATED_BY, UPDATED_DATE, UPDATED_BY
+        FROM tb_monster
+        WHERE MONSTER_ID = #{monsterId}
+    </select>
+
+    <insert id="insertMonster" useGeneratedKeys="true" keyProperty="monsterId">
+        INSERT INTO tb_monster (
+            IMAGE_ID, MONSTER_NAME, MONSTER_TYPE, MONSTER_HP, MONSTER_ATTACK, MONSTER_DEFENSE, MONSTER_SPEED,
+            MONSTER_CRITICAL_RATE, CREATED_BY
+        ) VALUES (
+            #{imagePath}, #{monsterName}, #{monsterType}, #{monsterHp}, #{monsterAttack}, #{monsterDefense}, #{monsterSpeed},
+            #{monsterCriticalRate}, #{createdBy}
+        )
+    </insert>
+
+    <update id="updateMonster">
+        UPDATE tb_monster
+        <set>
+            <if test="imagePath != null">IMAGE_ID = #{imagePath},</if>
+            <if test="monsterName != null">MONSTER_NAME = #{monsterName},</if>
+            <if test="monsterType != null">MONSTER_TYPE = #{monsterType},</if>
+            <if test="monsterHp > 0">MONSTER_HP = #{monsterHp},</if>
+            <if test="monsterAttack > 0">MONSTER_ATTACK = #{monsterAttack},</if>
+            <if test="monsterDefense > 0">MONSTER_DEFENSE = #{monsterDefense},</if>
+            <if test="monsterSpeed > 0">MONSTER_SPEED = #{monsterSpeed},</if>
+            <if test="monsterCriticalRate != null">MONSTER_CRITICAL_RATE = #{monsterCriticalRate},</if>
+            UPDATED_DATE = CURRENT_TIMESTAMP,
+            UPDATED_BY = #{updatedBy}
+        </set>
+        WHERE MONSTER_ID = #{monsterId}
+    </update>
+
+    <delete id="deleteMonsterById">
+        DELETE FROM tb_monster
+        WHERE MONSTER_ID = #{monsterId}
+    </delete>
 
 </mapper>

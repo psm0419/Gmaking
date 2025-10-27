@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAllUsers, deleteUser } from '../../api/admin/adminApi';
-import { Trash2, Edit, Search } from 'lucide-react'; // Search 아이콘 추가
+import { Trash2, Edit, Search } from 'lucide-react'; 
 
 const initialCriteria = {
     page: 1,
@@ -10,7 +10,7 @@ const initialCriteria = {
     filterRole: '',
 };
 
-const UserManagementTab = () => {
+const UserManagementTab = ({ refreshTrigger }) => {
     const { token, user } = useAuth();
     const [users, setUsers] = useState([]);
     const [criteria, setCriteria] = useState(initialCriteria); 
@@ -43,7 +43,7 @@ const UserManagementTab = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [token, user, criteria]); 
+    }, [token, user, criteria, refreshTrigger]); 
 
     useEffect(() => {
         loadUsers();
@@ -130,7 +130,7 @@ const UserManagementTab = () => {
                     {users.map((user) => (
                         <tr key={user.userId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="text-sm font-medium text-white-400 truncate max-w-[160px]">{user.userId}</div>
+                                <div className="text-sm font-medium text-white-400 max-w-[160px]">{user.userId}</div>
                                 <div className="text-xs text-gray-400 truncate">{user.userNickname}</div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
