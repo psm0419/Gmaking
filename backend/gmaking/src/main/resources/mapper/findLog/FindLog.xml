@@ -19,18 +19,21 @@
         b.CREATED_BY      AS createdBy,
         b.UPDATED_DATE    AS updatedDate,
         b.UPDATED_BY      AS updatedBy,
-        c.CHARACTER_NAME  AS characterName,
+        COALESCE(c.CHARACTER_NAME, '삭제된 캐릭터') AS characterName,
         CASE
-        WHEN b.BATTLE_TYPE = 'PVP' THEN oc.CHARACTER_NAME
-        WHEN b.BATTLE_TYPE = 'PVE' THEN m.MONSTER_NAME
-        ELSE NULL
-        END               AS opponentName
+        WHEN b.BATTLE_TYPE = 'PVP' THEN COALESCE(oc.CHARACTER_NAME, '삭제된 캐릭터')
+        WHEN b.BATTLE_TYPE = 'PVE' THEN COALESCE(m.MONSTER_NAME, '삭제된 몬스터')
+        ELSE '알 수 없음'
+        END AS opponentName
+
         FROM TB_BATTLE_LOG b
-        LEFT JOIN TB_CHARACTER c ON b.CHARACTER_ID = c.CHARACTER_ID
+        LEFT JOIN TB_CHARACTER c  ON b.CHARACTER_ID = c.CHARACTER_ID
         LEFT JOIN TB_CHARACTER oc ON b.OPPONENT_ID = oc.CHARACTER_ID
-        LEFT JOIN TB_MONSTER m ON b.OPPONENT_ID = m.MONSTER_ID
+        LEFT JOIN TB_MONSTER m    ON b.OPPONENT_ID = m.MONSTER_ID
+
         WHERE b.CHARACTER_ID = #{characterId}
         OR b.OPPONENT_ID = #{characterId}
+
         ORDER BY b.CREATED_DATE DESC
     </select>
 </mapper>
