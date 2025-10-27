@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -218,5 +219,61 @@ public class AdminController {
 
         Map<String, Object> result = adminService.getAllReports(criteria);
         return ResponseEntity.ok(result);
+    }
+
+    // -------------------------------------------------------------------------- //
+
+    // 8. 몬스터 목록 조회 (페이징, 검색, 필터링 적용)
+    @GetMapping("/monsters")
+    public ResponseEntity<Map<String, Object>> getAllMonsters(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "6") int pageSize,
+            @RequestParam(required = false) String searchKeyword,
+            @RequestParam(required = false) String filterMonsterType
+    ) {
+        AdminSearchCriteria criteria = createCriteria(page, pageSize, searchKeyword);
+        criteria.setFilterMonsterType(filterMonsterType);
+
+        Map<String, Object> result = adminService.getAllMonsters(criteria);
+        return ResponseEntity.ok(result);
+    }
+
+    // 몬스터 생성 (이미지 파일 포함)
+    @PostMapping("/monsters")
+    public ResponseEntity<Void> createMonster(
+            @ModelAttribute MonsterVO monster,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+    ) throws Exception { // IOException 처리 필요
+        adminService.createMonster(monster, imageFile);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    // 몬스터 상세 조회
+    @GetMapping("/monsters/{monsterId}")
+    public ResponseEntity<MonsterVO> getMonster(@PathVariable("monsterId") int monsterId) {
+        MonsterVO monster = adminService.getMonsterById(monsterId);
+        if (monster == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(monster);
+    }
+
+    // 몬스터 수정 (이미지 파일 포함)
+    @PutMapping("/monsters/{monsterId}")
+    public ResponseEntity<Void> updateMonster(
+            @PathVariable("monsterId") int monsterId,
+            @ModelAttribute MonsterVO monster,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+    ) throws Exception { // IOException 처리 필요
+        monster.setMonsterId(monsterId);
+        adminService.updateMonster(monster, imageFile);
+        return ResponseEntity.ok().build();
+    }
+
+    // 몬스터 삭제
+    @DeleteMapping("/monsters/{monsterId}")
+    public ResponseEntity<Void> deleteMonster(@PathVariable("monsterId") int monsterId) {
+        adminService.deleteMonster(monsterId);
+        return ResponseEntity.noContent().build();
     }
 }

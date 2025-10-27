@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Users, Bot, DollarSign, Archive, Package, MessageSquare, AlertTriangle } from 'lucide-react'; 
+import { Users, Bot, DollarSign, Archive, Package, MessageSquare, AlertTriangle, Skull } from 'lucide-react'; 
 import Header from '../../components/Header';
 import UserManagementTab from './UserManagementTab';
 import CharacterManagementTab from './CharacterManagementTab';
@@ -10,6 +10,7 @@ import InventoryManagementTab from './InventoryManagementTab';
 import ProductManagementTab from './ProductManagementTab';
 import CommunityPostManagementTab from './CommunityPostManagementTab';
 import ReportManagementTab from './ReportManagementTab';
+import MonsterManagementTab from './MonsterManagementTab';
 
 const TabButton = ({ isActive, onClick, icon, label }) => (
     <button
@@ -64,6 +65,8 @@ const AdminPage = () => {
                 return <CommunityPostManagementTab />;
             case 'reports':
                 return <ReportManagementTab />;
+            case 'monsters':
+                return <MonsterManagementTab />;
             default:
                 return null;
         }
@@ -137,6 +140,12 @@ const AdminPage = () => {
                         onClick={() => handleTabChange('reports')}
                         icon={<AlertTriangle className="w-5 h-5 mr-2" />}
                         label={`신고 관리`}
+                    />
+                    <TabButton
+                        isActive={activeTab === 'monsters'} 
+                        onClick={() => handleTabChange('monsters')}
+                        icon={<Skull className="w-5 h-5 mr-2" />}
+                        label={`몬스터 관리`}
                     />
                 </div>
 

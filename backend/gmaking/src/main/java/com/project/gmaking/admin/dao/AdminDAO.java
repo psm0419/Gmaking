@@ -46,4 +46,12 @@ public interface AdminDAO {
     // 7. 신고 목록
     List<ReportVO> selectAllReports(AdminSearchCriteria criteria);
     int countAllReports(AdminSearchCriteria criteria);
+
+    // 8. 몬스터 목록 (CRUD)
+    List<MonsterVO> selectAllMonsters(AdminSearchCriteria criteria);
+    int countAllMonsters(AdminSearchCriteria criteria);
+    MonsterVO selectMonsterById(int monsterId);
+    void insertMonster(MonsterVO monster);
+    void updateMonster(MonsterVO monster);
+    void deleteMonsterById(int monsterId);
 }

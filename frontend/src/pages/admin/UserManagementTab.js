@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAllUsers, deleteUser } from '../../api/admin/adminApi';
-import { Trash2, Edit, Search } from 'lucide-react'; // Search 아이콘 추가
+import { Trash2, Edit, Search } from 'lucide-react'; 
 
 const initialCriteria = {
     page: 1,
@@ -10,7 +10,7 @@ const initialCriteria = {
     filterRole: '',
 };
 
-const UserManagementTab = () => {
+const UserManagementTab = ({ refreshTrigger }) => {
     const { token, user } = useAuth();
     const [users, setUsers] = useState([]);
     const [criteria, setCriteria] = useState(initialCriteria); 
@@ -43,7 +43,7 @@ const UserManagementTab = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [token, user, criteria]); 
+    }, [token, user, criteria, refreshTrigger]); 
 
     useEffect(() => {
         loadUsers();

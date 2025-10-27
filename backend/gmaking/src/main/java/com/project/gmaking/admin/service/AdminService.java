@@ -2,20 +2,28 @@ package com.project.gmaking.admin.service;
 
 import com.project.gmaking.admin.dao.AdminDAO;
 import com.project.gmaking.admin.vo.*;
+import com.project.gmaking.character.service.GcsService;
+import com.project.gmaking.character.vo.ImageUploadResponseVO;
 import com.project.gmaking.login.vo.LoginVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AdminService {
 
     private final AdminDAO adminDAO;
+    private final GcsService gcsService;
+    private final String GCS_MONSTER_FOLDER = "monster";
 
     // 사용자 목록 조회
     public Map<String, Object> getAllUsers(AdminSearchCriteria criteria) {
@@ -213,4 +221,82 @@ public class AdminService {
 
         return result;
     }
+
+    // -------------------------------------------------------------------------- //
+
+    /**
+     * 8. 몬스터 목록 조회 (페이징/검색/필터 적용)
+     */
+    public Map<String, Object> getAllMonsters(AdminSearchCriteria criteria) {
+        int totalCount = adminDAO.countAllMonsters(criteria);
+        List<MonsterVO> monsters = adminDAO.selectAllMonsters(criteria);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("list", monsters);
+        result.put("totalCount", totalCount);
+        result.put("currentPage", criteria.getPage());
+        result.put("pageSize", criteria.getPageSize());
+        int totalPages = (int) Math.ceil((double) totalCount / criteria.getPageSize());
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    /**
+     * 몬스터 이미지 파일 저장 (GCS 사용)
+     * @param imageFile 업로드된 파일
+     * @return 저장된 파일의 공개 URL
+     */
+    private String saveMonsterImageToGCS(MultipartFile imageFile) throws IOException {
+        if (imageFile == null || imageFile.isEmpty()) {
+            return null;
+        }
+
+        // GcsService의 uploadFile 메서드를 사용하여 GCS에 업로드
+        ImageUploadResponseVO response = gcsService.uploadFile(imageFile, GCS_MONSTER_FOLDER);
+
+        // DB에는 공개 URL을 저장
+        return response.getFileUrl();
+    }
+
+    /**
+     * 몬스터 생성 (GCS 사용)
+     */
+    @Transactional
+    public void createMonster(MonsterVO monster, MultipartFile imageFile) throws IOException {
+        String imagePath = saveMonsterImageToGCS(imageFile);
+        monster.setImagePath(imagePath);
+        adminDAO.insertMonster(monster);
+    }
+
+    /**
+     * 몬스터 상세 조회
+     */
+    public MonsterVO getMonsterById(int monsterId) {
+        return adminDAO.selectMonsterById(monsterId);
+    }
+
+    /**
+     * 몬스터 수정 (GCS 사용)
+     */
+    @Transactional
+    public void updateMonster(MonsterVO monster, MultipartFile imageFile) throws IOException {
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String newImagePath = saveMonsterImageToGCS(imageFile);
+            monster.setImagePath(newImagePath);
+        } else {
+            monster.setImagePath(null);
+        }
+
+        adminDAO.updateMonster(monster);
+    }
+
+    /**
+     * 몬스터 삭제
+     */
+    @Transactional
+    public void deleteMonster(int monsterId) {
+        adminDAO.deleteMonsterById(monsterId);
+    }
+
 }
