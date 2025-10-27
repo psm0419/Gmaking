@@ -907,7 +907,7 @@ function MoreMenuInline() {
 
   const btnRef = useRef(null);
   const panelRef = useRef(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 }); // width는 필요없음
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   const handleEditProfile = () => {
     setOpen(false);
@@ -923,23 +923,25 @@ function MoreMenuInline() {
     }
   };
 
+
   const updatePosition = useCallback(() => {
     const btn = btnRef.current;
     const panel = panelRef.current;
     if (!btn || !panel) return;
 
     const r = btn.getBoundingClientRect();
-    const margin = 8;
-    // 패널을 버튼 우측에 정렬하고, 중앙에서 약간 왼쪽으로 조정
-    const OFFSET_X = -150;
-    const OFFSET_Y = 10;
+    const margin = 0;   // 버튼과 패널 사이 간격
+    const offsetY = 0; // 아래로 내려주는 값
+    const panelW = panel.offsetWidth;
 
-    let pw = panel.offsetWidth;
-    // 버튼 오른쪽 끝을 기준으로, 왼쪽으로 패널 너비만큼 이동
-    let left = r.right - pw + OFFSET_X;
-    // 화면 경계 체크
-    left = Math.max(margin, Math.min(left, window.innerWidth - pw - margin));
-    const top = r.bottom + OFFSET_Y;
+    // 버튼의 "오른쪽"에 고정해서 붙이기
+    let left = r.right + margin;
+
+    // 화면 오른쪽 밖으로 너무 튀어나가면 살짝만 안쪽으로 (하지만 '오른쪽 기준'은 유지)
+    const maxLeft = window.innerWidth - panelW - margin;
+    left = Math.min(left, maxLeft);
+
+    const top = r.bottom + offsetY;
 
     setPos({ top, left });
   }, []);
@@ -963,7 +965,6 @@ function MoreMenuInline() {
     };
 
     window.addEventListener("resize", onResizeScroll);
-    // Passive: true를 사용하여 성능 개선
     window.addEventListener("scroll", onResizeScroll, { capture: true, passive: true });
     document.addEventListener("mousedown", onDown);
     document.addEventListener("touchstart", onDown, { passive: true });
@@ -999,9 +1000,10 @@ function MoreMenuInline() {
             className="fixed z-[100] w-64 rounded-2xl bg-gray-900 shadow-xl ring-1 ring-white/10 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
-            {/* 팝업 위치 조정에 맞게 화살표 위치 수정 */}
-            <div className="absolute -top-2 right-6 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-900 drop-shadow" />
-
+            {/* ▲ 위쪽 화살표 (패널 상단, 왼쪽에 배치해서 버튼을 가리키는 느낌) */}
+            <div
+              className="absolute -top-2 left-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-gray-900 drop-shadow"
+            />
             <div className="px-4 py-3 border-b border-gray-700 text-sm text-gray-400">더보기</div>
             <div className="p-2">
               <button
@@ -1023,6 +1025,7 @@ function MoreMenuInline() {
     </div>
   );
 }
+
 
 function IconMore(props) {
   return (
