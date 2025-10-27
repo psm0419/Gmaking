@@ -185,31 +185,30 @@ export const fetchAllReports = async (token, params = {}) => {
 };
 
 /**
- * 몬스터 목록 조회 (페이징/검색/필터 적용)
+ * 몬스터 목록 조회 (페이징/검색/유형 필터링 적용)
  * GET /api/admin/monsters
  * @param {string} token 사용자 인증 토큰
- * @param {object} params 검색 조건 객체 ({ page, pageSize, searchKeyword, filterMonsterType })
- * @returns {Promise<object>} 몬스터 목록 데이터 및 페이징 정보
+ * @param {object} params 검색 및 페이징 파라미터
+ * @returns {Promise<object>} 몬스터 목록 데이터
  */
 export const fetchAllMonsters = async (token, params = {}) => {
     const queryString = buildQueryString(params);
-    const response = await axios.get(`${API_BASE_URL}/monsters?${queryString}`, { 
-        headers: getAuthHeaders(token) 
-    });
-    return response.data;
+    const response = await axios.get(`${API_BASE_URL}/monsters?${queryString}`, { headers: getAuthHeaders(token) });
+    return response.data; 
 };
 
+
 /**
- * 몬스터 생성 (이미지 파일 포함)
- * POST /api/admin/monsters
+ * 몬스터 등록 (이미지 파일 포함)
+ * POST /api/admin/monsters (multipart/form-data)
  * @param {string} token 사용자 인증 토큰
- * @param {FormData} formData 몬스터 데이터 및 이미지 파일
+ * @param {FormData} formData 몬스터 데이터(monsterData) 및 이미지 파일(imageFile)
  * @returns {Promise<void>} 
  */
 export const createMonster = async (token, formData) => {
-    // Content-Type: multipart/form-data는 axios가 FormData를 감지하여 자동으로 설정
     const response = await axios.post(`${API_BASE_URL}/monsters`, formData, { 
-        headers: getAuthHeaders(token) 
+        headers: getAuthHeaders(token),
+        'Content-Type': 'multipart/form-data' 
     });
     return response.data;
 };
@@ -234,22 +233,24 @@ export const fetchMonsterById = async (token, monsterId) => {
  * PUT /api/admin/monsters/{monsterId}
  * @param {string} token 사용자 인증 토큰
  * @param {number} monsterId 수정할 몬스터 ID
- * @param {FormData} formData 몬스터 데이터 및 이미지 파일
+ * @param {FormData} formData 몬스터 데이터(monsterData) 및 새 이미지 파일(newImageFile)
  * @returns {Promise<void>} 
  */
 export const updateMonster = async (token, monsterId, formData) => {
     const response = await axios.put(`${API_BASE_URL}/monsters/${monsterId}`, formData, { 
-        headers: getAuthHeaders(token) 
+        headers: getAuthHeaders(token),
+        'Content-Type': 'multipart/form-data'
     });
     return response.data;
 };
+
 
 /**
  * 몬스터 삭제
  * DELETE /api/admin/monsters/{monsterId}
  * @param {string} token 사용자 인증 토큰
  * @param {number} monsterId 삭제할 몬스터 ID
- * @returns {Promise<void>} 
+ * @returns {Promise<void>}
  */
 export const deleteMonster = async (token, monsterId) => {
     const response = await axios.delete(`${API_BASE_URL}/monsters/${monsterId}`, { 

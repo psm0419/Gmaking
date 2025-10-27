@@ -5,19 +5,25 @@ import java.time.LocalDateTime;
 
 @Data
 public class MonsterVO {
-    private int monsterId;                  // MONSTER_ID
-    private String imagePath;               // 몬스터 이미지 파일 경로
+    // tb_monster Fields
+    private Integer monsterId;              // MONSTER_ID (AI Key)
+    private Integer imageId;                // IMAGE_ID (tb_image FK)
     private String monsterName;             // MONSTER_NAME
     private String monsterType;             // MONSTER_TYPE (NORMAL, BOSS)
-    private int monsterHp;                  // MONSTER_HP
-    private int monsterAttack;              // MONSTER_ATTACK
-    private int monsterDefense;             // MONSTER_DEFENSE
-    private int monsterSpeed;               // MONSTER_SPEED
+    private Integer monsterHp;              // MONSTER_HP
+    private Integer monsterAttack;          // MONSTER_ATTACK
+    private Integer monsterDefense;         // MONSTER_DEFENSE
+    private Integer monsterSpeed;           // MONSTER_SPEED
     private Integer monsterCriticalRate;    // MONSTER_CRITICAL_RATE
 
-    // 공통 필드
-    private LocalDateTime createdDate;      // CREATED_DATE
-    private String createdBy;               // CREATED_BY
-    private LocalDateTime updatedDate;      // UPDATED_DATE
-    private String updatedBy;               // UPDATED_BY
+    // tb_image Fields (JOIN 조회 시 사용)
+    private String imageUrl;                // 이미지 URL
+    private String imageOriginalName;       // 원본 이미지 이름
+    private String imageName;               // 서버 저장 이미지 이름
+
+    // Common Fields
+    private LocalDateTime createdDate;
+    private String createdBy;
+    private LocalDateTime updatedDate;
+    private String updatedBy;
 }

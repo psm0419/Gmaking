@@ -25,4 +25,11 @@ public interface GcsService {
      * @throws IOException 파일 처리 중 발생 가능한 오류
      */
     ImageUploadResponseVO uploadBase64Image(byte[] imageBytes, String folderName, String extension, String createdBy) throws IOException;
+
+    /**
+     * GCS에서 파일(Blob)을 삭제
+     * @param fileName GCS에 저장된 파일의 전체 경로 (예: monster/UUID.png)
+     * @throws IOException 파일 처리 중 발생 가능한 오류
+     */
+    void deleteFile(String fileName) throws IOException;
 }

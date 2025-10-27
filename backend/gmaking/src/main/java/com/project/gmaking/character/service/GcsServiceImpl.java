@@ -105,4 +105,18 @@ public class GcsServiceImpl implements GcsService {
         return response;
     }
 
+    @Override
+    public void deleteFile(String fileName) throws IOException {
+        if (fileName == null || fileName.isEmpty()) {
+            return;
+        }
+
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        boolean deleted = storage.delete(blobId);
+
+        if (!deleted) {
+            System.err.println("GCS 파일 삭제 실패 또는 파일 없음: " + fileName);
+        }
+    }
+
 }
