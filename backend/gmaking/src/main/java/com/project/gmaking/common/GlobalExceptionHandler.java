@@ -2,6 +2,7 @@
 package com.project.gmaking.common;
 
 import com.project.gmaking.character.exception.ClassificationFailedException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -48,5 +49,7 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
-    // ----------------------------------------------------------------------
+    @ExceptionHandler(ClientAbortException.class)
+    public void handleClientAbort(ClientAbortException e) {}
+
 }

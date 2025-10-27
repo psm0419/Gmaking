@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-export default function CertificatePrint({ open, data, onClose, autoPrint = true }) {
+export default function CertificatePrint({ open, data, onClose, onFinish, autoPrint = true }) {
   const shouldRender = !!open && !!data;
 
 
@@ -22,27 +22,51 @@ export default function CertificatePrint({ open, data, onClose, autoPrint = true
 
     const thisRun = runIdRef.current;
 
-    const done = () => {
+    const done = (reason = 'afterprint') => {
       if (closedRunIdRef.current === thisRun) return;
       closedRunIdRef.current = thisRun;
-      setTimeout(() => onClose?.(), 0);
+      setTimeout(() => {
+        onFinish?.({ runId: thisRun, reason });
+        onClose?.();
+      }, 0);
     };
 
     const handleAfterPrint = () => done();
 
     const mql = window.matchMedia?.("print");
-    const handleChange = (e) => {
-      if (!e.matches) done();
-    };
+    const handleChange = (e) => { if (!e.matches) done('mql-exit'); };
 
     window.addEventListener("afterprint", handleAfterPrint);
     if (mql?.addEventListener) mql.addEventListener("change", handleChange);
     else if (mql?.addListener) mql.addListener(handleChange);
 
-    if (autoPrint && printedRunIdRef.current !== thisRun) {
-      printedRunIdRef.current = thisRun;
-      requestAnimationFrame(() => setTimeout(() => window.print(), 0));
-    }
+    // 추가: 이미지 프리로드 후 프린트
+    const urls = [data?.characterImageUrl, data?.qrUrl].filter(Boolean);
+    const preload = (src) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+
+    const startPrint = async () => {
+      // 1) 프리로드(최대 2~3장)
+      try {
+        await Promise.race([
+          Promise.all(urls.map(preload)),
+          new Promise((r) => setTimeout(r, 1500)), // 1.5s 타임아웃
+        ]);
+      } catch {}
+
+      // 2) 프린트
+      if (autoPrint && printedRunIdRef.current !== thisRun) {
+        printedRunIdRef.current = thisRun;
+        requestAnimationFrame(() => setTimeout(() => window.print(), 0));
+      }
+    };
+
+    startPrint();
 
     return () => {
       window.removeEventListener("afterprint", handleAfterPrint);
