@@ -11,7 +11,7 @@ const SALE_STATUS_OPTIONS = [
 
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 6,
     searchKeyword: '',
     filterType: '',   
     filterIsSale: '',  

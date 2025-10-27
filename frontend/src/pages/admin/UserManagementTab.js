@@ -5,7 +5,7 @@ import { Trash2, Edit, Search } from 'lucide-react'; // Search 아이콘 추가
 
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 6,
     searchKeyword: '',
     filterRole: '',
 };

@@ -19,7 +19,7 @@ const DELETE_STATUS_OPTIONS = [
 
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 7,
     searchKeyword: '',
     filterCategory: '',    
     filterIsDeleted: 'N', 
@@ -112,7 +112,7 @@ const CommunityPostManagementTab = () => {
 
     return (
         <div className="overflow-x-auto">
-            <div className="flex items-center justify-start mb-4 space-x-4">
+            <div className="flex items-center justify-between mb-4 space-x-4">
                 
                 {/* 게시판 카테고리 필터 */}
                 <select 

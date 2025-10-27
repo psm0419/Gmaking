@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 6,
     searchKeyword: '',
     filterProductId: '', 
 };

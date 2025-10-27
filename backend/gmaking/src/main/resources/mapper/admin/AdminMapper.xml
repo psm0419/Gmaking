@@ -384,13 +384,13 @@
 
     <select id="selectAllReports" resultMap="ReportVOResultMap">
         SELECT
-        T1.REPORT_ID, T1.TARGET_TYPE, T1.TARGET_ID, T1.REPORTER_ID, T1.REASON_CODE, T1.REASON_DETAIL,
-        T1.STATUS, T1.CREATED_DATE, T1.UPDATED_DATE, T1.CREATED_BY, T1.UPDATED_BY,
-        NULL AS REPORTER_NICKNAME,  T3.USER_NICKNAME AS PROCESSOR_NICKNAME
+            T1.REPORT_ID, T1.TARGET_TYPE, T1.TARGET_ID, T1.REPORTER_ID, T1.REASON_CODE, T1.REASON_DETAIL,
+            T1.STATUS, T1.CREATED_DATE, T1.UPDATED_DATE, T1.CREATED_BY, T1.UPDATED_BY,
+            NULL AS REPORTER_NICKNAME,  T3.USER_NICKNAME AS PROCESSOR_NICKNAME
         FROM
-        tb_report T1
+            tb_report T1
         LEFT JOIN
-        tb_user T3 ON T1.UPDATED_BY = T3.USER_ID  <include refid="reportWhereClause"/>
+            tb_user T3 ON T1.UPDATED_BY = T3.USER_ID  <include refid="reportWhereClause"/>
         ORDER BY
         T1.CREATED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}

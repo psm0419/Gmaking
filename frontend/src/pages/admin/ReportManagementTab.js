@@ -19,9 +19,26 @@ const STATUS_OPTIONS = [
     { value: 'APPROVED', label: '승인/조치 (APPROVED)' },
 ];
 
+const REPORT_REASON_OPTIONS = [
+    { value: 'SPAM', label: '스팸/홍보' },
+    { value: 'PORNOGRAPHY', label: '음란물 또는 불법 정보' },
+    { value: 'HATE_SPEECH', label: '혐오 발언 또는 차별적 표현' },
+    { value: 'HARASSMENT', label: '괴롭힘 및 따돌림' },
+    { value: 'ETC', label: '기타' }
+];
+
+const REASON_CODE_MAP = REPORT_REASON_OPTIONS.reduce((acc, option) => {
+    acc[option.value] = option.label;
+    return acc;
+}, {});
+
+const getReasonLabel = (code) => {
+    return REASON_CODE_MAP[code] || code;
+};
+
 const initialCriteria = {
     page: 1,
-    pageSize: 8,
+    pageSize: 7,
     searchKeyword: '',
     filterType: '',       
     filterStatus: 'PENDING',
@@ -107,7 +124,7 @@ const ReportManagementTab = () => {
 
     return (
         <div className="overflow-x-auto">
-            <div className="flex items-center justify-start mb-4 space-x-4">
+            <div className="flex items-center justify-between mb-4 space-x-4">
                 
                 {/* 신고 대상 타입 필터 */}
                 <select 
@@ -168,7 +185,7 @@ const ReportManagementTab = () => {
                             <td className="px-4 py-3 text-sm text-yellow-400">{item.targetType}</td>
                             <td className="px-4 py-3 text-sm text-gray-400">{item.targetId}</td>
                             <td className="px-4 py-3 text-sm font-semibold text-white">{item.reporterNickname} ({item.reporterId})</td>
-                            <td className="px-4 py-3 text-sm text-red-400">{item.reasonCode}</td>
+                            <td className="px-4 py-3 text-sm text-red-400">{getReasonLabel(item.reasonCode)}</td>
                             <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{item.reasonDetail || '없음'}</td>
                             <td className="px-4 py-3 text-center">
                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
