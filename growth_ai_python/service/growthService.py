@@ -31,54 +31,60 @@ REQUIRED_CLEARS = {1: 10, 2: 20, 3: 30}
 #    - 프롬프트 내용(base_prompt, negative_prompt)은 요청에 따라 그대로 유지됩니다.
 # =========================================================================
 MODIFICATIONS = {
+    # 초기 성장 (알에서 깨어나는 단계)
     "EVO_KEY_EGG": {
         "output_suffix": "stage_1_egg.png",
         "base_prompt": (
-            "Depict the same creature in its earliest egg form, small and round, "
-            "simple smooth surface with faint color hints of the original creature. "
-            "Keep the silhouette minimal, add a gentle magical glow, "
-            "solid light blue background, pixel-art fantasy RPG style, centered composition."
+            "Depict the same creature as if it is hatching from an egg, "
+            "keep its original species, color palette, and overall silhouette visible through cracks. "
+            "The creature should look baby-like but clearly the same species, "
+            "with parts of its body visible emerging from the egg. "
+            "Use a soft sky blue background, clean 2D pixel-art fantasy RPG style, centered composition, 1024x1024."
         ),
         "negative_prompt": (
-            "text, watermark, blur, 3D render, photorealistic, humanoid, multiple creatures, mutation"
+            "different animal, new design, photorealistic, extra limbs, human-like form, blurry, multiple characters, text, watermark"
         )
     },
+
+    # 2단계 성장 (아기)
     "EVO_KEY_BABY": {
         "output_suffix": "stage_2_baby.png",
         "base_prompt": (
-            "Evolve the creature into a baby form, small and cute with tiny limbs and bright eyes. "
-            "Maintain the same body colors and species traits, add a cheerful expression, "
-            "and faint magical aura around it. "
-            "Solid green background, clean pixel-art style, high detail but consistent design."
+            "Evolve the same creature into a baby form. Keep identical body shape, color patterns, and face structure "
+            "as the original creature. Just make it smaller, rounder, and cuter. "
+            "Add slightly brighter colors and a soft magical glow, as if freshly born. "
+            "Solid green background, detailed pixel-art RPG style, centered composition, 1024x1024."
         ),
         "negative_prompt": (
-            "photorealistic, extra heads, messy scene, background scenery, multiple creatures, human-like shape"
+            "different species, redesign, human-like, photorealistic, messy background, multiple creatures, text, watermark"
         )
     },
+
+    # 3단계 성장 (청소년)
     "EVO_KEY_TEEN": {
         "output_suffix": "stage_3_teen.png",
         "base_prompt": (
-            "Evolve the same creature into a teenage form, larger and stronger posture. "
-            "Add slight armor details, glowing patterns, or elemental effects (like fire, wind, or light aura). "
-            "Keep the face and body proportions consistent with the input. "
-            "Solid red background, dynamic pixel-art fantasy RPG illustration."
+            "Evolve the same creature into a teenage version. Keep the same animal species, color scheme, and overall body structure. "
+            "Enhance details such as muscle tone, markings, or accessories while preserving the recognizable identity. "
+            "Add a confident pose and faint magical effects like energy trails or glowing eyes. "
+            "Solid red background, 2D pixel-art fantasy RPG style, centered composition, 1024x1024."
         ),
         "negative_prompt": (
-            "distorted face, new species, photorealistic, messy background, 3D, blur, multiple creatures"
+            "different animal, new body design, photorealistic, extra limbs, human face, text, blur, 3D rendering"
         )
     },
+
+    # 최종형 (성인 혹은 최종 진화)
     "EVO_KEY_FINAL": {
         "output_suffix": "stage_4_final.png",
         "base_prompt": (
-            "Depict the same creature in its final evolved form, fully mature and majestic. "
-            "Keep the same color palette, silhouette, and facial identity as the input image. "
-            "Add visible power effects such as magical aura, refined armor or wings, glowing eyes, "
-            "and dynamic energy motion. "
-            "Solid golden yellow background with light burst. "
-            "Epic pixel-art fantasy RPG style, centered composition, high detail, sharp lines."
+            "Depict the same creature in its final evolved form, keeping the same face, proportions, and species identity "
+            "as the input image. Add subtle armor or magical aura details that emphasize maturity and power, "
+            "without changing the character’s design. "
+            "Solid golden yellow background, detailed pixel-art fantasy RPG illustration, centered composition, 1024x1024."
         ),
         "negative_prompt": (
-            "photorealistic, human-like, deformed limbs, new creature design, low-res, blur, text, watermark"
+            "different creature, new species, human-like, photorealistic, distorted, blur, text, watermark"
         )
     }
 }
@@ -128,7 +134,7 @@ class GrowthService:
                 "steps": 28, 
                 "width": 1024,
                 "height": 1024,
-                "denoising_strength": 0.68 # 강도
+                "denoising_strength": 0.5 # 강도
             },
             "nsfw": False
         }

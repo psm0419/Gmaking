@@ -20,8 +20,7 @@ function PveBattlePage() {
     const ttsRef = useRef(window.speechSynthesis);
     const ttsQueueRef = useRef([]);
 
-    const token = localStorage.getItem("gmaking_token");
-    // const userId = localStorage.getItem("userId"); //jwt토큰에서 추출하는 방식으로 변경
+    const token = localStorage.getItem("gmaking_token");    
 
     const styles = [
         { key: "COMIC", label: "코믹 (현재 기본)" },
@@ -169,8 +168,16 @@ function PveBattlePage() {
         setLogs([]);
         setIsBattle(true);
 
+        // 토큰 확인 및 연결
+        const token = localStorage.getItem("gmaking_token");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            navigate("/login");
+            return;
+        }
+
         // WebSocket 연결
-        const socket = new WebSocket("ws://localhost:8080/battle");
+        const socket = new WebSocket(`ws://localhost:8080/battle?token=${token}`);
         socketRef.current = socket;
 
         socket.onopen = () => {
@@ -179,7 +186,6 @@ function PveBattlePage() {
             const payload = {
                 type: "start", // 웹소켓 핸들러가 메시지 타입을 구분할 수 있도록 type 추가
                 characterId: selectedCharacter.characterId,
-                userId: userId,
                 mapId: mapId, // 서버가 DB에서 몬스터 생성
                 noteStyle: noteStyle
             };

@@ -23,7 +23,8 @@ public class BattleWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        System.out.println("WebSocket 연결 성공: " + session.getId());
+        String userId = (String) session.getAttributes().get("userId");
+        System.out.println("WebSocket 연결 성공: " + session.getId() + ", userId=" + userId);
         sessions.put(session.getId(), session);
     }
 
@@ -31,20 +32,21 @@ public class BattleWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             Map<String, Object> data = mapper.readValue(message.getPayload(), new TypeReference<Map<String, Object>>() {});
-            // 타입 캐스팅 시 안전성을 위해 toString() 후 Integer.parseInt() 사용
             Integer characterId = Integer.parseInt(data.get("characterId").toString());
             Integer mapId = Integer.parseInt(data.get("mapId").toString());
-            String userId = data.get("userId").toString();
+            String userId = (String) session.getAttributes().get("userId"); //수정
 
-            // 서버에서 몬스터 조회
             MonsterVO monster = pveBattleService.encounterMonster(mapId);
-            // 노트 스타일 정의
             String noteStyle = (String) data.getOrDefault("noteStyle", "COMIC");
+
             new Thread(() -> pveBattleService.startBattleWebSocket(session, characterId, monster, userId, noteStyle)).start();
         } catch (Exception e) {
             e.printStackTrace();
-            try { session.sendMessage(new TextMessage("오류 발생: " + e.getMessage())); }
-            catch (Exception ex) { ex.printStackTrace(); }
+            try {
+                session.sendMessage(new TextMessage("오류 발생: " + e.getMessage()));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
