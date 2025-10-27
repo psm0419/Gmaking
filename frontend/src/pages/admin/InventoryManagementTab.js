@@ -10,6 +10,14 @@ const initialCriteria = {
     filterProductId: '', 
 };
 
+const PRODUCT_NAME_MAP = {
+    1: '광고 제거 패스 (30일)',
+    2: '부화기 패키지 (5개)',
+    3: '부화기 대용량 (15개)',
+    4: '부화기',
+    5: '무료 지급 부화기',
+};
+
 const InventoryManagementTab = () => {
     const { token, user } = useAuth();
     const [inventory, setInventory] = useState([]);
@@ -93,11 +101,11 @@ const InventoryManagementTab = () => {
                     className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-32"
                 >
                     <option value="">상품 ID</option>
-                    <option value="1">1: 광고 제거 패스 (30일)</option> 
-                    <option value="2">2: 부화기 패키지 (5개)</option>
-                    <option value="3">3: 부화기 대용량 (15개)</option>
-                    <option value="4">4: 부화기</option>
-                    <option value="5">5: 무료 지급 부화기</option>
+                    <option value="1">광고 제거 패스 (30일)</option> 
+                    <option value="2">부화기 패키지 (5개)</option>
+                    <option value="3">부화기 대용량 (15개)</option>
+                    <option value="4">부화기</option>
+                    <option value="5">무료 지급 부화기</option>
                 </select>
                 
                 {/* 검색 입력 필드 */}
@@ -120,7 +128,7 @@ const InventoryManagementTab = () => {
                     <tr>
                         <th className="px-4 py-3 text-left min-w-[80px]">ID</th>
                         <th className="px-4 py-3 text-left min-w-[120px]">ID / 닉네임</th>
-                        <th className="px-4 py-3 text-left min-w-[180px]">상품 ID</th>
+                        <th className="px-4 py-3 text-left min-w-[180px]">상품</th>
                         <th className="px-4 py-3 text-left min-w-[80px]">보유 개수</th>
                         <th className="px-4 py-3 text-left min-w-[130px]">획득일</th>
                         <th className="px-4 py-3 text-left min-w-[130px]">만료일</th>
@@ -134,7 +142,7 @@ const InventoryManagementTab = () => {
                                 <div className="text-sm font-medium text-white-400 truncate max-w-[160px]">{item.userId}</div>
                                 <div className="text-xs text-gray-400 truncate">{item.userNickname}</div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-300">{item.productId}</td>
+                            <td className="px-4 py-3 text-sm text-gray-300">{PRODUCT_NAME_MAP[item.productId]}</td>
                             <td className="px-4 py-3 text-sm text-green-400 font-bold text-center">{item.quantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-400">{new Date(item.acquiredDate).toLocaleDateString()}</td>
                             <td className="px-4 py-3 text-sm text-gray-400">{item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : '무제한'}</td>
