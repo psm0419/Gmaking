@@ -39,6 +39,7 @@ public interface AdminDAO {
     // 6. 게시글 목록
     List<CommunityPostVO> selectAllPosts(AdminSearchCriteria criteria);
     int countAllPosts(AdminSearchCriteria criteria);
+    void deletePost(long postId);                                      // 게시글 삭제
 
     // 7. 신고 목록
     List<ReportVO> selectAllReports(AdminSearchCriteria criteria);

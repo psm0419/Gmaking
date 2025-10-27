@@ -432,6 +432,18 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <update id="deletePost" parameterType="long">
+        UPDATE
+        tb_community_post
+        SET
+            IS_DELETED = 'Y',
+            UPDATED_DATE = NOW(),
+            UPDATED_BY = 'ADMIN'
+        WHERE
+        POST_ID = #{postId}
+        AND IS_DELETED = 'N'
+    </update>
+
     <!-- .............................................................. -->
 
     <sql id="reportWhereClause">

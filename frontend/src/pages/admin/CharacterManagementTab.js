@@ -123,7 +123,7 @@ const CharacterManagementTab = () => {
                         onChange={handleTempSearchChange}
                         className="p-2 border rounded-l bg-gray-700 border-gray-600 text-gray-300 w-full"
                     />
-                    <button type="submit" className="p-2 bg-blue-600 hover:bg-blue-700 rounded-r text-white flex items-center">
+                    <button type="submit" className="p-2 bg-gray-600 hover:bg-blue-700 rounded-r text-white flex items-center">
                         <Search className="w-5 h-5" />
                     </button>
                 </form>

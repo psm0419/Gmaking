@@ -57,6 +57,12 @@ public class AdminController {
         return ResponseEntity.ok(result);
     }
 
+    @DeleteMapping("/characters/{characterId}")
+    public ResponseEntity<Void> deleteCharacter(@PathVariable("characterId") int characterId) {
+        adminService.deleteCharacter(characterId);
+        return ResponseEntity.noContent().build();
+    }
+
     // -------------------------------------------------------------------------- //
 
     // 구매 내역 목록 조회 (페이징, 검색, 필터링 적용)
@@ -165,9 +171,10 @@ public class AdminController {
         return ResponseEntity.ok(result);
     }
 
-    @DeleteMapping("/characters/{characterId}")
-    public ResponseEntity<Void> deleteCharacter(@PathVariable("characterId") int characterId) {
-        adminService.deleteCharacter(characterId);
+    // 게시글 삭제
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<Void> deletePost(@PathVariable("postId") long postId) {
+        adminService.deletePost(postId);
         return ResponseEntity.noContent().build();
     }
 

@@ -142,6 +142,20 @@ export const fetchAllPosts = async (token, params = {}) => {
 };
 
 /**
+ * 게시글 삭제 (Soft Delete: IS_DELETED='Y'로 변경)
+ * DELETE /api/admin/posts/{postId}
+ * @param {string} token 사용자 인증 토큰
+ * @param {bigint} postId 삭제할 게시글 ID
+ * @returns {Promise<void>} 
+ */
+export const deletePost = async (token, postId) => {
+    const response = await axios.delete(`${API_BASE_URL}/posts/${postId}`, { 
+        headers: getAuthHeaders(token) 
+    });
+    return response.data;
+};
+
+/**
  * 신고 목록 조회 (페이징/검색/필터 적용)
  * GET /api/admin/reports
  * @param {string} token 사용자 인증 토큰

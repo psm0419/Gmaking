@@ -170,6 +170,12 @@ public class AdminService {
         return result;
     }
 
+    // 게시글 삭제
+    @Transactional
+    public void deletePost(long postId) {
+        adminDAO.deletePost(postId);
+    }
+
     // -------------------------------------------------------------------------- //
 
     // 신고 목록 조회
