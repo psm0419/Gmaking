@@ -74,6 +74,16 @@ public class DebateWebSocketHandler implements WebSocketHandler {
                 Thread.sleep(800);
             }
 
+            // 오버레이 출력을 위한 end 메시지 전송
+            sendJson(session, Map.of("type", "end"));
+
+
+            // 퀘스트 갱신 (run()은 안 쓰지만 동일 효과)
+            if (req.getUserId() != null && !req.getUserId().isBlank()) {
+                questService.updateQuestProgress(req.getUserId(), "DEBATE");
+                log.info("[퀘스트 업데이트 완료] userId={}, type=DEBATE", req.getUserId());
+            }
+
             // 심사 결과
             Map<String, Object> verdict = debateService.judge(topic, dialogue);
             sendJson(session, Map.of(
@@ -82,15 +92,6 @@ public class DebateWebSocketHandler implements WebSocketHandler {
                     "votes", verdict.get("votes"),
                     "comments", verdict.get("comments")
             ));
-
-            // 퀘스트 갱신 (run()은 안 쓰지만 동일 효과)
-            if (req.getUserId() != null && !req.getUserId().isBlank()) {
-                questService.updateQuestProgress(req.getUserId(), "DEBATE");
-                log.info("[퀘스트 업데이트 완료] userId={}, type=DEBATE", req.getUserId());
-            }
-
-            // 종료
-            sendJson(session, Map.of("type", "end"));
 
         } catch (Exception e) {
             log.error("[Debate] handleMessage error", e);

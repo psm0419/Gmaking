@@ -16,6 +16,7 @@ function AiDebatePage() {
     const [loading, setLoading] = useState(false);
     const logRef = useRef(null);
     const logContainerRef = useRef(null);
+    const [isJudging, setIsJudging] = useState(false);
 
     useEffect(() => {
         if (!userId) return;
@@ -30,21 +31,21 @@ function AiDebatePage() {
     }, [dialogues]);
 
     // window의 스크롤 내부 컨테이너로 전달
-        useEffect(() => {
-            const handleWheel = (e) => {
-                const container = logContainerRef.current;
-                if (!container) return;
-    
-                // 기본 스크롤 막기
-                e.preventDefault();
-    
-                // 내부 스크롤로 전달
-                container.scrollTop += e.deltaY;
-            };
-    
-            window.addEventListener("wheel", handleWheel, { passive: false });
-            return () => window.removeEventListener("wheel", handleWheel);
-        }, []);
+    useEffect(() => {
+        const handleWheel = (e) => {
+            const container = logContainerRef.current;
+            if (!container) return;
+
+            // 기본 스크롤 막기
+            e.preventDefault();
+
+            // 내부 스크롤로 전달
+            container.scrollTop += e.deltaY;
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
 
     const startDebate = async () => {
         if (!aId || !bId || aId === bId)
@@ -62,7 +63,7 @@ function AiDebatePage() {
                     characterBId: bId,
                     topic,
                     turnsPerSide: 3,
-                    userId: userId 
+                    userId: userId
                 }));
             }
         };
@@ -70,13 +71,13 @@ function AiDebatePage() {
         ws.onmessage = (e) => {
             const data = JSON.parse(e.data);
 
-            if (data.type === "end") {
-                ws.close();
-                setLoading(false);
+            if (data.type === "end") {                
+                setIsJudging(true);
                 return;
             }
 
             if (data.type === "verdict") {
+                setIsJudging(false);
                 const resultMsg = {
                     speaker: "심사 결과",
                     type: "verdict",
@@ -87,17 +88,21 @@ function AiDebatePage() {
                             .join("\n")
                 };
                 setDialogues(prev => [...prev, resultMsg]);
+                ws.close();
+                setLoading(false);
                 return;
             }
 
             setDialogues(prev => [...prev, data]);
         };
 
-        ws.onclose = () => setLoading(false);
         ws.onerror = () => {
             alert("서버 연결 오류");
+            setIsJudging(false);
             setLoading(false);
         };
+
+        ws.onclose = () => setLoading(false);        
     };
 
     const getImage = (id) => chars.find(c => c.characterId === id)?.imageUrl;
@@ -105,6 +110,17 @@ function AiDebatePage() {
 
     return (
         <div><Header />
+            {isJudging && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-yellow-400 border-t-transparent mb-6 mt-6"></div>
+                    <h3 className="text-3xl font-extrabold text-white mb-3 mt-5">심사 중...</h3>
+                    <p className="text-gray-300 text-lg text-center">
+                        AI 심판이 승자를 결정하고 있습니다.
+                        <br />
+                        <strong>잠시만 기다려 주세요</strong>
+                    </p>
+                </div>
+            )}
             <div className="min-h-[calc(100vh-60px)] bg-gray-900 p-3 text-gray-100">
                 <div className="max-w-5xl mx-auto">
                     {/* 제목 */}
@@ -169,8 +185,8 @@ function AiDebatePage() {
                             logRef.current = el;
                             logContainerRef.current = el;
                         }}
-                        className="mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner no-scrollbar"
-                    >
+                        className="relative mt-4 bg-gray-900/90 backdrop-blur-md p-6 rounded-2xl h-[500px] overflow-y-auto border border-gray-700 shadow-inner no-scrollbar"
+                    >                        
                         {dialogues
                             .filter(d => d.line && d.line.trim() !== "")
                             .map((d, i) => {
@@ -216,7 +232,7 @@ function AiDebatePage() {
                                         )}
                                     </div>
                                 );
-                            })}
+                            })}                       
                     </div>
                 </div>
             </div>
