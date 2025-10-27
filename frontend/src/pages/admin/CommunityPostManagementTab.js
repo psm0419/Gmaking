@@ -5,9 +5,9 @@ import { Trash2, Search } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
     { value: '', label: '전체 게시판' },
-    { value: '자유 게시판', label: '자유 게시판' },
-    { value: '팁/정보', label: '팁/정보' },
-    { value: '질문/답변', label: '질문/답변' },
+    { value: 'FREE', label: '자유 게시판' },
+    { value: 'TIP', label: '팁/정보' },
+    { value: 'QNA', label: '질문/답변' },
 ];
 
 const initialCriteria = {
@@ -16,6 +16,11 @@ const initialCriteria = {
     searchKeyword: '',
     filterCategory: '',
     filterIsDeleted: 'N',
+};
+
+const getCategoryLabel = (value) => {
+  const option = CATEGORY_OPTIONS.find(opt => opt.value === value);
+  return option ? option.label : value; // 없으면 원래 값 표시
 };
 
 const CommunityPostManagementTab = () => {
@@ -148,7 +153,7 @@ const CommunityPostManagementTab = () => {
                     {posts.map((post) => (
                         <tr key={post.postId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 text-sm text-gray-300">{post.postId}</td>
-                            <td className="px-4 py-3 text-sm text-gray-300">{post.categoryCode}</td>
+                            <td className="px-4 py-3 text-sm text-gray-300">{getCategoryLabel(post.categoryCode)}</td>
                             <td
                                 className="px-4 py-3 text-sm text-white font-medium cursor-pointer hover:text-blue-400 transition truncate max-w-[200px]"
                                 onClick={() => handlePostClick(post.postId)}
