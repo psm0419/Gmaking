@@ -151,13 +151,13 @@ public class GrowthService {
      */
     private String determineEvolutionKeyForCurrentStep(int currentStep) {
         switch (currentStep) {
-            case 1: // 현재 Egg -> 다음 Baby로 갈 때
-                return "EVO_KEY_EGG";
-            case 2: // 현재 Baby -> 다음 Teen으로 갈 때
-                return "EVO_KEY_BABY";
-            case 3: // 현재 Teen -> 다음 Adult로 갈 때
-                return "EVO_KEY_TEEN";
-            case 4: // 현재 Adult -> 다음 Final(MAX)로 갈 때
+            case 1: // 현재 STAGE1 -> 다음 STAGE2로 갈 때
+                return "EVO_KEY_STAGE1";
+            case 2:
+                return "EVO_KEY_STAGE2";
+            case 3:
+                return "EVO_KEY_STAGE3";
+            case 4: // 현재 미구현, 코드만 있음
                 return "EVO_KEY_FINAL";
             default:
                 return "EVO_KEY_INVALID";
