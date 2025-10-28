@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { fetchAllReports } from '../../api/admin/adminApi';
+import { fetchAllReports, processReport } from '../../api/admin/adminApi';
 import { Search } from 'lucide-react';
 
 // 신고 대상 타입 옵션
@@ -40,7 +41,7 @@ const initialCriteria = {
     page: 1,
     pageSize: 7,
     searchKeyword: '',
-    filterType: '',       
+    filterType: '',
     filterStatus: 'PENDING',
 };
 
@@ -51,7 +52,8 @@ const ReportManagementTab = () => {
     const [pagination, setPagination] = useState({ totalPages: 1, totalCount: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [tempSearchKeyword, setTempSearchKeyword] = useState(''); 
+    const [tempSearchKeyword, setTempSearchKeyword] = useState('');
+    const navigate = useNavigate();
 
     const loadReports = useCallback(async () => {
         if (user?.role !== 'ADMIN' || !token) {
@@ -64,10 +66,10 @@ const ReportManagementTab = () => {
         try {
             const data = await fetchAllReports(token, criteria);
             setReports(data.list);
-            setPagination({ 
-                totalPages: data.totalPages, 
+            setPagination({
+                totalPages: data.totalPages,
                 totalCount: data.totalCount,
-                currentPage: data.currentPage, 
+                currentPage: data.currentPage,
             });
         } catch (err) {
             console.error("신고 목록 조회 실패:", err);
@@ -80,35 +82,54 @@ const ReportManagementTab = () => {
     useEffect(() => {
         loadReports();
     }, [loadReports]);
-    
+
+    const handleProcessReport = useCallback(async (reportId, newStatus) => {
+        if (!window.confirm(`선택한 신고(ID: ${reportId})를 [${newStatus}] 상태로 처리하시겠습니까?\n\n- APPROVED: 신고 대상(게시글/댓글)이 삭제 조치됩니다.\n- REJECTED/REVIEWED: 대상은 유지되고 신고 상태만 업데이트됩니다.`)) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await processReport(token, reportId, newStatus); // API 호출
+            alert(`신고 ID ${reportId} 처리가 [${newStatus}]로 완료되었습니다.`);
+            await loadReports();
+        } catch (err) {
+            console.error(`신고 처리 실패 (ID: ${reportId}, Status: ${newStatus}):`, err);
+            const errorMessage = err.response?.data || '신고 처리에 실패했습니다.';
+            alert(`처리 실패: ${errorMessage}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [token, loadReports]);
+
     const handleTempSearchChange = (e) => setTempSearchKeyword(e.target.value);
-    
+
     const handleTypeFilterChange = (e) => {
-        setCriteria(prev => ({ 
-            ...prev, 
-            filterType: e.target.value, 
-            page: 1, 
+        setCriteria(prev => ({
+            ...prev,
+            filterType: e.target.value,
+            page: 1,
             searchKeyword: '',
-        })); 
+        }));
         setTempSearchKeyword('');
     };
 
     const handleStatusFilterChange = (e) => {
-        setCriteria(prev => ({ 
-            ...prev, 
-            filterStatus: e.target.value, 
+        setCriteria(prev => ({
+            ...prev,
+            filterStatus: e.target.value,
             page: 1,
             searchKeyword: '',
-        })); 
+        }));
         setTempSearchKeyword('');
     };
-    
+
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        setCriteria(prev => ({ 
-            ...prev, 
-            searchKeyword: tempSearchKeyword, 
-            page: 1, 
+        setCriteria(prev => ({
+            ...prev,
+            searchKeyword: tempSearchKeyword,
+            page: 1,
         }));
     };
 
@@ -118,6 +139,26 @@ const ReportManagementTab = () => {
         }
     };
 
+    const handleCopy = useCallback((text, label) => {
+        if (text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`${label} ${text}가(이) 복사되었습니다.`);
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                alert('복사에 실패했습니다. 브라우저 설정을 확인해 주세요.');
+            });
+        }
+    }, []);
+
+    const handleNavigateTarget = useCallback((navigationId) => {
+        if (navigationId) {
+            const path = `/community/${navigationId}`;
+            navigate(path);
+        } else {
+            alert('이동할 게시글 ID를 찾을 수 없습니다. (게시글/댓글이 삭제되었을 수 있습니다)');
+        }
+    }, [navigate]);
+
 
     if (isLoading) return <div className="text-center py-10 text-yellow-400">신고 목록 로딩 중...</div>;
     if (error) return <div className="text-center py-10 text-red-400">에러: {error}</div>;
@@ -125,10 +166,9 @@ const ReportManagementTab = () => {
     return (
         <div className="overflow-x-auto">
             <div className="flex items-center justify-between mb-4 space-x-4">
-                
                 {/* 신고 대상 타입 필터 */}
-                <select 
-                    value={criteria.filterType} 
+                <select
+                    value={criteria.filterType}
                     onChange={handleTypeFilterChange}
                     className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-40"
                 >
@@ -138,8 +178,8 @@ const ReportManagementTab = () => {
                 </select>
 
                 {/* 신고 처리 상태 필터 */}
-                <select 
-                    value={criteria.filterStatus} 
+                <select
+                    value={criteria.filterStatus}
                     onChange={handleStatusFilterChange}
                     className="p-2 border rounded bg-gray-700 border-gray-600 text-gray-300 w-48"
                 >
@@ -147,7 +187,7 @@ const ReportManagementTab = () => {
                         <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                 </select>
-                
+
                 {/* 검색 입력 필드 (신고자 닉네임 또는 상세 내용 검색) */}
                 <form onSubmit={handleSearchSubmit} className="flex flex-grow max-w-md">
                     <input
@@ -167,39 +207,83 @@ const ReportManagementTab = () => {
                 <thead className="bg-gray-700 text-xs uppercase font-semibold tracking-wider">
                     <tr>
                         <th className="px-4 py-3 text-left min-w-[50px]">ID</th>
-                        <th className="px-4 py-3 text-left min-w-[100px]">대상 타입</th>
-                        <th className="px-4 py-3 text-left min-w-[80px]">대상 ID</th>
-                        <th className="px-4 py-3 text-left min-w-[120px]">신고자</th>
-                        <th className="px-4 py-3 text-left min-w-[120px]">사유 코드</th>
-                        <th className="px-4 py-3 text-left min-w-[200px]">상세 내용</th>
+                        <th className="px-4 py-3 text-left min-w-[70px]">대상 타입</th>
+                        <th className="px-4 py-3 text-left min-w-[120px]">대상 ID</th>
+                        <th className="px-4 py-3 text-left min-w-[140px]">신고자</th>
+                        <th className="px-4 py-3 text-left min-w-[100px]">사유 코드</th>
+                        <th className="px-4 py-3 text-left w-full min-w-[200px]">상세 내용</th>
                         <th className="px-4 py-3 text-center min-w-[100px]">상태</th>
                         <th className="px-4 py-3 text-left min-w-[100px]">접수일</th>
-                        <th className="px-4 py-3 text-left min-w-[100px]">처리 관리자</th>
-                        <th className="px-4 py-3 text-center min-w-[80px]">액션</th>
+                        <th className="px-4 py-3 text-left min-w-[120px]">처리 관리자</th>
                     </tr>
                 </thead>
                 <tbody className="bg-gray-800 divide-y divide-gray-700">
                     {reports.map((item) => (
                         <tr key={item.reportId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 text-sm text-gray-300">{item.reportId}</td>
-                            <td className="px-4 py-3 text-sm text-yellow-400">{item.targetType}</td>
-                            <td className="px-4 py-3 text-sm text-gray-400">{item.targetId}</td>
-                            <td className="px-4 py-3 text-sm font-semibold text-white">{item.reporterNickname} ({item.reporterId})</td>
+                            <td
+                                className="px-4 py-3 text-sm text-yellow-400 cursor-pointer hover:text-yellow-300 transition"
+                                onClick={() => handleNavigateTarget(item.navigationId)}
+                            >
+                                {item.targetType}
+                            </td>
+                            <td
+                                className="px-4 py-3 text-sm font-semibold text-white max-w-[120px] truncate cursor-pointer"
+                                title={`${item.targetId} (${item.targetUserId})`}
+                                onClick={() => handleCopy(item.targetUserId, '대상 작성자 ID')}
+                            >
+                                {item.targetId} ({item.targetUserId})
+                            </td>
+                            <td
+                                className="px-4 py-3 text-sm font-semibold text-white max-w-[140px] truncate cursor-pointer"
+                                title={`${item.reporterNickname} (${item.reporterId})`}
+                                onClick={() => handleCopy(item.reporterId, '신고자 ID')}
+                            >
+                                {item.reporterNickname} ({item.reporterId})
+                            </td>
                             <td className="px-4 py-3 text-sm text-red-400">{getReasonLabel(item.reasonCode)}</td>
                             <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{item.reasonDetail || '없음'}</td>
                             <td className="px-4 py-3 text-center">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                    item.status === 'PENDING' ? 'bg-orange-600/20 text-orange-400' : 
-                                    item.status === 'APPROVED' ? 'bg-green-600/20 text-green-400' : 
-                                    'bg-gray-600/20 text-gray-400'
-                                }`}>
-                                    {item.status}
-                                </span>
+                                {item.status === 'PENDING' ? (
+                                    <div className="flex justify-center space-x-1">
+                                        <button
+                                            onClick={() => handleProcessReport(item.reportId, 'APPROVED')}
+                                            className="px-2 py-1 border border-red-500 text-red-300 hover:bg-red-500 hover:text-white rounded-md text-xs transition whitespace-nowrap"
+                                        >
+                                            삭제 조치
+                                        </button>
+                                        <button
+                                            onClick={() => handleProcessReport(item.reportId, 'REJECTED')}
+                                            className="px-2 py-1 border border-green-500 text-green-300 hover:bg-green-500 hover:text-white rounded-md text-xs transition whitespace-nowrap"
+                                        >
+                                            거절
+                                        </button>
+                                        <button
+                                            onClick={() => handleProcessReport(item.reportId, 'REVIEWED')}
+                                            className="px-2 py-1 border border-yellow-500 text-yellow-300 hover:bg-yellow-500 hover:text-white rounded-md text-xs transition whitespace-nowrap"
+                                        >
+                                            검토 완료
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span 
+                                        className={`font-semibold text-xs py-1 px-2 rounded-full 
+                                            ${item.status === 'APPROVED' ? 'bg-red-900/50 text-red-300' : 
+                                            item.status === 'REJECTED' ? 'bg-green-900/50 text-green-300' : 
+                                            'bg-yellow-900/50 text-yellow-300'}`}
+                                    >
+                                        {STATUS_OPTIONS.find(opt => opt.value === item.status)?.label.split(' ')[0] || item.status}
+                                    </span>
+                                )}
                             </td>
+
                             <td className="px-4 py-3 text-sm text-gray-400">{new Date(item.createdDate).toLocaleDateString()}</td>
-                            <td className="px-4 py-3 text-sm text-cyan-400">{item.processorNickname || '대기 중'}</td>
-                            <td className="px-4 py-3 text-center">
-                                <button className="text-blue-400 hover:text-blue-300 transition text-xs">처리</button>
+                            <td
+                                className="px-4 py-3 text-sm text-cyan-400 max-w-[120px] truncate cursor-pointer"
+                                title={item.processorNickname || '대기 중'}
+                                onClick={() => handleCopy(item.updatedBy, '처리 관리자 ID')}
+                            >
+                                {item.processorNickname || '대기 중'}
                             </td>
                         </tr>
                     ))}
@@ -209,7 +293,7 @@ const ReportManagementTab = () => {
 
             {pagination.totalPages > 1 && (
                 <div className="flex justify-center items-center space-x-4 mt-6">
-                    <button 
+                    <button
                         onClick={() => handlePageChange(criteria.page - 1)}
                         disabled={criteria.page <= 1}
                         className="px-3 py-1 border rounded bg-gray-700 text-gray-300 disabled:opacity-50 hover:bg-gray-600 transition"

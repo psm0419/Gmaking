@@ -185,6 +185,19 @@ export const fetchAllReports = async (token, params = {}) => {
 };
 
 /**
+ * 신고 처리 (상태 변경 및 조치)
+ * PUT /api/admin/reports/{reportId}/status
+ * @param {string} token 사용자 인증 토큰
+ * @param {number} reportId 처리할 신고 ID
+ * @param {string} status 변경할 상태 (REJECTED, APPROVED, REVIEWED)
+ */
+export const processReport = async (token, reportId, status) => {
+    const data = { status };
+    const response = await axios.put(`${API_BASE_URL}/reports/${reportId}/status`, data, { headers: getAuthHeaders(token) });
+    return response.data;
+};
+
+/**
  * 몬스터 목록 조회 (페이징/검색/유형 필터링 적용)
  * GET /api/admin/monsters
  * @param {string} token 사용자 인증 토큰

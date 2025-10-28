@@ -222,6 +222,29 @@ public class AdminController {
         return ResponseEntity.ok(result);
     }
 
+    // 신고 처리 API (상태 변경 및 조치)
+    // PUT /api/admin/reports/{reportId}/status
+    @PutMapping("/reports/{reportId}/status")
+    public ResponseEntity<String> processReport(
+            @PathVariable("reportId") long reportId,
+            @RequestBody Map<String, String> requestBody) {
+
+        String status = requestBody.get("status");
+
+        if (status == null) {
+            return ResponseEntity.badRequest().body("상태(status) 값은 필수입니다.");
+        }
+
+        try {
+            adminService.processReport(reportId, status);
+            return ResponseEntity.ok().body("신고 처리가 완료되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("신고 처리 중 오류가 발생했습니다.");
+        }
+    }
+
     // -------------------------------------------------------------------------- //
 
     /**
