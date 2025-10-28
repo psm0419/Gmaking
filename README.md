@@ -56,9 +56,9 @@ AI가 생성한 캐릭터와 함께 **PVE / PVP 대전**, **퀘스트 수행**,
 
 > 각 팀원별 담당 기능 및 기술 설명은 아래 개인 문서에서 확인할 수 있습니다.
 
-| [![박수민](https://github.com/psm0419.png?size=100)](https://github.com/psm0419) | [![박은희](https://github.com/dmsgml7476.png?size=100)](https://github.com/dmsgml7476) | [![박현재](https://github.com/pnow7.png?size=100)](https://github.com/pnow7) | [![정예진](https://github.com/zcx1119son.png?size=100)](https://github.com/zcx1119son) |
+| [![박수민](https://github.com/psm0419.png?size=100)](https://github.com/psm0419) | [![박은희](https://github.com/dmsgml7476.png?size=100)](https://github.com/dmsgml7476) | [![박현재](https://github.com/pnow7.png?size=100)](https://github.com/pnow7) | [![엄정민](https://github.com/zcx1119son.png?size=100)](https://github.com/zcx1119son) |
 |:--:|:--:|:--:|:--:|
-| **[박수민](https://github.com/psm0419)**<br>팀장 / 풀스택 | **[박은희](https://github.com/dmsgml7476)**<br>팀원 / 풀스택 | **[박현재](https://github.com/pnow7)**<br>팀원 / 풀스택 | **[정예진](https://github.com/zcx1119son)**<br>팀원 / AI 서버 |
+| **[박수민](https://github.com/psm0419)**<br>팀장 / 풀스택 | **[박은희](https://github.com/dmsgml7476)**<br>팀원 / 풀스택 | **[박현재](https://github.com/pnow7)**<br>팀원 / 풀스택 | **[엄정민](https://github.com/zcx1119son)**<br>팀원 / AI 서버 |
 | (작성 예정) | (작성 예정) | [개인 문서 →](./README/phj/README.md) | (작성 예정) |
 
 ---
