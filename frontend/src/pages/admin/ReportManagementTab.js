@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAllReports } from '../../api/admin/adminApi';
 import { Search } from 'lucide-react';
@@ -52,6 +53,7 @@ const ReportManagementTab = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [tempSearchKeyword, setTempSearchKeyword] = useState('');
+    const navigate = useNavigate();
 
     const loadReports = useCallback(async () => {
         if (user?.role !== 'ADMIN' || !token) {
@@ -129,6 +131,15 @@ const ReportManagementTab = () => {
         }
     }, []);
 
+   const handleNavigateTarget = useCallback((navigationId) => {
+        if (navigationId) {
+            const path = `/community/${navigationId}`; 
+            navigate(path); 
+        } else {
+            alert('이동할 게시글 ID를 찾을 수 없습니다. (게시글/댓글이 삭제되었을 수 있습니다)');
+        }
+    }, [navigate]);
+
 
     if (isLoading) return <div className="text-center py-10 text-yellow-400">신고 목록 로딩 중...</div>;
     if (error) return <div className="text-center py-10 text-red-400">에러: {error}</div>;
@@ -193,7 +204,12 @@ const ReportManagementTab = () => {
                     {reports.map((item) => (
                         <tr key={item.reportId} className="hover:bg-gray-700/70 transition duration-150 ease-in-out">
                             <td className="px-4 py-3 text-sm text-gray-300">{item.reportId}</td>
-                            <td className="px-4 py-3 text-sm text-yellow-400">{item.targetType}</td>
+                            <td 
+                                className="px-4 py-3 text-sm text-yellow-400 cursor-pointer hover:text-yellow-300 transition"
+                                onClick={() => handleNavigateTarget(item.navigationId)} // navigationId를 전달하도록 수정
+                            >
+                                {item.targetType}
+                            </td>
                             <td
                                 className="px-4 py-3 text-sm font-semibold text-white max-w-[120px] truncate cursor-pointer"
                                 title={`${item.targetId} (${item.targetUserId})`}

@@ -108,6 +108,7 @@
         <result property="targetUserId" column="TARGET_USER_ID"/>
         <result property="reporterNickname" column="REPORTER_NICKNAME"/>
         <result property="processorNickname" column="PROCESSOR_NICKNAME"/>
+        <result property="navigationId" column="NAVIGATION_ID"/>
     </resultMap>
 
     <resultMap id="MonsterVOResultMap" type="com.project.gmaking.admin.vo.MonsterVO">
@@ -534,10 +535,17 @@
                 ELSE NULL
             END AS TARGET_USER_ID,
 
-            -- 닉네임 필드 (신고자)
+            -- 페이지 이동을 위한 최종 POST_ID 또는 TARGET_ID
+            CASE T1.TARGET_TYPE
+                WHEN 'POST' THEN T1.TARGET_ID
+                WHEN 'COMMENT' THEN Comment.POST_ID
+                ELSE NULL
+            END AS NAVIGATION_ID,
+
+            -- 신고자 닉네임 (REPORTER_ID를 사용하여 T2 테이블에서 가져옴)
             T2.USER_NICKNAME AS REPORTER_NICKNAME,
 
-            -- 닉네임 필드 (처리 관리자)
+            -- 처리 관리자 닉네임 (UPDATED_BY를 사용하여 T3 테이블에서 가져옴)
             T3.USER_NICKNAME AS PROCESSOR_NICKNAME
             FROM
                 tb_report T1
@@ -554,7 +562,7 @@
             LEFT JOIN
                 tb_community_post Post ON T1.TARGET_TYPE = 'POST' AND T1.TARGET_ID = Post.POST_ID
 
-            -- 댓글 작성자 ID 조인을 위한 조건부 LEFT JOIN
+            -- 댓글 작성자 ID 및 POST_ID를 가져오기 위한 조건부 LEFT JOIN
             LEFT JOIN
                 tb_community_comment Comment ON T1.TARGET_TYPE = 'COMMENT' AND T1.TARGET_ID = Comment.COMMENT_ID
 
