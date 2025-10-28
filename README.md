@@ -27,7 +27,7 @@
 
 1. **디렉토리 이동**
    ```bash
-   cd ai-server
+   cd ai_server
    ```
 2. **의존성 설치**
    ```bash
@@ -46,13 +46,13 @@
 
 1. **디렉토리 이동**
    ```bash
-   cd growth-ai-server
+   cd growth_ai_server
    ```
 2. **의존성 설치**
    ```bash
    pip install -r requirements.txt
    ```
-3. **(선택) 가상 환경 생성**
+3. **가상 환경 생성**
    ```bash
    python -m venv venv
    ```
