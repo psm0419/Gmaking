@@ -48,7 +48,7 @@ export default function GrowthModal({
         <div className="flex flex-col items-center justify-center p-8 min-h-[250px]">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FFC700] border-t-transparent mb-6"></div>
           <h3 className="text-2xl font-bold text-white mb-2">캐릭터 진화 중...</h3>
-          <p className="text-gray-400 text-center">
+          <p className="text-gray-400 text-center whitespace-nowrap">
             AI가 새로운 외형을 디자인하고 있습니다.
             <br />
             <strong>잠시만 기다려 주세요</strong>

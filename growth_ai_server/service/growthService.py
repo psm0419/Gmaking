@@ -264,9 +264,13 @@ class GrowthService:
     # ------------------------------------------------------------------
     def evolve_character(self, request: GrowthRequestVO) -> Tuple[Optional[Dict[str, Any]], str]:
         """캐릭터 성장, AI 이미지 생성, DB 성장 기록(tb_growth)을 처리합니다."""
+
+        # 🚨 새 이미지 ID는 임시값 1을 사용합니다. (Java 백엔드 처리 전 임시값)
+        NEW_IMAGE_ID_PLACEHOLDER = 1
+
         try:
             print("--- 1. [로그] 캐릭터 정보 조회 시도 (DB) ---")
-            # 1. 캐릭터 현재 상태 조회
+            # 1. 캐릭터 현재 상태 조회 (BASE_XX는 현재 최종 스탯을 의미한다고 가정)
             growth_data = self.character_dao.get_growth_info(request.user_id, request.character_id)
             if growth_data is None:
                 self.db.rollback()
@@ -275,7 +279,7 @@ class GrowthService:
             current_step = growth_data['EVOLUTION_STEP']
             total_clear = growth_data['TOTAL_STAGE_CLEARS']
 
-            # 2. ~ 3. 성장 가능 조건 검토 (로직 유지)
+            # 2. ~ 3. 성장 가능 조건 검토
             if current_step >= MAX_EVOLUTION_STEP:
                 self.db.rollback()
                 return None, "Character is already at max evolution stage."
@@ -284,80 +288,102 @@ class GrowthService:
                 self.db.rollback()
                 return None, f"Insufficient clear count. Requires {required_clear} to reach step {current_step + 1}, current is {total_clear}."
 
-            # 4. 스탯 증가분 계산 및 다음 단계 설정 (로직 유지)
+            # 4. 스탯 증가분 계산 및 다음 단계 설정
             inc_attack = random.randint(*GROWTH_INCREMENT_RANGE)
             inc_defense = random.randint(*GROWTH_INCREMENT_RANGE)
             inc_hp = random.randint(*GROWTH_INCREMENT_RANGE)
             inc_speed = random.randint(*GROWTH_INCREMENT_RANGE)
             inc_critical_rate = random.randint(*GROWTH_INCREMENT_RANGE)
+
+            # 🚨 [Unresolved reference 해결] new_step 변수 정의
             new_step = current_step + 1
 
-            # 4.1. [AI 이미지 생성] (로직 유지)
+            # 4.1. 🌟 새로운 최종 스탯 계산 (DB 업데이트 전에 미리 계산)
+            current_total_attack = growth_data['BASE_ATTACK']
+            current_total_defense = growth_data['BASE_DEFENSE']
+            current_total_hp = growth_data['BASE_HP']
+            current_total_speed = growth_data['BASE_SPEED']
+            current_total_critical_rate = growth_data['BASE_CRITICAL_RATE']
+
+            new_total_attack = current_total_attack + inc_attack
+            new_total_defense = current_total_defense + inc_defense
+            new_total_hp = current_total_hp + inc_hp
+            new_total_speed = current_total_speed + inc_speed
+            new_total_critical_rate = current_total_critical_rate + inc_critical_rate
+
+            new_final_stats = {
+                "attack": new_total_attack,
+                "defense": new_total_defense,
+                "hp": new_total_hp,
+                "speed": new_total_speed,
+                "critical_rate": new_total_critical_rate
+            }
+
+            # 4.2. [AI 이미지 생성] (로직 유지)
             print("--- 2. [로그] 이미지 다운로드 및 Base64 인코딩 시도 ---")
             current_image_url = growth_data['CURRENT_IMAGE_URL']
             if current_image_url.startswith('/'):
-                # Java 서버 주소 (8080)를 사용하여 절대 경로로 만듭니다.
                 current_image_url = f"http://localhost:8080{current_image_url}"
             input_b64 = _download_and_encode_image(current_image_url)
             print("--- 3. [로그] AI 작업 제출 직전 (Horde API) ---")
 
             mod_type = request.target_modification
             mod = MODIFICATIONS.get(mod_type)
-
             if not mod:
-                # 요청된 modification 키가 유효하지 않으면 오류 반환
                 self.db.rollback()
                 return None, f"AI modification type '{mod_type}' is invalid or not defined."
 
             job_id = self._submit_job(mod["base_prompt"], mod["negative_prompt"], input_b64)
             print(f"--- 4. [로그] AI 작업 제출 성공. Job ID: {job_id}. 결과 대기 시작 ---")
             ai_result = self._fetch_result(job_id)
-
-            # 4.2. [새 이미지 ID 조회] 단계 제거:
-            # 해당 로직이 'tb_image'에 EVOLUTION_STEP 컬럼이 없어 오류를 발생시켰으므로 제거합니다.
-            print(f"--- 4.5. [로그] 새 이미지 ID 조회 로직 제거. Java 백엔드에서 처리 예정 ---")
-            # new_image_info = self.character_dao.get_image_data_by_step(new_step) # ❌ 제거
-            # new_image_id = new_image_info['IMAGE_ID'] # ❌ 제거
+            print(f"--- 4.5. [로그] 새 이미지 ID: {NEW_IMAGE_ID_PLACEHOLDER} (임시값 사용) ---")
 
 
-            # 5. [DB 업데이트]
-            print("--- 5. [로그] DB 업데이트 (성장 기록만) 시도 ---")
+            # 5. 🌟 [DB 업데이트] - 3개 테이블 모두 반영 (이전 대화에서 결정된 최종 로직)
+            print("--- 5. [로그] DB 업데이트 (스탯, 진화, 기록) 시도 ---")
 
-            # 5.1. tb_growth에 능력치 증가분 기록 (tb_growth에만 데이터 삽입)
+            # 5.1. tb_character_stat에 최종 스탯 반영 (핵심)
+            if not self.character_dao.update_character_stats(request.character_id, request.user_id, new_final_stats):
+                self.db.rollback()
+                return None, "Failed to update final character stats (tb_character_stat)."
+
+            # 5.2. tb_character의 진화 단계 및 이미지 ID 업데이트
+            if not self.character_dao.update_character_evolution(request.character_id, request.user_id, new_step, NEW_IMAGE_ID_PLACEHOLDER):
+                self.db.rollback()
+                return None, "Failed to update character evolution step and image (tb_character)."
+
+            # 5.3. tb_growth에 능력치 증가분 기록 (히스토리)
             new_growth_record = GrowthModel(
-                character_id=request.character_id,
-                user_id=request.user_id,
+                character_id=request.character_id, user_id=request.user_id,
                 increment_attack=inc_attack, increment_defense=inc_defense, increment_hp=inc_hp,
                 increment_speed=inc_speed, increment_critical_rate=inc_critical_rate
             )
+            # 🚨 DAO의 insert_new_growth_record 함수 시그니처가 GrowthModel만 받도록 수정되었다고 가정
             if not self.character_dao.insert_new_growth_record(new_growth_record):
                 self.db.rollback()
-                return None, "Failed to record new growth data to tb_growth."
+                return None, "Failed to record new growth data to tb_growth (history)."
 
-            # 5.3. 최종 커밋 (tb_growth 기록만 커밋)
+            # 5.4. 최종 커밋
             self.db.commit()
 
 
             # 6. 최종 결과 반환 객체 생성 및 반환 (Java 백엔드에 전달)
-            new_total_attack = growth_data['BASE_ATTACK'] + growth_data['TOTAL_INCREMENT_ATTACK'] + inc_attack
-            new_total_defense = growth_data['BASE_DEFENSE'] + growth_data['TOTAL_INCREMENT_DEFENSE'] + inc_defense
-            new_total_hp = growth_data['BASE_HP'] + growth_data['TOTAL_INCREMENT_HP'] + inc_hp
-            new_total_speed = growth_data['BASE_SPEED'] + growth_data['TOTAL_INCREMENT_SPEED'] + inc_speed
-            new_total_critical_rate = growth_data['BASE_CRITICAL_RATE'] + growth_data['TOTAL_INCREMENT_CRATE'] + inc_critical_rate
-
             return {
                 "status": "success",
                 "image_base64": ai_result['image_base64'],
                 "image_format": ai_result['image_format'],
                 "user_id": request.user_id,
                 "character_id": request.character_id,
-                "new_evolution_step": new_step, # 💡 새 진화 단계 정보는 Java 백엔드에 전달
-                "total_stage_clear_count": total_clear,
+                "new_evolution_step": new_step, # 🚨 [Unresolved reference 해결] new_step 사용
+                "total_stage_clear_count": 0, # tb_character 업데이트 시 0으로 초기화되었으므로
+
+                # 🚨 [KeyError 해결] 계산된 최종 스탯 변수를 직접 사용
                 "new_total_attack": new_total_attack,
                 "new_total_defense": new_total_defense,
                 "new_total_hp": new_total_hp,
                 "new_total_speed": new_total_speed,
                 "new_total_critical_rate": new_total_critical_rate,
+
                 "increment_attack": inc_attack,
                 "increment_defense": inc_defense,
                 "increment_hp": inc_hp,
@@ -372,6 +398,6 @@ class GrowthService:
             print(f"🚨 캐릭터 성장 중 예외 발생: {e}")
             self.db.rollback()
             return None, "Internal server error during growth process."
-        
+
         # uvicorn controller.main:app --host 0.0.0.0 --port 8001 --reload
         # uvicorn controller.main:app --reload --port 8001

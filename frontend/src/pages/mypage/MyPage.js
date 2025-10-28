@@ -14,7 +14,8 @@ import { Egg } from "lucide-react";
 import NotificationBell from "../../components/notifications/NotificationBell";
 import PvpResultModal from "../../components/notifications/PvpResultModal";
 
-import GrowthModal from "../../components/GrowthModal";
+import GrowthModal from "../../components/growth/GrowthModal";
+import GrowthResultModal from "../../components/growth/GrowthResultModal";
 
 const DEFAULT_PROFILE_IMG = "/images/profile/default.png";
 
@@ -110,6 +111,8 @@ function MyMain() {
   // PVP 모달
   const [pvpModalOpen, setPvpModalOpen] = useState(false);
   const [pvpModalData, setPvpModalData] = useState(null);
+
+  const [growthResult, setGrowthResult] = useState(null);
 
   const token = localStorage.getItem("gmaking_token");
   let userId = null;
@@ -328,9 +331,9 @@ function MyMain() {
       alert(e?.response?.data?.message || "대표 캐릭터 해제에 실패했습니다.");
     }
   };
-
+  
   const handleConfirmGrowth = async () => {
-    if (!selected?.id || isGrowing || incubatorCount <= 0) return;
+    if (!selected?.id || isGrowing) return;
 
     const currentEvolutionStep = selected.evolutionStep;
     const condition = GROWTH_CONDITIONS[currentEvolutionStep];
@@ -385,10 +388,12 @@ function MyMain() {
         evolution_step: currentEvolutionStep,
       };
 
-      await axios.post("/growth/character", requestBody, { headers: authHeaders });
+      const response = await axios.post("/growth/character", requestBody, { headers: authHeaders });
+      const growthData = response.data;
+
       // 성공 후 상태 정리 및 데이터 갱신
       setIsGrowthModalOpen(false);
-      await fetchSummaryData(true); // 데이터 갱신 (로딩 스피너 없이)
+      setGrowthResult(growthData);
     } catch (e) {
       alert(e?.response?.data?.message || "캐릭터 성장에 실패했습니다.");
     } finally {
@@ -609,7 +614,22 @@ function MyMain() {
         currentClearCount={selected?.stageClearCount ?? 0}
       />
 
-      {/* 프린트 전용 인증서 뷰 (포털) */}
+      {/* 성장 결과 모달 (이미지 비교) */}
+      {growthResult && selected && (
+        <GrowthResultModal
+        // API 호출 직전의 '현재' 캐릭터 데이터 (성장 전 이미지 URL이 포함됨)
+        currentCharacter={selected}
+        // API 응답으로 받은 성장 후 이미지(Base64) 및 데이터
+        growthResult={growthResult}
+        onClose={() => {
+          setGrowthResult(null); // 모달 닫기
+
+          // 🚨 [이동된 코드] 모달이 닫힐 때 메인 데이터 갱신
+          fetchSummaryData();
+        }}
+      />
+    )}
+      {/* 프린트 전용 인증서 뷰 (포털) */}  
       <CertificatePrint
         open={printOpen}
         data={certificateData}
