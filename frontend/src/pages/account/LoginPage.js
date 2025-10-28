@@ -99,7 +99,10 @@ const LoginPage = ({ onRegisterClick }) => {
                             id="userId"
                             type="text"
                             value={userId}
-                            onChange={(e) => setUserId(e.target.value)}
+                            onChange={(e) => {
+                                const englishOnly = e.target.value.replace(/[^a-zA-Z]/g, '');
+                                setUserId(englishOnly);
+                            }}
                             placeholder="testuser"
                             className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition duration-150"
                             required
