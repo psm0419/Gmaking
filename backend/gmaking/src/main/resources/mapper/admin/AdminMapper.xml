@@ -572,6 +572,31 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <select id="selectReportDetail" resultMap="ReportVOResultMap">
+        SELECT
+            T1.REPORT_ID, T1.TARGET_TYPE, T1.TARGET_ID, T1.STATUS
+        FROM
+            tb_report T1
+        WHERE
+            T1.REPORT_ID = #{reportId}
+    </select>
+
+    <update id="updateReportStatus">
+        UPDATE tb_report
+        SET
+            STATUS = #{status},
+            UPDATED_BY = #{updatedBy},
+            UPDATED_DATE = CURRENT_TIMESTAMP()
+        WHERE
+            REPORT_ID = #{reportId}
+            AND STATUS = 'PENDING' </update>
+
+    <update id="deleteComment">
+        UPDATE tb_community_comment
+        SET IS_DELETED = 1
+        WHERE COMMENT_ID = #{commentId}
+    </update>
+
     <!-- .............................................................. -->
 
     <sql id="monsterWhereClause">

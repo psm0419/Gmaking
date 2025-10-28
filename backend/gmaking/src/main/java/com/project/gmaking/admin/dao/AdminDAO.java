@@ -43,9 +43,12 @@ public interface AdminDAO {
     int countAllPosts(AdminSearchCriteria criteria);
     void deletePost(long postId);                                      // 게시글 삭제
 
-    // 7. 신고 목록
+    // 7. 신고 목록, 신고 상세 정보 조회
     List<ReportVO> selectAllReports(AdminSearchCriteria criteria);
     int countAllReports(AdminSearchCriteria criteria);
+    ReportVO selectReportDetail(long reportId);
+    void updateReportStatus(Map<String, Object> params);
+    void deleteComment(long commentId);
 
     // 8. 몬스터 CRUD, 이미지 저장
     int insertImage(ImageVO imageVO);

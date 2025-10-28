@@ -226,6 +226,45 @@ public class AdminService {
         return result;
     }
 
+    /**
+     * 신고 처리 (승인/거절/검토 완료) 및 연관 조치 (Transactional)
+     * @param reportId 처리할 신고 ID
+     * @param status 변경할 상태 (REJECTED, APPROVED, REVIEWED)
+     */
+    @Transactional
+    public void processReport(long reportId, String status) {
+        String adminId = getCurrentAdminId();
+
+        // 1. 신고 정보 조회 및 상태 검증
+        ReportVO report = adminDAO.selectReportDetail(reportId);
+
+        if (report == null || !"PENDING".equals(report.getStatus())) {
+            throw new IllegalArgumentException("처리 대기 중인 신고가 아니거나 존재하지 않는 신고입니다.");
+        }
+
+        if (!("REJECTED".equals(status) || "APPROVED".equals(status) || "REVIEWED".equals(status))) {
+            throw new IllegalArgumentException("유효하지 않은 처리 상태 코드입니다.");
+        }
+
+        Map<String, Object> statusUpdateParams = new HashMap<>();
+        statusUpdateParams.put("reportId", reportId);
+        statusUpdateParams.put("status", status);
+        statusUpdateParams.put("updatedBy", adminId);
+        adminDAO.updateReportStatus(statusUpdateParams);
+
+        // 3. 'APPROVED' 상태일 경우 조치 (게시글/댓글 삭제)
+        if ("APPROVED".equals(status)) {
+            String targetType = report.getTargetType();
+            long targetId = report.getTargetId();
+
+            if ("POST".equals(targetType)) {
+                adminDAO.deletePost(targetId);
+            } else if ("COMMENT".equals(targetType)) {
+                adminDAO.deleteComment(targetId);
+            }
+        }
+    }
+
     // -------------------------------------------------------------------------- //
 
     /**
