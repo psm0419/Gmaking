@@ -17,7 +17,7 @@ public class PostReportVO {
     private Long targetId;
 
     // 신고 내용
-    private Long reporterId; // 신고한 사용자 ID
+    private String reporterId; // 신고한 사용자 ID
     private String reasonCode; // SPAM, HATE_SPEECH, ETC 등
     private String reasonDetail; // 기타 사유 상세 내용
 
@@ -25,8 +25,8 @@ public class PostReportVO {
     private String status; // PENDING, REVIEWED, REJECTED 등
 
     // 감사(Auditing) 필드
-    private Long createdBy; // 최초 생성자 (신고자 ID)
+    private String createdBy; // 최초 생성자 (신고자 ID)
     private LocalDateTime createdDate; // 최초 생성일시
-    private Long updatedBy; // 마지막 수정자 (처리 관리자 ID)
+    private String updatedBy; // 마지막 수정자 (처리 관리자 ID)
     private LocalDateTime updatedDate; // 마지막 수정일시
 }

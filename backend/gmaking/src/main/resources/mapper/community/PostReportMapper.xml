@@ -5,21 +5,11 @@
 
     <insert id="insertReport" parameterType="com.project.gmaking.community.vo.PostReportVO" useGeneratedKeys="true" keyProperty="reportId">
         INSERT INTO tb_report (
-        target_type,
-        target_id,
-        reporter_id,  reason_code,
-        reason_detail,
-        status,
-        created_by,
-        created_date
+        target_type, target_id, reporter_id, reason_code, reason_detail,
+        status, created_by, created_date
         ) VALUES (
-        #{targetType},
-        #{targetId},
-        #{reporterId},  #{reasonCode},
-        #{reasonDetail},
-        #{status},
-        #{createdBy},
-        NOW()
+        #{targetType}, #{targetId}, #{reporterId}, #{reasonCode}, #{reasonDetail},
+        #{status}, #{createdBy}, NOW()
         )
     </insert>
 

@@ -3,63 +3,61 @@ package com.project.gmaking.community.service;
 import com.project.gmaking.community.dao.PostReportDAO;
 import com.project.gmaking.community.vo.PostReportRequestDTO;
 import com.project.gmaking.community.vo.PostReportVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor // @Autowired 대신 사용 (더 깔끔)
 public class PostReportService {
+
     private final PostReportDAO postReportDAO;
 
-    @Autowired
-    public PostReportService(PostReportDAO postReportDAO){
-        this.postReportDAO = postReportDAO;
-    }
-
-    // 게시글 신고 접수
+    /**
+     * 신고 접수 공통 메서드 (게시글/댓글 모두 사용)
+     *
+     * @param targetType  "POST" 또는 "COMMENT"
+     * @param targetId    신고 대상 ID
+     * @param reporterId  신고자 ID (String)
+     * @param requestDTO  신고 사유 DTO
+     */
     @Transactional
-    public void createReport (String targetType, Long targetId, Long reporterId, PostReportRequestDTO requestDTO) {
-        // 1. [비즈니스 검증] 중복 신고 확인
-        // targetId와 targetType을 모두 사용하여 중복을 확인합니다.
-        int existingCount = postReportDAO.checkDuplicateReport(targetId, targetType, reporterId);
+    public void createReport(String targetType, Long targetId, String reporterId, PostReportRequestDTO requestDTO) {
 
-        if (existingCount > 0) {
+        // 1. 중복 신고 체크
+        if (postReportDAO.checkDuplicateReport(targetId, targetType, reporterId) > 0) {
             throw new IllegalStateException("이미 처리 대기 중인 신고 기록이 있습니다. 중복 신고는 불가능합니다.");
         }
 
-        // 2. [데이터 처리] 요청 DTO에서 사유 파싱 (Service에서 처리하는 것이 일반적)
+        // 2. reason 파싱: "ETC: 상세내용" → 코드 + 상세
         String fullReason = requestDTO.getReason();
         String reasonCode;
         String reasonDetail = null;
 
-        // 예: "SPAM: 상세 내용" -> SPAM을 코드로, 나머지를 상세 내용으로 분리
         if (fullReason != null && fullReason.contains(":")) {
             String[] parts = fullReason.split(":", 2);
-            reasonCode = parts[0].trim();
-            if (parts.length > 1) {
+            reasonCode = parts[0].trim().toUpperCase(); // 대문자 정규화 (SPAM, ETC 등)
+            if (parts.length > 1 && !parts[1].trim().isEmpty()) {
                 reasonDetail = parts[1].trim();
             }
         } else {
-            // 상세 내용 없이 코드만 온 경우
-            reasonCode = fullReason != null ? fullReason.trim() : "UNKNOWN";
+            reasonCode = fullReason != null ? fullReason.trim().toUpperCase() : "UNKNOWN";
         }
 
-        // 3. [데이터 매핑] ReportVO 객체 생성 및 초기화
+        // 3. VO 생성 및 설정
         PostReportVO reportVO = new PostReportVO();
-        reportVO.setTargetType(targetType); // 게시글 신고이므로 하드코딩
+        reportVO.setTargetType(targetType);
         reportVO.setTargetId(targetId);
-        reportVO.setReporterId(reporterId);
+        reportVO.setReporterId(reporterId);           // String
         reportVO.setReasonCode(reasonCode);
         reportVO.setReasonDetail(reasonDetail);
         reportVO.setStatus("PENDING");
+        reportVO.setCreatedBy(reporterId);           // String
+        reportVO.setCreatedDate(LocalDateTime.now());
 
-        // 4. [감사 필드] 생성자/생성일시 설정
-        reportVO.setCreatedBy(reporterId); // 신고자가 생성자
-        reportVO.setCreatedDate(LocalDateTime.now()); // DB NOW()를 사용해도 되지만, Service에서 설정
-
-        // 5. [DAO 호출] DB에 신고 기록 저장
+        // 4. DB 저장
         postReportDAO.insertReport(reportVO);
     }
 }

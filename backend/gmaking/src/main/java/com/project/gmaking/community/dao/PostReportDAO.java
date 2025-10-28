@@ -7,5 +7,5 @@ public interface PostReportDAO {
     void insertReport(PostReportVO postReportVO);
 
     // 중복 신고 확인 (SELECT)
-    int checkDuplicateReport(Long targetId, String targetType, Long reporterId);
+    int checkDuplicateReport(Long targetId, String targetType, String reporterId);
 }
