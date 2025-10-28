@@ -200,7 +200,7 @@ public class ConversationSummarizePipelineService {
 
                         longMemoryDAO.upsertSlot(mem);
                         kept++;
-                        if (kept >= 2) break; // 한 번에 최대 2개만 저장
+                        if (kept >= 4) break; // 한 번에 최대 4개만 저장
                     } catch (Exception ex) {
                         dropOther++;
                         log.debug("[LM] drop by exception: {}", ex.toString());

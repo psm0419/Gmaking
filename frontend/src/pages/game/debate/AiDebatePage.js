@@ -54,7 +54,8 @@ function AiDebatePage() {
         setDialogues([]);
         setLoading(true);
 
-        const ws = new WebSocket(`ws://192.168.1.107:8080/debate?token=${token}`);
+        const ws = new WebSocket(`ws://localhost:8080/debate?token=${token}`);
+//        const ws = new WebSocket(`ws://192.168.1.107:8080/debate?token=${token}`);
 
         ws.onopen = () => {
             if (ws.readyState === WebSocket.OPEN) {
