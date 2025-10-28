@@ -18,6 +18,7 @@ public class ReportVO {
     private LocalDateTime updatedDate;  // updated_date (처리일시)
 
     // 조인 정보
+    private String targetUserId;        // 신고 대상의 작성자 ID
     private String reporterNickname;    // 신고자 닉네임 (tb_user 조인)
     private String processorNickname;   // 처리자(관리자) 닉네임 (tb_user 조인)
 }

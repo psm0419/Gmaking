@@ -105,6 +105,7 @@
         <result property="updatedBy" column="UPDATED_BY"/>
         <result property="updatedDate" column="UPDATED_DATE"/>
 
+        <result property="targetUserId" column="TARGET_USER_ID"/>
         <result property="reporterNickname" column="REPORTER_NICKNAME"/>
         <result property="processorNickname" column="PROCESSOR_NICKNAME"/>
     </resultMap>
@@ -525,11 +526,39 @@
         SELECT
             T1.REPORT_ID, T1.TARGET_TYPE, T1.TARGET_ID, T1.REPORTER_ID, T1.REASON_CODE, T1.REASON_DETAIL,
             T1.STATUS, T1.CREATED_DATE, T1.UPDATED_DATE, T1.CREATED_BY, T1.UPDATED_BY,
-            NULL AS REPORTER_NICKNAME,  T3.USER_NICKNAME AS PROCESSOR_NICKNAME
-        FROM
-            tb_report T1
-        LEFT JOIN
-            tb_user T3 ON T1.UPDATED_BY = T3.USER_ID  <include refid="reportWhereClause"/>
+
+            -- 신고 대상의 작성자 ID (USER_ID)
+            CASE T1.TARGET_TYPE
+                WHEN 'POST' THEN Post.USER_ID
+                WHEN 'COMMENT' THEN Comment.USER_ID
+                ELSE NULL
+            END AS TARGET_USER_ID,
+
+            -- 닉네임 필드 (신고자)
+            T2.USER_NICKNAME AS REPORTER_NICKNAME,
+
+            -- 닉네임 필드 (처리 관리자)
+            T3.USER_NICKNAME AS PROCESSOR_NICKNAME
+            FROM
+                tb_report T1
+
+            -- 신고자 닉네임을 가져오기 위한 조인
+            LEFT JOIN
+                tb_user T2 ON T1.REPORTER_ID = T2.USER_ID
+
+            -- 처리 관리자 닉네임을 가져오기 위한 조인
+            LEFT JOIN
+                tb_user T3 ON T1.UPDATED_BY = T3.USER_ID
+
+            -- 게시글 작성자 ID 조인을 위한 조건부 LEFT JOIN
+            LEFT JOIN
+                tb_community_post Post ON T1.TARGET_TYPE = 'POST' AND T1.TARGET_ID = Post.POST_ID
+
+            -- 댓글 작성자 ID 조인을 위한 조건부 LEFT JOIN
+            LEFT JOIN
+                tb_community_comment Comment ON T1.TARGET_TYPE = 'COMMENT' AND T1.TARGET_ID = Comment.COMMENT_ID
+
+        <include refid="reportWhereClause"/>
         ORDER BY
         T1.CREATED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
