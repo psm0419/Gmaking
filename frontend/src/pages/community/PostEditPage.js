@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useAuth } from '../../context/AuthContext';
-import { FileText, Tag, ArrowLeft } from 'lucide-react'; // 아이콘 유지
+import { FileText, Tag, ArrowLeft } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:8080/community';
 
@@ -148,29 +148,29 @@ const PostEditPage = () => {
                 <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-6 flex-1 overflow-x-hidden">
                     {/* 카테고리 선택 드롭다운 */}
                     <div>
-    <label htmlFor="categoryCode" className="block text-lg font-medium text-gray-300 mb-2 flex items-center">
-        <Tag className="w-5 h-5 mr-2 text-red-400" /> 카테고리
-    </label>
-    <div className="relative">
-        <select
-            id="categoryCode"
-            name="categoryCode"
-            value={formState.categoryCode}
-            onChange={handleChange}
-            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none pr-10 appearance-none" // appearance-auto 대신 appearance-none 복원
-        >
-            {CATEGORIES.map(cat => (
-                <option key={cat.code} value={cat.code}>{cat.name}</option>
-            ))}
-        </select>
-        {/* 커스텀 화살표 */}
-        <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-        </span>
-    </div>
-</div>
+                        <label htmlFor="categoryCode" className="block text-lg font-medium text-gray-300 mb-2 flex items-center">
+                            <Tag className="w-5 h-5 mr-2 text-red-400" /> 카테고리
+                        </label>
+                        <div className="relative">
+                            <select
+                                id="categoryCode"
+                                name="categoryCode"
+                                value={formState.categoryCode}
+                                onChange={handleChange}
+                                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none pr-10 appearance-none" // appearance-auto 대신 appearance-none 복원
+                            >
+                                {CATEGORIES.map(cat => (
+                                    <option key={cat.code} value={cat.code}>{cat.name}</option>
+                                ))}
+                            </select>
+                            {/* 커스텀 화살표 */}
+                            <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
 
                     {/* 제목 입력 필드 */}
                     <div>
