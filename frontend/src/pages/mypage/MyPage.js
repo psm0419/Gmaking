@@ -343,13 +343,14 @@ function MyMain() {
     }
 
     const currentClearCount = selected.stageClearCount ?? 0;
+    const remaining = Math.max(0, condition.requiredClearCount - currentClearCount);
 
     // 2. 스테이지 클리어 횟수 조건 확인
-    if (currentClearCount < condition.requiredClearCount) {
+    if (remaining > 0) {
       alert(
         `캐릭터 성장에 실패했습니다. (${selected.name})\n` +
-          `다음 단계로 성장하려면, ` +
-          `스테이지를 최소 ${condition.requiredClearCount}회 클리어해야 합니다. (현재: ${currentClearCount}회)`
+        `다음 단계로 성장하려면, 남은 ${remaining}회 클리어해야 합니다.\n` +
+        `(현재: ${currentClearCount}회 / 필요: ${condition.requiredClearCount}회)`
       );
       setIsGrowthModalOpen(false);
       return;
@@ -646,7 +647,9 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing, onPrint
   const clearCount = character?.stageClearCount ?? 0;
   const condition = GROWTH_CONDITIONS[evolutionStep];
   const nextGradeLabel = condition ? condition.nextGradeLabel : "최대 단계";
-  const requiredClearCount = condition ? condition.requiredClearCount : "-";
+  const requiredClearCount = condition ? condition.requiredClearCount : 0;
+  const currentClearCount = character?.stageClearCount ?? 0; 
+  const remaining = Math.max(0, requiredClearCount - currentClearCount);
 
   return (
     <section className="rounded-2xl border border-[#FFC700]/50 bg-gray-800 p-6 shadow-xl">
@@ -724,7 +727,11 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing, onPrint
             <div className="rounded-xl bg-gray-900 px-4 ring-1 ring-gray-700
                                   h-[72px] flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">다음 성장 조건</span>
-              <span className="text-lg font-bold text-[#FFC700] leading-none">클리어 {requiredClearCount}회 필요</span>
+              <span className="text-lg font-bold text-[#FFC700] leading-none text-right whitespace-pre-line">
+                {remaining > 0
+                  ? `스테이지 ${remaining}회`
+                  : `조건 충족!`}
+              </span>
             </div>
           </div>
         </>
@@ -741,10 +748,14 @@ function CharacterDetail({ character, onGrow, onChat, onSend, isGrowing, onPrint
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onGrow}
-            disabled={_statsLoading || isGrowing}
-            className="rounded-xl border border-transparent bg-[#FF8C00] px-6 py-3 text-lg font-bold text-white shadow-md transition hover:bg-[#E07B00] active:bg-[#C06A00] disabled:opacity-60"
+            disabled={remaining > 0 || isGrowing}
+            className={`rounded-xl border border-transparent px-6 py-3 text-lg font-bold text-white shadow-md transition ${
+              remaining === 0
+              ? 'bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600'
+              : 'bg-[#FF8C00] hover:bg-[#E07B00] active:bg-[#C06A00] opacity-60'
+            }`}
           >
-            성장시키기
+            {remaining === 0 ? '성장 가능!' : '성장 준비'}
           </button>
           <button
             onClick={onChat}
