@@ -330,7 +330,7 @@ function MyMain() {
   };
 
   const handleConfirmGrowth = async () => {
-    if (!selected?.id || isGrowing || incubatorCount <= 0) return;
+    if (!selected?.id || isGrowing) return;
 
     const currentEvolutionStep = selected.evolutionStep;
     const condition = GROWTH_CONDITIONS[currentEvolutionStep];
