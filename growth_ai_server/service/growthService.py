@@ -31,60 +31,61 @@ REQUIRED_CLEARS = {1: 10, 2: 20, 3: 30}
 #    - 프롬프트 내용(base_prompt, negative_prompt)은 요청에 따라 그대로 유지됩니다.
 # =========================================================================
 MODIFICATIONS = {
-    # 초기 성장 (알에서 깨어나는 단계)
-    "EVO_KEY_EGG": {
-        "output_suffix": "stage_1_egg.png",
+    # 1단계 성장 (최소한의 장비 추가 및 전사 자세 설정)
+    "EVO_KEY_STAGE1": {
+        "output_suffix": "stage_1_warrior.png",
         "base_prompt": (
-            "Depict the same creature as if it is hatching from an egg, "
-            "keep its original species, color palette, and overall silhouette visible through cracks. "
-            "The creature should look baby-like but clearly the same species, "
-            "with parts of its body visible emerging from the egg. "
-            "Use a soft sky blue background, clean 2D pixel-art fantasy RPG style, centered composition, 1024x1024."
+            "A pixel-art fantasy RPG style character, keeping the same creature's **species**, **color palette**, and overall **face structure** "
+            "from the input image. The character is now equipped with **basic, functional armor** and a **simple, functional weapon**. "
+            "The **pose** is that of a newly established warrior, confident and ready for adventure. "
+            "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different animal, new design, photorealistic, extra limbs, human-like form, blurry, multiple characters, text, watermark"
+            "different creature, new design, photorealistic, extra limbs, human-like form, blurry, multiple characters, text, watermark, colored background, change in species or face, oversized weapon, overly ornate"
         )
     },
-
-    # 2단계 성장 (아기)
-    "EVO_KEY_BABY": {
-        "output_suffix": "stage_2_baby.png",
+    
+    # 2단계 성장 (기존 장비의 강화 및 영웅적인 자세)
+    "EVO_KEY_STAGE2": {
+        "output_suffix": "stage_2_hero.png",
         "base_prompt": (
-            "Evolve the same creature into a baby form. Keep identical body shape, color patterns, and face structure "
-            "as the original creature. Just make it smaller, rounder, and cuter. "
-            "Add slightly brighter colors and a soft magical glow, as if freshly born. "
-            "Solid green background, detailed pixel-art RPG style, centered composition, 1024x1024."
+            "Evolve the same pixel-art character. **Maintain its species**, color scheme, and face structure. "
+            "The character's **armor is clearly upgraded** to a stronger, more protective version (e.g., plate mail). "
+            "Its **current weapon is enhanced** to be larger, more detailed, and more refined. "
+            "The character adopts a **heroic, dynamic battle pose**, showing greater strength and readiness. "
+            "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different species, redesign, human-like, photorealistic, messy background, multiple creatures, text, watermark"
+            "different species, redesign, human-like, photorealistic, messy background, multiple creatures, text, watermark, colored background, change in species or face, drastically different weapon type"
         )
     },
-
-    # 3단계 성장 (청소년)
-    "EVO_KEY_TEEN": {
-        "output_suffix": "stage_3_teen.png",
+    
+    # 3단계 성장 (웅장함과 장식 추가)
+    "EVO_KEY_STAGE3": {
+        "output_suffix": "stage_3_knight.png",
         "base_prompt": (
-            "Evolve the same creature into a teenage version. Keep the same animal species, color scheme, and overall body structure. "
-            "Enhance details such as muscle tone, markings, or accessories while preserving the recognizable identity. "
-            "Add a confident pose and faint magical effects like energy trails or glowing eyes. "
-            "Solid red background, 2D pixel-art fantasy RPG style, centered composition, 1024x1024."
+            "Evolve the same character into a seasoned knight-like figure. **Keep the same animal species**, color scheme, and body structure. "
+            "The **armor is now full, gleaming, and highly ornate**, possibly featuring an emblem or a **cape**. "
+            "The **weapon is grander and more powerful**, possibly with **subtle magical effects** like glowing runes. "
+            "The character stands in a **proud, commanding, or charging stance**. "
+            "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different animal, new body design, photorealistic, extra limbs, human face, text, blur, 3D rendering"
+            "different animal, new body design, photorealistic, extra limbs, human face, text, blur, 3D rendering, colored background, change in species or face, simple armor, rusty weapon"
         )
     },
-
-    # 최종형 (성인 혹은 최종 진화)
+    
+    # 최종형 (전설적이고 최종적인 형태)
     "EVO_KEY_FINAL": {
-        "output_suffix": "stage_4_final.png",
+        "output_suffix": "stage_4_legend.png",
         "base_prompt": (
-            "Depict the same creature in its final evolved form, keeping the same face, proportions, and species identity "
-            "as the input image. Add subtle armor or magical aura details that emphasize maturity and power, "
-            "without changing the character’s design. "
-            "Solid golden yellow background, detailed pixel-art fantasy RPG illustration, centered composition, 1024x1024."
+            "Depict the same character in its ultimate, legendary evolved form. **Maintain the same face, proportions, and species identity** as the input image. "
+            "The **weapon and armor are mythical and indestructible**, with **exquisite, magical details** and powerful auras. "
+            "The character's **pose** conveys supreme power, wisdom, and victory. "
+            "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different creature, new species, human-like, photorealistic, distorted, blur, text, watermark"
+            "different creature, new species, human-like, photorealistic, distorted, blur, text, watermark, colored background, change in species or face, weak equipment, no armor"
         )
     }
 }
