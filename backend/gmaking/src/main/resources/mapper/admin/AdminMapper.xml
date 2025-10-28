@@ -464,19 +464,25 @@
     <select id="selectAllPosts" resultMap="CommunityPostVOResultMap">
         SELECT
             t1.POST_ID, t1.USER_ID, t1.CATEGORY_CODE, t1.TITLE,
-            t1.CONTENT, t1.UPDATED_DATE, t1.UPDATED_BY, t1.VIEW_COUNT, t1.LIKE_COUNT, t1.IS_DELETED,
-            t1.CREATED_DATE, t1.CREATED_BY,
-            t2.USER_NICKNAME,
+            t1.CONTENT, t1.UPDATED_DATE, t1.UPDATED_BY, t1.VIEW_COUNT,
+            (
+                SELECT COUNT(tl.POST_ID)
+                FROM tb_community_like tl
+                WHERE tl.POST_ID = t1.POST_ID
+            ) AS LIKE_COUNT,
+                t1.IS_DELETED,
+                t1.CREATED_DATE, t1.CREATED_BY,
+                t2.USER_NICKNAME,
             (
                 SELECT COUNT(c.COMMENT_ID)
                 FROM tb_community_comment c
-                WHERE c.POST_ID = t1.POST_ID AND c.IS_DELETED = 0
+                WHERE c.POST_ID = t1.POST_ID AND c.IS_DELETED = 'N'
             ) AS COMMENT_COUNT
         FROM
             tb_community_post t1
-        JOIN
+            JOIN
             tb_user t2 ON t1.USER_ID = t2.USER_ID
-            <include refid="postWhereClause"/>
+        <include refid="postWhereClause"/>
         ORDER BY
         t1.CREATED_DATE DESC
         LIMIT #{pageSize} OFFSET #{offset}
