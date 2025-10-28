@@ -1,19 +1,23 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Dict, Any, Optional, List
-
-# VO 모듈 임포트
 from vo.growthVO import GrowthModel
 
 class CharacterDAO:
     """
     캐릭터 성장과 관련된 데이터베이스 접근 로직(DAO)을 처리합니다.
+    (성장 시 최종 스탯을 tb_character_stat에 직접 반영하는 방식으로 수정)
     """
     def __init__(self, db: Session):
         self.db = db
 
     def get_growth_info(self, user_id: str, character_id: int) -> Optional[Dict[str, Any]]:
-        # 이 함수는 그대로 유지
+        """
+        성장 로직 처리에 필요한 현재 캐릭터 정보를 가져옵니다.
+        (tb_growth의 SUM 로직은 제거가 필요하나, 기존 로직 유지를 위해 임시로 둡니다.)
+
+        *주의: 이제 tb_character_stat에 최종 스탯이 담기므로, BASE_XX는 최종 스탯을 의미하게 됩니다.*
+        """
         query = text("""
             SELECT 
                 c.EVOLUTION_STEP,
@@ -23,25 +27,16 @@ class CharacterDAO:
                 tb.CHARACTER_HP AS BASE_HP,
                 tb.CHARACTER_SPEED AS BASE_SPEED,
                 tb.CRITICAL_RATE AS BASE_CRITICAL_RATE,
-                COALESCE(SUM(tg.INCREMENT_ATTACK), 0) AS TOTAL_INCREMENT_ATTACK,
-                COALESCE(SUM(tg.INCREMENT_DEFENSE), 0) AS TOTAL_INCREMENT_DEFENSE,
-                COALESCE(SUM(tg.INCREMENT_HP), 0) AS TOTAL_INCREMENT_HP,
-                COALESCE(SUM(tg.INCREMENT_SPEED), 0) AS TOTAL_INCREMENT_SPEED,
-                COALESCE(SUM(tg.INCREMENT_CRITICAL), 0) AS TOTAL_INCREMENT_CRATE,
                 ti.IMAGE_URL AS CURRENT_IMAGE_URL
+                # Note: tb_growth의 SUM 로직은 최종 스탯 반영 방식에서는 제거 필요
             FROM 
                 tb_character c
             JOIN 
                 tb_character_stat tb ON c.CHARACTER_ID = tb.CHARACTER_ID
-            LEFT JOIN 
-                tb_growth tg ON c.CHARACTER_ID = tg.CHARACTER_ID AND c.USER_ID = tg.USER_ID
             JOIN 
                 tb_image ti ON c.IMAGE_ID = ti.IMAGE_ID
             WHERE 
                 c.USER_ID = :user_id AND c.CHARACTER_ID = :character_id
-            GROUP BY 
-                c.CHARACTER_ID, ti.IMAGE_ID,
-                tb.CHARACTER_ID, tb.CHARACTER_ATTACK, tb.CHARACTER_DEFENSE, tb.CHARACTER_HP, tb.CHARACTER_SPEED, tb.CRITICAL_RATE
         """)
 
         params = {"user_id": user_id, "character_id": character_id}
@@ -53,8 +48,9 @@ class CharacterDAO:
 
     def insert_new_growth_record(self, growth_model: GrowthModel) -> bool:
         """
-        tb_growth 테이블에 새로운 성장 기록을 삽입합니다.
-        UPDATED_BY 필드를 추가하고, 날짜 필드는 NOW()를 사용합니다.
+        tb_growth 테이블에 새로운 성장 기록을 삽입합니다. (히스토리 기록용)
+
+        *NOTE: 현재 tb_growth 스키마에 IMAGE_ID_AFTER_GROWTH 컬럼이 없으므로 제거했습니다.*
         """
         insert_growth_query = text("""
             INSERT INTO tb_growth (
@@ -70,8 +66,6 @@ class CharacterDAO:
             )
         """)
 
-        # 💡 GrowthModel의 필드를 기반으로 파라미터 구성
-        # CREATED_BY와 UPDATED_BY가 USER_ID와 동일하다고 가정합니다.
         user_id = growth_model.USER_ID
 
         params = {
@@ -82,10 +76,68 @@ class CharacterDAO:
             "inc_speed": growth_model.INCREMENT_SPEED,
             "inc_critical": growth_model.INCREMENT_CRITICAL,
             "user_id": user_id,
-            "created_by": user_id, # 💡 USER_ID 사용
-            "updated_by": user_id, # 💡 UPDATED_BY 추가
+            "created_by": user_id,
+            "updated_by": user_id,
         }
 
-        # SQL Alchemy는 트랜잭션을 자동으로 관리하므로, execute만 하면 됩니다.
         result = self.db.execute(insert_growth_query, params)
+        return result.rowcount == 1
+
+    # 🌟 [추가] tb_character_stat 업데이트 메서드 (요청하신 핵심 수정 사항)
+    def update_character_stats(self, character_id: int, user_id: str, new_stats: Dict[str, Any]) -> bool:
+        """
+        tb_character_stat 테이블의 스탯을 직접 계산된 최종 스탯으로 업데이트합니다.
+        """
+        update_stats_query = text("""
+            UPDATE tb_character_stat
+            SET 
+                CHARACTER_ATTACK = :attack, 
+                CHARACTER_DEFENSE = :defense, 
+                CHARACTER_HP = :hp,
+                CHARACTER_SPEED = :speed,
+                CRITICAL_RATE = :critical_rate,
+                UPDATED_DATE = NOW(),
+                UPDATED_BY = :user_id
+            WHERE 
+                CHARACTER_ID = :character_id
+        """)
+
+        params = {
+            "character_id": character_id,
+            "user_id": user_id,
+            "attack": new_stats["attack"],
+            "defense": new_stats["defense"],
+            "hp": new_stats["hp"],
+            "speed": new_stats["speed"],
+            "critical_rate": new_stats["critical_rate"],
+        }
+
+        result = self.db.execute(update_stats_query, params)
+        return result.rowcount == 1
+
+    # 🌟 [추가] tb_character 업데이트 메서드
+    def update_character_evolution(self, character_id: int, user_id: str, next_step: int, new_image_id: int) -> bool:
+        """
+        tb_character 테이블의 진화 단계(EVOLUTION_STEP)와 이미지 ID를 업데이트합니다.
+        """
+        update_char_query = text("""
+            UPDATE tb_character
+            SET 
+                EVOLUTION_STEP = :next_step, 
+                IMAGE_ID = :new_image_id,
+                TOTAL_STAGE_CLEARS = 0, -- 진화 조건 클리어 횟수 초기화 (가정)
+                UPDATED_DATE = NOW(),
+                UPDATED_BY = :user_id
+            WHERE 
+                CHARACTER_ID = :character_id AND USER_ID = :user_id
+        """)
+
+        params = {
+            "character_id": character_id,
+            "user_id": user_id,
+            "next_step": next_step,
+            "new_image_id": new_image_id,
+        }
+
+        result = self.db.execute(update_char_query, params)
         return result.rowcount == 1

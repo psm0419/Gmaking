@@ -59,18 +59,19 @@ class GrowthModel:
     """
     def __init__(self, character_id: int, increment_attack: float, # 👈 evolution_step 제거
                  increment_defense: float, increment_hp: float, increment_speed: float,
-                 increment_critical_rate: float, user_id: str, created_by: str = "SYSTEM"):
+                 increment_critical_rate: float, user_id: str):
         # 기존 필드
+        # 스탯 필드
         self.CHARACTER_ID = character_id
         self.INCREMENT_ATTACK = increment_attack
         self.INCREMENT_DEFENSE = increment_defense
         self.INCREMENT_HP = increment_hp
         self.INCREMENT_SPEED = increment_speed
-        # 💡 스키마에 맞춰 CRITICAL을 CRITICAL_RATE 대신 CRITICAL로 변경 (dao.characterDAO.py에서 매핑을 CRITICAL로 할 경우)
         self.INCREMENT_CRITICAL = increment_critical_rate
-        self.USER_ID = user_id
 
         # 감사 필드
-        self.CREATED_BY = created_by
+        self.USER_ID = user_id
+        self.CREATED_BY = user_id
+        self.UPDATED_BY = user_id
         self.CREATED_DATE = datetime.now()
         self.UPDATED_DATE = datetime.now()
