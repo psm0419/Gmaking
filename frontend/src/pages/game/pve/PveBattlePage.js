@@ -214,6 +214,7 @@ function PveBattlePage() {
                     monsterName: data.monsterName,
                     imageId: data.imageId,
                     imageOriginalName: data.imageOriginalName,
+                    imageUrl: data.imageUrl,
                     monsterHp: data.monsterHp,
                     monsterAttack: data.monsterAttack,
                     monsterDefense: data.monsterDefense,
@@ -280,7 +281,7 @@ function PveBattlePage() {
                             {opponentMonster ? (
                                 <>
                                     <img
-                                        src={`/images/monster/${opponentMonster.imageOriginalName}`}
+                                        src={opponentMonster.imageUrl}
                                         alt={opponentMonster.monsterName}
                                         className="w-32 h-32 mx-auto mb-2 border border-red-400 rounded-lg bg-white/10"
                                     />

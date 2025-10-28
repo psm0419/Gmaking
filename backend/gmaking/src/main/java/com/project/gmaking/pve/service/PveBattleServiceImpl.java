@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -229,18 +230,18 @@ public class PveBattleServiceImpl implements PveBattleService {
 
             // 1. 몬스터 정보를 별도의 JSON 객체로 클라이언트에게 전송
             //    프론트에서 이 정보를 받아 몬스터 스탯/이미지 영역을 업데이트합니다.
-            Map<String, Object> encounterData = Map.of(
-                    "type", "encounter",
-                    "monsterId", monster.getMonsterId(),
-                    "imageOriginalName", monster.getImageOriginalName(),
-                    "monsterName", monster.getMonsterName(),
-                    "imageId", monster.getImageId(),
-                    "monsterHp", monster.getMonsterHp(),
-                    "monsterAttack", monster.getMonsterAttack(),
-                    "monsterDefense", monster.getMonsterDefense(),
-                    "monsterSpeed", monster.getMonsterSpeed(),
-                    "monsterCriticalRate", monster.getMonsterCriticalRate()
-                    // MonsterVO에 있는 모든 필드를 필요에 따라 추가
+            Map<String, Object> encounterData = Map.ofEntries(
+                    Map.entry("type", "encounter"),
+                    Map.entry("monsterId", monster.getMonsterId()),
+                    Map.entry("imageOriginalName", monster.getImageOriginalName()),
+                    Map.entry("imageUrl", monster.getImageUrl()),
+                    Map.entry("monsterName", monster.getMonsterName()),
+                    Map.entry("imageId", monster.getImageId()),
+                    Map.entry("monsterHp", monster.getMonsterHp()),
+                    Map.entry("monsterAttack", monster.getMonsterAttack()),
+                    Map.entry("monsterDefense", monster.getMonsterDefense()),
+                    Map.entry("monsterSpeed", monster.getMonsterSpeed()),
+                    Map.entry("monsterCriticalRate", monster.getMonsterCriticalRate())
             );
             session.sendMessage(new TextMessage(mapper.writeValueAsString(encounterData)));
             log.info("클라이언트에게 몬스터 조우 정보 전송: {}", monster.getMonsterName());
