@@ -95,7 +95,8 @@ export default function ChatPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [showTopLoader, setShowTopLoader] = useState(false); // ⬅️ 상단 비주얼 로더 표시 제어
+  const [showTopLoader, setShowTopLoader] = useState(false); // 상단 비주얼 로더 표시 제어
+  const [firstPhase, setFirstPhase] = useState(false);
   const endRef = useRef(null);
   const scrollWrapRef = useRef(null);
 
@@ -107,14 +108,6 @@ export default function ChatPage() {
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
-
-  // 상단 비주얼 로더 표시 로직
-  useEffect(() => {
-    const hasAssistant = messages.some((m) => m.role === "assistant");
-    const hasTyping = messages.some((m) => m.role === "typing");
-    // 히스토리 로딩 중이거나, 아직 assistant 없음 or 타이핑 중이면 표시
-    setShowTopLoader(historyLoading || hasTyping || !hasAssistant);
-  }, [historyLoading, messages]);
 
   /** 1) 초기: 캐릭터 목록 */
   useEffect(() => {
@@ -168,13 +161,27 @@ export default function ChatPage() {
     setMessages([]);
     const myLoadId = ++loadIdRef.current;
 
+    setFirstPhase(true);
+    setShowTopLoader(true);
+
     if (
       enterPayload &&
       (enterPayload.characterId === selectedCharacter.id ||
         String(enterPayload.characterId) === String(selectedCharacter.id))
     ) {
       const list = normalizeHistory(enterPayload.history || []).reverse();
-      if (myLoadId === loadIdRef.current) setMessages(list);
+      if (myLoadId === loadIdRef.current) {
+         setMessages(list);
+
+         const hasAssistant = list.some(m => m.role === "assistant");
+         if (hasAssistant) {
+           setFirstPhase(false);
+           setShowTopLoader(false);
+         } else {
+          setFirstPhase(true);
+          setShowTopLoader(true);
+        }
+      }
       enterOnceRef.current = { cid: selectedCharacter.id, called: true };
       navigate(".", { replace: true, state: {} });
       return;
@@ -196,6 +203,15 @@ export default function ChatPage() {
         const list = normalizeHistory(enter?.history || []).reverse();
         if (!cancelled && myLoadId === loadIdRef.current) {
           setMessages(list);
+
+          const hasAssistant = list.some(m => m.role === "assistant");
+          if (hasAssistant) {
+             setFirstPhase(false);
+             setShowTopLoader(false);
+           } else {
+            setFirstPhase(true);
+            setShowTopLoader(true);
+          }
         }
       } catch (e) {
         console.error("대화 이력 조회 실패:", e);
@@ -216,6 +232,13 @@ export default function ChatPage() {
       cancelled = true;
     };
   }, [selectedCharacter?.id, enterPayload, navigate]);
+
+  useEffect(() => {
+   if (firstPhase && messages.some(m => m.role === "assistant")) {
+      setFirstPhase(false);
+      setShowTopLoader(false);
+    }
+  }, [messages, firstPhase]);
 
   /** 타이핑 말풍선 ID 생성 */
   const createTyping = () =>
@@ -349,10 +372,8 @@ export default function ChatPage() {
                 {/* 기존 텍스트 로더 대신 비주얼 로더를 상단 아래에 별도 표시 */}
               </div>
 
-              {/* ⬇️ 상단 비주얼 로더 */}
-              {showTopLoader && (
-                <TopVisualLoader />
-              )}
+              {/* 상단 비주얼 로더 */}
+              {firstPhase && <TopVisualLoader />}
 
               {/* 채팅 영역 */}
               <div

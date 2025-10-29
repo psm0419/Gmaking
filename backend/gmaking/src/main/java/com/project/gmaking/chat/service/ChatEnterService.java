@@ -38,6 +38,9 @@ public class ChatEnterService {
             convId = chatDAO.findLatestConversationId(userId, characterId);
         }
 
+        int rows = conversationDAO.updateStatus(convId, ConversationStatus.OPEN, userId);
+        log.info("[ENTER] set OPEN convId={} rows={}", convId, rows);
+
         // 입장시 지연청소
         cleanupDelayedIfClosed(convId, userId);
 
@@ -109,6 +112,7 @@ public class ChatEnterService {
 
         return EnterResponseVO.builder()
                 .personaId(persona.getPersonaId())
+                .conversationId(convId)
                 .greetingMessage(null)     // history에 포함되므로 굳이 별도 필드 필요 X
                 .isFirstMeet(isFirstMeet)
                 .history(history)
