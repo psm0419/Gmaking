@@ -92,6 +92,19 @@ public class LoginServiceImpl implements LoginService {
             throw new RuntimeException("회원가입에 실패했습니다. DB 삽입 오류.");
         }
 
+        // 4. 무료 부화기 (PRODUCT_ID 5) 1개를 인벤토리에 지급
+        final int FREE_INCUBATOR_PRODUCT_ID = 5;
+        final int QUANTITY = 1;
+
+        try {
+            loginDAO.insertUserInventory(requestVO.getUserId(), FREE_INCUBATOR_PRODUCT_ID, QUANTITY);
+            log.info(">>>> [REGISTER-TRACE] 3. 무료 부화권(ID: {}) 1개를 인벤토리에 지급 완료.", FREE_INCUBATOR_PRODUCT_ID);
+        } catch (Exception e) {
+            // 인벤토리 삽입 실패 시 회원가입 트랜잭션 롤백 유도를 위해 RuntimeException 처리
+            log.error(">>>> [REGISTER-ERROR] 인벤토리 삽입 중 오류 발생. ID: {}", requestVO.getUserId(), e);
+            throw new RuntimeException("회원가입에 실패했습니다. (인벤토리 지급 오류)", e);
+        }
+
         // 이메일 인증 코드 발송 요청
         try {
             verificationService.sendCode(requestVO.getUserId(), requestVO.getUserEmail());

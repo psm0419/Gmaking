@@ -53,16 +53,30 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            ROLE
+            ROLE,
+            INCUBATOR_COUNT
         ) VALUES (
-                    #{userId},
-                    #{userName},
-                    #{userEmail},
-                    'N',
-                    #{userPassword},
-                    #{userNickname},
-                    'USER'
-                )
+            #{userId},
+            #{userName},
+            #{userEmail},
+            'N',
+            #{userPassword},
+            #{userNickname},
+            'USER',
+            1
+        )
+    </insert>
+
+    <insert id="insertUserInventory">
+        INSERT INTO TB_USER_INVENTORY (
+            USER_ID,
+            PRODUCT_ID,
+            QUANTITY
+        ) VALUES (
+            #{userId},
+            #{productId},
+            #{quantity}
+        )
     </insert>
 
     <select id="checkDuplicate" resultType="int">
