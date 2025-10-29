@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConversationSummarizePipelineService {
 
-    // 최근 몇 턴까지 조회해 누적 길이를 계산할지 (길이 트리거 기반이므로 20~30 권장)
+    // 최근 몇 턴까지 조회해 누적 길이를 계산할지
     private static final int PATCH_TURN_LIMIT = 24;
 
     // "마지막 요약 이후" 누적 길이 임계치(정규화 후 문자 수)
@@ -66,30 +66,20 @@ public class ConversationSummarizePipelineService {
                 return false;
             }
 
-            // 1) 이전 요약 upsert 보장
+            // 기존 요약 조회(있으면 사용, 없으면 null)
             ConversationSummaryVO saved = conversationSummaryDAO.selectByConversationId(convId);
-            if (saved == null) {
-                ConversationSummaryVO init = new ConversationSummaryVO();
-                init.setConversationId(convId);
-                init.setRollingSummary("");
-                init.setLastTurnId(0);
-                init.setUpdatedBy(actor);
-                conversationSummaryDAO.upsertRollingSummary(init);
-                saved = conversationSummaryDAO.selectByConversationId(convId);
-            }
 
-            // 2) 최근 턴 수집 (오래된 → 최신)
+            // 1) 최근 턴 수집 (오래된 → 최신) 후 역전 방지용 정렬
             List<DialogueVO> recent = chatDAO.selectRecentDialogues(convId, PATCH_TURN_LIMIT);
             if (recent == null || recent.isEmpty()) {
                 log.info("[SummaryPipeline] no recent dialogues convId={}", convId);
                 return false;
             }
-            Collections.reverse(recent);
-
-
+            // DAO가 최신→오래된 순서를 줄 수 있으므로 정렬을 보장
+            recent.sort(Comparator.comparing(DialogueVO::getMessageId));
 
             // 마지막 요약 이후만 필터링
-            int lastTurnIdSaved = saved.getLastTurnId() == null ? 0 : saved.getLastTurnId();
+            int lastTurnIdSaved = (saved == null || saved.getLastTurnId() == null) ? 0 : saved.getLastTurnId();
             List<DialogueVO> deltaTurns = recent.stream()
                     .filter(d -> d.getMessageId() != null && d.getMessageId() > lastTurnIdSaved)
                     .collect(Collectors.toList());
@@ -104,13 +94,19 @@ public class ConversationSummarizePipelineService {
                 deltaCharsSinceLast += c.length();
             }
 
-            boolean smallTalkButManyTurns = deltaTurns.size() >= 4; // 초반 4턴 누적되면 요약 시도
-            if (!forced && !smallTalkButManyTurns && deltaCharsSinceLast < DELTA_LEN_THRESHOLD) {
-                return false;
-            }
+            log.debug("[SummaryPipeline] conv={} deltaChars={} deltaTurns={} lastSavedTurn={}",
+                    convId, deltaCharsSinceLast, deltaTurns.size(), lastTurnIdSaved);
 
-            if (!forced && deltaCharsSinceLast < DELTA_LEN_THRESHOLD) {
-                // 아직 요약/저장 트리거 임계치를 넘지 않음
+            // 2) 트리거: (강제) OR (길이 임계치) OR (턴수 4 이상)
+            boolean trigger = forced
+                    || deltaCharsSinceLast >= DELTA_LEN_THRESHOLD
+                    || deltaTurns.size() >= 4;
+
+            if (!trigger) return false;
+
+            if (deltaTurns.isEmpty()) {
+                // 강제 실행인데도 delta가 없으면 할 게 없음
+                log.debug("[SummaryPipeline] nothing new since last summary convId={}", convId);
                 return false;
             }
 
@@ -119,21 +115,26 @@ public class ConversationSummarizePipelineService {
 
             SummarizeResult result;
             try {
-                String existing = saved.getRollingSummary() == null ? "" : saved.getRollingSummary();
+                String existing = (saved == null || saved.getRollingSummary() == null) ? "" : saved.getRollingSummary();
                 result = llmClient.summarizeAndExtract(existing, patch, "ko");
             } catch (Exception e) {
                 log.error("[SummaryPipeline] LLM failed convId={}", convId, e);
                 return false;
             }
 
-            // 4) 요약 저장 (lastTurnId는 deltaTurns의 마지막으로 갱신)
-            String updated = result.getUpdatedSummary() == null ? "" : result.getUpdatedSummary();
+            // 4) 요약 저장 (빈 요약은 저장 금지)
+            String updated = (result.getUpdatedSummary() == null) ? "" : result.getUpdatedSummary().trim();
+            if (updated.isEmpty()) {
+                log.warn("[SummaryPipeline] empty updated summary. skip save convId={}", convId);
+                return false;
+            }
 
+            // 최신 turnId 계산 보강(명시 전달 > delta 최대값 > 저장된 값)
             Integer lastTurnId = (currentTurnId != null) ? currentTurnId
                     : deltaTurns.stream()
                     .map(DialogueVO::getMessageId)
                     .filter(Objects::nonNull)
-                    .reduce((a, b) -> b)
+                    .max(Integer::compareTo)
                     .orElse(lastTurnIdSaved);
 
             ConversationSummaryVO vo = new ConversationSummaryVO();
@@ -141,15 +142,17 @@ public class ConversationSummarizePipelineService {
             vo.setRollingSummary(updated);
             vo.setLastTurnId(lastTurnId);
             vo.setUpdatedBy(actorOrPipeline(actor));
-            conversationSummaryDAO.updateSummaryByConversationId(vo);
 
-            // 5) 장기 기억 저장(업서트, 카테고리/정규화 주제) — 반드시 "사용자 발화" 근거만
+            // 성공시에만 upsert
+            conversationSummaryDAO.upsertRollingSummary(vo);
+
+            // 5) 장기 기억 저장(업서트) — 반드시 "사용자 발화" 근거만
             if (result.getMemories() != null && !result.getMemories().isEmpty()) {
                 // delta 기준으로 sender 매핑 (근거 검증)
                 Map<Integer, DialogueSender> idToSender = senderMap(deltaTurns);
 
                 int cand = result.getMemories().size();
-                int kept = 0, dropNoMeta = 0, dropNotUser = 0, dropCat = 0, dropLen = 0, dropConf = 0, dropOther = 0;
+                int kept = 0, dropNoMeta = 0, dropNotUser = 0, dropCat = 0, dropLen = 0, dropConf = 0, dropRange = 0, dropOther = 0;
 
                 for (var m : result.getMemories()) {
                     try {
@@ -161,7 +164,10 @@ public class ConversationSummarizePipelineService {
                         Integer srcMid = getSourceMid(m);
                         if (srcMid == null) { dropNoMeta++; continue; }
 
-                        if (idToSender.get(srcMid) != DialogueSender.user) { dropNotUser++; continue; }
+                        // sourceMid 범위 검증: lastSavedTurn < srcMid <= lastTurnId
+                        if (!(srcMid > lastTurnIdSaved && srcMid <= lastTurnId)) { dropRange++; continue; }
+
+                        if (idToSender.get(srcMid) != DialogueSender.USER) { dropNotUser++; continue; }
 
                         String subjectRaw  = safe(m.getSubject());
                         String subjectNorm = normalizeSubject(subjectRaw);
@@ -191,7 +197,7 @@ public class ConversationSummarizePipelineService {
                         mem.setSourceConvId(convId);
                         mem.setUpdatedBy(actorOrPipeline(actor));
 
-                        // meta에 sourceMid 남기기 (SCHEDULE이든 아니든)
+                        // meta에 sourceMid 남기기
                         String metaJson = toJsonString(mergeMetaWithSourceMid(m.getMeta(), srcMid));
                         mem.setMetaJson(metaJson);
                         if ("SCHEDULE".equals(cat)) {
@@ -207,8 +213,8 @@ public class ConversationSummarizePipelineService {
                     }
                 }
 
-                log.debug("[LM] mem candidates={} kept={} drop(noMeta={},notUser={},cat={},len={},conf={},other={})",
-                        cand, kept, dropNoMeta, dropNotUser, dropCat, dropLen, dropConf, dropOther);
+                log.debug("[LM] mem candidates={} kept={} drop(noMeta={},notUser={},cat={},len={},conf={},range={},other={})",
+                        cand, kept, dropNoMeta, dropNotUser, dropCat, dropLen, dropConf, dropRange, dropOther);
             }
 
             return true;
@@ -231,7 +237,7 @@ public class ConversationSummarizePipelineService {
                     .replaceAll("\\s+"," ").trim();
             if (content.length() > 600) content = content.substring(0, 600) + "…";
 
-            String roleTag = (t.getSender() == DialogueSender.user) ? "U" : "A"; // U=user, A=assistant
+            String roleTag = (t.getSender() == DialogueSender.USER) ? "U" : "A"; // U=user, A=assistant
             int mid = (t.getMessageId() == null ? -1 : t.getMessageId());
 
             // 예: U#123: 사탕을 좋아해
@@ -327,20 +333,6 @@ public class ConversationSummarizePipelineService {
             log.debug("[SummaryPipeline] meta json serialize failed", e);
             return null;
         }
-    }
-
-    private boolean isGoodMemory(SummarizeResult.MemoryCandidate m) {
-        if (m == null || Boolean.TRUE.equals(m.getPii())) return false;
-        String cat = m.getCategory() == null ? "" : m.getCategory().toUpperCase(Locale.ROOT);
-        if (!CAT_WHITELIST.contains(cat)) return false;
-
-        String subjectNorm = normalizeSubject(m.getSubject());
-        String value = safe(m.getValue());
-        if (subjectNorm.length() < 1 || subjectNorm.length() > 120) return false;
-        if (value.length() < 5 || value.length() > (cat.equals("SCHEDULE") ? 200 : 120)) return false;
-
-        double conf = m.getConfidence() == null ? 0.0 : m.getConfidence();
-        return conf >= 0.65;
     }
 
     // (옵션) 용량 제어

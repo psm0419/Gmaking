@@ -127,7 +127,7 @@ public class ChatEnterService {
     private void saveCharacterLine(Integer convId, String userId, String content) {
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
-                .sender(DialogueSender.character)
+                .sender(DialogueSender.CHARACTER)
                 .content(content)
                 .createdBy(userId)
                 .updatedBy(userId)
