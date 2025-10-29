@@ -97,7 +97,7 @@ const NoticeManagePage = () => {
     return (
         <div className="h-screen flex flex-col bg-gray-900 text-white overflow-hidden">
             <Header />
-            <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-10 flex flex-col min-h-0">
+            <main className="flex-grow w-full max-w-4xl mx-auto px-4 pt-[1.3rem] flex flex-col min-h-0">
                 <h1 className="text-3xl font-bold mb-6 text-yellow-400 border-b border-gray-700 pb-2 flex-shrink-0">
                     {isEditMode ? '공지사항 수정' : '새 공지 등록'}
                 </h1>
@@ -108,7 +108,7 @@ const NoticeManagePage = () => {
                         {isLoading ? '처리 중...' : '권한 확인 중...'}
                     </div>
                 ) : (
-                    <div className="flex-grow overflow-y-auto min-h-0"> {/* ⭐️ flex-grow와 overflow-y-auto 추가 */}
+                    <div className="flex-grow min-h-0"> 
                         <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-700 space-y-6">                        {/* 제목 입력 */}
                             <div className="flex-shrink-0">
                                 <label htmlFor="title" className="block text-lg font-medium text-white mb-2">제목</label>
