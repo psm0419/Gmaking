@@ -16,7 +16,7 @@ public class FreeIncubatorDailyJob {
 
     // 매일 06:00 KST 가 기본
     @Transactional
-    @Scheduled(cron = "0 57 17 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 00 06 * * *", zone = "Asia/Seoul")
     public void grantDailyFreeIncubator() {
         Integer lock = null;
         try {
