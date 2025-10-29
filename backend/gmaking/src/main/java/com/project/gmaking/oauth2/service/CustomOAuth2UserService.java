@@ -177,7 +177,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.debug(">>> [OAuth2-Insert] Prepared newUser values: {}", newUser.toString());
 
         // DB 삽입
-        loginDAO.insertSocialUser(newUser);
+        // loginDAO.insertSocialUser(newUser);
+
+        // DB 삽입
+        int insertedRow = loginDAO.insertSocialUser(newUser);
+
+        if (insertedRow != 1) {
+            log.error(">>> [OAuth2-REGISTER-ERROR] 소셜 사용자 DB 삽입 실패. ID={}", newUser.getUserId());
+            throw new RuntimeException("소셜 회원가입 중 DB 오류가 발생했습니다.");
+        }
+
+        // 무료 부화기 (PRODUCT_ID 5) 1개를 인벤토리에 지급
+        final int FREE_INCUBATOR_PRODUCT_ID = 5;
+        final int QUANTITY = 1;
+
+        try {
+            loginDAO.insertUserInventory(newUser.getUserId(), FREE_INCUBATOR_PRODUCT_ID, QUANTITY);
+            log.info(">>>> [OAuth2-REGISTER-TRACE] 무료 부화권(ID: {}) 1개를 인벤토리에 지급 완료. User ID={}", FREE_INCUBATOR_PRODUCT_ID, newUser.getUserId());
+        } catch (Exception e) {
+            log.error(">>>> [OAuth2-REGISTER-ERROR] 인벤토리 삽입 중 오류 발생. ID: {}", newUser.getUserId(), e);
+            throw new RuntimeException("소셜 회원가입에 실패했습니다. (인벤토리 지급 오류)", e);
+        }
+
+        // 만약 DB에서 1로 설정된 값을 객체에 반영하고 싶다면
+        newUser.setIncubatorCount(1);
 
         return newUser;
 

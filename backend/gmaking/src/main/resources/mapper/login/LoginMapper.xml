@@ -118,16 +118,18 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            ROLE
+            ROLE,
+            INCUBATOR_COUNT
         ) VALUES (
-                     #{userId},
-                     #{userName},
-                     #{userEmail},
-                     'Y',
-                     #{userPassword},
-                     #{userNickname},
-                     'USER'
-                 )
+            #{userId},
+            #{userName},
+            #{userEmail},
+            'Y',
+            #{userPassword},
+            #{userNickname},
+            'USER',
+            1
+        )
     </insert>
 
     <select id="selectUserBySocialId" resultMap="loginResultMap">
