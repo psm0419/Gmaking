@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.gmaking.growth.dao.GrowthPreGeneratedDAO">
+
+    <!-- 사전 생성 이미지 등록 -->
+    <insert id="insertPreGeneratedImage" parameterType="com.project.gmaking.growth.vo.GrowthPreGeneratedVO">
+        INSERT INTO tb_growth_pre_generated
+        (CHARACTER_ID, USER_ID, CURRENT_EVOLUTION_STEP, NEXT_EVOLUTION_STEP,
+        IMAGE_ID, IMAGE_URL, CREATED_BY, CREATED_DATE)
+        VALUES
+        (#{characterId}, #{userId}, #{currentEvolutionStep}, #{nextEvolutionStep},
+        #{imageId}, #{imageUrl}, #{createdBy}, NOW())
+    </insert>
+
+    <!-- 캐릭터 ID + 진화 단계로 조회 -->
+    <select id="findByCharacterAndStep" resultType="com.project.gmaking.growth.vo.GrowthPreGeneratedVO">
+        SELECT
+        PRE_GEN_ID AS preGenId,
+        CHARACTER_ID AS characterId,
+        USER_ID AS userId,
+        CURRENT_EVOLUTION_STEP AS currentEvolutionStep,
+        NEXT_EVOLUTION_STEP AS nextEvolutionStep,
+        IMAGE_ID AS imageId,
+        IMAGE_URL AS imageUrl,
+        CREATED_DATE AS createdDate,
+        CREATED_BY AS createdBy,
+        UPDATED_DATE AS updatedDate,
+        UPDATED_BY AS updatedBy
+        FROM tb_growth_pre_generated
+        WHERE CHARACTER_ID = #{characterId}
+        AND NEXT_EVOLUTION_STEP = #{nextEvolutionStep}
+        LIMIT 1
+    </select>
+
+    <!-- 스케줄러용: 조건 달성 캐릭터 목록 조회 -->
+    <select id="findEligibleCharactersForPreGen" resultType="int">
+        SELECT c.CHARACTER_ID
+        FROM tb_character c
+        WHERE c.EVOLUTION_STEP &lt; 5
+        AND (
+        (c.EVOLUTION_STEP = 1 AND c.TOTAL_STAGE_CLEARS &gt;= 10)
+        OR (c.EVOLUTION_STEP = 2 AND c.TOTAL_STAGE_CLEARS &gt;= 20)
+        OR (c.EVOLUTION_STEP = 3 AND c.TOTAL_STAGE_CLEARS &gt;= 30)
+        )
+        AND NOT EXISTS (
+        SELECT 1 FROM tb_growth_pre_generated g
+        WHERE g.CHARACTER_ID = c.CHARACTER_ID
+        AND g.NEXT_EVOLUTION_STEP = c.EVOLUTION_STEP + 1
+        )
+    </select>
+
+
+    <!-- 캐릭터 삭제 시 관련 데이터 정리 -->
+    <delete id="deleteByCharacterId" parameterType="int">
+        DELETE FROM tb_growth_pre_generated
+        WHERE CHARACTER_ID = #{characterId}
+    </delete>
+
+</mapper>

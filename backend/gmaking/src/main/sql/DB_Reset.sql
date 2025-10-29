@@ -158,7 +158,7 @@ DROP TABLE IF EXISTS `tb_dialogue`;
 CREATE TABLE `tb_dialogue` (
   `message_id` int NOT NULL AUTO_INCREMENT,
   `conversation_id` int NOT NULL,
-  `SENDER` enum('user','character','system') NOT NULL,
+  `SENDER` enum('USER','CHARACTER','SYSTEM') NOT NULL,
   `content` text NOT NULL,
   `chat_date` date NOT NULL,
   `created_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
