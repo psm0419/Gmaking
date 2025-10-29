@@ -192,4 +192,12 @@
         AND INCUBATOR_COUNT &gt;= 1
     </update>
 
+    <update id="decrementUserInventoryQuantity">
+        UPDATE TB_USER_INVENTORY
+        SET QUANTITY = QUANTITY - 1
+        WHERE USER_ID = #{userId}
+        AND PRODUCT_ID = #{productId}
+        AND QUANTITY > 0
+    </update>
+
 </mapper>

@@ -89,7 +89,16 @@ public interface LoginDAO {
     int updateUserCharacterInfo(@Param("userId") String userId);
 
     /**
-     * 특정 사용자의 부화권 수량을 1 감소
+     * 특정 사용자의 인벤토리에서 상품 수량을 1 감소 (TB_USER_INVENTORY.QUANTITY)
+     * @param userId 사용자 ID
+     * @param productId 감소시킬 상품 ID (5:무료, 4:일반)
+     * @return 성공적으로 업데이트된 레코드 수 (1 또는 0)
+     */
+    int decrementUserInventoryQuantity(@Param("userId") String userId, @Param("productId") int productId);
+
+
+    /**
+     * 특정 사용자의 부화권 수량을 1 감소 (TB_USER.INCUBATOR_COUNT)
      * @param userId 사용자 ID
      * @return 성공적으로 업데이트된 레코드 수 (1 또는 0)
      */
