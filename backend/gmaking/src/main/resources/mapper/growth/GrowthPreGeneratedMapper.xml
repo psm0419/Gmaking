@@ -9,10 +9,10 @@
     <insert id="insertPreGeneratedImage" parameterType="com.project.gmaking.growth.vo.GrowthPreGeneratedVO">
         INSERT INTO tb_growth_pre_generated
         (CHARACTER_ID, USER_ID, CURRENT_EVOLUTION_STEP, NEXT_EVOLUTION_STEP,
-        IMAGE_ID, IMAGE_URL, CREATED_BY, CREATED_DATE)
+        IMAGE_ID, IMAGE_URL, CREATED_BY, CREATED_DATE, USED_YN)
         VALUES
         (#{characterId}, #{userId}, #{currentEvolutionStep}, #{nextEvolutionStep},
-        #{imageId}, #{imageUrl}, #{createdBy}, NOW())
+        #{imageId}, #{imageUrl}, #{createdBy}, NOW(), 'N')
     </insert>
 
     <!-- 캐릭터 ID + 진화 단계로 조회 -->
@@ -28,15 +28,17 @@
         CREATED_DATE AS createdDate,
         CREATED_BY AS createdBy,
         UPDATED_DATE AS updatedDate,
-        UPDATED_BY AS updatedBy
+        UPDATED_BY AS updatedBy,
+        USED_YN AS usedYn
         FROM tb_growth_pre_generated
         WHERE CHARACTER_ID = #{characterId}
         AND NEXT_EVOLUTION_STEP = #{nextEvolutionStep}
+        AND USED_YN = 'N'
         LIMIT 1
     </select>
 
     <!-- 스케줄러용: 조건 달성 캐릭터 목록 조회 -->
-    <select id="findEligibleCharactersForPreGen" resultType="int">
+    <select id="findEligibleCharactersForPreGen" resultType="long">
         SELECT c.CHARACTER_ID
         FROM tb_character c
         WHERE c.EVOLUTION_STEP &lt; 5
@@ -52,11 +54,13 @@
         )
     </select>
 
-
-    <!-- 캐릭터 삭제 시 관련 데이터 정리 -->
-    <delete id="deleteByCharacterId" parameterType="int">
-        DELETE FROM tb_growth_pre_generated
-        WHERE CHARACTER_ID = #{characterId}
-    </delete>
+    <!-- 사전생성 데이터 사용 완료 처리 -->
+    <update id="markAsUsed" parameterType="integer">
+        UPDATE tb_growth_pre_generated
+        SET USED_YN = 'Y',
+        UPDATED_DATE = NOW(),
+        UPDATED_BY = 'system'
+        WHERE PRE_GEN_ID = #{preGenId}
+    </update>
 
 </mapper>
