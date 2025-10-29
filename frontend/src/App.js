@@ -7,7 +7,7 @@ import LoginPage from './pages/account/LoginPage';
 import HomePage from './pages/HomePage';
 import CharacterCreationPage from './pages/characterCreation/CharacterCreationPage';
 import RegisterPage from './pages/account/RegisterPage';
-import FindIdPage from './pages/account/FindPasswordPage';
+import FindIdPage from './pages/account/FindIdPage';
 import FindPasswordPage from './pages/account/FindPasswordPage';
 import OAuth2RedirectHandler from './pages/account/OAuth2RedirectHandler';
 import ChatPage from './pages/mypage/ChatPage';

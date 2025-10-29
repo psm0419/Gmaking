@@ -92,7 +92,7 @@ public class LoginServiceImpl implements LoginService {
             throw new RuntimeException("회원가입에 실패했습니다. DB 삽입 오류.");
         }
 
-        // 4. 무료 부화기 (PRODUCT_ID 5) 1개를 인벤토리에 지급
+        // 무료 부화기 (PRODUCT_ID 5) 1개를 인벤토리에 지급
         final int FREE_INCUBATOR_PRODUCT_ID = 5;
         final int QUANTITY = 1;
 
@@ -190,16 +190,15 @@ public class LoginServiceImpl implements LoginService {
         // 인증 완료 후 인증 기록 삭제
         verificationDAO.deleteVerificationInfoByUserId(userId);
 
-        // 아이디 마스킹 처리
-        String maskedUserId;
-        if (userId.length() > 3) {
-            maskedUserId = userId.substring(0, 3) + "***" + userId.substring(6); // 예: user***id
-        } else {
-            maskedUserId = userId.substring(0, 1) + "***";
-        }
+//        // 아이디 마스킹 처리
+//        String maskedUserId;
+//        if (userId.length() > 3) {
+//            maskedUserId = userId.substring(0, 3) + "***" + userId.substring(6); // 예: user***id
+//        } else {
+//            maskedUserId = userId.substring(0, 1) + "***";
+//        }
 
-        return maskedUserId;
-
+        return userId;
     }
 
     /**
