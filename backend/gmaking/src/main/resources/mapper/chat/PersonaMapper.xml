@@ -5,7 +5,7 @@
 
 <mapper namespace="com.project.gmaking.chat.dao.PersonaDAO">
 
-    <!-- ✅ 캐릭터 ID로 가장 최근 페르소나 조회 -->
+    <!-- 캐릭터 ID로 가장 최근 페르소나 조회 -->
     <select id="selectPersonaByCharacterId" resultType="com.project.gmaking.chat.vo.PersonaVO">
         SELECT
             PERSONA_ID         AS personaId,

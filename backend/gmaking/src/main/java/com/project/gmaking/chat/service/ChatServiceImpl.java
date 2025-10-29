@@ -60,7 +60,7 @@ public class ChatServiceImpl implements ChatService {
         // 4) 유저 발화 저장
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
-                .sender(DialogueSender.user)
+                .sender(DialogueSender.USER)
                 .content(message)
                 .createdBy(userId)
                 .updatedBy(userId)
@@ -105,7 +105,7 @@ public class ChatServiceImpl implements ChatService {
         Collections.reverse(recent); // 오래된→최신으로 정렬
         if (!recent.isEmpty()) {
             DialogueVO last = recent.get(recent.size() - 1);
-            if (last.getSender() == DialogueSender.user && message.equals(last.getContent())) {
+            if (last.getSender() == DialogueSender.USER && message.equals(last.getContent())) {
                 // 이번 턴의 유저 발화(방금 insert 한 것)는 컨텍스트에서 제외
                 recent.remove(recent.size() - 1);
             }
@@ -148,7 +148,7 @@ public class ChatServiceImpl implements ChatService {
         // 11) 캐릭터 발화 저장
         chatDAO.insertDialogue(DialogueVO.builder()
                 .conversationId(convId)
-                .sender(DialogueSender.character)
+                .sender(DialogueSender.CHARACTER)
                 .content(reply)
                 .createdBy(userId)
                 .updatedBy(userId)

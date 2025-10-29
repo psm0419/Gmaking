@@ -44,18 +44,17 @@
     </insert>
 
     <!--  최근 메시지 N개  -->
-    <select id="selectRecentDialogues"
-            resultMap="dialogueMap">
+    <select id="selectRecentDialogues" resultMap="dialogueMap">
         SELECT
-            MESSAGE_ID      AS messageId,
-            CONVERSATION_ID AS conversationId,
-            SENDER,
-            CONTENT,
-            CHAT_DATE       AS chatDate,
-            CREATED_DATE    AS createdDate,
-            CREATED_BY      AS createdBy,
-            UPDATED_DATE    AS updatedDate,
-            UPDATED_BY      AS updatedBy
+        MESSAGE_ID      AS message_id,
+        CONVERSATION_ID AS conversation_id,
+        SENDER          AS sender,
+        CONTENT         AS content,
+        CHAT_DATE       AS chat_date,
+        CREATED_DATE    AS created_date,
+        CREATED_BY      AS created_by,
+        UPDATED_DATE    AS updated_date,
+        UPDATED_BY      AS updated_by
         FROM TB_DIALOGUE
         WHERE CONVERSATION_ID = #{conversationId}
         ORDER BY MESSAGE_ID DESC

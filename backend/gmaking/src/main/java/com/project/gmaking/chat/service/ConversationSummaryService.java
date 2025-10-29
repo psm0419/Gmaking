@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -44,7 +45,7 @@ public class ConversationSummaryService {
     /**
      * 최근 로그를 요약하여 upsert 저장(독립 트랜잭션).
      * - 대화 로그가 없으면 false
-     * - 요약 실패/빈 요약이면 false
+     * - 요약 실패/빈 요약이면 false (저장하지 않음)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public boolean summarizeAndSave(Integer convId, String actor) {
@@ -59,6 +60,9 @@ public class ConversationSummaryService {
             log.info("ConversationSummary: no logs to summarize. convId={}", convId);
             return false;
         }
+
+        // 정렬 보장(오래된 → 최신)
+        logs.sort(Comparator.comparing(DialogueVO::getMessageId));
 
         String systemPrompt = """
             다음 대화 로그를 핵심 사실/설정/관계/약속/선호로 요약해.
@@ -79,15 +83,16 @@ public class ConversationSummaryService {
 
         if (summary == null || summary.isBlank()) {
             log.warn("ConversationSummary: empty summary. convId={}", convId);
-            return false;
+            return false; // 빈/실패는 저장하지 않음
         }
 
         Integer lastTurnId = logs.get(logs.size() - 1).getMessageId();
+        if (lastTurnId == null) lastTurnId = 0;
 
         ConversationSummaryVO vo = ConversationSummaryVO.builder()
                 .conversationId(convId)
-                .rollingSummary(summary)
-                .lastTurnId(lastTurnId == null ? 0 : lastTurnId)
+                .rollingSummary(summary.trim())
+                .lastTurnId(lastTurnId)
                 .updatedBy(actor)
                 .build();
 

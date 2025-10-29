@@ -72,7 +72,7 @@ public class GeminiClientSdkImpl implements LlmClient {
         // 1) 과거 히스토리 (오래된 → 최신)
         if (historyChrono != null && !historyChrono.isEmpty()) {
             for (DialogueVO d : historyChrono) {
-                String role = (d.getSender() == DialogueSender.user) ? "user" : "model";
+                String role = (d.getSender() == DialogueSender.USER) ? "user" : "model";
                 String text = d.getContent() == null ? "" : d.getContent();
                 if (text.isBlank()) continue;
 
@@ -157,7 +157,7 @@ public class GeminiClientSdkImpl implements LlmClient {
         // 1) 과거 히스토리
         if (historyChrono != null && !historyChrono.isEmpty()) {
             for (DialogueVO d : historyChrono) {
-                String role = (d.getSender() == DialogueSender.user) ? "user" : "model";
+                String role = (d.getSender() == DialogueSender.USER) ? "user" : "model";
                 String text = d.getContent() == null ? "" : d.getContent();
                 if (text.isBlank()) continue;
 

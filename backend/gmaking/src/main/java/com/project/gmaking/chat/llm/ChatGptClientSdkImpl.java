@@ -159,7 +159,7 @@ public class ChatGptClientSdkImpl implements LlmClient {
             for (DialogueVO d : historyChrono) {
                 String content = nullToEmpty(d.getContent());
                 if (content.isBlank()) continue;
-                boolean isAssistant = d.getSender() != null && d.getSender() != DialogueSender.user;
+                boolean isAssistant = d.getSender() != null && d.getSender() != DialogueSender.USER;
                 msgs.add(new Msg(isAssistant ? "assistant" : "user", content));
             }
         }
