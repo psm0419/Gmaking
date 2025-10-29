@@ -102,8 +102,8 @@ const LoginPage = ({ onRegisterClick }) => {
                             onChange={(e) => setUserId(e.target.value)} 
                             placeholder="겜만중 ID" 
                             className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition duration-150"
-                            required />
-                    />
+                            required 
+                        />
                     </div>
 
                     <div>

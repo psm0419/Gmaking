@@ -23,6 +23,16 @@ public interface LoginDAO {
     int register(RegisterRequestVO registerRequestVO);
 
     /**
+     * 특정 사용자 인벤토리에 상품을 추가
+     * (회원가입 시 무료 지급, 구매 시 사용)
+     * @param userId 사용자 ID
+     * @param productId 상품 ID (5번: 무료 부화기)
+     * @param quantity 지급 수량 (1)
+     * @return 성공적으로 삽입된 레코드 수
+     */
+    int insertUserInventory(@Param("userId") String userId, @Param("productId") int productId, @Param("quantity") int quantity);
+
+    /**
      * 중복 확인: ID, 닉네임, 이메일 중 하나라도 중복되는지 확인
      */
     int checkDuplicate(@Param("type") String type, @Param("value") String value);
@@ -79,7 +89,16 @@ public interface LoginDAO {
     int updateUserCharacterInfo(@Param("userId") String userId);
 
     /**
-     * 특정 사용자의 부화권 수량을 1 감소
+     * 특정 사용자의 인벤토리에서 상품 수량을 1 감소 (TB_USER_INVENTORY.QUANTITY)
+     * @param userId 사용자 ID
+     * @param productId 감소시킬 상품 ID (5:무료, 4:일반)
+     * @return 성공적으로 업데이트된 레코드 수 (1 또는 0)
+     */
+    int decrementUserInventoryQuantity(@Param("userId") String userId, @Param("productId") int productId);
+
+
+    /**
+     * 특정 사용자의 부화권 수량을 1 감소 (TB_USER.INCUBATOR_COUNT)
      * @param userId 사용자 ID
      * @return 성공적으로 업데이트된 레코드 수 (1 또는 0)
      */

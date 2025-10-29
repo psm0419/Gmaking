@@ -53,16 +53,30 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            ROLE
+            ROLE,
+            INCUBATOR_COUNT
         ) VALUES (
-                    #{userId},
-                    #{userName},
-                    #{userEmail},
-                    'N',
-                    #{userPassword},
-                    #{userNickname},
-                    'USER'
-                )
+            #{userId},
+            #{userName},
+            #{userEmail},
+            'N',
+            #{userPassword},
+            #{userNickname},
+            'USER',
+            1
+        )
+    </insert>
+
+    <insert id="insertUserInventory">
+        INSERT INTO TB_USER_INVENTORY (
+            USER_ID,
+            PRODUCT_ID,
+            QUANTITY
+        ) VALUES (
+            #{userId},
+            #{productId},
+            #{quantity}
+        )
     </insert>
 
     <select id="checkDuplicate" resultType="int">
@@ -104,16 +118,18 @@
             IS_EMAIL_VERIFIED,
             USER_PASSWORD,
             USER_NICKNAME,
-            ROLE
+            ROLE,
+            INCUBATOR_COUNT
         ) VALUES (
-                     #{userId},
-                     #{userName},
-                     #{userEmail},
-                     'Y',
-                     #{userPassword},
-                     #{userNickname},
-                     'USER'
-                 )
+            #{userId},
+            #{userName},
+            #{userEmail},
+            'Y',
+            #{userPassword},
+            #{userNickname},
+            'USER',
+            1
+        )
     </insert>
 
     <select id="selectUserBySocialId" resultMap="loginResultMap">
@@ -176,6 +192,14 @@
         SET INCUBATOR_COUNT = INCUBATOR_COUNT - 1
         WHERE USER_ID = #{userId}
         AND INCUBATOR_COUNT &gt;= 1
+    </update>
+
+    <update id="decrementUserInventoryQuantity">
+        UPDATE TB_USER_INVENTORY
+        SET QUANTITY = QUANTITY - 1
+        WHERE USER_ID = #{userId}
+        AND PRODUCT_ID = #{productId}
+        AND QUANTITY > 0
     </update>
 
 </mapper>

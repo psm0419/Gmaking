@@ -42,7 +42,7 @@ public class EmailVerificationService {
         verificationDAO.saveVerificationCode(vo);
 
         // 이메일 발송
-        String subject = "[겜만중] 회원가입 이메일 인증 코드입니다.";
+        String subject = "[겜만중] 이메일 인증 코드입니다.";
         String htmlContent = generateEmailContent(verifyCode, expirySeconds / 60);
 
         emailService.sendVerificationEmail(userEmail, subject, htmlContent);
@@ -94,9 +94,9 @@ public class EmailVerificationService {
     // 헬퍼: 이메일 HTML 콘텐츠 생성
     private String generateEmailContent(String code, long expiryMinutes) {
         return "<div style=\"font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px; max-width: 600px; margin: auto; text-align: center;\">"
-                + "<h2 style=\"color: #ffc107;\">회원가입 이메일 인증</h2>"
+                + "<h2 style=\"color: #ffc107;\">이메일 인증</h2>"
                 + "<p>안녕하세요, 겜만중입니다.</p>"
-                + "<p>아래 인증 코드를 회원가입 화면에 입력해주세요.</p>"
+                + "<p>아래 인증 코드를 입력해주세요.</p>"
                 + "<div style=\"background-color: #343a40; color: #ffffff; padding: 15px; border-radius: 5px; margin: 20px 0;\">"
                 + "<strong style=\"font-size: 24px; letter-spacing: 5px;\">" + code + "</strong>"
                 + "</div>"
