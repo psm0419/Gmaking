@@ -96,17 +96,17 @@ const LoginPage = ({ onRegisterClick }) => {
                             아이디
                         </label>
                         <input
-                            id="userId"
-                            type="text"
-                            value={userId}
-                            onChange={(e) => {
-                                const englishOnly = e.target.value.replace(/[^a-zA-Z]/g, '');
-                                setUserId(englishOnly);
-                            }}
-                            placeholder="testuser"
-                            className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition duration-150"
-                            required
-                        />
+                        id="userId"
+                        type="text"
+                        value={userId}
+                        onChange={(e) => {
+                            const englishAndNumbersOnly = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                            setUserId(englishAndNumbersOnly);
+                        }}
+                        placeholder="testuser"
+                        className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition duration-150"
+                        required
+                    />
                     </div>
 
                     <div>
