@@ -124,7 +124,7 @@
 
     <update id="updateStatus">
         UPDATE TB_CONVERSATION
-        SET STATUS = #{status},
+        SET STATUS = #{status, jdbcType=VARCHAR},
         UPDATED_BY = #{actor},
         UPDATED_DATE = NOW()
         WHERE CONVERSATION_ID = #{conversationId}
