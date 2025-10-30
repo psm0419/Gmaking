@@ -7,10 +7,27 @@ import { useAuth } from '../../context/AuthContext';
 
 const API_BASE_URL = 'http://localhost:8080/community';
 
-// 고정 열 레이아웃 PostItem (Grid 기반)
-const PostItem = ({ type, title, authorNickname, date, postId, navigate, viewCount, likeCount, replyCount, onLikeClick }) => {
-    const isNotice = type === 'notice';
-    const tagColor = isNotice ? 'bg-red-600' : 'bg-yellow-600';
+// PostItem 컴포넌트 수정: categoryCode와 categoryMap을 props로 받도록 수정
+const PostItem = ({ categoryCode, categoryMap, title, authorNickname, date, postId, navigate, viewCount, likeCount, replyCount, onLikeClick }) => {
+    const getCategoryColor = (code) => {
+        switch (code) {
+            case 'NOTICE':
+                return 'bg-red-600';     // 공지사항 (빨강)
+            case 'QNA':
+                return 'bg-blue-600';     // 질문/답변 (파랑)
+            case 'TIP':
+                return 'bg-green-600';    // 팁/정보 (녹색)
+            case 'FREE':
+                return 'bg-yellow-600';   // 자유 게시판 (노랑)
+            default:
+                return 'bg-gray-500';     // 기타 (회색)
+        }
+    };
+    
+    const isNotice = categoryCode === 'NOTICE'; 
+    const categoryName = categoryMap[categoryCode] || '기타'; 
+    const tagColor = getCategoryColor(categoryCode);
+
 
     return (
         <div 
@@ -20,7 +37,7 @@ const PostItem = ({ type, title, authorNickname, date, postId, navigate, viewCou
             {/* 태그 + 제목 (6열) */}
             <div className="col-span-6 flex items-center min-w-0">
                 <span className={`inline-block px-2 py-0.5 mr-3 text-xs font-bold rounded-md text-white ${tagColor} flex-shrink-0`}>
-                    {isNotice ? '공지' : '자유'}
+                    {categoryName}
                 </span>
                 <span 
                     className={`text-white font-medium truncate block ${isNotice ? 'group-hover:text-red-400' : 'group-hover:text-yellow-400'}`}
@@ -61,7 +78,7 @@ const PostItem = ({ type, title, authorNickname, date, postId, navigate, viewCou
 
             {/* 날짜 (1열) */}
             <div className="col-span-1 text-center text-gray-400 hidden sm:block">
-                {new Date(date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }).replace(/\./g, '')}
+                {new Date(date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }).replace(/ /g, '').replace(/\.$/, '')}
             </div>
         </div>
     );
@@ -201,7 +218,8 @@ const CommunityPage = () => {
             });
             if (!response.ok) throw new Error('좋아요 업데이트 실패');
             const categoryForApi = getCategoryName(activeCategory);
-            fetchPosts(currentPage, currentKeyword, categoryForApi);
+            // 좋아요 후 목록 갱신을 위해 현재 페이지로 다시 fetch
+            fetchPosts(currentPage, currentKeyword, categoryForApi); 
         } catch (error) {
             console.error("좋아요 처리 실패:", error);
             alert('좋아요 처리 중 오류가 발생했습니다.');
@@ -325,7 +343,10 @@ const CommunityPage = () => {
                                 posts.map((post) => (
                                     <PostItem 
                                         key={post.postId} 
-                                        type={post.categoryCode === 'NOTICE' ? 'notice' : 'free'}
+                                        // 수정된 부분: categoryCode와 categoryMap 전달
+                                        categoryCode={post.categoryCode}
+                                        categoryMap={categoryMap}
+                                        
                                         title={post.title}
                                         authorNickname={post.userNickname || post.userId}
                                         date={post.createdDate}

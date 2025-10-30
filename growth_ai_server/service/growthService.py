@@ -35,13 +35,15 @@ MODIFICATIONS = {
     "EVO_KEY_STAGE1": {
         "output_suffix": "stage_1_warrior.png",
         "base_prompt": (
-            "A pixel-art fantasy RPG style character, keeping the same creature's **species**, **color palette**, and overall **face structure** "
+            "A pixel-art fantasy RPG style character, keeping the same creature's **species**, **color palette**, "
+            "and overall **face structure** "
             "from the input image. The character is now equipped with **basic, functional armor** and a **simple, functional weapon**. "
             "The **pose** is that of a newly established warrior, confident and ready for adventure. "
             "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different creature, new design, photorealistic, extra limbs, human-like form, blurry, multiple characters, text, watermark, colored background, change in species or face, oversized weapon, overly ornate"
+            "different creature, new design, photorealistic, extra limbs, human-like form, blurry, multiple characters, "
+            "text, watermark, colored background, change in species or face, oversized weapon, overly ornate"
         )
     },
     
@@ -56,7 +58,8 @@ MODIFICATIONS = {
             "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different species, redesign, human-like, photorealistic, messy background, multiple creatures, text, watermark, colored background, change in species or face, drastically different weapon type"
+            "different species, redesign, human-like, photorealistic, messy background, multiple creatures, "
+            "text, watermark, colored background, change in species or face, drastically different weapon type"
         )
     },
     
@@ -64,14 +67,16 @@ MODIFICATIONS = {
     "EVO_KEY_STAGE3": {
         "output_suffix": "stage_3_knight.png",
         "base_prompt": (
-            "Evolve the same character into a seasoned knight-like figure. **Keep the same animal species**, color scheme, and body structure. "
+            "Evolve the same character into a seasoned knight-like figure. **Keep the same animal species**, color scheme, "
+            "and body structure. "
             "The **armor is now full, gleaming, and highly ornate**, possibly featuring an emblem or a **cape**. "
             "The **weapon is grander and more powerful**, possibly with **subtle magical effects** like glowing runes. "
             "The character stands in a **proud, commanding, or charging stance**. "
             "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different animal, new body design, photorealistic, extra limbs, human face, text, blur, 3D rendering, colored background, change in species or face, simple armor, rusty weapon"
+            "different animal, new body design, photorealistic, extra limbs, human face, text, blur, 3D rendering, "
+            "colored background, change in species or face, simple armor, rusty weapon"
         )
     },
     
@@ -79,13 +84,15 @@ MODIFICATIONS = {
     "EVO_KEY_FINAL": {
         "output_suffix": "stage_4_legend.png",
         "base_prompt": (
-            "Depict the same character in its ultimate, legendary evolved form. **Maintain the same face, proportions, and species identity** as the input image. "
+            "Depict the same character in its ultimate, legendary evolved form. **Maintain the same face, proportions, "
+            "and species identity** as the input image. "
             "The **weapon and armor are mythical and indestructible**, with **exquisite, magical details** and powerful auras. "
             "The character's **pose** conveys supreme power, wisdom, and victory. "
             "Centered composition, 1024x1024, with a **clean white background**."
         ),
         "negative_prompt": (
-            "different creature, new species, human-like, photorealistic, distorted, blur, text, watermark, colored background, change in species or face, weak equipment, no armor"
+            "different creature, new species, human-like, photorealistic, distorted, blur, text, watermark, colored background, "
+            "change in species or face, weak equipment, no armor"
         )
     }
 }
