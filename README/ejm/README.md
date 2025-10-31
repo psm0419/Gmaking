@@ -70,7 +70,7 @@
 
 ### 3.1. 🗺️ 전체 아키텍처 흐름
 
-AI 이미지 생성 처리를 위해 **Java Spring Backend**와 **FastAPI AI Server**를 분리한 **MSA(Microservice Architecture)**를 구성했습니다.
+**MSA(Microservice Architecture)** 형태로 Backend와 AI Server를 분리하여 AI 이미지 생성 과정의 부하를 분산하고 효율적인 처리를 구현했습니다.
 
 ```mermaid
 graph LR
@@ -80,29 +80,3 @@ graph LR
     D --> C_1(FastAPI: 결과 반환);
     C_1 --> B_1(Java Backend: DB 저장);
     B_1 --> A_1(Frontend: 성장 이미지 전 후 표시);
-
-
-3.2. 🗄️ 데이터베이스 개요
-프로젝트의 데이터 모델링을 담당하며 테이블 정의서를 작성하고 핵심 테이블을 설계했습니다.
-
-테이블 명,역할
-tb_user,사용자 정보 관리
-tb_charcter,캐릭터 기본 정보
-tb_character_stat,캐릭터 스탯 정보
-tb_growth,캐릭터 성장 로그 기록
-tb_Coummunity,게시글 본문 및 기본 정보
-tb_Community_like,게시글 추천 기록
-tb_report,신고 내역 관리
-tb_Coummunity_comment,댓글 및 답글 정보
-
-3.3. 💻 기술 스택 (Technology Stack)
-
-구분,기술 스택,주요 역할
-Front,React,SPA 기반 UI/UX 구축
-Backend,Spring Boot,핵심 비즈니스 로직 및 API 서버
-AI Server,FastAPI,AI 모델과의 고성능 통신 및 처리
-AI,AI Horde + Stable Diffusion,img2img 기반 이미지 변형
-ORM,SQLAIchemy,DB와의 효율적인 데이터 처리 (FastAPI 측)
-DB,MySQL,데이터 영속성 관리
-Tool,"PIL, Base64",이미지 처리 및 데이터 인코딩/디코딩
-Infra,REST API,시스템 간 표준 통신 규약
