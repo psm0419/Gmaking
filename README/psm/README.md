@@ -60,3 +60,5 @@ YOLOv8 (이미지 분류), GPT-4o-mini, DALL·E 3, Gemini 2.0 Flash
 
 개발 도구
 IntelliJ IDEA Community Edition (백엔드 개발), Visual Studio Code (프론트엔드 개발), GitHub (버전 관리)
+
+[⬅ 메인 README로 돌아가기](../../README.md)
