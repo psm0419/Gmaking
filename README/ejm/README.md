@@ -70,7 +70,7 @@
 
 ### 3.1. 🗺️ 전체 아키텍처 흐름
 
-**MSA(Microservice Architecture)** 형태로 Backend와 AI Server를 분리하여 AI 이미지 생성 과정의 부하를 분산하고 효율적인 처리를 구현했습니다.
+AI 이미지 생성 처리를 위해 **Java Spring Backend**와 **FastAPI AI Server**를 분리한 **MSA(Microservice Architecture)**를 구성했습니다.
 
 ```mermaid
 graph LR
@@ -81,7 +81,11 @@ graph LR
     C_1 --> B_1(Java Backend: DB 저장);
     B_1 --> A_1(Frontend: 성장 이미지 전 후 표시);
 
-# ** 테이블 명,역할 **
+
+3.2. 🗄️ 데이터베이스 개요
+프로젝트의 데이터 모델링을 담당하며 테이블 정의서를 작성하고 핵심 테이블을 설계했습니다.
+
+테이블 명,역할
 tb_user,사용자 정보 관리
 tb_charcter,캐릭터 기본 정보
 tb_character_stat,캐릭터 스탯 정보
@@ -91,7 +95,9 @@ tb_Community_like,게시글 추천 기록
 tb_report,신고 내역 관리
 tb_Coummunity_comment,댓글 및 답글 정보
 
-# ** 구분,기술 스택,주요 역할 **
+3.3. 💻 기술 스택 (Technology Stack)
+
+구분,기술 스택,주요 역할
 Front,React,SPA 기반 UI/UX 구축
 Backend,Spring Boot,핵심 비즈니스 로직 및 API 서버
 AI Server,FastAPI,AI 모델과의 고성능 통신 및 처리
