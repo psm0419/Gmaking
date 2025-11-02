@@ -21,7 +21,7 @@ AI가 생성한 캐릭터와 함께 **PVE / PVP 대전**, **퀘스트 수행**,
 
 | 구분 | 기능 |
 |------|------|
-| 🎨 **AI 캐릭터 생성** | DALL·E 3(GPT OpenAi) 기반의 이미지 생성 및 저장 |
+| 🎨 **AI 캐릭터 생성** | DALL·E 3(GPT OpenAI) 기반의 이미지 생성 및 저장 |
 | 🧠 **AI 캐릭터 대화** | ChatGPT 기반의 자연어 캐릭터 대화 기능 |
 | ⚔️ **PVE / PVP 대전** | AI 판단 기반 전투 결과, 로그 저장, 승패 기록 |
 | 🪄 **캐릭터 성장 시스템** | 경험치, 스탯, 아이템, 퀘스트 기반 성장 로직 |
@@ -38,9 +38,9 @@ AI가 생성한 캐릭터와 함께 **PVE / PVP 대전**, **퀘스트 수행**,
 | 영역 | 사용 기술 |
 |------|------------|
 | **Frontend** | React, TailwindCSS, Axios, React Router |
-| **Backend** | Spring Boot, JPA, MySQL, JWT |
+| **Backend** | Spring Boot, MySQL, JWT |
 | **AI Server** | FastAPI, YOLOv8, DALL·E 3, Stable Diffusion, GPT API, Gemini |
-| **collaboration tools** | Discord, Kakao, GitHub |
+| **collaboration tools** | Notion, Google Cloud, Discord, Kakao, , MiriCanvas, GitHub |
 
 ---
 
@@ -58,7 +58,7 @@ AI가 생성한 캐릭터와 함께 **PVE / PVP 대전**, **퀘스트 수행**,
 
 | [![박수민](https://github.com/psm0419.png?size=100)](https://github.com/psm0419) | [![박은희](https://github.com/dmsgml7476.png?size=100)](https://github.com/dmsgml7476) | [![박현재](https://github.com/pnow7.png?size=100)](https://github.com/pnow7) | [![엄정민](https://github.com/zcx1119son.png?size=100)](https://github.com/zcx1119son) |
 |:--:|:--:|:--:|:--:|
-| **[박수민](https://github.com/psm0419)**<br>팀장 / 풀스택 | **[박은희](https://github.com/dmsgml7476)**<br>팀원 / 풀스택 | **[박현재](https://github.com/pnow7)**<br>팀원 / 풀스택 | **[엄정민](https://github.com/zcx1119son)**<br>팀원 / AI 서버 |
+| **[박수민](https://github.com/psm0419)**<br>팀장 / 이미지 분류, 토론 AI | **[박은희](https://github.com/dmsgml7476)**<br>팀원 / 채팅 AI, 도우미봇(RAG) | **[박현재](https://github.com/pnow7)**<br>팀원 / 이미지 생성 AI | **[엄정민](https://github.com/zcx1119son)**<br>팀원 / 이미지 변형 AI |
 | [개인 문서 →](./README/psm/README.md) | [개인 문서 →](./README/peh/README.md) | [개인 문서 →](./README/phj/README.md) | [개인 문서 →](./README/ejm/README.md) |
 
 ---
