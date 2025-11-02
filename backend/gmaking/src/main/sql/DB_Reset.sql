@@ -417,3 +417,109 @@ CREATE TABLE `tb_user_email_verify` (
   `UPDATED_DATE` datetime DEFAULT NULL COMMENT '수정일자',
   PRIMARY KEY (`USER_ID`,`EMAIL`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='이메일 인증 정보';
+
+
+CREATE TABLE `tb_character_personality` (
+   `CHARACTER_PERSONALITY_ID` int NOT NULL AUTO_INCREMENT COMMENT '성격 ID',
+   `PERSONALITY_DESCRIPTION` varchar(255) DEFAULT NULL COMMENT '설명',
+   `CREATED_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+   `CREATED_BY` varchar(50) DEFAULT NULL COMMENT '생성자',
+   `UPDATED_DATE` datetime DEFAULT NULL COMMENT '수정 일자',
+   `UPDATED_BY` varchar(50) DEFAULT NULL COMMENT '수정자',
+   PRIMARY KEY (`CHARACTER_PERSONALITY_ID`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='캐릭터 성격 정보';
+
+ CREATE TABLE `tb_encounter_rate` (
+    `ENCOUNTER_TYPE` varchar(20) NOT NULL,
+    `ENCOUNTER_RATE` decimal(5,2) NOT NULL,
+    `DESCRIPTION` varchar(100) DEFAULT NULL,
+    `UPDATED_DATE` datetime DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`ENCOUNTER_TYPE`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='보스몬스터 등장 확률';
+
+  CREATE TABLE `tb_growth_pre_generated` (
+     `PRE_GEN_ID` int NOT NULL AUTO_INCREMENT COMMENT '사전생성 ID',
+     `CHARACTER_ID` int NOT NULL COMMENT '캐릭터 ID',
+     `USER_ID` varchar(50) NOT NULL COMMENT '유저 ID',
+     `IMAGE_ID` int NOT NULL COMMENT '캐릭터의 기존 이미지 ID (tb_image 참조)',
+     `CURRENT_EVOLUTION_STEP` int NOT NULL COMMENT '현재 진화 단계',
+     `NEXT_EVOLUTION_STEP` int NOT NULL COMMENT '다음 진화 단계',
+     `IMAGE_URL` varchar(500) NOT NULL COMMENT '사전생성된 새 이미지 URL',
+     `USED_YN` char(1) DEFAULT 'N' COMMENT '성장 반영 여부 (N: 대기, Y: 반영 완료)',
+     `CREATED_DATE` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일시',
+     `CREATED_BY` varchar(50) DEFAULT 'system_scheduler' COMMENT '생성자',
+     `UPDATED_DATE` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 일시',
+     `UPDATED_BY` varchar(50) DEFAULT NULL COMMENT '수정자',
+     PRIMARY KEY (`PRE_GEN_ID`)
+   ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+   CREATE TABLE `tb_map` (
+      `MAP_ID` int NOT NULL AUTO_INCREMENT COMMENT '맵 ID',
+      `MAP_NAME` varchar(50) DEFAULT NULL COMMENT '맵 이름',
+      `CREATED_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+      `CREATED_BY` varchar(50) DEFAULT NULL COMMENT '생성자',
+      `UPDATED_DATE` datetime DEFAULT NULL COMMENT '수정 일자',
+      `UPDATED_BY` varchar(50) DEFAULT NULL COMMENT '수정자',
+      `MAP_IMAGE_URL` varchar(255) DEFAULT NULL COMMENT '맵 이미지 파일 경로',
+      PRIMARY KEY (`MAP_ID`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='맵 정보';
+
+    CREATE TABLE `tb_monster` (
+       `MONSTER_ID` int NOT NULL AUTO_INCREMENT COMMENT '몬스터 ID',
+       `IMAGE_ID` int NOT NULL COMMENT '이미지 ID',
+       `MONSTER_NAME` varchar(100) NOT NULL COMMENT '몬스터 이름',
+       `MONSTER_TYPE` varchar(20) NOT NULL DEFAULT 'NORMAL' COMMENT '몬스터 유형: NOMAL, BOSS',
+       `MONSTER_HP` int NOT NULL COMMENT '몬스터 체력',
+       `MONSTER_ATTACK` int NOT NULL COMMENT '몬스터 공격력',
+       `MONSTER_DEFENSE` int NOT NULL COMMENT '몬스터 방어력',
+       `MONSTER_SPEED` int NOT NULL COMMENT '몬스터 스피드',
+       `MONSTER_CRITICAL_RATE` int DEFAULT NULL COMMENT '몬스터 크리티컬 확률',
+       `CREATED_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+       `CREATED_BY` varchar(50) DEFAULT NULL COMMENT '생성자',
+       `UPDATED_DATE` datetime DEFAULT NULL COMMENT '수정 일자',
+       `UPDATED_BY` varchar(50) DEFAULT NULL COMMENT '수정자',
+       PRIMARY KEY (`MONSTER_ID`)
+     ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='몬스터 정보';
+
+     CREATE TABLE `tb_product` (
+        `PRODUCT_ID` int NOT NULL AUTO_INCREMENT COMMENT '상품 ID',
+        `PRODUCT_NAME` varchar(100) NOT NULL COMMENT '상품명',
+        `PRODUCT_TYPE` varchar(20) NOT NULL COMMENT '상품 유형: 뽑기권, 광고제거',
+        `PRICE` int NOT NULL DEFAULT '0' COMMENT '가격',
+        `CURRENCY_TYPE` varchar(10) NOT NULL DEFAULT 'KRW' COMMENT '통화 유형',
+        `IS_SALE` char(1) NOT NULL DEFAULT 'Y' COMMENT '판매 여부',
+        `CREATED_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일자',
+        `CREATED_BY` varchar(50) DEFAULT NULL COMMENT '생성자',
+        `UPDATED_DATE` datetime DEFAULT NULL COMMENT '수정 일자',
+        `UPDATED_BY` varchar(50) DEFAULT NULL COMMENT '수정자',
+        `DURATION_DAYS` int DEFAULT NULL COMMENT '사용기간(일단위, 영구적인 경우 NULL)',
+        `pack_size` int DEFAULT NULL COMMENT '지급 수량',
+        `GRANT_PRODUCT_ID` int DEFAULT NULL COMMENT '지급대상 아이템 아이디',
+        `sale_price` int DEFAULT NULL COMMENT '할인금액',
+        PRIMARY KEY (`PRODUCT_ID`)
+      ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='상품 정보';
+
+      CREATE TABLE `tb_quest` (
+         `QUEST_ID` int NOT NULL AUTO_INCREMENT COMMENT '퀘스트 ID',
+         `QUEST_NAME` varchar(100) NOT NULL COMMENT '퀘스트 이름',
+         `QUEST_TYPE` varchar(30) NOT NULL COMMENT '퀘스트 타입 (PVE, PVP, DEBATE, MINIGAME 등)',
+         `TARGET_COUNT` int NOT NULL DEFAULT '1' COMMENT '목표 횟수',
+         `REWARD_PRODUCT_ID` int NOT NULL DEFAULT '4' COMMENT '보상 상품 ID (기본: 부화권)',
+         `REWARD_QUANTITY` int NOT NULL DEFAULT '1' COMMENT '보상 수량',
+         `IS_REPEATABLE` char(1) NOT NULL DEFAULT 'N' COMMENT '반복 가능 여부',
+         `QUEST_CYCLE` varchar(20) NOT NULL DEFAULT 'DAILY' COMMENT '퀘스트 주기 (DAILY, WEEKLY 등)',
+         `CREATED_AT` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         PRIMARY KEY (`QUEST_ID`)
+       ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='퀘스트 정의 테이블';
+
+       CREATE TABLE `tb_rag_embedding_chunk` (
+          `id` bigint NOT NULL AUTO_INCREMENT,
+          `doc_path` varchar(512) NOT NULL,
+          `chunk_index` int NOT NULL,
+          `text` mediumtext NOT NULL,
+          `vector` longblob NOT NULL,
+          `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `uq_doc_chunk` (`doc_path`,`chunk_index`),
+          KEY `idx_doc_path` (`doc_path`)
+        ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
