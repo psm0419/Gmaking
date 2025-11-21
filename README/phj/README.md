@@ -76,11 +76,10 @@
 | 구분 | 기술 | 상세 내용 |
 | :--- | :--- | :--- |
 | **Frontend** | **React**, TailwindCSS | 프론트엔드 개발 및 UI 구현 |
-| **Backend** | **Spring Boot**, JPA, MyBatis | 백엔드 API 서버 구축 (Java JDK 17) |
+| **Backend** | **Spring Boot**, MyBatis | 백엔드 API 서버 구축 (Java JDK 17) |
 | **AI Server** | **FastAPI**, **YOLOv8**, **DALL·E 3**, GPT, Gemini | AI 통신 서버 및 모델 관리 (Python 3.10.11) |
 | **DB/Cloud** | MySQL, **Google Cloud Storage (GCS)** | 데이터베이스 및 이미지/파일 저장소 |
 | **Auth/Security** | **JWT**, **OAuth2** (Google/Naver/Kakao) | 인증/인가 및 소셜 로그인 |
-| **DevOps/Infra** | **Docker**, **Nginx**, GitHub | 컨테이너 환경, 리버스 프록시, 버전 관리 |
 
 ---
 
