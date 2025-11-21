@@ -66,6 +66,7 @@
 ## 🧩 주요 성과 및 기술 스택
 
 ### 🏆 핵심 성과
+* **사용자 경험 중심의 메인 서비스 구축**: React 기반으로 **메인 홈 화면**을 포함한 핵심 프론트엔드 UI를 개발하고, **백엔드 API와의 안정적인 연동**을 구현하여 **사용자 경험을 최적화**했습니다.
 * **기술적 효율성 확보**: Stable Diffusion $\rightarrow$ **DALL·E 3** 전략적 전환을 통한 생성 속도 **20초 이내 단축**.
 * **보안 강화**: JWT, OAuth2, SMTP를 활용한 **안정적인 인증/인가 시스템** 구축.
 * **클라우드 기반 협업**: **GCS 서비스화**를 통해 이미지 관리의 효율성과 팀 협업 환경 개선.
@@ -75,7 +76,7 @@
 
 | 구분 | 기술 | 상세 내용 |
 | :--- | :--- | :--- |
-| **Frontend** | **React**, TailwindCSS | 프론트엔드 개발 및 UI 구현 |
+| **Frontend** | **React**, TailwindCSS | 메인 홈 화면 및 핵심 UI/UX 구현, 프론트엔드 개발 |
 | **Backend** | **Spring Boot**, MyBatis | 백엔드 API 서버 구축 (Java JDK 17) |
 | **AI Server** | **FastAPI**, **YOLOv8**, **DALL·E 3**, GPT, Gemini | AI 통신 서버 및 모델 관리 (Python 3.10.11) |
 | **DB/Cloud** | MySQL, **Google Cloud Storage (GCS)** | 데이터베이스 및 이미지/파일 저장소 |
