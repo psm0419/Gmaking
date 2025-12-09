@@ -73,7 +73,7 @@ public class EmailVerificationController {
         }
 
         try {
-            // 기존의 코드 발송/DB 저장 로직 (ON DUPLICATE KEY UPDATE) 재사용
+            // 기존의 코드 발송/DB 저장 로직 (ON DUPLICATE KEY UPDATE) 재사용 
             verificationService.sendCode(userId, email);
 
             response.put("success", true);
